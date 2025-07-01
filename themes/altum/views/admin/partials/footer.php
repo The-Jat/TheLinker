@@ -4,7 +4,7 @@
     <div class="mb-3 mb-lg-0">
         <div class="mb-2"><?= sprintf(l('global.footer.copyright'), date('Y'), settings()->main->title) ?></div>
 
-        <div>Powered by <img src="<?= ASSETS_FULL_URL . 'images/altumcode.png' ?>" class="icon-favicon" alt="AltumCode logo" /> <a href="https://altumcode.com/" target="_blank">AltumCode</a>.</div>
+        <div>Powered by <img src="<?= ASSETS_FULL_URL . 'images/thejat.png' ?>" class="icon-favicon" alt="TheJat logo" /> <a href="https://thejat.in/" target="_blank">TheJat</a>.</div>
     </div>
 
     <div class="d-flex flex-column flex-lg-row">
