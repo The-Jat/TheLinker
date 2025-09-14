@@ -1,15 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+
+defined('ALTUMCODE') || die();
 
 class Account extends Controller {
 
@@ -18,19 +27,20 @@ class Account extends Controller {
         \Altum\Authentication::guard();
 
         /* Prepare the TwoFA codes just in case we need them */
-        $twofa = new \RobThree\Auth\TwoFactorAuth(settings()->main->title, 6, 30);
+        $twofa = new \RobThree\Auth\TwoFactorAuth(new \RobThree\Auth\Providers\Qr\BaconQrCodeProvider(format: 'svg'), settings()->main->title, 6, 30);
         $twofa_secret = $twofa->createSecret();
-        $twofa_image = $twofa->getQRCodeImageAsDataUri($this->user->email . ' - ' . $this->user->name, $twofa_secret);
+        $twofa_image = $twofa->getQRCodeImageAsDataUri($this->user->email . ' - ' . $this->user->name, $twofa_secret, 400);
 
         if(!empty($_POST)) {
 
             /* Clean some posted variables */
-            $_POST['email'] = mb_substr(filter_var($_POST['email'], FILTER_SANITIZE_EMAIL), 0, 320);
-            $_POST['name'] = input_clean($_POST['name'], 64);
+            $this->user->avatar = \Altum\Uploads::process_upload($this->user->avatar, 'users', 'avatar', 'avatar_remove', settings()->main->avatar_size_limit);
+            $_POST['email'] = input_clean_email($_POST['email'] ?? '');
+            $_POST['name'] = input_clean_name($_POST['name'], 64);
             $_POST['timezone'] = in_array($_POST['timezone'], \DateTimeZone::listIdentifiers()) ? query_clean($_POST['timezone']) : settings()->main->default_timezone;
             $_POST['anti_phishing_code'] = input_clean($_POST['anti_phishing_code'], 8);
             $_POST['twofa_is_enabled'] = (bool) $_POST['twofa_is_enabled'];
-            $_POST['twofa_token'] = input_clean($_POST['twofa_token'] ?? '');
+            $_POST['twofa_token'] = input_clean(str_replace(' ', '', $_POST['twofa_token'] ?? ''));
             $_POST['is_newsletter_subscribed'] = (int) isset($_POST['is_newsletter_subscribed']);
             $twofa_secret = $_POST['twofa_is_enabled'] ? $this->user->twofa_secret : null;
 
@@ -72,11 +82,33 @@ class Account extends Controller {
             if(!\Altum\Csrf::check()) {
                 Alerts::add_error(l('global.error_message.invalid_csrf_token'));
             }
+
             if(filter_var($_POST['email'], FILTER_VALIDATE_EMAIL) == false) {
                 Alerts::add_field_error('email', l('global.error_message.invalid_email'));
             }
+
             if(db()->where('email', $_POST['email'])->has('users') && $_POST['email'] !== $this->user->email) {
                 Alerts::add_field_error('email', l('register.error_message.email_exists'));
+            }
+
+            if(!settings()->users->email_aliases_is_enabled && str_contains($_POST['email'], '+')) {
+                Alerts::add_field_error('email', l('register.error_message.email_aliases_not_allowed'));
+            }
+
+            /* Make sure the domain is not blacklisted */
+            $email_domain = get_domain_from_email($_POST['email']);
+            if(settings()->users->blacklisted_domains && in_array($email_domain, settings()->users->blacklisted_domains)) {
+                Alerts::add_field_error('email', l('register.error_message.blacklisted_domain'));
+            }
+
+            /* Email shield plugin */
+            if(
+                \Altum\Plugin::is_active('email-shield') 
+                && settings()->email_shield->is_enabled 
+                && !in_array($email_domain, settings()->email_shield->whitelisted_domains ?? [])
+                && !\Altum\Plugin\EmailShield::validate($email_domain)
+            ) {
+                Alerts::add_field_error('email', l('register.error_message.blacklisted_domain'));
             }
 
             if(db()->where('referral_key', $_POST['referral_key'])->has('users') && $_POST['referral_key'] !== $this->user->referral_key) {
@@ -107,7 +139,7 @@ class Account extends Controller {
 
                     /* Regenerate */
                     $twofa_secret = $twofa->createSecret();
-                    $twofa_image = $twofa->getQRCodeImageAsDataUri($this->user->email . ' - ' . $this->user->name, $twofa_secret);
+                    $twofa_image = $twofa->getQRCodeImageAsDataUri($this->user->email . ' - ' . $this->user->name, $twofa_secret, 400);
 
                 } else {
                     $twofa_secret = $_SESSION['twofa_potential_secret'];
@@ -124,6 +156,7 @@ class Account extends Controller {
 
                 /* Database query */
                 db()->where('user_id', $this->user->user_id)->update('users', [
+                    'avatar' => $this->user->avatar,
                     'name' => $_POST['name'],
                     'billing' => $_POST['billing'],
                     'timezone' => $_POST['timezone'],
@@ -214,7 +247,7 @@ class Account extends Controller {
                     session_start();
 
                     /* Clear the cache */
-                    \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $this->user->user_id);
+                    cache()->deleteItemsByTag('user_id=' . $this->user->user_id);
 
                     /* Set a nice success message */
                     Alerts::add_success(l('account.success_message.password_updated'));
@@ -231,12 +264,23 @@ class Account extends Controller {
                         'title' => l('global.notifications.new_newsletter_subscriber.title'),
                         'description' => sprintf(l('global.notifications.new_newsletter_subscriber.description'), $_POST['name'], $_POST['email']),
                         'url' => 'admin/user-view/' . $this->user->user_id,
-                        'datetime' => \Altum\Date::$date,
+                        'datetime' => get_date(),
+                    ]);
+                }
+
+                /* Send webhook notification if needed */
+                if(settings()->webhooks->user_update) {
+                    fire_and_forget('post', settings()->webhooks->user_update, [
+                        'user_id' => $this->user->user_id,
+                        'email' => $_POST['email'],
+                        'name' => $_POST['name'],
+                        'source' => 'account',
+                        'datetime' => get_date(),
                     ]);
                 }
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $this->user->user_id);
+                cache()->deleteItemsByTag('user_id=' . $this->user->user_id);
 
                 redirect('account');
             }
@@ -250,7 +294,7 @@ class Account extends Controller {
         $menu = new \Altum\View('partials/account_header_menu', (array) $this);
         $this->add_view_content('account_header_menu', $menu->run());
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'twofa_secret'  => $twofa_secret,
             'twofa_image'   => $twofa_image

@@ -7,7 +7,7 @@
 <nav aria-label="breadcrumb">
         <ol class="custom-breadcrumbs small">
             <li><a href="<?= url('links') ?>"><?= l('links.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li><a href="<?= url('link/' . $data->biolink_block->link_id . '?tab=links') ?>"><?= l('link.breadcrumb.biolink') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+            <li><a href="<?= url('link/' . $data->biolink_block->link_id . '?tab=blocks') ?>"><?= l('link.breadcrumb.biolink') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
             <li class="active" aria-current="page">
                 <?= l('link.breadcrumb.biolink_block') . ' ' . l('link.statistics.breadcrumb') ?>
             </li>
@@ -35,6 +35,6 @@
 </div>
 
 <?php ob_start() ?>
-<link href="<?= ASSETS_FULL_URL . 'css/libraries/daterangepicker.min.css' ?>" rel="stylesheet" media="screen,print">
+<link href="<?= ASSETS_FULL_URL . 'css/libraries/daterangepicker.min.css?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
 <?php \Altum\Event::add_content(ob_get_clean(), 'head') ?>
 

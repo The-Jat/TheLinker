@@ -5,7 +5,7 @@ return (object) [
     'plugin_id' => 'email-signatures',
     'name' => 'Email signatures generator',
     'description' => 'This plugin adds a fully fledged email signatures generator.',
-    'version' => '1.0.0',
+    'version' => '1.2.0',
     'url' => 'https://altumco.de/email-signatures-plugin',
     'author' => 'AltumCode',
     'author_url' => 'https://altumcode.com/',

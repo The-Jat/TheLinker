@@ -1,24 +1,33 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class SignatureCreate extends Controller {
 
     public function index() {
-        \Altum\Authentication::guard();
-
         if(!\Altum\Plugin::is_active('email-signatures') || !settings()->signatures->is_enabled) {
-            redirect('dashboard');
+            redirect('not-found');
         }
+
+        \Altum\Authentication::guard();
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('create.signatures')) {
@@ -56,7 +65,7 @@ class SignatureCreate extends Controller {
 
                 $settings = json_encode([
                     'direction' => 'ltr',
-                    'sign_off' => l('signatures.input.sign_off.default'),
+                    'sign_off' => l('signatures.sign_off.default'),
                     'image_url' => '',
                     'full_name' => '',
                     'job_title' => '',
@@ -77,20 +86,20 @@ class SignatureCreate extends Controller {
                     'link_color' => '#000000',
                 ]);
 
-                /* Prepare the statement and execute query */
+                /* Database query */
                 $signature_id = db()->insert('signatures', [
                     'user_id' => $this->user->user_id,
                     'name' => $_POST['name'],
                     'template' => array_key_first($signature_templates),
                     'settings' => $settings,
-                    'datetime' => \Altum\Date::$date,
+                    'datetime' => get_date(),
                 ]);
 
                 /* Set a nice success message */
                 Alerts::add_success(sprintf(l('global.success_message.create1'), '<strong>' . $_POST['name'] . '</strong>'));
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItem('signatures?user_id=' . $this->user->user_id);
+                cache()->deleteItem('signatures?user_id=' . $this->user->user_id);
 
                 redirect('signature-update/' . $signature_id);
             }
@@ -100,7 +109,7 @@ class SignatureCreate extends Controller {
             'name' => $_POST['name'] ?? '',
         ];
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'values' => $values
         ];

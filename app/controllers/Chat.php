@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -13,13 +20,15 @@ use Altum\Alerts;
 use Altum\Response;
 use Altum\Title;
 
+defined('ALTUMCODE') || die();
+
 class Chat extends Controller {
 
     public function index() {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->chats_is_enabled) {
-            redirect('dashboard');
+            redirect('not-found');
         }
 
         /* Team checks */
@@ -85,7 +94,7 @@ class Chat extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->chats_is_enabled) {
-            redirect('dashboard');
+            redirect('not-found');
         }
 
         $_POST['chat_id'] = (int) $_POST['chat_id'];
@@ -115,11 +124,11 @@ class Chat extends Controller {
         $ai_model = $ai_chats_models[$this->user->plan_settings->chats_model];
 
         /* */
-        $_POST['content'] = trim(mb_substr($_POST['content'], 0, 2048));
+        $_POST['content'] = trim(mb_substr($_POST['content'], 0, 20000));
 
         /* Vision */
         $image = null;
-        if($this->user->plan_settings->chats_model == 'gpt-4-vision-preview') {
+        if(in_array($this->user->plan_settings->chats_model, ['gpt-4o', 'gpt-4o-mini'])) {
             $image = \Altum\Uploads::process_upload(null, 'chats_images', 'image', 'image_remove', $this->user->plan_settings->chat_image_size_limit, 'json_error');
         }
 
@@ -137,7 +146,7 @@ class Chat extends Controller {
 
         /* Check for timeouts */
         if(settings()->aix->input_moderation_is_enabled) {
-            $cache_instance = \Altum\Cache::$adapter->getItem('user?flagged=' . $this->user->user_id);
+            $cache_instance = cache()->getItem('user?flagged=' . $this->user->user_id);
             if(!is_null($cache_instance->get())) {
                 Response::json(l('documents.error_message.timed_out'), 'error');
             }
@@ -172,6 +181,7 @@ class Chat extends Controller {
                     ],
                     \Unirest\Request\Body::json([
                         'input' => $_POST['content'],
+                        'model' => 'omni-moderation-latest',
                     ])
                 );
 
@@ -181,8 +191,8 @@ class Chat extends Controller {
 
                 if($response->body->results[0]->flagged ?? null) {
                     /* Time out the user for a few minutes */
-                    \Altum\Cache::$adapter->save(
-                        $cache_instance->set('true')->expiresAfter(3 * 60)->addTag('users')->addTag('user_id=' . $this->user->user_id)
+                    cache()->save(
+                        $cache_instance->set('true')->expiresAfter(3 * 60)->addTag('user_id=' . $this->user->user_id)
                     );
 
                     /* Return the error */
@@ -243,6 +253,10 @@ class Chat extends Controller {
             case 'custom:': $temperature = number_format($_POST['creativity_level'], 1); break;
         }
 
+        if(in_array($this->user->plan_settings->documents_model, ['o1', 'o1-mini', 'o3-mini'])) {
+            $temperature = 1;
+        }
+
         $body = [
             'model' => $this->user->plan_settings->chats_model,
             'messages' => $messages,
@@ -250,8 +264,8 @@ class Chat extends Controller {
             'user' => 'user_id:' . $this->user->user_id,
         ];
 
-        if($this->user->plan_settings->chats_model == 'gpt-4-vision-preview') {
-            $body['max_tokens'] = $ai_model['max_tokens'];
+        if(in_array($this->user->plan_settings->chats_model, ['gpt-4o', 'gpt-4o-mini'])) {
+            $body['max_completion_tokens'] = $ai_model['max_tokens'];
         }
 
         /* Try to increase the database timeout as well */
@@ -293,7 +307,7 @@ class Chat extends Controller {
         $content = trim($response->body->choices[0]->message->content);
         $role = trim($response->body->choices[0]->message->role);
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         db()->insert('chats_messages', [
             'user_id' => $this->user->user_id,
             'chat_id' => $chat->chat_id,
@@ -302,10 +316,10 @@ class Chat extends Controller {
             'image' => $image,
             'model' => $response->body->model,
             'api_response_time' => 0,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         db()->insert('chats_messages', [
             'user_id' => $this->user->user_id,
             'chat_id' => $chat->chat_id,
@@ -313,7 +327,7 @@ class Chat extends Controller {
             'content' => $content,
             'model' => $response->body->model,
             'api_response_time' => $api_response_time,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Settings */
@@ -323,7 +337,7 @@ class Chat extends Controller {
             'creativity_level_custom' => $_POST['creativity_level_custom'],
         ]);
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         db()->where('chat_id', $chat->chat_id)->update('chats', [
             'total_messages' => db()->inc(2),
             'settings' => $settings,
@@ -342,8 +356,8 @@ class Chat extends Controller {
                 'role' => $role,
                 'content' => $content,
                 'image_url' => $image ? \Altum\Uploads::get_full_url('chats_images') . $image : null,
-                'datetime_his' => \Altum\Date::get(\Altum\Date::$date, 3),
-                'datetime_full' => \Altum\Date::get(\Altum\Date::$date, 1)
+                'datetime_his' => \Altum\Date::get(get_date(), 3),
+                'datetime_full' => \Altum\Date::get(get_date(), 1)
             ]
         );
 

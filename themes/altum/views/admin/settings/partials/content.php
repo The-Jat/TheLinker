@@ -35,6 +35,19 @@
             <input id="blog_views_is_enabled" name="blog_views_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->content->blog_views_is_enabled ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="blog_views_is_enabled"><i class="fas fa-fw fa-sm fa-eye text-muted mr-1"></i> <?= l('admin_settings.content.blog_views_is_enabled') ?></label>
         </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="blog_ratings_is_enabled" name="blog_ratings_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->content->blog_ratings_is_enabled ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="blog_ratings_is_enabled"><i class="fas fa-fw fa-sm fa-star text-muted mr-1"></i> <?= l('admin_settings.content.blog_ratings_is_enabled') ?></label>
+        </div>
+
+        <div class="form-group">
+            <label for="blog_columns"><i class="fas fa-fw fa-sm fa-columns text-muted mr-1"></i> <?= l('admin_settings.content.blog_columns') ?></label>
+            <select id="blog_columns" name="blog_columns" class="custom-select">
+                <option value="1" <?= settings()->content->blog_columns == '1' ? 'selected="selected"' : null ?>>1</option>
+                <option value="2" <?= settings()->content->blog_columns == '2' ? 'selected="selected"' : null ?>>2</option>
+            </select>
+        </div>
     </div>
 
     <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#pages_container" aria-expanded="false" aria-controls="pages_container">

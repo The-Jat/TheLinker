@@ -2,16 +2,16 @@
 
 <div class="container">
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li><a href="<?= url('api-documentation') ?>"><?= l('api_documentation.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li class="active" aria-current="page"><?= l('api_documentation.projects') ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li><a href="<?= url('api-documentation') ?>"><?= l('api_documentation.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li class="active" aria-current="page"><?= l('projects.title') ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
-    <h1 class="h4 mb-4"><?= l('api_documentation.projects') ?></h1>
+    <h1 class="h4 mb-4"><?= l('projects.title') ?></h1>
 
     <div class="accordion">
         <div class="card">
@@ -41,7 +41,7 @@
                             <div class="card-body">
                                 curl --request GET \<br />
                                 --url '<?= SITE_URL ?>api/projects/' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \
                             </div>
                         </div>
                     </div>
@@ -59,16 +59,16 @@
                             <tr>
                                 <td>page</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td><?= l('api_documentation.filters.page') ?></td>
                             </tr>
                             <tr>
                                 <td>results_per_page</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td><?= sprintf(l('api_documentation.filters.results_per_page'), '<code>' . implode('</code> , <code>', [10, 25, 50, 100, 250, 500, 1000]) . '</code>', 25) ?></td>
                             </tr>
@@ -78,15 +78,15 @@
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
     "data": [
         {
             "id": 1,
             "name": "Development",
             "color": "#0e23cc",
-            "last_datetime": "2021-03-14 21:22:37",
-            "datetime": "2021-02-04 17:51:07"
+            "last_datetime": null,
+            "datetime": "<?= get_date() ?>",
         },
     ],
     "meta": {
@@ -96,18 +96,19 @@
         "total_pages": 1
     },
     "links": {
-        "first": "<?= SITE_URL ?>api/projects?&page=1",
-        "last": "<?= SITE_URL ?>api/projects?&page=1",
+        "first": "<?= SITE_URL ?>api/projects?page=1",
+        "last": "<?= SITE_URL ?>api/projects?page=1",
         "next": null,
         "prev": null,
-        "self": "<?= SITE_URL ?>api/projects?&page=1"
+        "self": "<?= SITE_URL ?>api/projects?page=1"
     }
 }
+</pre>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
 
         <div class="card">
             <div class="card-header bg-white p-3 position-relative">
@@ -136,28 +137,29 @@
                             <div class="card-body">
                                 curl --request GET \<br />
                                 --url '<?= SITE_URL ?>api/projects/<span class="text-primary">{project_id}</span>' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
     "data": {
         "id": 1,
         "name": "Development",
         "color": "#0e23cc",
-        "last_datetime": "2021-03-14 21:22:37",
-        "datetime": "2021-02-04 17:51:07"
+        "last_datetime": null,
+        "datetime": "<?= get_date() ?>",
     }
 }
+</pre>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
 
         <div class="card">
             <div class="card-header bg-white p-3 position-relative">
@@ -193,16 +195,16 @@
                             <tr>
                                 <td>name</td>
                                 <td>
-                                    <span class="badge badge-danger"><?= l('api_documentation.required') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-danger"><i class="fas fa-fw fa-sm fa-asterisk mr-1"></i> <?= l('api_documentation.required') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>color</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
@@ -216,7 +218,7 @@
                             <div class="card-body">
                                 curl --request POST \<br />
                                 --url '<?= SITE_URL ?>api/projects' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \<br />
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \<br />
                                 --header 'Content-Type: multipart/form-data' \<br />
                                 --form 'name=<span class="text-primary">Production</span>' \<br />
                                 --form 'color=<span class="text-primary">#ffffff</span>' \<br />
@@ -226,18 +228,19 @@
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
     "data": {
         "id": 1
     }
 }
+</pre>
                         </div>
                     </div>
 
                 </div>
             </div>
-        </div>
+
 
         <div class="card">
             <div class="card-header bg-white p-3 position-relative">
@@ -273,16 +276,16 @@
                             <tr>
                                 <td>name</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>color</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
@@ -296,7 +299,7 @@
                             <div class="card-body">
                                 curl --request POST \<br />
                                 --url '<?= SITE_URL ?>api/projects/<span class="text-primary">{project_id}</span>' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \<br />
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \<br />
                                 --header 'Content-Type: multipart/form-data' \<br />
                                 --form 'name=<span class="text-primary">Production</span>' \<br />
                                 --form 'color=<span class="text-primary">#000000</span>' \<br />
@@ -306,18 +309,19 @@
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
-  "data": {
-    "id": 1
-  }
+    "data": {
+        "id": 1
+    }
 }
+</pre>
                         </div>
                     </div>
 
                 </div>
             </div>
-        </div>
+
 
         <div class="card">
             <div class="card-header bg-white p-3 position-relative">
@@ -346,14 +350,14 @@
                             <div class="card-body">
                                 curl --request DELETE \<br />
                                 --url '<?= SITE_URL ?>api/projects/<span class="text-primary">{project_id}</span>' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \<br />
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \<br />
                             </div>
                         </div>
                     </div>
 
                 </div>
             </div>
-        </div>
+
     </div>
 </div>
 

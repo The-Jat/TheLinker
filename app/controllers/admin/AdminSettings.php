@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,6 +19,8 @@ namespace Altum\Controllers;
 use Altum\Alerts;
 use Altum\Title;
 
+
+defined('ALTUMCODE') || die();
 
 class AdminSettings extends Controller {
 
@@ -56,8 +65,11 @@ class AdminSettings extends Controller {
 
     private function after_update_settings($key) {
 
+        /* Clear the language cache */
+        \Altum\Language::clear_cache();
+
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('settings');
+        cache()->deleteItem('settings');
 
         /* Set a nice success message */
         Alerts::add_success(l('global.success_message.update2'));
@@ -83,6 +95,16 @@ class AdminSettings extends Controller {
                 }
             }
 
+            /* Make sure there is way to auto redirect yourself to the not found page infinitely */
+            if($_POST['not_found_url']) {
+                $site_url_parsed = parse_url(SITE_URL . 'not-found');
+                $not_found_url_parsed = parse_url(settings()->main->not_found_url);
+
+                if($site_url_parsed['host'] == $not_found_url_parsed['host'] && ($site_url_parsed['path'] == $not_found_url_parsed['path'] || $site_url_parsed['path'] == $not_found_url_parsed['path'] . '/')) {
+                    $_POST['not_found_url'] = null;
+                }
+            }
+
             /* Uploads processing */
             foreach(['logo_light', 'logo_dark', 'logo_email', 'favicon', 'opengraph'] as $image_key) {
                 settings()->main->{$image_key} = \Altum\Uploads::process_upload(settings()->main->{$image_key}, $image_key, $image_key, $image_key . '_remove', null);
@@ -93,9 +115,46 @@ class AdminSettings extends Controller {
                 $_POST['force_https_is_enabled'] = false;
             }
 
+            /* AI Scraping */
+            $_POST['ai_scraping_is_allowed'] = isset($_POST['ai_scraping_is_allowed']);
+            $_POST['se_indexing'] = isset($_POST['se_indexing']);
+            $_POST['iframe_embedding'] = trim(preg_replace('/\s+/', ' ', $_POST['iframe_embedding']));
+
+            if(!is_writable(ROOT_PATH . 'robots.txt')) {
+                Alerts::add_info(sprintf(l('global.error_message.directory_not_writable'), ROOT_PATH . 'robots.txt'));
+            }
+
+            /* Process content for robots.txt */
+            $new_robots_content = '';
+
+            /* Process Search engine Indexing */
+            if($_POST['se_indexing']) {
+                $new_robots_content .= 'User-agent: *' . "\n";
+                $new_robots_content .= 'Allow: /' . "\n";
+            } else {
+                $new_robots_content .= 'User-agent: *' . "\n";
+                $new_robots_content .= 'Disallow: /' . "\n";
+            }
+
+            /* Process AI scraping */
+            if(!$_POST['ai_scraping_is_allowed']) {
+                $new_robots_content .= "\n";
+                $new_robots_content .= 'User-agent: GPTBot' . "\n";
+                $new_robots_content .= 'User-agent: Google-Extended' . "\n";
+                $new_robots_content .= 'Disallow: /' . "\n";
+            }
+
+            $new_robots_content .= "\n";
+            $new_robots_content .= 'Sitemap: ' . SITE_URL . 'sitemap';
+
+            file_put_contents(ROOT_PATH . 'robots.txt', $new_robots_content);
+
+            $_POST['avatar_size_limit'] = $_POST['avatar_size_limit'] > get_max_upload() || $_POST['avatar_size_limit'] < 0 ? get_max_upload() : (float) $_POST['avatar_size_limit'];
+
             /* :) */
             $value = json_encode([
                 'title' => $_POST['title'],
+                'title_separator' => $_POST['title_separator'],
                 'default_language' => $_POST['default_language'],
                 'default_theme_style' => $_POST['default_theme_style'],
                 'default_timezone' => $_POST['default_timezone'],
@@ -103,7 +162,9 @@ class AdminSettings extends Controller {
                 'terms_and_conditions_url' => $_POST['terms_and_conditions_url'],
                 'privacy_policy_url' => $_POST['privacy_policy_url'],
                 'not_found_url' => $_POST['not_found_url'],
-                'se_indexing' => isset($_POST['se_indexing']),
+                'ai_scraping_is_allowed' => $_POST['ai_scraping_is_allowed'],
+                'se_indexing' => $_POST['se_indexing'],
+                'iframe_embedding' => $_POST['iframe_embedding'],
                 'display_index_plans' => isset($_POST['display_index_plans']),
                 'display_index_testimonials' => isset($_POST['display_index_testimonials']),
                 'display_index_faq' => isset($_POST['display_index_faq']),
@@ -114,6 +175,9 @@ class AdminSettings extends Controller {
                 'blog_is_enabled' => isset($_POST['blog_is_enabled']),
                 'api_is_enabled' => isset($_POST['api_is_enabled']),
                 'theme_style_change_is_enabled' => isset($_POST['theme_style_change_is_enabled']),
+                'white_labeling_is_enabled' => isset($_POST['white_labeling_is_enabled']),
+                'admin_spotlight_is_enabled' => isset($_POST['admin_spotlight_is_enabled']),
+                'user_spotlight_is_enabled' => isset($_POST['user_spotlight_is_enabled']),
                 'logo_light' => settings()->main->logo_light ?? '',
                 'logo_dark' => settings()->main->logo_dark ?? '',
                 'logo_email' => settings()->main->logo_email ?? '',
@@ -125,6 +189,15 @@ class AdminSettings extends Controller {
                 'broadcasts_statistics_is_enabled' => isset($_POST['broadcasts_statistics_is_enabled']),
                 'breadcrumbs_is_enabled' => isset($_POST['breadcrumbs_is_enabled']),
                 'display_pagination_when_no_pages' => isset($_POST['display_pagination_when_no_pages']),
+                'chart_cache' => (int) $_POST['chart_cache'],
+                'chart_days' => (int) $_POST['chart_days'],
+                'avatar_size_limit' => $_POST['avatar_size_limit'],
+
+                'maintenance_is_enabled' => isset($_POST['maintenance_is_enabled']),
+                'maintenance_title' => $_POST['maintenance_title'],
+                'maintenance_description' => $_POST['maintenance_description'],
+                'maintenance_button_text' => $_POST['maintenance_button_text'],
+                'maintenance_button_url' => $_POST['maintenance_button_url'],
             ]);
 
             $this->update_settings('main', $value);
@@ -138,17 +211,20 @@ class AdminSettings extends Controller {
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
             /* :) */
-            $_POST['blacklisted_domains'] = implode(',', array_map('trim', explode(',', $_POST['blacklisted_domains'])));
+            $_POST['blacklisted_domains'] = array_filter(array_map('trim', explode(',', $_POST['blacklisted_domains'])));
             $_POST['blacklisted_countries'] = $_POST['blacklisted_countries'] ?? [];
 
             $value = json_encode([
+                'email_aliases_is_enabled' => isset($_POST['email_aliases_is_enabled']),
                 'email_confirmation' => isset($_POST['email_confirmation']),
                 'welcome_email_is_enabled' => isset($_POST['welcome_email_is_enabled']),
                 'register_is_enabled' => isset($_POST['register_is_enabled']),
                 'register_only_social_logins' => isset($_POST['register_only_social_logins']),
                 'register_social_login_require_password' => isset($_POST['register_social_login_require_password']),
                 'register_display_newsletter_checkbox' => isset($_POST['register_display_newsletter_checkbox']),
+                'account_display_newsletter_checkbox' => isset($_POST['account_display_newsletter_checkbox']),
                 'login_rememberme_checkbox_is_checked' => isset($_POST['login_rememberme_checkbox_is_checked']),
+                'login_rememberme_cookie_days' => (int) $_POST['login_rememberme_cookie_days'],
                 'auto_delete_unconfirmed_users' => (int) $_POST['auto_delete_unconfirmed_users'],
                 'auto_delete_inactive_users' => (int) $_POST['auto_delete_inactive_users'],
                 'user_deletion_reminder' => (int) $_POST['user_deletion_reminder'],
@@ -186,6 +262,8 @@ class AdminSettings extends Controller {
                 'blog_categories_widget_is_enabled' => isset($_POST['blog_categories_widget_is_enabled']),
                 'blog_popular_widget_is_enabled' => isset($_POST['blog_popular_widget_is_enabled']),
                 'blog_views_is_enabled' => isset($_POST['blog_views_is_enabled']),
+                'blog_ratings_is_enabled' => isset($_POST['blog_ratings_is_enabled']),
+                'blog_columns' => (int) max(1, min((int) $_POST['blog_columns'], 2)),
 
                 'pages_is_enabled' => isset($_POST['pages_is_enabled']),
                 'pages_share_is_enabled' => isset($_POST['pages_share_is_enabled']),
@@ -209,6 +287,7 @@ class AdminSettings extends Controller {
             $_POST['codes_is_enabled'] = (int) isset($_POST['codes_is_enabled']);
             $_POST['taxes_and_billing_is_enabled'] = (int) isset($_POST['taxes_and_billing_is_enabled']);
             $_POST['invoice_is_enabled'] = (int) isset($_POST['invoice_is_enabled']);
+            $_POST['trial_require_card'] = (int) isset($_POST['trial_require_card']);
             $_POST['default_currency'] = input_clean(mb_strtoupper($_POST['default_currency']));
 
             $currencies = [];
@@ -221,6 +300,8 @@ class AdminSettings extends Controller {
                 $currencies[$code] = [
                     'code' => mb_strtoupper($code),
                     'symbol' => $_POST['symbol'][$code],
+                    'display_as' => $_POST['display_as'][$code],
+                    'currency_placement' => $_POST['currency_placement'][$code],
                     'default_payment_processor' => $_POST['default_payment_processor'][$code],
                 ];
             }
@@ -232,12 +313,14 @@ class AdminSettings extends Controller {
             $value = json_encode([
                 'is_enabled' => $_POST['is_enabled'],
                 'type' => $_POST['type'],
+                'default_payment_type' => $_POST['default_payment_type'],
                 'default_payment_frequency' => $_POST['default_payment_frequency'],
                 'currencies' => $currencies,
                 'default_currency' => $_POST['default_currency'],
                 'codes_is_enabled' => $_POST['codes_is_enabled'],
                 'taxes_and_billing_is_enabled' => $_POST['taxes_and_billing_is_enabled'],
                 'invoice_is_enabled' => $_POST['invoice_is_enabled'],
+                'trial_require_card' => $_POST['trial_require_card'],
                 'user_plan_expiry_reminder' => (int) $_POST['user_plan_expiry_reminder'],
                 'user_plan_expiry_checker_is_enabled' => isset($_POST['user_plan_expiry_checker_is_enabled']),
                 'currency_exchange_api_key' => $_POST['currency_exchange_api_key'],
@@ -559,6 +642,56 @@ class AdminSettings extends Controller {
         }
     }
 
+    public function lemonsqueezy() {
+        $this->process();
+
+        if(!empty($_POST)) {
+            //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+            /* :) */
+            $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
+
+            $value = json_encode([
+                'is_enabled' => $_POST['is_enabled'],
+                'api_key' => $_POST['api_key'],
+                'signing_secret' => $_POST['signing_secret'],
+                'store_id' => $_POST['store_id'],
+                'one_time_monthly_variant_id' => $_POST['one_time_monthly_variant_id'],
+                'one_time_quarterly_variant_id' => $_POST['one_time_quarterly_variant_id'],
+                'one_time_biannual_variant_id' => $_POST['one_time_biannual_variant_id'],
+                'one_time_annual_variant_id' => $_POST['one_time_annual_variant_id'],
+                'one_time_lifetime_variant_id' => $_POST['one_time_lifetime_variant_id'],
+                'recurring_monthly_variant_id' => $_POST['recurring_monthly_variant_id'],
+                'recurring_annual_variant_id' => $_POST['recurring_annual_variant_id'],
+                'currencies' => $_POST['currencies'] ?? [],
+            ]);
+
+            $this->update_settings('lemonsqueezy', $value);
+        }
+    }
+
+    public function myfatoorah() {
+        $this->process();
+
+        if(!empty($_POST)) {
+            //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+            /* :) */
+            $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
+            $_POST['api_endpoint'] = in_array($_POST['api_endpoint'], ['api.myfatoorah.com', 'api-sa.myfatoorah.com', 'api-qa.myfatoorah.com', 'api-eg.myfatoorah.com', 'apitest.myfatoorah.com',]) ? input_clean($_POST['api_endpoint']) : 'api.myfatoorah.com';
+
+            $value = json_encode([
+                'is_enabled' => $_POST['is_enabled'],
+                'api_endpoint' => $_POST['api_endpoint'],
+                'api_key' => $_POST['api_key'],
+                'secret_key' => $_POST['secret_key'],
+                'currencies' => $_POST['currencies'] ?? [],
+            ]);
+
+            $this->update_settings('myfatoorah', $value);
+        }
+    }
+
     public function affiliate() {
         $this->process();
 
@@ -576,6 +709,13 @@ class AdminSettings extends Controller {
             $_POST['tracking_duration'] = (int) $_POST['tracking_duration'] >= 1 ? (int) $_POST['tracking_duration'] : 30;
             $_POST['minimum_withdrawal_amount'] = (float) $_POST['minimum_withdrawal_amount'];
 
+            /* Translations */
+            foreach($_POST['translations'] as $language_name => $array) {
+                if(!array_key_exists($language_name, \Altum\Language::$active_languages)) {
+                    unset($_POST['translations'][$language_name]);
+                }
+            }
+
             $value = json_encode([
                 'is_enabled' => $_POST['is_enabled'],
                 'commission_type' => $_POST['commission_type'],
@@ -583,6 +723,8 @@ class AdminSettings extends Controller {
                 'tracking_duration' => $_POST['tracking_duration'],
                 'minimum_withdrawal_amount' => $_POST['minimum_withdrawal_amount'],
                 'withdrawal_notes' => $_POST['withdrawal_notes'],
+
+                'translations' => $_POST['translations'],
             ]);
 
             $this->update_settings('affiliate', $value);
@@ -855,6 +997,29 @@ class AdminSettings extends Controller {
             foreach(require APP_PATH . 'includes/admin_socials.php' as $key => $social) {
                 $value[$key] = $_POST[$key];
             }
+
+            /* Share buttons */
+            $value['share_buttons'] = [];
+            $social_share_keys = [
+                'facebook',
+                'threads',
+                'x',
+                'pinterest',
+                'linkedin',
+                'reddit',
+                'whatsapp',
+                'telegram',
+                'snapchat',
+                'microsoft_teams',
+                'email',
+                'copy',
+                'share',
+                'print'
+            ];
+            foreach($social_share_keys as $key) {
+                $value['share_buttons'][$key] = isset($_POST['share_button_' . $key]);
+            }
+
             $value = json_encode($value);
 
             $this->update_settings('socials', $value);
@@ -871,10 +1036,23 @@ class AdminSettings extends Controller {
             $_POST['auth'] = (int) isset($_POST['auth']);
             $_POST['username'] = input_clean($_POST['username'] ?? '');
             $_POST['password'] = $_POST['password'] ?? '';
+            $_POST['cc'] = str_replace(' ', '', $_POST['cc']);
+            $_POST['bcc'] = str_replace(' ', '', $_POST['bcc']);
+            $_POST['button_background_color'] = !verify_hex_color($_POST['button_background_color']) ? '#000000' : $_POST['button_background_color'];
+            $_POST['button_text_color'] = !verify_hex_color($_POST['button_text_color']) ? '#000000' : $_POST['button_text_color'];
+            $_POST['button_border_radius'] = (int) $_POST['button_border_radius'];
+            $_POST['main_container_border_radius'] = (int) $_POST['main_container_border_radius'];
 
             $value = json_encode([
                 'from_name' => $_POST['from_name'],
                 'from' => $_POST['from'],
+
+                'reply_to_name' => $_POST['reply_to_name'],
+                'reply_to' => $_POST['reply_to'],
+
+                'cc' => $_POST['cc'],
+                'bcc' => $_POST['bcc'],
+
                 'host' => $_POST['host'],
                 'encryption' => $_POST['encryption'],
                 'port' => $_POST['port'],
@@ -883,6 +1061,11 @@ class AdminSettings extends Controller {
                 'password' => $_POST['password'],
                 'display_socials' => isset($_POST['display_socials']),
                 'company_details' => $_POST['company_details'],
+
+                'button_background_color' => $_POST['button_background_color'],
+                'button_text_color' => $_POST['button_text_color'],
+                'button_border_radius' => $_POST['button_border_radius'],
+                'main_container_border_radius' => $_POST['main_container_border_radius'],
             ]);
 
             $this->update_settings('smtp', $value);
@@ -897,22 +1080,35 @@ class AdminSettings extends Controller {
 
             if(!is_writable(ASSETS_PATH . 'css/custom-bootstrap/')) {
                 Alerts::add_error(sprintf(l('global.error_message.directory_not_writable'), ASSETS_PATH . 'css/custom-bootstrap/'));
+                redirect('admin/settings/' . \Altum\Router::$method);
             }
 
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+                $admin_primary_themes = require APP_PATH . 'includes/admin_primary_themes.php';
+                $admin_gray_themes = require APP_PATH . 'includes/admin_gray_themes.php';
+
                 /* Process */
                 $theme = [];
 
                 /* Go through all the inputs and clean them */
-                foreach(['light_ltr', 'light_rtl', 'dark_ltr', 'dark_rtl'] as $mode) {
-                    foreach (['25', '50', '100', '200', '300', '400', '500', '600', '700', '800', '900'] as $key) {
+                foreach(['light', 'dark'] as $mode) {
+
+                    /* Presets for primary / gray */
+                    $_POST[$mode . '_primary_theme'] = isset($_POST[$mode . '_primary_theme']) && array_key_exists($_POST[$mode . '_primary_theme'], $admin_primary_themes[$mode]) ? $_POST[$mode . '_primary_theme'] : 'custom';
+                    $_POST[$mode . '_gray_theme'] = isset($_POST[$mode . '_gray_theme']) && array_key_exists($_POST[$mode . '_gray_theme'], $admin_gray_themes[$mode]) ? $_POST[$mode . '_gray_theme'] : 'custom';
+
+                    $theme[$mode . '_primary_theme'] = $_POST[$mode . '_primary_theme'];
+                    $theme[$mode . '_gray_theme'] = $_POST[$mode . '_gray_theme'];
+
+
+                    foreach(['50', '100', '200', '300', '400', '500', '600', '700', '800', '900'] as $key) {
                         if(isset($_POST[$mode . '_primary_' . $key])) {
-                            $_POST[$mode . '_primary_' . $key] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST[$mode . '_primary_' . $key]) ? '#000000' : $_POST[$mode . '_primary_' . $key];
+                            $_POST[$mode . '_primary_' . $key] = !verify_hex_color($_POST[$mode . '_primary_' . $key]) ? '#000000' : $_POST[$mode . '_primary_' . $key];
                             $theme[$mode . '_primary_' . $key] = $_POST[$mode . '_primary_' . $key];
                         }
 
                         if(isset($_POST[$mode . '_gray_' . $key])) {
-                            $_POST[$mode . '_gray_' . $key] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST[$mode . '_gray_' . $key]) ? '#000000' : $_POST[$mode . '_gray_' . $key];
+                            $_POST[$mode . '_gray_' . $key] = !verify_hex_color($_POST[$mode . '_gray_' . $key]) ? '#000000' : $_POST[$mode . '_gray_' . $key];
                             $theme[$mode . '_gray_' . $key] = $_POST[$mode . '_gray_' . $key];
                         }
                     }
@@ -922,15 +1118,18 @@ class AdminSettings extends Controller {
                     $theme[$mode . '_border_radius'] = $_POST[$mode . '_border_radius'];
 
                     /* Font family */
-                    $theme[$mode . '_font_family'] = $_POST[$mode . '_font_family'];
-
+                    $theme[$mode . '_font_family'] = match($_POST[$mode . '_font_family']) {
+                        'default' => '',
+                        'custom' => $_POST[$mode . '_font_family_custom'],
+                        default => $_POST[$mode . '_font_family'],
+                    };
                 }
 
                 $css_files = [
-                    'bootstrap' => 'light_ltr',
-                    'bootstrap-rtl' => 'light_rtl',
-                    'bootstrap-dark' => 'dark_ltr',
-                    'bootstrap-dark-rtl' => 'dark_rtl',
+                    'bootstrap' => 'light',
+                    'bootstrap-rtl' => 'light',
+                    'bootstrap-dark' => 'dark',
+                    'bootstrap-dark-rtl' => 'dark',
                 ];
 
                 foreach($css_files as $key => $value) {
@@ -964,7 +1163,6 @@ class AdminSettings extends Controller {
                     $primary-800: ' . $_POST[$value . '_primary_800'] . ';
                     $primary-900: ' . $_POST[$value . '_primary_900'] . ';
                     
-                    $gray-25: ' . $_POST[$value . '_gray_25'] . ' !default;
                     $gray-50: ' . $_POST[$value . '_gray_50'] . ' !default;
                     $gray-100: ' . $_POST[$value . '_gray_100'] . ' !default;
                     $gray-200: ' . $_POST[$value . '_gray_200'] . ' !default;
@@ -986,6 +1184,24 @@ class AdminSettings extends Controller {
 
                     /* Save the custom CSS file */
                     file_put_contents(ASSETS_PATH . 'css/custom-bootstrap/' . $key . '.min.css', $compiled_css);
+
+                    /* Offload uploading */
+                    if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
+                        try {
+                            $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
+
+                            /* Upload image */
+                            $result = $s3->putObject([
+                                'Bucket' => settings()->offload->storage_name,
+                                'Key' => 'assets/css/custom-bootstrap/' . $key . '.min.css',
+                                'ContentType' => 'text/css',
+                                'SourceFile' => ASSETS_PATH . 'css/custom-bootstrap/' . $key . '.min.css',
+                                'ACL' => 'public-read'
+                            ]);
+                        } catch (\Exception $exception) {
+                            Alerts::add_error($exception->getMessage());
+                        }
+                    }
                 }
 
                 /* :) */
@@ -1004,15 +1220,56 @@ class AdminSettings extends Controller {
 
             /* :) */
             $value = json_encode([
+                'body_content' => $_POST['body_content'],
                 'head_js' => $_POST['head_js'],
+                'welcome_js' => $_POST['welcome_js'],
+                'pay_thank_you_js' => $_POST['pay_thank_you_js'],
                 'head_css' => $_POST['head_css'],
                 'head_js_biolink' => $_POST['head_js_biolink'],
                 'head_css_biolink' => $_POST['head_css_biolink'],
+                'body_content_biolink' => $_POST['body_content_biolink'],
                 'head_js_splash_page' => $_POST['head_js_splash_page'],
                 'head_css_splash_page' => $_POST['head_css_splash_page'],
+                'body_content_splash_page' => $_POST['body_content_splash_page'],
             ]);
 
             $this->update_settings('custom', $value);
+        }
+    }
+
+    public function custom_images() {
+        $this->process();
+
+        if(!empty($_POST)) {
+            //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+            $images_keys = [
+                'index/analytics.webp',
+                'index/bio-link.webp',
+                'index/hero-one.webp',
+                'index/hero-two.webp',
+                'index/qr-code.webp',
+                'index/short-link.webp',
+                'index/static-link.webp',
+                'index/testimonial-one.webp',
+                'index/testimonial-two.webp',
+                'index/testimonial-three.webp',
+            ];
+
+            if(is_null(settings()->custom_images)) {
+                settings()->custom_images = (object) [];
+            }
+
+            /* Uploads processing */
+            foreach($images_keys as $image_key) {
+                $image_key_id = str_replace('.', '_', get_slug($image_key));
+                settings()->custom_images->{$image_key_id} = \Altum\Uploads::process_upload(settings()->custom_images->{$image_key_id} ?? null, 'custom_images', $image_key_id, $image_key_id . '_remove', null);
+            }
+
+            /* :) */
+            $value = json_encode(settings()->custom_images);
+
+            $this->update_settings('custom_images', $value);
         }
     }
 
@@ -1023,22 +1280,38 @@ class AdminSettings extends Controller {
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
             /* :) */
+            $_POST['guests_is_enabled'] = (int) isset($_POST['guests_is_enabled']);
             $_POST['guests_id'] = md5($_POST['content'] . time());
-            $_POST['guests_text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['guests_text_color']) ? '#000000' : $_POST['guests_text_color'];
-            $_POST['guests_background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['guests_background_color']) ? '#ffffff' : $_POST['guests_background_color'];
+            $_POST['guests_text_color'] = !verify_hex_color($_POST['guests_text_color']) ? '#000000' : $_POST['guests_text_color'];
+            $_POST['guests_background_color'] = !verify_hex_color($_POST['guests_background_color']) ? '#ffffff' : $_POST['guests_background_color'];
+            $_POST['users_is_enabled'] = (int) isset($_POST['users_is_enabled']);
             $_POST['users_id'] = md5($_POST['content'] . time());
-            $_POST['users_text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['users_text_color']) ? '#000000' : $_POST['users_text_color'];
-            $_POST['users_background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['users_background_color']) ? '#ffffff' : $_POST['users_background_color'];
+            $_POST['users_text_color'] = !verify_hex_color($_POST['users_text_color']) ? '#000000' : $_POST['users_text_color'];
+            $_POST['users_background_color'] = !verify_hex_color($_POST['users_background_color']) ? '#ffffff' : $_POST['users_background_color'];
+
+            /* Translations */
+            foreach($_POST['translations'] as $language_name => $array) {
+                if(!array_key_exists($language_name, \Altum\Language::$active_languages)) {
+                    unset($_POST['translations'][$language_name]);
+                }
+            }
+
+            //$_POST['translations'][\Altum\Language::$default_name]['guests_content'] = $_POST['guests_content'];
+            //$_POST['translations'][\Altum\Language::$default_name]['users_content'] = $_POST['users_content'];
 
             $value = json_encode([
+                'guests_is_enabled' => $_POST['guests_is_enabled'],
                 'guests_id' => $_POST['guests_id'],
                 'guests_content' => $_POST['guests_content'],
                 'guests_text_color' => $_POST['guests_text_color'],
                 'guests_background_color' => $_POST['guests_background_color'],
+                'users_is_enabled' => $_POST['users_is_enabled'],
                 'users_id' => $_POST['users_id'],
                 'users_content' => $_POST['users_content'],
                 'users_text_color' => $_POST['users_text_color'],
                 'users_background_color' => $_POST['users_background_color'],
+
+                'translations' => $_POST['translations'],
             ]);
 
             $this->update_settings('announcements', $value);
@@ -1085,6 +1358,7 @@ class AdminSettings extends Controller {
             $_POST['new_user'] = (int) isset($_POST['new_user']);
             $_POST['delete_user'] = (int) isset($_POST['delete_user']);
             $_POST['new_payment'] = (int) isset($_POST['new_payment']);
+            $_POST['new_code_redeemed'] = (int) isset($_POST['new_code_redeemed']);
             $_POST['new_domain'] = (int) isset($_POST['new_domain']);
             $_POST['new_affiliate_withdrawal'] = (int) isset($_POST['new_affiliate_withdrawal']);
             $_POST['contact'] = (int) isset($_POST['contact']);
@@ -1094,6 +1368,7 @@ class AdminSettings extends Controller {
                 'new_user' => $_POST['new_user'],
                 'delete_user' => $_POST['delete_user'],
                 'new_payment' => $_POST['new_payment'],
+                'new_code_redeemed' => $_POST['new_code_redeemed'],
                 'new_domain' => $_POST['new_domain'],
                 'new_affiliate_withdrawal' => $_POST['new_affiliate_withdrawal'],
                 'contact' => $_POST['contact'],
@@ -1121,9 +1396,13 @@ class AdminSettings extends Controller {
                 'guests_is_enabled' => isset($_POST['guests_is_enabled']),
                 'ask_to_subscribe_is_enabled' => isset($_POST['ask_to_subscribe_is_enabled']),
                 'ask_to_subscribe_delay' => (int) $_POST['ask_to_subscribe_delay'],
+                'ask_to_subscribe_delay_minimum_pageviews_count' => (int) $_POST['ask_to_subscribe_delay_minimum_pageviews_count'],
                 'icon' => settings()->push_notifications->icon ?? '',
                 'public_key' => settings()->push_notifications->public_key,
                 'private_key' => settings()->push_notifications->private_key,
+                'notifications_per_cron' => (int) $_POST['notifications_per_cron'],
+                'notifications_per_cron_batch' => (int) $_POST['notifications_per_cron_batch'],
+                'notifications_per_cron_batch_concurrently' => (int) $_POST['notifications_per_cron_batch_concurrently'],
             ]);
 
             $this->update_settings('push_notifications', $value);
@@ -1137,7 +1416,9 @@ class AdminSettings extends Controller {
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
             /* :) */
+            $_POST['wait_for_response_domains'] = array_filter(array_map('trim', explode(',', $_POST['wait_for_response_domains'])));
             $_POST['user_new'] = input_clean($_POST['user_new']);
+            $_POST['user_update'] = input_clean($_POST['user_update']);
             $_POST['user_delete'] = input_clean($_POST['user_delete']);
             $_POST['payment_new'] = input_clean($_POST['payment_new']);
             $_POST['code_redeemed'] = input_clean($_POST['code_redeemed']);
@@ -1148,7 +1429,9 @@ class AdminSettings extends Controller {
             $_POST['domain_update'] = input_clean($_POST['domain_update']);
 
             $value = json_encode([
+                'wait_for_response_domains' => $_POST['wait_for_response_domains'],
                 'user_new' => $_POST['user_new'],
+                'user_update' => $_POST['user_update'],
                 'user_delete' => $_POST['user_delete'],
                 'payment_new' => $_POST['payment_new'],
                 'code_redeemed' => $_POST['code_redeemed'],
@@ -1174,15 +1457,14 @@ class AdminSettings extends Controller {
             }
 
             /* :) */
-            $_POST['assets_url'] = trim(input_clean($_POST['assets_url']));
-
             $value = json_encode([
-                'cdn_uploads_url' => $_POST['cdn_uploads_url'],
-                'cdn_assets_url' => $_POST['cdn_assets_url'],
-                'assets_url' => $_POST['assets_url'],
+                'cdn_uploads_url' => !empty($_POST['cdn_uploads_url']) ? rtrim($_POST['cdn_uploads_url'], '/') . '/' : '',
+                'cdn_assets_url' => !empty($_POST['cdn_assets_url']) ? rtrim($_POST['cdn_assets_url'], '/') . '/' : '',
                 'provider' => $_POST['provider'],
+                'assets_url' => !empty($_POST['assets_url']) ? rtrim($_POST['assets_url'], '/') . '/' : '',
+                'uploads_url' => !empty($_POST['uploads_url']) ? rtrim($_POST['uploads_url'], '/') . '/' : '',
                 'endpoint_url' => $_POST['endpoint_url'],
-                'uploads_url' => $_POST['uploads_url'],
+                'bucket_endpoint' => (int) isset($_POST['bucket_endpoint']),
                 'access_key' => $_POST['access_key'],
                 'secret_access_key' => $_POST['secret_access_key'],
                 'storage_name' => $_POST['storage_name'],
@@ -1211,10 +1493,26 @@ class AdminSettings extends Controller {
             $_POST['app_name'] = input_clean($_POST['app_name']);
             $_POST['short_app_name'] = input_clean($_POST['short_app_name']);
             $_POST['app_description'] = input_clean($_POST['app_description']);
-            $_POST['theme_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['theme_color']) ? '#ffffff' : $_POST['theme_color'];
-            $_POST['app_start_url'] = trim(filter_var($_POST['app_start_url'], FILTER_SANITIZE_URL));
+            $_POST['theme_color'] = !verify_hex_color($_POST['theme_color']) ? '#ffffff' : $_POST['theme_color'];
+            $_POST['app_start_url'] = get_url($_POST['app_start_url']);
             if(empty($_POST['app_start_url']) || !string_starts_with(SITE_URL, $_POST['app_start_url'])) {
                 $_POST['app_start_url'] = SITE_URL;
+            }
+
+            $parsed_url = parse_url($_POST['app_start_url']);
+            parse_str($parsed_url['query'] ?? '', $query);
+
+            if(
+                empty($query['utm_source']) &&
+                empty($query['utm_medium']) &&
+                empty($query['utm_campaign'])
+            ) {
+                $query['utm_source'] = 'pwa';
+                $query['utm_medium'] = 'web-app';
+                $query['utm_campaign'] = 'install-or-pwa-launch';
+
+                $base = $parsed_url['scheme'] . '://' . $parsed_url['host'] . ($parsed_url['path'] ?? '');
+                $_POST['app_start_url'] = $base . '?' . http_build_query($query);
             }
 
             /* App icons */
@@ -1224,9 +1522,13 @@ class AdminSettings extends Controller {
             $value = [
                 'is_enabled' => isset($_POST['is_enabled']),
                 'display_install_bar' => isset($_POST['display_install_bar']),
+                'display_install_bar_for_guests' => isset($_POST['display_install_bar_for_guests']),
+                'display_install_bar_delay' => (int) $_POST['display_install_bar_delay'],
+                'display_install_bar_minimum_pageviews_count' => (int) $_POST['display_install_bar_minimum_pageviews_count'],
                 'app_name' => $_POST['app_name'],
                 'short_app_name' => $_POST['short_app_name'],
                 'app_description' => $_POST['app_description'],
+                'background_color' => $_POST['background_color'],
                 'theme_color' => $_POST['theme_color'],
                 'app_start_url' => $_POST['app_start_url'],
                 'app_icon' => settings()->pwa->app_icon ?? '',
@@ -1263,7 +1565,7 @@ class AdminSettings extends Controller {
                 if(empty($_POST['shortcut_url_' . $key]) || !string_starts_with(SITE_URL, $_POST['shortcut_url_' . $key])) {
                     $_POST['shortcut_url_' . $key] = SITE_URL;
                 }
-                $value['shortcut_url_' . $key] = trim(filter_var($_POST['shortcut_url_' . $key], FILTER_SANITIZE_URL));
+                $value['shortcut_url_' . $key] = get_url($_POST['shortcut_url_' . $key]);
 
                 settings()->pwa->{'shortcut_icon_' .  $key} = \Altum\Uploads::process_upload(settings()->pwa->{'shortcut_icon_' .  $key}, 'app_screenshots', 'shortcut_icon_' .  $key, 'shortcut_icon_' .  $key . '_remove', null);
                 $value['shortcut_icon_' .  $key] = settings()->pwa->{'shortcut_icon_' .  $key};
@@ -1285,6 +1587,7 @@ class AdminSettings extends Controller {
                 'name' => $_POST['app_name'],
                 'short_name' => $_POST['short_app_name'],
                 'description' => $_POST['app_description'],
+                'background_color' => $_POST['background_color'],
                 'theme_color' => $_POST['theme_color'],
                 'app_icon_url' => settings()->pwa->app_icon ? \Altum\Uploads::get_full_url('app_icon') . settings()->pwa->app_icon : null,
                 'app_icon_maskable_url' => settings()->pwa->app_icon_maskable ? \Altum\Uploads::get_full_url('app_icon') . settings()->pwa->app_icon_maskable : null,
@@ -1299,6 +1602,101 @@ class AdminSettings extends Controller {
         }
     }
 
+    public function image_optimizer() {
+        $this->process();
+
+        if(!empty($_POST)) {
+
+            //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+            if(!\Altum\Plugin::is_active('image-optimizer')) {
+                redirect('admin/settings/image_optimizer');
+            }
+
+            /* :) */
+            $_POST['provider'] = isset($_POST['provider']) && in_array($_POST['provider'], ['local', 'resmushit', 'imagerypro']) ? $_POST['provider'] : 'local';
+            $_POST['imagerypro_api_key'] = input_clean($_POST['imagerypro_api_key']);
+            $_POST['quality'] = isset($_POST['quality']) & $_POST['quality'] >= 50 && $_POST['quality'] <= 100 ? (int) $_POST['quality'] : 75;
+
+            $value = [
+                'is_enabled' => isset($_POST['is_enabled']),
+                'statistics_is_enabled' => isset($_POST['statistics_is_enabled']),
+                'provider' => $_POST['provider'],
+                'imagerypro_api_key' => $_POST['imagerypro_api_key'],
+                'quality' => $_POST['quality'],
+            ];
+
+            $this->update_settings('image_optimizer', json_encode($value));
+        }
+    }
+
+    public function dynamic_og_images() {
+        $this->process();
+
+        if(!empty($_POST)) {
+
+            //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+            if(!\Altum\Plugin::is_active('dynamic-og-images')) {
+                redirect('admin/settings/dynamic_og_images');
+            }
+
+            /* :) */
+            $_POST['imagerypro_api_key'] = input_clean($_POST['imagerypro_api_key']);
+            $_POST['api_key'] = input_clean($_POST['api_key']);
+            $_POST['quality'] = isset($_POST['quality']) & $_POST['quality'] >= 50 && $_POST['quality'] <= 100 ? (int) $_POST['quality'] : 75;
+            $_POST['title'] = input_clean($_POST['title'], 64);
+            settings()->dynamic_og_images->logo = \Altum\Uploads::process_upload(settings()->dynamic_og_images->logo, 'logo_light', 'logo', 'logo_remove', null);
+            settings()->dynamic_og_images->background = \Altum\Uploads::process_upload(settings()->dynamic_og_images->background, 'logo_light', 'background', 'background_remove', null);
+            $_POST['screenshot_image_border_radius'] = isset($_POST['screenshot_image_border_radius']) & $_POST['screenshot_image_border_radius'] >= 0 && $_POST['screenshot_image_border_radius'] <= 40 ? (int) $_POST['screenshot_image_border_radius'] : 25;
+            $_POST['title_color'] = !verify_hex_color($_POST['title_color']) ? '#ffffff' : $_POST['title_color'];
+            $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#000000' : $_POST['background_color'];
+            $_POST['refresh_interval'] = isset($_POST['refresh_interval']) & $_POST['refresh_interval'] >= 5 && $_POST['refresh_interval'] <= 90 ? (int) $_POST['refresh_interval'] : 10;
+
+            $value = [
+                'is_enabled' => isset($_POST['is_enabled']),
+                'api_key' => $_POST['api_key'],
+                'imagerypro_api_key' => $_POST['imagerypro_api_key'],
+                'quality' => $_POST['quality'],
+                'title' => $_POST['title'],
+                'logo' => settings()->dynamic_og_images->logo ?? null,
+                'background' => settings()->dynamic_og_images->background ?? null,
+                'screenshot_image_border_radius' => $_POST['screenshot_image_border_radius'],
+                'title_color' => $_POST['title_color'],
+                'background_color' => $_POST['background_color'],
+                'refresh_interval' => $_POST['refresh_interval'],
+            ];
+
+            $this->update_settings('dynamic_og_images', json_encode($value));
+        }
+    }
+
+    public function email_shield() {
+        $this->process();
+
+        if(!empty($_POST)) {
+
+            //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+            if(!\Altum\Plugin::is_active('dynamic-og-images')) {
+                redirect('admin/settings/email_shield');
+            }
+
+            /* :) */
+            $_POST['email_shield_api_key'] = input_clean($_POST['email_shield_api_key']);
+            $_POST['whitelisted_domains'] = array_filter(array_map('trim', explode(',', $_POST['whitelisted_domains'])));
+
+            $value = [
+                'is_enabled' => isset($_POST['is_enabled']),
+                'statistics_is_enabled' => isset($_POST['statistics_is_enabled']),
+                'email_shield_api_key' => $_POST['email_shield_api_key'],
+                'whitelisted_domains' => $_POST['whitelisted_domains'],
+            ];
+
+            $this->update_settings('email_shield', json_encode($value));
+        }
+    }
+
     public function sso() {
         $this->process();
 
@@ -1310,7 +1708,7 @@ class AdminSettings extends Controller {
 
             foreach($_POST['id'] as $id) {
                 $websites[$id] = [
-                    'id' => $id,
+                    'id' => get_slug($id),
                     'name' => $_POST['name'][$id],
                     'icon' => $_POST['icon'][$id],
                     'api_key' => $_POST['api_key'][$id],
@@ -1345,7 +1743,10 @@ class AdminSettings extends Controller {
         if(!empty($_POST)) {
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
-            \Altum\Cache::$adapter->clear();
+            cache()->clear();
+
+            /* Clear the language cache */
+            \Altum\Language::clear_cache();
 
             /* Set a nice success message */
             Alerts::add_success(l('global.success_message.update2'));
@@ -1384,7 +1785,7 @@ class AdminSettings extends Controller {
                     if(!empty($response->body->sql)) {
                         $dump = array_filter(explode('-- SEPARATOR --', $response->body->sql));
 
-                        foreach ($dump as $query) {
+                        foreach($dump as $query) {
                             database()->query($query);
                         }
                     }
@@ -1402,19 +1803,22 @@ class AdminSettings extends Controller {
     public function support() {
         $this->process();
 
-        if(!empty($_POST)) {
+        if(!empty($_POST) && !empty($_POST['new_key'])) {
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
-            //$altumcode_api = 'http://127.0.0.1/altumcode-api/get-support-status';
-            $altumcode_api = 'https://api.altumcode.com/get-support-status';
+            $altumcode_api = 'https://api.altumcode.com/validate-support-extension';
+            //$altumcode_api = 'http://127.0.0.1/altumcode-api/validate-support-extension';
 
             /* Make sure the license is correct */
             $response = \Unirest\Request::post($altumcode_api, [], [
-                'license'           => settings()->license->license,
-                'url'               => url(),
+                'support_key'       => $_POST['new_key'],
+                'license_type'      => settings()->license->type,
+                'installation_url'  => url(),
                 'product_key'       => PRODUCT_KEY,
                 'product_name'      => PRODUCT_NAME,
                 'product_version'   => PRODUCT_VERSION,
+                'server_ip'         => $_SERVER['SERVER_ADDR'],
+                'client_ip'         => get_ip()
             ]);
 
             if($response->body->status == 'error') {
@@ -1439,6 +1843,68 @@ class AdminSettings extends Controller {
         }
     }
 
+    public function codes() {
+        $this->process();
+
+        if(!empty($_POST)) {
+            //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+            /* :) */
+            $_POST['qr_codes_is_enabled'] = (int) isset($_POST['qr_codes_is_enabled']);
+            $_POST['logo_size_limit'] = $_POST['logo_size_limit'] > get_max_upload() || $_POST['logo_size_limit'] < 0 ? get_max_upload() : (float) $_POST['logo_size_limit'];
+            $_POST['background_size_limit'] = $_POST['background_size_limit'] > get_max_upload() || $_POST['background_size_limit'] < 0 ? get_max_upload() : (float) $_POST['background_size_limit'];
+
+            $available_qr_codes = [];
+            foreach(require APP_PATH . 'includes/qr_codes.php' as $key => $value) {
+                $available_qr_codes[$key] = in_array($key, $_POST['available_qr_codes'] ?? []);
+            }
+
+            $qr_codes_branding_logo = \Altum\Uploads::process_upload(settings()->codes->qr_codes_branding_logo, 'qr_code_logo', 'qr_codes_branding_logo', 'qr_codes_branding_logo_remove', null);
+            $qr_codes_default_image = \Altum\Uploads::process_upload(settings()->codes->qr_codes_default_image, 'qr_code_default_image', 'qr_codes_default_image', 'qr_codes_default_image_remove', null);
+
+            $value = json_encode([
+                'qr_codes_is_enabled' => $_POST['qr_codes_is_enabled'],
+                'logo_size_limit' => $_POST['logo_size_limit'],
+                'background_size_limit' => $_POST['background_size_limit'],
+                'available_qr_codes' => $available_qr_codes,
+                'qr_codes_branding_logo' => $qr_codes_branding_logo,
+                'qr_codes_default_image' => $qr_codes_default_image,
+            ]);
+
+            $this->update_settings('codes', $value);
+        }
+    }
+
+    public function notification_handlers() {
+        $this->process();
+
+        if(!empty($_POST)) {
+            //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+            /* :) */
+            $_POST['twilio_sid'] = trim($_POST['twilio_sid']);
+            $_POST['twilio_token'] = trim($_POST['twilio_token']);
+            $_POST['twilio_number'] = trim($_POST['twilio_number']);
+            $_POST['whatsapp_number_id'] = trim($_POST['whatsapp_number_id']);
+            $_POST['whatsapp_access_token'] = trim($_POST['whatsapp_access_token']);
+
+            $value = [
+                'twilio_sid' => $_POST['twilio_sid'],
+                'twilio_token' => $_POST['twilio_token'],
+                'twilio_number' => $_POST['twilio_number'],
+                'whatsapp_number_id' => $_POST['whatsapp_number_id'],
+                'whatsapp_access_token' => $_POST['whatsapp_access_token'],
+            ];
+
+            foreach(require APP_PATH . 'includes/available_notification_handlers.php' as $type => $notification_handler) {
+                $value[$type . '_is_enabled'] = isset($_POST[$type . '_is_enabled']);
+            }
+
+            $value = json_encode($value);
+
+            $this->update_settings('notification_handlers', $value);
+        }
+    }
+
     public function links() {
         $this->process();
 
@@ -1450,13 +1916,20 @@ class AdminSettings extends Controller {
             $_POST['shortener_is_enabled'] = (int) isset($_POST['shortener_is_enabled']);
             $_POST['branding'] = trim($_POST['branding']);
             $_POST['biolinks_is_enabled'] = (int) isset($_POST['biolinks_is_enabled']);
+            $_POST['biolinks_report_is_enabled'] = (int) isset($_POST['biolinks_report_is_enabled']);
             $_POST['biolinks_templates_is_enabled'] = (int) isset($_POST['biolinks_templates_is_enabled']);
             $_POST['biolinks_new_blocks_position'] = in_array($_POST['biolinks_new_blocks_position'], ['top', 'bottom']) ? $_POST['biolinks_new_blocks_position'] : 'bottom';
-            $_POST['qr_codes_is_enabled'] = (int) isset($_POST['qr_codes_is_enabled']);
+            $_POST['biolinks_default_active_tab'] = in_array($_POST['biolinks_default_active_tab'], ['settings', 'blocks']) ? $_POST['biolinks_default_active_tab'] : 'bottom';
+            $_POST['default_biolink_theme_id'] = $_POST['default_biolink_theme_id'] ? (int) $_POST['default_biolink_theme_id'] : null;
+            $_POST['default_biolink_template_id'] = $_POST['default_biolink_template_id'] ? (int) $_POST['default_biolink_template_id'] : null;
             $_POST['files_is_enabled'] = (int) isset($_POST['files_is_enabled']);
             $_POST['vcards_is_enabled'] = (int) isset($_POST['vcards_is_enabled']);
             $_POST['events_is_enabled'] = (int) isset($_POST['events_is_enabled']);
             $_POST['static_is_enabled'] = (int) isset($_POST['static_is_enabled']);
+            $_POST['sixsixpusher_is_enabled'] = (int) isset($_POST['sixsixpusher_is_enabled']);
+            $_POST['claim_url_is_enabled'] = (int) isset($_POST['claim_url_is_enabled']);
+            $_POST['claim_url_type'] = in_array($_POST['claim_url_type'], ['link', 'biolink', 'file', 'vcard', 'event', 'static']) ? $_POST['claim_url_type'] : 'link';
+            $_POST['pixels_is_enabled'] = (int) isset($_POST['pixels_is_enabled']);
             $_POST['splash_page_is_enabled'] = (int) isset($_POST['splash_page_is_enabled']);
             $_POST['splash_page_auto_redirect'] = (int) isset($_POST['splash_page_auto_redirect']);
             $_POST['splash_page_link_unlock_seconds'] = (int) $_POST['splash_page_link_unlock_seconds'];
@@ -1464,10 +1937,11 @@ class AdminSettings extends Controller {
             $_POST['directory_display'] = in_array($_POST['directory_display'], ['all', 'verified']) ? $_POST['directory_display'] : 'all';
             $_POST['directory_access'] = in_array($_POST['directory_access'], ['everyone', 'users']) ? $_POST['directory_access'] : 'everyone';
             $_POST['domains_is_enabled'] = (int) isset($_POST['domains_is_enabled']);
+            $_POST['projects_is_enabled'] = (int) isset($_POST['projects_is_enabled']);
             $_POST['additional_domains_is_enabled'] = (int) isset($_POST['additional_domains_is_enabled']);
             $_POST['main_domain_is_enabled'] = (int) isset($_POST['main_domain_is_enabled']);
-            $_POST['blacklisted_domains'] = implode(',', array_map('trim', explode(',', $_POST['blacklisted_domains'])));
-            $_POST['blacklisted_keywords'] = implode(',', array_map('trim', explode(',', $_POST['blacklisted_keywords'])));
+            $_POST['blacklisted_domains'] = array_filter(array_map('trim', explode(',', $_POST['blacklisted_domains'])));
+            $_POST['blacklisted_keywords'] = array_filter(array_map('trim', explode(',', $_POST['blacklisted_keywords'])));
             $_POST['google_safe_browsing_is_enabled'] = (int) isset($_POST['google_safe_browsing_is_enabled']);
             $_POST['google_static_maps_is_enabled'] = (int) isset($_POST['google_static_maps_is_enabled']);
             $_POST['avatar_size_limit'] = $_POST['avatar_size_limit'] > get_max_upload() || $_POST['avatar_size_limit'] < 0 ? get_max_upload() : (float) $_POST['avatar_size_limit'];
@@ -1481,20 +1955,50 @@ class AdminSettings extends Controller {
             $_POST['file_size_limit'] = $_POST['file_size_limit'] > get_max_upload() || $_POST['file_size_limit'] < 0 ? get_max_upload() : (float) $_POST['file_size_limit'];
             $_POST['product_file_size_limit'] = $_POST['product_file_size_limit'] > get_max_upload() || $_POST['product_file_size_limit'] < 0 ? get_max_upload() : (float) $_POST['product_file_size_limit'];
             $_POST['static_size_limit'] = $_POST['static_size_limit'] > get_max_upload() || $_POST['static_size_limit'] < 0 ? get_max_upload() : (float) $_POST['static_size_limit'];
+            $_POST['pwa_icon_size_limit'] = $_POST['pwa_icon_size_limit'] > get_max_upload() || $_POST['pwa_icon_size_limit'] < 0 ? get_max_upload() : (float) $_POST['pwa_icon_size_limit'];
+            $_POST['email_reports_is_enabled'] = in_array($_POST['email_reports_is_enabled'], [0, 'weekly', 'monthly']) ? $_POST['email_reports_is_enabled'] : 0;
+
+            $available_biolink_blocks = [];
+            foreach(require APP_PATH . 'includes/biolink_blocks.php' as $key => $value) {
+                $available_biolink_blocks[$key] = in_array($key, $_POST['available_biolink_blocks'] ?? []);
+            }
+
+            /* biolinks fonts */
+            $biolinks_fonts = [];
+
+            foreach($_POST['id'] as $id) {
+                $biolinks_fonts[$id] = [
+                    'id' => get_slug($id),
+                    'name' => $_POST['name'][$id],
+                    'font_family' => $_POST['font_family'][$id],
+                    'css_url' => $_POST['css_url'][$id],
+                ];
+            }
 
             $value = json_encode([
+                'sixsixpusher_is_enabled' => $_POST['sixsixpusher_is_enabled'],
+                'sixsixpusher_service_worker_file_name' => $_POST['sixsixpusher_service_worker_file_name'],
+                'available_biolink_blocks' => $available_biolink_blocks,
                 'example_url' => $_POST['example_url'],
                 'random_url_length' => $_POST['random_url_length'],
                 'branding' => $_POST['branding'],
                 'shortener_is_enabled' => $_POST['shortener_is_enabled'],
-                'qr_codes_is_enabled' => $_POST['qr_codes_is_enabled'],
                 'biolinks_is_enabled' => $_POST['biolinks_is_enabled'],
+                'biolinks_report_is_enabled' => $_POST['biolinks_report_is_enabled'],
                 'biolinks_templates_is_enabled' => $_POST['biolinks_templates_is_enabled'],
+                'biolinks_themes_is_enabled' => $_POST['biolinks_themes_is_enabled'],
                 'biolinks_new_blocks_position' => $_POST['biolinks_new_blocks_position'],
+                'biolinks_default_active_tab' => $_POST['biolinks_default_active_tab'],
+                'default_biolink_theme_id' => $_POST['default_biolink_theme_id'],
+                'default_biolink_template_id' => $_POST['default_biolink_template_id'],
                 'files_is_enabled' => $_POST['files_is_enabled'],
                 'vcards_is_enabled' => $_POST['vcards_is_enabled'],
                 'events_is_enabled' => $_POST['events_is_enabled'],
                 'static_is_enabled' => $_POST['static_is_enabled'],
+                'claim_url_is_enabled' => $_POST['claim_url_is_enabled'],
+                'claim_url_type' => $_POST['claim_url_type'],
+                'biolinks_fonts' => $biolinks_fonts,
+                'pixels_is_enabled' => $_POST['pixels_is_enabled'],
                 'splash_page_is_enabled' => $_POST['splash_page_is_enabled'],
                 'splash_page_auto_redirect' => $_POST['splash_page_auto_redirect'],
                 'splash_page_link_unlock_seconds' => $_POST['splash_page_link_unlock_seconds'],
@@ -1502,6 +2006,7 @@ class AdminSettings extends Controller {
                 'directory_access' => $_POST['directory_access'],
                 'directory_display' => $_POST['directory_display'],
                 'domains_is_enabled' => $_POST['domains_is_enabled'],
+                'projects_is_enabled' => $_POST['projects_is_enabled'],
                 'additional_domains_is_enabled' => $_POST['additional_domains_is_enabled'],
                 'main_domain_is_enabled' => $_POST['main_domain_is_enabled'],
                 'domains_custom_main_ip' => $_POST['domains_custom_main_ip'],
@@ -1522,6 +2027,8 @@ class AdminSettings extends Controller {
                 'file_size_limit' => $_POST['file_size_limit'],
                 'product_file_size_limit' => $_POST['product_file_size_limit'],
                 'static_size_limit' => $_POST['static_size_limit'],
+                'pwa_icon_size_limit' => $_POST['pwa_icon_size_limit'],
+                'email_reports_is_enabled' => $_POST['email_reports_is_enabled'],
             ]);
 
             $this->update_settings('links', $value);
@@ -1534,18 +2041,19 @@ class AdminSettings extends Controller {
         if(!empty($_POST)) {
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
-            $tools = require APP_PATH . 'includes/tools.php';
+            $tools = require APP_PATH . 'includes/tools/tools.php';
 
             /* :) */
             $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
             $_POST['access'] = in_array($_POST['access'], ['everyone', 'users']) ? $_POST['access'] : 'everyone';
+            $_POST['style'] = in_array($_POST['style'], ['frankfurt', 'munich']) ? $_POST['style'] : 'frankfurt';
             $available_tools = [];
             foreach($tools as $key => $value) {
-                $available_tools[$key] = in_array($key, $_POST['available_tools']);
+                $available_tools[$key] = in_array($key, $_POST['available_tools'] ?? []);
             }
 
             /* Check for errors */
-            if($available_tools['idn_punnycode_converter']) {
+            if($available_tools['idn_punnycode_converter'] || $available_tools['whois_lookup']) {
                 if(!extension_loaded('intl')) {
                     Alerts::add_error(sprintf(l('global.error_message.function_required'), 'INTL'));
                 }
@@ -1554,10 +2062,15 @@ class AdminSettings extends Controller {
             $value = json_encode([
                 'is_enabled' => $_POST['is_enabled'],
                 'access' => $_POST['access'],
+                'style' => $_POST['style'],
                 'available_tools' => $available_tools,
                 'extra_content_is_enabled' => isset($_POST['extra_content_is_enabled']),
                 'share_is_enabled' => isset($_POST['share_is_enabled']),
+                'views_is_enabled' => isset($_POST['views_is_enabled']),
+                'submissions_is_enabled' => isset($_POST['submissions_is_enabled']),
+                'ratings_is_enabled' => isset($_POST['ratings_is_enabled']),
                 'similar_widget_is_enabled' => isset($_POST['similar_widget_is_enabled']),
+                'popular_widget_is_enabled' => isset($_POST['popular_widget_is_enabled']),
             ]);
 
             $this->update_settings('tools', $value);
@@ -1584,7 +2097,6 @@ class AdminSettings extends Controller {
     }
 
     public function aix() {
-        //ALTUMCODE:DEMO if(DEMO) settings()->aix->clipdrop_api_key = 'not shown on the demo';
         //ALTUMCODE:DEMO if(DEMO) settings()->aix->openai_api_key = 'not shown on the demo';
         $this->process();
 
@@ -1593,7 +2105,6 @@ class AdminSettings extends Controller {
 
             /* :) */
             $_POST['openai_api_key'] = trim($_POST['openai_api_key']);
-            $_POST['clipdrop_api_key'] = trim($_POST['clipdrop_api_key']);
             $_POST['documents_is_enabled'] = (int) isset($_POST['documents_is_enabled']);
             $_POST['images_is_enabled'] = (int) isset($_POST['images_is_enabled']);
             $_POST['transcriptions_is_enabled'] = (int) isset($_POST['transcriptions_is_enabled']);
@@ -1609,7 +2120,6 @@ class AdminSettings extends Controller {
             $value = json_encode([
                 /* OpenAI */
                 'openai_api_key' => $_POST['openai_api_key'],
-                'clipdrop_api_key' => $_POST['clipdrop_api_key'],
                 'documents_is_enabled' => $_POST['documents_is_enabled'],
                 'images_is_enabled' => $_POST['images_is_enabled'],
                 'transcriptions_is_enabled' => $_POST['transcriptions_is_enabled'],
@@ -1651,7 +2161,7 @@ class AdminSettings extends Controller {
             $result = send_mail(
                 $_POST['email'],
                 settings()->main->title . ' - Test Email',
-                'This is just a test email to confirm that the smtp email settings are properly working!',
+                'This is just a test email to confirm that the smtp email settings are properly working!<br /><br /><a href="' . SITE_URL . '" class="cta">Sample button</a>',
                 [],
                 null,
                 true

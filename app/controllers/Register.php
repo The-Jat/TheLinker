@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -13,7 +20,8 @@ use Altum\Alerts;
 use Altum\Captcha;
 use Altum\Logger;
 use Altum\Models\User;
-use MaxMind\Db\Reader;
+
+defined('ALTUMCODE') || die();
 
 class Register extends Controller {
 
@@ -26,8 +34,10 @@ class Register extends Controller {
 
         /* Check if Registration is enabled first */
         if(!settings()->users->register_is_enabled && (!\Altum\Plugin::is_active('teams') || (\Altum\Plugin::is_active('teams') && !$unique_registration_identifier))) {
-            redirect();
+            redirect('not-found');
         }
+
+        \Altum\CustomHooks::user_initiate_registration();
 
         $redirect = process_and_get_redirect_params() ?? 'dashboard';
         $redirect_append = $redirect ? '?redirect=' . $redirect : null;
@@ -35,7 +45,7 @@ class Register extends Controller {
         /* Default variables */
         $values = [
             'name' => isset($_GET['name']) ? query_clean($_GET['name']) : '',
-            'email' => isset($_GET['email']) ? query_clean($_GET['email']) : '',
+            'email' => isset($_GET['email']) && is_string($_GET['email']) ? query_clean($_GET['email']) : '',
             'password' => ''
         ];
 
@@ -45,9 +55,9 @@ class Register extends Controller {
         if(!empty($_POST) && !settings()->users->register_only_social_logins) {
 
             /* Clean some posted variables */
-            $_POST['name'] = mb_substr(trim(input_clean($_POST['name'])), 0, 64);
-            $_POST['email'] = mb_substr(filter_var($_POST['email'], FILTER_SANITIZE_EMAIL), 0, 320);
-            $_POST['is_newsletter_subscribed'] = settings()->users->register_display_newsletter_checkbox ? (bool) $_POST['is_newsletter_subscribed'] : false;
+            $_POST['name'] = input_clean_name($_POST['name'], 64);
+            $_POST['email'] = input_clean_email($_POST['email'] ?? '');
+            $_POST['is_newsletter_subscribed'] = settings()->users->register_display_newsletter_checkbox && isset($_POST['is_newsletter_subscribed']);
 
             /* Default variables */
             $values['name'] = $_POST['name'];
@@ -74,19 +84,32 @@ class Register extends Controller {
             if(!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
                 Alerts::add_field_error('email', l('global.error_message.invalid_email'));
             }
+            if(!settings()->users->email_aliases_is_enabled && str_contains($_POST['email'], '+')) {
+                Alerts::add_field_error('email', l('register.error_message.email_aliases_not_allowed'));
+            }
             if(mb_strlen($_POST['password']) < 6 || mb_strlen($_POST['password']) > 64) {
                 Alerts::add_field_error('password', l('global.error_message.password_length'));
             }
 
             /* Make sure the domain is not blacklisted */
             $email_domain = get_domain_from_email($_POST['email']);
-            if(settings()->users->blacklisted_domains && in_array($email_domain, explode(',', settings()->users->blacklisted_domains))) {
+            if(settings()->users->blacklisted_domains && in_array($email_domain, settings()->users->blacklisted_domains)) {
+                Alerts::add_field_error('email', l('register.error_message.blacklisted_domain'));
+            }
+
+            /* Email shield plugin */
+            if(
+                \Altum\Plugin::is_active('email-shield')
+                && settings()->email_shield->is_enabled
+                && !in_array($email_domain, settings()->email_shield->whitelisted_domains ?? [])
+                && !\Altum\Plugin\EmailShield::validate($email_domain)
+            ) {
                 Alerts::add_field_error('email', l('register.error_message.blacklisted_domain'));
             }
 
             /* Detect the location */
             try {
-                $maxmind = (new Reader(APP_PATH . 'includes/GeoLite2-Country.mmdb'))->get(get_ip());
+                $maxmind = (get_maxmind_reader_country())->get(get_ip());
             } catch(\Exception $exception) { /* :) */ }
             $country = isset($maxmind) && isset($maxmind['country']) ? $maxmind['country']['iso_code'] : null;
 
@@ -123,7 +146,7 @@ class Register extends Controller {
                 /* Determine what plan is set by default */
                 $plan_id                    = 'free';
                 $plan_settings              = json_encode(settings()->plan_free->settings ?? '');
-                $plan_expiration_date       = \Altum\Date::$date;
+                $plan_expiration_date       = get_date();
 
                 $registered_user = (new User())->create(
                     $_POST['email'],
@@ -155,6 +178,7 @@ class Register extends Controller {
                             [
                                 '{{NAME}}' => $_POST['name'],
                                 '{{URL}}' => url(),
+                                '{{DASHBOARD_LINK}}' => url('dashboard'),
                             ],
                             l('global.emails.user_welcome.body')
                         );
@@ -172,6 +196,14 @@ class Register extends Controller {
                             [
                                 '{{NAME}}' => str_replace('.', '. ', $_POST['name']),
                                 '{{EMAIL}}' => $_POST['email'],
+                                '{{SOURCE}}' => $registered_user['source'],
+                                '{{IP}}' => $registered_user['ip'],
+                                '{{COUNTRY_NAME}}' => $registered_user['country'] ? get_country_from_country_code($registered_user['country']) : l('global.unknown'),
+                                '{{CITY_NAME}}' => $registered_user['city_name'] ?? l('global.unknown'),
+                                '{{DEVICE_TYPE}}' => l('global.device.' . $registered_user['device_type']),
+                                '{{OS_NAME}}' => $registered_user['os_name'],
+                                '{{BROWSER_NAME}}' => $registered_user['browser_name'],
+                                '{{USER_LINK}}' => url('admin/user-view/' . $registered_user['user_id']),
                             ],
                             l('global.emails.admin_new_user_notification.body')
                         );
@@ -181,12 +213,13 @@ class Register extends Controller {
 
                     /* Send webhook notification if needed */
                     if(settings()->webhooks->user_new) {
-                        \Unirest\Request::post(settings()->webhooks->user_new, [], [
+                        fire_and_forget('post', settings()->webhooks->user_new, [
                             'user_id' => $registered_user['user_id'],
                             'email' => $_POST['email'],
                             'name' => $_POST['name'],
                             'source' => 'direct',
                             'is_newsletter_subscribed' => $_POST['is_newsletter_subscribed'],
+                            'datetime' => get_date(),
                         ]);
                     }
 
@@ -199,7 +232,7 @@ class Register extends Controller {
                             'title' => l('global.notifications.new_user.title'),
                             'description' => sprintf(l('global.notifications.new_user.description'), $_POST['name'], $_POST['email']),
                             'url' => 'admin/user-view/' . $registered_user['user_id'],
-                            'datetime' => \Altum\Date::$date,
+                            'datetime' => get_date(),
                         ]);
                     }
 
@@ -212,7 +245,7 @@ class Register extends Controller {
                             'title' => l('global.notifications.new_newsletter_subscriber.title'),
                             'description' => sprintf(l('global.notifications.new_newsletter_subscriber.description'), $_POST['name'], $_POST['email']),
                             'url' => 'admin/user-view/' . $registered_user['user_id'],
-                            'datetime' => \Altum\Date::$date,
+                            'datetime' => get_date(),
                         ]);
                     }
 

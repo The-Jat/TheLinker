@@ -28,6 +28,9 @@
 
 <?php ob_start() ?>
 <script>
+    'use strict';
+    
+    
     /* On modal show load new data */
     $('#affiliate_withdrawal_approve_modal').on('show.bs.modal', event => {
         let affiliate_withdrawal_id = $(event.relatedTarget).data('affiliate-withdrawal-id');

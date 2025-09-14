@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,8 +19,12 @@ namespace Altum\Controllers;
 use Altum\Response;
 use Altum\Traits\Apiable;
 
+defined('ALTUMCODE') || die();
+
 class ApiStatistics extends Controller {
     use Apiable;
+    public $link;
+    public $datetime;
 
     public function index() {
 
@@ -53,6 +64,7 @@ class ApiStatistics extends Controller {
             'overview',
             'referrer_host',
             'referrer_path',
+            'continent_code',
             'country_code',
             'city_name',
             'os_name',
@@ -61,7 +73,8 @@ class ApiStatistics extends Controller {
             'browser_language',
             'utm_source',
             'utm_medium',
-            'utm_campaign'
+            'utm_campaign',
+            'hour'
         ]) ? query_clean($_GET['type']) : 'overview';
 
         /* :) */
@@ -70,16 +83,18 @@ class ApiStatistics extends Controller {
         switch($type) {
             case 'overview':
 
+                $convert_tz_sql = get_convert_tz_sql('`datetime`', \Altum\Date::$default_timezone);
+
                 $result = database()->query("
                     SELECT
                         COUNT(`id`) AS `pageviews`,
                         SUM(`is_unique`) AS `visitors`,
-                        DATE_FORMAT(`datetime`, '{$this->datetime['query_date_format']}') AS `formatted_date`
+                        DATE_FORMAT({$convert_tz_sql}, '{$this->datetime['query_date_format']}') AS `formatted_date`
                     FROM
                          `track_links`
                     WHERE
                         `link_id` = {$this->link->link_id}
-                        AND (`datetime` BETWEEN '{$this->datetime['query_start_date']}' AND '{$this->datetime['query_end_date']}')
+                        AND ({$convert_tz_sql} BETWEEN '{$this->datetime['query_start_date']}' AND '{$this->datetime['query_end_date']}')
                     GROUP BY
                         `formatted_date`
                     ORDER BY
@@ -90,13 +105,14 @@ class ApiStatistics extends Controller {
                     $data[] = [
                         'pageviews' => (int) $row->pageviews,
                         'visitors' => (int) $row->visitors,
-                        'formatted_date' => $this->datetime['process']($row->formatted_date),
+                        'formatted_date' => $this->datetime['process']($row->formatted_date, true),
                     ];
                 }
 
                 break;
 
             case 'referrer_host':
+            case 'continent_code':
             case 'country_code':
             case 'os_name':
             case 'browser_name':
@@ -116,7 +132,7 @@ class ApiStatistics extends Controller {
                         `{$type}`
                     ORDER BY
                         `pageviews` DESC
-                    LIMIT 250
+                    
                 ");
 
                 while($row = $result->fetch_object()) {
@@ -149,7 +165,7 @@ class ApiStatistics extends Controller {
                         `referrer_path`
                     ORDER BY
                         `pageviews` DESC
-                    LIMIT 250
+                    
                 ");
 
                 while($row = $result->fetch_object()) {
@@ -182,7 +198,7 @@ class ApiStatistics extends Controller {
                         `city_name`
                     ORDER BY
                         `pageviews` DESC
-                    LIMIT 250
+                    
                 ");
 
                 while($row = $result->fetch_object()) {
@@ -212,7 +228,7 @@ class ApiStatistics extends Controller {
                         `utm_source`
                     ORDER BY
                         `pageviews` DESC
-                    LIMIT 250
+                    
                 ");
 
                 while($row = $result->fetch_object()) {
@@ -244,7 +260,7 @@ class ApiStatistics extends Controller {
                         `utm_medium`
                     ORDER BY
                         `pageviews` DESC
-                    LIMIT 250
+                    
                 ");
 
                 while($row = $result->fetch_object()) {
@@ -281,7 +297,7 @@ class ApiStatistics extends Controller {
                         `utm_campaign`
                     ORDER BY
                         `pageviews` DESC
-                    LIMIT 250
+                    
                 ");
 
                 while($row = $result->fetch_object()) {
@@ -289,6 +305,37 @@ class ApiStatistics extends Controller {
                         'utm_source' => $row->utm_source,
                         'utm_medium' => $row->utm_medium,
                         $type => $row->{$type},
+                        'pageviews' => (int) $row->pageviews
+                    ];
+                }
+
+                break;
+
+            case 'hour':
+
+                /* Group by HOUR after timezone adjustment */
+                $result = database()->query("
+                    SELECT 
+                        HOUR(`datetime`) AS `hour`,
+                        COUNT(*) AS `pageviews`
+                    FROM
+                        `track_links`
+                    WHERE
+                        `link_id` = {$this->link->link_id}
+                        AND (`datetime` BETWEEN '{$this->datetime['query_start_date']}' AND '{$this->datetime['query_end_date']}')
+                    GROUP BY
+                        `hour`
+                    ORDER BY
+                        `hour`
+                ");
+
+                while($row = $result->fetch_object()) {
+                    $hour_start = sprintf('%02d:00', $row->hour);
+                    $hour_end = sprintf('%02d:00', ($row->hour + 1) % 24);
+                    $label = $hour_start . ' - ' . $hour_end;
+
+                    $data[] = [
+                        $type => $label,
                         'pageviews' => (int) $row->pageviews
                     ];
                 }

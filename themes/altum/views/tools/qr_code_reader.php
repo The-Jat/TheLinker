@@ -13,8 +13,8 @@
 <?php endif ?>
 
     <div class="row mb-4">
-        <div class="col-12 col-xl d-flex align-items-center mb-3 mb-xl-0">
-            <h1 class="h4 m-0"><?= l('tools.qr_code_reader.name') ?></h1>
+        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0 text-truncate">
+            <h1 class="h4 m-0 text-truncate"><?= l('tools.qr_code_reader.name') ?></h1>
 
             <div class="ml-2">
                 <span data-toggle="tooltip" title="<?= l('tools.qr_code_reader.description') ?>">
@@ -22,16 +22,18 @@
                 </span>
             </div>
         </div>
+
+        <?= $this->views['ratings'] ?>
     </div>
 
     <div class="card">
         <div class="card-body">
 
-            <form action="" method="post" role="form" enctype="multipart/form-data">
+            <form id="tool_form" action="" method="post" role="form" enctype="multipart/form-data">
                 <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
 
                 <div class="form-group">
-                    <label for="image"><i class="fas fa-fw fa-qrcode fa-sm text-muted mr-1"></i> <?= l('tools.image') ?></label>
+                    <label for="image"><i class="fas fa-fw fa-qrcode fa-sm text-muted mr-1"></i> <?= l('global.image') ?></label>
                     <input type="file" id="image" name="image" accept=".png, .jpg, .jpeg, .svg, .webp" class="form-control-file altum-file-input <?= \Altum\Alerts::has_field_errors('image') ? 'is-invalid' : null ?>" required="required" />
                     <?= \Altum\Alerts::output_field_error('image') ?>
                 </div>
@@ -46,7 +48,7 @@
 
                 <div class="form-group">
                     <div class="d-flex justify-content-between align-items-center">
-                        <label for="result"><?= l('tools.qr_code_reader.result') ?></label>
+                        <label for="result"><i class="fas fa-fw fa-bars fa-sm text-muted mr-1"></i> <?= l('tools.qr_code_reader.result') ?></label>
                         <div>
                             <button
                                     type="button"
@@ -73,16 +75,20 @@
     <?= $this->views['extra_content'] ?>
 
     <?= $this->views['similar_tools'] ?>
+
+    <?= $this->views['popular_tools'] ?>
 </div>
 
 <?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>
 
 <?php ob_start() ?>
-    <script src="<?= ASSETS_FULL_URL . 'js/libraries/html5-qrcode.min.js' ?>"></script>
+    <script src="<?= ASSETS_FULL_URL . 'js/libraries/html5-qrcode.min.js?v=' . PRODUCT_CODE ?>"></script>
 
     <script>
         'use strict';
-        const html5QrCode = new Html5Qrcode('image');
+        const html5QrCode = new Html5Qrcode('image', {
+        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
+    });
 
         const image = document.getElementById('image');
         image.addEventListener('change', event => {

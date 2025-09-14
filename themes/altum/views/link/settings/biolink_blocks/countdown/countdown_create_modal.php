@@ -6,7 +6,7 @@
 
             <div class="modal-header">
                 <button type="button" data-toggle="modal" data-target="#biolink_link_create_modal" data-dismiss="modal" class="btn btn-sm btn-link"><i class="fas fa-fw fa-chevron-circle-left text-muted"></i></button>
-                <h5 class="modal-title"><?= l('create_biolink_countdown_modal.header') ?></h5>
+                <h5 class="modal-title"><?= l('biolink_countdown.header') ?></h5>
                 <button type="button" class="close" data-dismiss="modal" title="<?= l('global.close') ?>">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -22,7 +22,7 @@
                     <div class="notification-container"></div>
 
                     <div class="form-group">
-                        <label for="countdown_counter_end_date"><i class="fas fa-fw fa-clock fa-sm text-muted mr-1"></i> <?= l('create_biolink_countdown_modal.end_date') ?></label>
+                        <label for="countdown_counter_end_date"><i class="fas fa-fw fa-clock fa-sm text-muted mr-1"></i> <?= l('biolink_countdown.end_date') ?></label>
                         <input
                                 id="countdown_counter_end_date"
                                 type="text"
@@ -35,15 +35,17 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="countdown_theme"><i class="fas fa-fw fa-sun fa-sm text-muted mr-1"></i> <?= l('create_biolink_countdown_modal.theme') ?></label>
+                        <label for="countdown_theme"><i class="fas fa-fw fa-sun fa-sm text-muted mr-1"></i> <?= l('biolink_countdown.theme') ?></label>
                         <select id="countdown_theme" name="theme" class="custom-select">
                             <option value="light"><?= l('global.theme_style_light') ?></option>
                             <option value="dark"><?= l('global.theme_style_dark') ?></option>
                         </select>
                     </div>
 
+                    <p class="small text-muted"><i class="fas fa-fw fa-sm fa-circle-info mr-1"></i> <?= l('link.create_info') ?></p>
+                    
                     <div class="text-center mt-4">
-                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('global.submit') ?></button>
+                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('link.biolink.create_block') ?></button>
                     </div>
                 </form>
             </div>

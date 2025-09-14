@@ -8,6 +8,7 @@
     <?php endif ?>
 
     <div class="<?= !in_array(settings()->license->type, ['Extended License', 'extended']) ? 'container-disabled' : null ?>">
+        <div class="alert alert-info mb-3"><?= sprintf(l('admin_settings.documentation'), '<a href="' . PRODUCT_DOCUMENTATION_URL . '#' . \Altum\Router::$method . '" target="_blank">', '</a>') ?></div>
         <div class="form-group custom-control custom-switch">
             <input id="is_enabled" name="is_enabled" type="checkbox" class="custom-control-input" <?= settings()->payment->is_enabled ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="is_enabled"><i class="fas fa-fw fa-sm fa-credit-card text-muted mr-1"></i> <?= l('admin_settings.payment.is_enabled') ?></label>
@@ -20,6 +21,14 @@
                 <option value="one_time" <?= settings()->payment->type == 'one_time' ? 'selected="selected"' : null ?>><?= l('admin_settings.payment.type_one_time') ?></option>
                 <option value="recurring" <?= settings()->payment->type == 'recurring' ? 'selected="selected"' : null ?>><?= l('admin_settings.payment.type_recurring') ?></option>
                 <option value="both" <?= settings()->payment->type == 'both' ? 'selected="selected"' : null ?>><?= l('admin_settings.payment.type_both') ?></option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="default_payment_type"><i class="fas fa-fw fa-sm fa-dollar-sign text-muted mr-1"></i> <?= l('admin_settings.payment.default_payment_type') ?></label>
+            <select id="default_payment_type" name="default_payment_type" class="custom-select">
+                <option value="one_time" <?= settings()->payment->default_payment_type == 'one_time' ? 'selected="selected"' : null ?>><?= l('admin_settings.payment.type_one_time') ?></option>
+                <option value="recurring" <?= settings()->payment->default_payment_type == 'recurring' ? 'selected="selected"' : null ?>><?= l('admin_settings.payment.type_recurring') ?></option>
             </select>
         </div>
 
@@ -48,6 +57,23 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="<?= 'display_as[' . $currency->code . ']' ?>"><i class="fas fa-fw fa-sm fa-comment-dollar text-muted mr-1"></i> <?= l('admin_settings.payment.currencies.display_as') ?></label>
+                        <select id="<?= 'display_as[' . $currency->code . ']' ?>" name="display_as[<?= $currency->code ?>]" class="custom-select" data-is-not-custom-select>
+                            <option value="currency_code" <?= $currency->display_as == 'currency_code' ? 'selected="selected"' : null ?>><?= l('admin_settings.payment.currencies.code') ?></option>
+                            <option value="currency_symbol" <?= $currency->display_as == 'currency_symbol' ? 'selected="selected"' : null ?>><?= l('admin_settings.payment.currencies.symbol') ?></option>
+                        </select>
+                        <small class="form-text text-muted"><?= l('admin_settings.payment.currencies.display_as_help') ?></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="<?= 'currency_placement[' . $currency->code . ']' ?>"><i class="fas fa-fw fa-sm fa-align-justify text-muted mr-1"></i> <?= l('admin_settings.payment.currencies.currency_placement') ?></label>
+                        <select id="<?= 'currency_placement[' . $currency->code . ']' ?>" name="currency_placement[<?= $currency->code ?>]" class="custom-select" data-is-not-custom-select>
+                            <option value="left" <?= $currency->currency_placement == 'left' ? 'selected="selected"' : null ?>><?= l('admin_settings.payment.currencies.currency_placement.left') ?></option>
+                            <option value="right" <?= $currency->currency_placement == 'right' ? 'selected="selected"' : null ?>><?= l('admin_settings.payment.currencies.currency_placement.right') ?></option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label for="<?= 'default_payment_processor[' . $currency->code . ']' ?>"><i class="fas fa-fw fa-sm fa-piggy-bank text-muted mr-1"></i> <?= l('admin_settings.payment.currencies.default_payment_processor') ?></label>
                         <select id="<?= 'default_payment_processor[' . $currency->code . ']' ?>" name="default_payment_processor[<?= $currency->code ?>]" class="custom-select" data-is-not-custom-select>
                             <?php foreach(require APP_PATH . 'includes/payment_processors.php' as $key => $value): ?>
@@ -62,7 +88,7 @@
             <?php endforeach ?>
         </div>
 
-        <div class="mb-3">
+        <div class="mb-4">
             <button data-add="currencies" type="button" class="btn btn-block btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
         </div>
 
@@ -88,6 +114,12 @@
             <input id="invoice_is_enabled" name="invoice_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->payment->invoice_is_enabled ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="invoice_is_enabled"><i class="fas fa-fw fa-sm fa-file-invoice text-muted mr-1"></i> <?= l('admin_settings.payment.invoice_is_enabled') ?></label>
             <small class="form-text text-muted"><?= l('admin_settings.payment.invoice_is_enabled_help') ?></small>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="trial_require_card" name="trial_require_card" type="checkbox" class="custom-control-input" <?= settings()->payment->trial_require_card ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="trial_require_card"><i class="fas fa-fw fa-sm fa-credit-card text-muted mr-1"></i> <?= l('admin_settings.payment.trial_require_card') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.payment.trial_require_card_help') ?></small>
         </div>
 
         <div class="form-group">
@@ -140,7 +172,26 @@
             <small class="form-text text-muted"><?= l('admin_settings.payment.currencies.default_payment_processor_help') ?></small>
         </div>
 
-        <button type="button" data-remove="request" class="mb-3 btn btn-block btn-outline-danger"><i class="fas fa-fw fa-times"></i> <?= l('global.delete') ?></button>
+        <div class="form-group">
+            <label for="<?= 'display_as[]' ?>"><i class="fas fa-fw fa-sm fa-comment-dollar text-muted mr-1"></i> <?= l('admin_settings.payment.currencies.display_as') ?></label>
+            <select id="<?= 'display_as[]' ?>" name="display_as[]" class="custom-select" data-is-not-custom-select>
+                <option value="currency_code"><?= l('admin_settings.payment.currencies.code') ?></option>
+                <option value="currency_symbol"><?= l('admin_settings.payment.currencies.symbol') ?></option>
+            </select>
+            <small class="form-text text-muted"><?= l('admin_settings.payment.currencies.display_as_help') ?></small>
+        </div>
+
+        <div class="form-group">
+            <label for="<?= 'currency_placement[]' ?>"><i class="fas fa-fw fa-sm fa-align-justify text-muted mr-1"></i> <?= l('admin_settings.payment.currencies.currency_placement') ?></label>
+            <select id="<?= 'currency_placement[]' ?>" name="currency_placement[]" class="custom-select" data-is-not-custom-select>
+                <option value="left"><?= l('admin_settings.payment.currencies.currency_placement.left') ?></option>
+                <option value="right"><?= l('admin_settings.payment.currencies.currency_placement.right') ?></option>
+            </select>
+        </div>
+
+        <button type="button" data-remove="request" class="mb-3 btn btn-block btn-outline-danger">
+            <i class="fas fa-fw fa-times"></i> <?= l('global.delete') ?>
+        </button>
     </div>
 </template>
 
@@ -148,7 +199,7 @@
 <script>
     'use strict';
 
-    /* add new request header */
+/* add new request header */
     let add = event => {
         let type = event.currentTarget.getAttribute('data-add');
         let clone = document.querySelector(`#template_${type}`).content.cloneNode(true);
@@ -193,7 +244,6 @@
 
     let code_initiator = () => {
         document.querySelectorAll('#currencies [name^="code"]').forEach(element => {
-            console.log('test');
             element.removeEventListener('change', code);
             element.addEventListener('change', code)
         })

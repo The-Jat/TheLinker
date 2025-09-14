@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,14 +19,16 @@ namespace Altum\Controllers;
 use Altum\Alerts;
 use Altum\Title;
 
+defined('ALTUMCODE') || die();
+
 class SignatureUpdate extends Controller {
 
     public function index() {
-        \Altum\Authentication::guard();
-
         if(!\Altum\Plugin::is_active('email-signatures') || !settings()->signatures->is_enabled) {
-            redirect('dashboard');
+            redirect('not-found');
         }
+
+        \Altum\Authentication::guard();
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('update.signatures')) {
@@ -70,13 +79,14 @@ class SignatureUpdate extends Controller {
 
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
                 $_POST['direction'] = in_array($_POST['direction'], ['rtl', 'ltr']) ? $_POST['direction'] : 'ltr';
-                $_POST['image_url'] = input_clean(filter_var($_POST['image_url'], FILTER_SANITIZE_URL), 1024);
+                $_POST['image_url'] = get_url($_POST['image_url'], 1024);
                 $_POST['sign_off'] = input_clean($_POST['sign_off'], 64);
                 $_POST['full_name'] = input_clean($_POST['full_name'], 64);
                 $_POST['job_title'] = input_clean($_POST['job_title'], 64);
                 $_POST['department'] = input_clean($_POST['department'], 64);
                 $_POST['company'] = input_clean($_POST['company'], 64);
-                $_POST['email'] = input_clean($_POST['email'], 320);
+                $_POST['email'] = input_clean_email($_POST['email'] ?? '');
+                $_POST['website_name'] = input_clean($_POST['website_name'], 256);
                 $_POST['website_url'] = input_clean($_POST['website_url'], 256);
                 $_POST['address'] = input_clean($_POST['address'], 256);
                 $_POST['address_url'] = input_clean($_POST['address_url'], 512);
@@ -96,9 +106,9 @@ class SignatureUpdate extends Controller {
                 $_POST['socials_width'] = (int) $_POST['socials_width'] < 15 || (int) $_POST['socials_width'] > 30 ? 20 : (int) $_POST['socials_width'];
                 $_POST['socials_padding'] = (int) $_POST['socials_padding'] < 5 || (int) $_POST['socials_padding'] > 15 ? 10 : (int) $_POST['socials_padding'];
                 $_POST['separator_size'] = (int) $_POST['separator_size'] < 0 || (int) $_POST['separator_size'] > 5 ? 1 : (int) $_POST['separator_size'];
-                $_POST['full_name_color'] = isset($_POST['full_name_color']) && preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['full_name_color']) ? $_POST['full_name_color'] : '#000000';
-                $_POST['text_color'] = isset($_POST['text_color']) && preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? $_POST['text_color'] : '#000000';
-                $_POST['link_color'] = isset($_POST['link_color']) && preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['link_color']) ? $_POST['link_color'] : '#000000';
+                $_POST['full_name_color'] = isset($_POST['full_name_color']) && verify_hex_color($_POST['full_name_color']) ? $_POST['full_name_color'] : '#000000';
+                $_POST['text_color'] = isset($_POST['text_color']) && verify_hex_color($_POST['text_color']) ? $_POST['text_color'] : '#000000';
+                $_POST['link_color'] = isset($_POST['link_color']) && verify_hex_color($_POST['link_color']) ? $_POST['link_color'] : '#000000';
 
                 /* Prepare settings */
                 $settings = [
@@ -111,6 +121,7 @@ class SignatureUpdate extends Controller {
                     'department' => $_POST['department'],
                     'company' => $_POST['company'],
                     'email' => $_POST['email'],
+                    'website_name' => $_POST['website_name'],
                     'website_url' => $_POST['website_url'],
                     'address' => $_POST['address'],
                     'address_url' => $_POST['address_url'],
@@ -145,7 +156,7 @@ class SignatureUpdate extends Controller {
                     'name' => $_POST['name'],
                     'template' => $_POST['template'],
                     'settings' => $settings,
-                    'last_datetime' => \Altum\Date::$date,
+                    'last_datetime' => get_date(),
                 ]);
 
                 /* Set a nice success message */

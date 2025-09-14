@@ -31,19 +31,19 @@
                         <span class="input-group-text"><?= remove_url_protocol_from_url(SITE_URL) . 'blog/category/' ?></span>
                     </div>
 
-                    <input id="url" type="text" name="url" class="form-control <?= \Altum\Alerts::has_field_errors('url') ? 'is-invalid' : null ?>" placeholder="<?= l('global.url_placeholder') ?>" value="<?= $data->blog_posts_category->url ?>" onchange="update_this_value(this, get_slug)" onkeyup="update_this_value(this, get_slug)" maxlength="256" required="required" />
+                    <input id="url" type="text" name="url" class="form-control <?= \Altum\Alerts::has_field_errors('url') ? 'is-invalid' : null ?>" placeholder="<?= l('global.url_slug_placeholder') ?>" value="<?= $data->blog_posts_category->url ?>" onchange="update_this_value(this, get_slug)" onkeyup="update_this_value(this, get_slug)" maxlength="256" required="required" />
                     <?= \Altum\Alerts::output_field_error('url') ?>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="title"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('admin_blog.main.title') ?></label>
+                <label for="title"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('admin_blog.title') ?></label>
                 <input id="title" type="text" name="title" class="form-control <?= \Altum\Alerts::has_field_errors('title') ? 'is-invalid' : null ?>" value="<?= $data->blog_posts_category->title ?>" maxlength="256" required="required" />
                 <?= \Altum\Alerts::output_field_error('title') ?>
             </div>
 
             <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#advanced_container" aria-expanded="false" aria-controls="advanced_container">
-                <i class="fas fa-fw fa-user-tie fa-sm mr-1"></i> <?= l('admin_blog.main.advanced') ?>
+                <i class="fas fa-fw fa-user-tie fa-sm mr-1"></i> <?= l('admin_blog.advanced') ?>
             </button>
 
             <div class="collapse" id="advanced_container">
@@ -60,7 +60,7 @@
                 <div class="form-group">
                     <label for="order"><i class="fas fa-fw fa-sm fa-sort text-muted mr-1"></i> <?= l('global.order') ?></label>
                     <input id="order" type="number" name="order" class="form-control" value="<?= $data->blog_posts_category->order ?>" />
-                    <small class="form-text text-muted"><?= l('admin_blog.main.order_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_blog.order_help') ?></small>
                 </div>
             </div>
 

@@ -2,14 +2,14 @@
 
 <div class="container">
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li><a href="<?= url('api-documentation') ?>"><?= l('api_documentation.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li class="active" aria-current="page"><?= l('api_documentation.statistics') ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li><a href="<?= url('api-documentation') ?>"><?= l('api_documentation.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li class="active" aria-current="page"><?= l('api_documentation.statistics') ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
     <h1 class="h4 mb-4"><?= l('api_documentation.statistics') ?></h1>
 
@@ -47,33 +47,53 @@
                             <tbody>
                             <tr>
                                 <td>start_date</td>
-                                <td><span class="badge badge-danger"><?= l('api_documentation.required') ?></span></td>
+                                <td><span class="badge badge-danger"><i class="fas fa-fw fa-sm fa-asterisk mr-1"></i> <?= l('api_documentation.required') ?></span></td>
                                 <td><?= l('api_documentation.statistics.start_date') ?></td>
                             </tr>
                             <tr>
                                 <td>end_date</td>
-                                <td><span class="badge badge-danger"><?= l('api_documentation.required') ?></span></td>
+                                <td><span class="badge badge-danger"><i class="fas fa-fw fa-sm fa-asterisk mr-1"></i> <?= l('api_documentation.required') ?></span></td>
                                 <td><?= l('api_documentation.statistics.end_date') ?></td>
                             </tr>
                             <tr>
                                 <td>type</td>
-                                <td><span class="badge badge-info"><?= l('api_documentation.optional') ?></span></td>
-                                <td><?= l('api_documentation.statistics.type') ?></td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td><?= sprintf(l('api_documentation.allowed_values'), '<code>' . implode('</code>, <code>', ['overview', 'referrer_host', 'referrer_path', 'continent_code', 'country_code', 'city_name', 'os_name', 'browser_name', 'device_type', 'browser_language', 'utm_source', 'utm_medium', 'utm_campaign', 'hour'])) ?></td>
                             </tr>
                             <tr>
                                 <td>country_code</td>
-                                <td><span class="badge badge-info"><?= l('api_documentation.optional') ?></span></td>
-                                <td><?= l('api_documentation.statistics.country_code') ?></td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">type = city_name</span>') ?></td>
                             </tr>
                             <tr>
                                 <td>utm_source</td>
-                                <td><span class="badge badge-info"><?= l('api_documentation.optional') ?></span></td>
-                                <td><?= l('api_documentation.statistics.utm_source') ?></td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">type = utm_medium, utm_campaign</span>') ?></td>
                             </tr>
                             <tr>
                                 <td>utm_medium</td>
-                                <td><span class="badge badge-info"><?= l('api_documentation.optional') ?></span></td>
-                                <td><?= l('api_documentation.statistics.utm_medium') ?></td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">type = utm_campaign</span>') ?></td>
+                            </tr>
+                            <tr>
+                                <td>referrer_host</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">type = referrer_path</span>') ?></td>
                             </tr>
                             </tbody>
                         </table>
@@ -85,14 +105,14 @@
                             <div class="card-body">
                                 curl --request GET \<br />
                                 --url '<?= SITE_URL ?>api/statistics/<span class="text-primary">{link_id}</span>?start_date=<span class="text-primary">2020-01-01</span>&end_date=<span class="text-primary">2021-01-01</span>' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
     "data": [
         {
@@ -112,11 +132,12 @@
         }
     ]
 }
+</pre>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
     </div>
 </div>
 

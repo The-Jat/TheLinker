@@ -1,15 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+
+defined('ALTUMCODE') || die();
 
 class AdminBiolinkTemplateUpdate extends Controller {
 
@@ -22,14 +31,32 @@ class AdminBiolinkTemplateUpdate extends Controller {
         }
         $biolink_template->settings = json_decode($biolink_template->settings ?? '');
 
+        $biolinks = [];
+        $result = database()->query("
+            SELECT 
+                `links`.`link_id`, `links`.`domain_id`, `links`.`url`,
+                `domains`.`scheme`, `domains`.`host`, `domains`.`link_id` as `domain_link_id`
+            FROM 
+                `links` 
+            LEFT JOIN `users` ON `users`.`user_id` = `links`.`user_id`
+            LEFT JOIN `domains` ON `links`.`domain_id` = `domains`.`domain_id`
+            WHERE 
+                `users`.`type` = 1
+                AND `links`.`type` = 'biolink'
+        ");
+
+        while($row = $result->fetch_object()) {
+            $row->full_url = $row->domain_id ? $row->scheme . $row->host . '/' . ($row->domain_link_id == $row->link_id ? null : $row->url) : SITE_URL . $row->url;
+            $biolinks[$row->link_id] = $row;
+        }
 
         if(!empty($_POST)) {
-            /* Filter some the variables */
+            /* Filter some of the variables */
             $_POST['link_id'] = (int) $_POST['link_id'];
             $_POST['name'] = input_clean($_POST['name']);
-            $_POST['url'] = input_clean($_POST['url']);
             $_POST['order'] = (int) $_POST['order'] ?? 0;
             $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
+            $_POST['url'] = $biolinks[$_POST['link_id']]->full_url ?? '';
 
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
@@ -41,9 +68,6 @@ class AdminBiolinkTemplateUpdate extends Controller {
                 Alerts::add_field_error('link_id', l('admin_biolinks_templates.error_message.link_id'));
             }
 
-            /* Check for errors & process  potential uploads */
-            $biolink_template->image = \Altum\Uploads::process_upload($biolink_template->image, 'biolinks_templates', 'image', 'image_remove', null);
-
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
                 $settings = json_encode([]);
@@ -53,18 +77,17 @@ class AdminBiolinkTemplateUpdate extends Controller {
                     'link_id' => $_POST['link_id'],
                     'name' => $_POST['name'],
                     'url' => $_POST['url'],
-                    'image' => $biolink_template->image,
                     'settings' => $settings,
                     'is_enabled' => $_POST['is_enabled'],
                     'order' => $_POST['order'],
-                    'last_datetime' => \Altum\Date::$date,
+                    'last_datetime' => get_date(),
                 ]);
 
                 /* Set a nice success message */
                 Alerts::add_success(sprintf(l('global.success_message.update1'), '<strong>' . $_POST['name'] . '</strong>'));
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItem('biolinks_templates');
+                cache()->deleteItem('biolinks_templates');
 
                 /* Refresh the page */
                 redirect('admin/biolink-template-update/' . $biolink_template_id);
@@ -76,6 +99,7 @@ class AdminBiolinkTemplateUpdate extends Controller {
         /* Main View */
         $data = [
             'biolink_template' => $biolink_template,
+            'biolinks' => $biolinks,
         ];
 
         $view = new \Altum\View('admin/biolink-template-update/index', (array) $this);

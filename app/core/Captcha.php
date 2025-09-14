@@ -1,13 +1,22 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum;
+
+defined('ALTUMCODE') || die();
 
 class Captcha {
 
@@ -69,12 +78,28 @@ class Captcha {
 
     /* Display function based on the captcha settings ( normal captcha or recaptcha ) */
     public function display() {
-        $data_size = get_device_type($_SERVER['HTTP_USER_AGENT']) == 'desktop' ? 'normal' : 'compact';
+        $data_size = get_this_device_type() == 'desktop' ? 'normal' : 'compact';
 
         if(settings()->captcha->type == 'recaptcha' && settings()->captcha->recaptcha_public_key && settings()->captcha->recaptcha_private_key) {
-            echo '<div class="g-recaptcha d-flex justify-content-center" data-size="' . $data_size . '" data-sitekey="' . settings()->captcha->recaptcha_public_key . '"></div>';
+            echo '<style>
+            .g-recaptcha {
+                overflow:hidden;
+                width: 158px;
+                height: 138px;
+                border-radius: var(--border-radius);
+            }
+            @media (min-width: 992px) {
+                .g-recaptcha {
+                    width: 302px;
+                    height: 76px;
+                }
+            }
+            </style>';
+            echo '<div class="d-flex justify-content-center">';
+            echo '<div class="g-recaptcha" data-size="' . $data_size . '" data-sitekey="' . settings()->captcha->recaptcha_public_key . '" data-theme="' . \Altum\ThemeStyle::get() . '"></div>';
             echo '<input type="hidden" name="captcha" class="form-control ' . (\Altum\Alerts::has_field_errors('captcha') ? 'is-invalid' : null) . '">';
             echo \Altum\Alerts::output_field_error('captcha');
+            echo '</div>';
 
             if(!\Altum\Event::exists_content_type_key('javascript', 'captcha')) {
                 ob_start();
@@ -84,9 +109,19 @@ class Captcha {
         }
 
         else if(settings()->captcha->type == 'hcaptcha' && settings()->captcha->hcaptcha_site_key && settings()->captcha->hcaptcha_secret_key) {
-            echo '<div class="h-captcha d-flex justify-content-center" data-size="' . $data_size . '" data-sitekey="' . settings()->captcha->hcaptcha_site_key . '"></div>';
+            echo '<style>
+            .h-captcha {
+                overflow:hidden;
+                width: 302px;
+                height: 76px;
+                border-radius: var(--border-radius);
+            }
+            </style>';
+            echo '<div class="d-flex justify-content-center">';
+            echo '<div class="h-captcha" data-size="' . $data_size . '" data-sitekey="' . settings()->captcha->hcaptcha_site_key . '" data-theme="' . \Altum\ThemeStyle::get() . '"></div>';
             echo '<input type="hidden" name="captcha" class="form-control ' . (\Altum\Alerts::has_field_errors('captcha') ? 'is-invalid' : null) . '">';
             echo \Altum\Alerts::output_field_error('captcha');
+            echo '</div>';
 
             if(!\Altum\Event::exists_content_type_key('javascript', 'captcha')) {
                 ob_start();
@@ -96,7 +131,7 @@ class Captcha {
         }
 
         else if(settings()->captcha->type == 'turnstile' && settings()->captcha->turnstile_site_key && settings()->captcha->turnstile_secret_key) {
-            echo '<div class="cf-turnstile d-flex justify-content-center" data-size="' . $data_size . '" data-sitekey="' . settings()->captcha->turnstile_site_key . '"></div>';
+            echo '<div class="cf-turnstile d-flex justify-content-center" data-size="' . $data_size . '" data-sitekey="' . settings()->captcha->turnstile_site_key . '" data-theme="' . \Altum\ThemeStyle::get() . '"></div>';
             echo '<input type="hidden" name="captcha" class="form-control ' . (\Altum\Alerts::has_field_errors('captcha') ? 'is-invalid' : null) . '">';
             echo \Altum\Alerts::output_field_error('captcha');
 
@@ -109,7 +144,7 @@ class Captcha {
 
         else {
             echo '
-            <img src="data:image/png;base64,' . base64_encode($this->create_simple_captcha()) . '" class="mb-2" id="captcha" alt="' . l('global.accessibility.captcha_alt') . '" />
+            <img src="data:image/png;base64,' . base64_encode($this->create_simple_captcha()) . '" class="mb-2 rounded" id="captcha" alt="' . l('global.accessibility.captcha_alt') . '" />
             <input type="text" name="captcha" class="form-control ' . (\Altum\Alerts::has_field_errors('captcha') ? 'is-invalid' : null) . '" placeholder="' . l('global.captcha_placeholder') . '" aria-label="' . l('global.accessibility.captcha_input') . '" required="required" autocomplete="off" />
             ' . \Altum\Alerts::output_field_error('captcha') . '
             ';

@@ -1,38 +1,51 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<?php if(count($data->codes) || count($data->filters->get)): ?>
+<?php if(!settings()->payment->codes_is_enabled): ?>
+    <div class="alert alert-info">
+        <i class="fas fa-fw fa-info-circle mr-1"></i>
+        <?= sprintf(l('global.info_message.admin_feature_disabled'), url('admin/settings/payment')) ?>
+    </div>
+<?php endif ?>
+
+<?php if(count($data->codes) || $data->filters->has_applied_filters): ?>
 
     <div class="d-flex flex-column flex-md-row justify-content-between mb-4">
-        <h1 class="h3 mb-3 mb-md-0"><i class="fas fa-fw fa-xs fa-tags text-primary-900 mr-2"></i> <?= l('admin_codes.header') ?></h1>
+        <h1 class="h3 mb-3 mb-md-0 text-truncate"><i class="fas fa-fw fa-xs fa-tags text-primary-900 mr-2"></i> <?= l('admin_codes.header') ?></h1>
 
         <div class="d-flex position-relative">
-            <div class="">
-                <a href="<?= url('admin/code-create') ?>" class="btn btn-primary"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_codes.create') ?></a>
+            <div>
+                <a href="<?= url('admin/code-create') ?>" class="btn btn-primary text-nowrap"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_codes.create') ?></a>
+            </div>
+
+            <div class="ml-3">
+                <a href="<?= url('admin/statistics/redeemed_codes') ?>" class="btn btn-gray-300" data-tooltip title="<?= l('global.statistics') ?>">
+                    <i class="fas fa-fw fa-sm fa-chart-bar"></i>
+                </a>
             </div>
 
             <div class="ml-3">
                 <div class="dropdown">
-                    <button type="button" class="btn btn-gray-300 dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>">
+                    <button type="button" class="btn btn-gray-300 dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-download"></i>
                     </button>
 
                     <div class="dropdown-menu dropdown-menu-right d-print-none">
-                        <a href="<?= url('admin/codes?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item">
-                            <i class="fas fa-fw fa-sm fa-file-csv mr-1"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
+                        <a href="<?= url('admin/codes?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->csv ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->csv ? null : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-csv mr-2"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
                         </a>
-                        <a href="<?= url('admin/codes?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item">
-                            <i class="fas fa-fw fa-sm fa-file-code mr-1"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
+                        <a href="<?= url('admin/codes?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                         </a>
-                        <button type="button" onclick="window.print();" class="dropdown-item">
-                            <i class="fas fa-fw fa-sm fa-file-pdf mr-1"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
-                        </button>
+                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                        <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
+                    </a>
                     </div>
                 </div>
             </div>
 
             <div class="ml-3">
                 <div class="dropdown">
-                    <button type="button" class="btn <?= count($data->filters->get) ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.filters.header') ?>">
+                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-filter"></i>
                     </button>
 
@@ -40,8 +53,8 @@
                         <div class="dropdown-header d-flex justify-content-between">
                             <span class="h6 m-0"><?= l('global.filters.header') ?></span>
 
-                            <?php if(count($data->filters->get)): ?>
-                                <a href="<?= url('admin/codes') ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
+                            <?php if($data->filters->has_applied_filters): ?>
+                                <a href="<?= url(\Altum\Router::$original_request) ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
                             <?php endif ?>
                         </div>
 
@@ -57,7 +70,7 @@
                                 <label for="filters_search_by" class="small"><?= l('global.filters.search_by') ?></label>
                                 <select name="search_by" id="filters_search_by" class="custom-select custom-select-sm">
                                     <option value="name" <?= $data->filters->search_by == 'name' ? 'selected="selected"' : null ?>><?= l('global.name') ?></option>
-                                    <option value="code" <?= $data->filters->search_by == 'code' ? 'selected="selected"' : null ?>><?= l('admin_codes.main.code') ?></option>
+                                    <option value="code" <?= $data->filters->search_by == 'code' ? 'selected="selected"' : null ?>><?= l('admin_codes.code') ?></option>
                                 </select>
                             </div>
 
@@ -65,20 +78,21 @@
                                 <label for="filters_type" class="small"><?= l('global.type') ?></label>
                                 <select name="type" id="filters_type" class="custom-select custom-select-sm">
                                     <option value=""><?= l('global.all') ?></option>
-                                    <option value="redeemable" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'redeemable' ? 'selected="selected"' : null ?>><?= l('admin_codes.main.type_redeemable') ?></option>
-                                    <option value="discount" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'discount' ? 'selected="selected"' : null ?>><?= l('admin_codes.main.type_discount') ?></option>
+                                    <option value="redeemable" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'redeemable' ? 'selected="selected"' : null ?>><?= l('admin_codes.type_redeemable') ?></option>
+                                    <option value="discount" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'discount' ? 'selected="selected"' : null ?>><?= l('admin_codes.type_discount') ?></option>
                                 </select>
                             </div>
 
                             <div class="form-group px-4">
                                 <label for="filters_order_by" class="small"><?= l('global.filters.order_by') ?></label>
                                 <select name="order_by" id="filters_order_by" class="custom-select custom-select-sm">
+                                    <option value="code_id" <?= $data->filters->order_by == 'code_id' ? 'selected="selected"' : null ?>><?= l('global.id') ?></option>
                                     <option value="datetime" <?= $data->filters->order_by == 'datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_datetime') ?></option>
                                     <option value="name" <?= $data->filters->search_by == 'name' ? 'selected="selected"' : null ?>><?= l('global.name') ?></option>
-                                    <option value="code" <?= $data->filters->search_by == 'code' ? 'selected="selected"' : null ?>><?= l('admin_codes.main.code') ?></option>
-                                    <option value="days" <?= $data->filters->search_by == 'days' ? 'selected="selected"' : null ?>><?= l('admin_codes.main.days') ?></option>
-                                    <option value="redeemed" <?= $data->filters->search_by == 'redeemed' ? 'selected="selected"' : null ?>><?= l('admin_codes.main.redeemed') ?></option>
-                                    <option value="discount" <?= $data->filters->search_by == 'discount' ? 'selected="selected"' : null ?>><?= l('admin_codes.main.discount') ?></option>
+                                    <option value="code" <?= $data->filters->search_by == 'code' ? 'selected="selected"' : null ?>><?= l('admin_codes.code') ?></option>
+                                    <option value="days" <?= $data->filters->search_by == 'days' ? 'selected="selected"' : null ?>><?= l('admin_codes.days') ?></option>
+                                    <option value="redeemed" <?= $data->filters->search_by == 'redeemed' ? 'selected="selected"' : null ?>><?= l('admin_codes.redeemed') ?></option>
+                                    <option value="discount" <?= $data->filters->search_by == 'discount' ? 'selected="selected"' : null ?>><?= l('admin_codes.discount') ?></option>
                                 </select>
                             </div>
 
@@ -112,7 +126,7 @@
                 <button id="bulk_enable" type="button" class="btn btn-gray-300" data-toggle="tooltip" title="<?= l('global.bulk_actions') ?>"><i class="fas fa-fw fa-sm fa-list"></i></button>
 
                 <div id="bulk_group" class="btn-group d-none" role="group">
-                    <div class="btn-group" role="group">
+                    <div class="btn-group dropdown" role="group">
                         <button id="bulk_actions" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
                             <?= l('global.bulk_actions') ?> <span id="bulk_counter" class="d-none"></span>
                         </button>
@@ -132,6 +146,8 @@
     <form id="table" action="<?= SITE_URL . 'admin/codes/bulk' ?>" method="post" role="form">
         <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
         <input type="hidden" name="type" value="" data-bulk-type />
+    <input type="hidden" name="original_request" value="<?= base64_encode(\Altum\Router::$original_request) ?>" />
+    <input type="hidden" name="original_request_query" value="<?= base64_encode(\Altum\Router::$original_request_query) ?>" />
 
         <div class="table-responsive table-custom-container">
             <table class="table table-custom">
@@ -143,11 +159,10 @@
                             <label class="custom-control-label" for="bulk_select_all"></label>
                         </div>
                     </th>
-                    <th><?= l('admin_codes.main.code') ?></th>
-                    <th><?= l('global.type') ?></th>
-                    <th><?= l('admin_codes.main.discount') ?></th>
-                    <th><?= l('admin_codes.main.quantity') ?></th>
-                    <th><?= l('admin_codes.main.redeemed') ?></th>
+                    <th><?= l('global.name') ?></th>
+                    <th><?= l('admin_codes.code') ?></th>
+                    <th><?= l('admin_codes.discount') ?></th>
+                    <th><?= l('admin_codes.redeemed') ?></th>
                     <th></th>
                 </tr>
                 </thead>
@@ -160,22 +175,40 @@
                                 <label class="custom-control-label" for="selected_id_<?= $row->code_id ?>"></label>
                             </div>
                         </td>
+
                         <td class="text-nowrap">
                             <div class="d-flex flex-column">
                                 <a href="<?= url('admin/code-update/' . $row->code_id) ?>"><?= $row->name ?></a>
                                 <div>
-                                    <span class="badge badge-primary"><?= $row->code ?></span>
+                                    <span class="text-muted small"><?= l('admin_codes.type_' . $row->type) ?></span>
                                 </div>
                             </div>
                         </td>
-                        <td class="text-nowrap"><?= l('admin_codes.main.type_' . $row->type) ?></td>
-                        <td class="text-nowrap"><?= $row->discount . '%' ?></td>
-                        <td class="text-nowrap"><?= nr($row->quantity) ?></td>
+
+                        <td class="text-nowrap">
+                            <span
+                                    class="badge badge-primary"
+                                    type="button"
+                                    data-toggle="tooltip"
+                                    title="<?= l('global.clipboard_copy') ?>"
+                                    aria-label="<?= l('global.clipboard_copy') ?>"
+                                    data-copy="<?= l('global.clipboard_copy') ?>"
+                                    data-copied="<?= l('global.clipboard_copied') ?>"
+                                    data-clipboard-text="<?= $row->code ?>"
+                            >
+                                <?= $row->code ?>
+                            </span>
+                        </td>
+
+                        <td class="text-nowrap">
+                            <?= $row->discount . '%' ?>
+                        </td>
+
                         <td class="text-nowrap">
                             <div class="d-flex align-items-center">
                                 <a href="<?= url('admin/redeemed-codes?code_id=' . $row->code_id) ?>" class="badge badge-light mr-2" data-toggle="tooltip" title="<?= l('admin_redeemed_codes.menu') ?>">
                                     <i class="fas fa-fw fa-sm fa-tags text-muted mr-1"></i>
-                                    <?= nr($row->redeemed) ?>
+                                    <?= nr($row->redeemed) . '/' . nr($row->quantity) ?>
                                 </a>
 
                                 <a href="<?= url('admin/payments?code=' . $row->code) ?>" class="mr-2" data-toggle="tooltip" title="<?= l('admin_payments.menu') ?>">
@@ -213,7 +246,7 @@
                     <p class="text-muted"><?= l('admin_codes.subheader_no_data') ?></p>
 
                     <div>
-                        <a href="<?= url('admin/code-create') ?>" class="btn btn-primary"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_codes.create') ?></a>
+                        <a href="<?= url('admin/code-create') ?>" class="btn btn-primary text-nowrap"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_codes.create') ?></a>
                     </div>
                 </div>
             </div>
@@ -222,11 +255,12 @@
 
 <?php endif ?>
 
-<?php require THEME_PATH . 'views/admin/partials/js_bulk.php' ?>
-<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/admin/partials/bulk_delete_modal.php'), 'modals'); ?>
+<?php require THEME_PATH . 'views/partials/js_bulk.php' ?>
+<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/bulk_delete_modal.php'), 'modals'); ?>
 <?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/universal_delete_modal_url.php', [
     'name' => 'code',
     'resource_id' => 'code_id',
     'has_dynamic_resource_name' => true,
     'path' => 'admin/codes/delete/'
 ]), 'modals'); ?>
+<?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>

@@ -108,7 +108,7 @@
                 </div>
 
                 <div class="mt-4">
-                    <button type="submit" name="submit" class="btn btn-lg btn-block btn-primary"><?= sprintf(l('pay_billing.submit'), $data->plan->name) ?></button>
+                    <button type="submit" name="submit" class="btn btn-lg btn-block btn-primary"><?= sprintf(l('pay_billing.submit'), $data->plan->translations->{\Altum\Language::$name}->name ?? $data->plan->name) ?></button>
                 </div>
             </form>
         </div>
@@ -118,8 +118,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* Billing type handler */
+    
+/* Billing type handler */
     let billing_type = () => {
         let type = document.querySelector('select[name="billing_type"]').value;
 

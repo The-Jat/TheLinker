@@ -1,4 +1,5 @@
 <?php
+const ALTUMCODE = 66;
 define('ROOT', realpath(__DIR__ . '/..') . '/');
 require_once ROOT . 'app/includes/product.php';
 
@@ -9,13 +10,13 @@ if(file_exists(ROOT . 'install/installed')) {
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/css/custom.css">
 
-    <link rel="shortcut icon" href="./assets/favicons/favicon.ico">
+    <link rel="icon" href="./assets/favicons/favicon.ico">
 
     <title><?= PRODUCT_NAME ?> Installation</title>
 </head>
@@ -100,10 +101,10 @@ if(file_exists(ROOT . 'install/installed')) {
                                     <tbody>
                                     <tr>
                                         <td>PHP Version</td>
-                                        <td>8.0 - 8.3</td>
+                                        <td>8.3 - 8.4</td>
                                         <td><?= PHP_VERSION ?></td>
                                         <td class="text-right">
-                                            <?php if(version_compare(PHP_VERSION, '8.0.0', '>=') && version_compare(PHP_VERSION, '8.4', '<')): ?>
+                                            <?php if(version_compare(PHP_VERSION, '8.3.0', '>=') && version_compare(PHP_VERSION, '8.5', '<')): ?>
                                                 ✅
                                             <?php else: ?>
                                                 ❌
@@ -181,7 +182,7 @@ if(file_exists(ROOT . 'install/installed')) {
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    <?php foreach(['config.php', 'uploads/main/', 'uploads/cache/', 'uploads/offline_payment_proofs/', 'uploads/blog/', 'uploads/pwa/', 'uploads/products_files/', 'uploads/avatars/', 'uploads/backgrounds/', 'uploads/block_thumbnail_images/', 'uploads/block_images/', 'uploads/files/', 'uploads/favicons/', 'uploads/qr_code/', 'uploads/qr_code_logo/', 'uploads/biolinks_themes/', 'uploads/biolinks_templates/', 'uploads/chats_assistants/', 'uploads/chats_images', 'uploads/syntheses', 'uploads/static/', 'uploads/splash_pages/'] as $key): ?>
+                                    <?php foreach(['config.php', 'uploads/main/', 'uploads/users/', 'uploads/cache/', 'uploads/cookie_consent', 'uploads/logs', 'uploads/offline_payment_proofs/', 'uploads/blog/', 'uploads/pwa/', 'uploads/dynamic_og_images/', 'uploads/products_files/', 'uploads/avatars/', 'uploads/backgrounds/', 'uploads/block_thumbnail_images/', 'uploads/block_images/', 'uploads/files/', 'uploads/favicons/', 'uploads/qr_code/', 'uploads/qr_code_logo/', 'uploads/qr_code_background', 'uploads/qr_code_foreground', 'uploads/chats_assistants/', 'uploads/chats_images', 'uploads/syntheses', 'uploads/static/', 'uploads/splash_pages/', 'uploads/service_workers/'] as $key): ?>
                                     <tr>
                                         <td>/<?= $key ?></td>
                                         <td><?= is_writable(ROOT . $key) ? 'Writable' : 'Not Writable' ?></td>
@@ -221,7 +222,7 @@ if(file_exists(ROOT . 'install/installed')) {
                                 <div class="form-group">
                                     <label for="license_key">License key</label>
                                     <input type="text" class="form-control" id="license_key" name="license_key" required="required">
-                                    <small class="form-text text-muted">Enter random data!</small>
+                                    <small class="form-text text-muted">The unique license key that you got after purchasing.</small>
                                 </div>
 
                                 <div class="form-group">
@@ -270,7 +271,7 @@ if(file_exists(ROOT . 'install/installed')) {
                                         <input type="text" class="form-control" id="newsletter_name" name="newsletter_name" placeholder="Your full name">
                                     </div>
                                 </div>
-                                <p class="text-muted"><small>By subscribing, you agree with Revue’s <a target="_blank" href="https://www.getrevue.co/terms">Terms of Service</a> and <a target="_blank" href="https://www.getrevue.co/privacy">Privacy Policy</a>. Leave the fields empty if you do not wish to subscribe to the newsletter.</small></p>
+                                <p class="text-muted"><small>Leave the fields empty if you do not wish to subscribe to the newsletter.</small></p>
 
                                 <button type="submit" name="submit" class="btn btn-block btn-primary mt-4">Finish installation</button>
                             </form>

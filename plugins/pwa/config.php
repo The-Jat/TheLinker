@@ -5,7 +5,7 @@ return (object) [
     'plugin_id' => 'pwa',
     'name' => 'PWA system',
     'description' => 'The PWA plugin makes your whole site basic PWA compatible.',
-    'version' => '1.0.0',
+    'version' => '4.0.0',
     'url' => 'https://altumco.de/pwa-plugin',
     'author' => 'AltumCode',
     'author_url' => 'https://altumcode.com/',

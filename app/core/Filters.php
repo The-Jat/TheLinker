@@ -1,13 +1,22 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum;
+
+defined('ALTUMCODE') || die();
 
 class Filters {
 
@@ -25,6 +34,7 @@ class Filters {
     public $results_per_page = 25;
 
     public $get = [];
+    public $has_applied_filters = false;
 
     private $is_processed = false;
 
@@ -82,6 +92,8 @@ class Filters {
             $this->get['results_per_page'] = $_GET['results_per_page'];
         }
 
+        if(count($this->get)) $this->has_applied_filters = true;
+
     }
 
     public function get_sql_where($table_prefix = null) {
@@ -98,7 +110,7 @@ class Filters {
                     case 'json_contains':
                         /* Only allow numbers for array json searching */
                         $value = (int) $value;
-                        $where .= " AND JSON_CONTAINS({$table_prefix}`{$key}`, '{$value}', '$')";
+                        $where .= " AND JSON_CONTAINS(COALESCE(NULLIF({$table_prefix}`{$key}`, ''), '[]'), '{$value}', '$')";
                         break;
                 }
             } else {
@@ -148,6 +160,10 @@ class Filters {
 
         if(!in_array($order_type, ['ASC', 'DESC'])) {
             $order_type = 'DESC';
+        }
+
+        if(!$order_by && count($this->allowed_order_by)) {
+            $order_by = reset($this->allowed_order_by);
         }
 
         $this->order_by = $order_by;

@@ -2,14 +2,14 @@
 
 <div class="container">
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li><a href="<?= url('api-documentation') ?>"><?= l('api_documentation.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li class="active" aria-current="page"><?= l('api_documentation.user') ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li><a href="<?= url('api-documentation') ?>"><?= l('api_documentation.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li class="active" aria-current="page"><?= l('api_documentation.user') ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
     <h1 class="h4 mb-4"><?= l('api_documentation.user') ?></h1>
 
@@ -41,49 +41,50 @@
                             <div class="card-body">
                                 curl --request GET \<br />
                                 --url '<?= SITE_URL ?>api/user' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
     "data": {
         "id":"1",
         "type":"users",
         "email":"example@example.com",
         "billing":{
-        "type":"personal",
-        "name":"John Doe",
-        "address":"Lorem Ipsum",
-        "city":"Dolor Sit",
-        "county":"Amet",
-        "zip":"5000",
-        "country":"",
-        "phone":"",
-        "tax_id":""
-        "is_enabled":true,
-        "plan_id":"custom",
-        "plan_expiration_date":"2025-12-12 00:00:00",
-        "plan_settings":{
-            ...
-        },
-        "plan_trial_done":false,
-        "language":"english",
-        "timezone":"UTC",
-        "country":null,
-        "date":"2020-01-01 00:00:00",
-        "last_activity":"2020-01-01 00:00:00",
-        "total_logins":10
+            "type":"personal",
+            "name":"John Doe",
+            "address":"Lorem Ipsum",
+            "city":"Dolor Sit",
+            "county":"Amet",
+            "zip":"5000",
+            "country":"",
+            "phone":"",
+            "tax_id":"",
+            "is_enabled":true,
+            "plan_id":"custom",
+            "plan_expiration_date":"<?= date('Y-m-d H:i:s', strtotime('+1 year')) ?>",
+            "plan_settings":{
+                ...
+            },
+            "plan_trial_done":false,
+            "language":"english",
+            "timezone":"UTC",
+            "country":null,
+            "datetime": "<?= get_date() ?>",
+            "last_activity":"2020-01-01 00:00:00",
+            "total_logins":10
+        }
     }
-}
-                        </div>
+</pre>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 

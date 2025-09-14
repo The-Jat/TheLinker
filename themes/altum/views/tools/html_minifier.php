@@ -13,8 +13,8 @@
 <?php endif ?>
 
     <div class="row mb-4">
-        <div class="col-12 col-xl d-flex align-items-center mb-3 mb-xl-0">
-            <h1 class="h4 m-0"><?= l('tools.html_minifier.name') ?></h1>
+        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0 text-truncate">
+            <h1 class="h4 m-0 text-truncate"><?= l('tools.html_minifier.name') ?></h1>
 
             <div class="ml-2">
                 <span data-toggle="tooltip" title="<?= l('tools.html_minifier.description') ?>">
@@ -22,6 +22,8 @@
                 </span>
             </div>
         </div>
+
+        <?= $this->views['ratings'] ?>
     </div>
 
     <div class="card">
@@ -92,7 +94,7 @@
                                 </button>
                             </div>
                         </div>
-                        <textarea id="result" class="form-control"><?= htmlspecialchars($data->result, ENT_QUOTES, 'UTF-8') ?></textarea>
+                        <textarea id="result" class="form-control" rows="10"><?= htmlspecialchars($data->result, ENT_QUOTES, 'UTF-8') ?></textarea>
                     </div>
 
                 </div>
@@ -103,6 +105,8 @@
 <?= $this->views['extra_content'] ?>
 
     <?= $this->views['similar_tools'] ?>
+
+    <?= $this->views['popular_tools'] ?>
 </div>
 
 <?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>

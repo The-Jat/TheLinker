@@ -1,38 +1,45 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<?php if(count($data->taxes) || count($data->filters->get)): ?>
+<?php if(!settings()->payment->taxes_and_billing_is_enabled): ?>
+    <div class="alert alert-info">
+        <i class="fas fa-fw fa-info-circle mr-1"></i>
+        <?= sprintf(l('global.info_message.admin_feature_disabled'), url('admin/settings/payment')) ?>
+    </div>
+<?php endif ?>
+
+<?php if(count($data->taxes) || $data->filters->has_applied_filters): ?>
 
     <div class="d-flex flex-column flex-md-row justify-content-between mb-4">
-        <h1 class="h3 mb-3 mb-md-0"><i class="fas fa-fw fa-xs fa-paperclip text-primary-900 mr-2"></i> <?= l('admin_taxes.header') ?></h1>
+        <h1 class="h3 mb-3 mb-md-0 text-truncate"><i class="fas fa-fw fa-xs fa-paperclip text-primary-900 mr-2"></i> <?= l('admin_taxes.header') ?></h1>
 
         <div class="d-flex position-relative">
-            <div class="">
-                <a href="<?= url('admin/tax-create') ?>" class="btn btn-primary"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_taxes.create') ?></a>
+            <div>
+                <a href="<?= url('admin/tax-create') ?>" class="btn btn-primary text-nowrap"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_taxes.create') ?></a>
             </div>
 
             <div class="ml-3">
                 <div class="dropdown">
-                    <button type="button" class="btn btn-gray-300 dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>">
+                    <button type="button" class="btn btn-gray-300 dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-download"></i>
                     </button>
 
                     <div class="dropdown-menu dropdown-menu-right d-print-none">
-                        <a href="<?= url('admin/taxes?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item">
-                            <i class="fas fa-fw fa-sm fa-file-csv mr-1"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
+                        <a href="<?= url('admin/taxes?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->csv ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->csv ? null : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-csv mr-2"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
                         </a>
-                        <a href="<?= url('admin/taxes?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item">
-                            <i class="fas fa-fw fa-sm fa-file-code mr-1"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
+                        <a href="<?= url('admin/taxes?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                         </a>
-                        <button type="button" onclick="window.print();" class="dropdown-item">
-                            <i class="fas fa-fw fa-sm fa-file-pdf mr-1"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
-                        </button>
+                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                        <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
+                    </a>
                     </div>
                 </div>
             </div>
 
             <div class="ml-3">
                 <div class="dropdown">
-                    <button type="button" class="btn <?= count($data->filters->get) ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.filters.header') ?>">
+                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-filter"></i>
                     </button>
 
@@ -40,8 +47,8 @@
                         <div class="dropdown-header d-flex justify-content-between">
                             <span class="h6 m-0"><?= l('global.filters.header') ?></span>
 
-                            <?php if(count($data->filters->get)): ?>
-                                <a href="<?= url('admin/taxes') ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
+                            <?php if($data->filters->has_applied_filters): ?>
+                                <a href="<?= url(\Altum\Router::$original_request) ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
                             <?php endif ?>
                         </div>
 
@@ -58,16 +65,16 @@
                                 <select name="search_by" id="filters_search_by" class="custom-select custom-select-sm">
                                     <option value="name" <?= $data->filters->search_by == 'name' ? 'selected="selected"' : null ?>><?= l('global.name') ?></option>
                                     <option value="description" <?= $data->filters->search_by == 'description' ? 'selected="selected"' : null ?>><?= l('global.description') ?></option>
-                                    <option value="value" <?= $data->filters->search_by == 'value' ? 'selected="selected"' : null ?>><?= l('admin_taxes.main.value') ?></option>
+                                    <option value="value" <?= $data->filters->search_by == 'value' ? 'selected="selected"' : null ?>><?= l('admin_taxes.value') ?></option>
                                 </select>
                             </div>
 
                             <div class="form-group px-4">
-                                <label for="filters_value_type" class="small"><?= l('admin_taxes.main.value_type') ?></label>
+                                <label for="filters_value_type" class="small"><?= l('admin_taxes.value_type') ?></label>
                                 <select name="value_type" id="filters_value_type" class="custom-select custom-select-sm">
                                     <option value=""><?= l('global.all') ?></option>
-                                    <option value="percentage" <?= isset($data->filters->filters['value_type']) && $data->filters->filters['value_type'] == 'percentage' ? 'selected="selected"' : null ?>><?= l('admin_taxes.main.value_type_percentage') ?></option>
-                                    <option value="fixed" <?= isset($data->filters->filters['value_type']) && $data->filters->filters['value_type'] == 'fixed' ? 'selected="selected"' : null ?>><?= l('admin_taxes.main.value_type_fixed') ?></option>
+                                    <option value="percentage" <?= isset($data->filters->filters['value_type']) && $data->filters->filters['value_type'] == 'percentage' ? 'selected="selected"' : null ?>><?= l('admin_taxes.value_type_percentage') ?></option>
+                                    <option value="fixed" <?= isset($data->filters->filters['value_type']) && $data->filters->filters['value_type'] == 'fixed' ? 'selected="selected"' : null ?>><?= l('admin_taxes.value_type_fixed') ?></option>
                                 </select>
                             </div>
 
@@ -75,26 +82,27 @@
                                 <label for="filters_type" class="small"><?= l('global.type') ?></label>
                                 <select name="type" id="filters_type" class="custom-select custom-select-sm">
                                     <option value=""><?= l('global.all') ?></option>
-                                    <option value="inclusive" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'inclusive' ? 'selected="selected"' : null ?>><?= l('admin_taxes.main.type_inclusive') ?></option>
-                                    <option value="exclusive" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'exclusive' ? 'selected="selected"' : null ?>><?= l('admin_taxes.main.type_exclusive') ?></option>
+                                    <option value="inclusive" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'inclusive' ? 'selected="selected"' : null ?>><?= l('admin_taxes.type_inclusive') ?></option>
+                                    <option value="exclusive" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'exclusive' ? 'selected="selected"' : null ?>><?= l('admin_taxes.type_exclusive') ?></option>
                                 </select>
                             </div>
 
                             <div class="form-group px-4">
-                                <label for="filters_billing_type" class="small"><?= l('admin_taxes.main.billing_type') ?></label>
+                                <label for="filters_billing_type" class="small"><?= l('admin_taxes.billing_type') ?></label>
                                 <select name="billing_type" id="filters_billing_type" class="custom-select custom-select-sm">
                                     <option value=""><?= l('global.all') ?></option>
-                                    <option value="personal" <?= isset($data->filters->filters['billing_type']) && $data->filters->filters['billing_type'] == 'personal' ? 'selected="selected"' : null ?>><?= l('admin_taxes.main.billing_type_personal') ?></option>
-                                    <option value="business" <?= isset($data->filters->filters['billing_type']) && $data->filters->filters['billing_type'] == 'business' ? 'selected="selected"' : null ?>><?= l('admin_taxes.main.billing_type_business') ?></option>
+                                    <option value="personal" <?= isset($data->filters->filters['billing_type']) && $data->filters->filters['billing_type'] == 'personal' ? 'selected="selected"' : null ?>><?= l('admin_taxes.billing_type_personal') ?></option>
+                                    <option value="business" <?= isset($data->filters->filters['billing_type']) && $data->filters->filters['billing_type'] == 'business' ? 'selected="selected"' : null ?>><?= l('admin_taxes.billing_type_business') ?></option>
                                 </select>
                             </div>
 
                             <div class="form-group px-4">
                                 <label for="filters_order_by" class="small"><?= l('global.filters.order_by') ?></label>
                                 <select name="order_by" id="filters_order_by" class="custom-select custom-select-sm">
+                                    <option value="tax_id" <?= $data->filters->order_by == 'tax_id' ? 'selected="selected"' : null ?>><?= l('global.id') ?></option>
                                     <option value="datetime" <?= $data->filters->order_by == 'datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_datetime') ?></option>
                                     <option value="name" <?= $data->filters->search_by == 'name' ? 'selected="selected"' : null ?>><?= l('global.name') ?></option>
-                                    <option value="value" <?= $data->filters->search_by == 'value' ? 'selected="selected"' : null ?>><?= l('admin_taxes.main.value') ?></option>
+                                    <option value="value" <?= $data->filters->search_by == 'value' ? 'selected="selected"' : null ?>><?= l('admin_taxes.value') ?></option>
                                 </select>
                             </div>
 
@@ -132,9 +140,9 @@
         <table class="table table-custom">
             <thead>
             <tr>
-                <th><?= l('admin_taxes.table.tax') ?></th>
+                <th><?= l('admin_taxes.tax') ?></th>
                 <th><?= l('global.details') ?></th>
-                <th><?= l('admin_taxes.table.billing_type') ?></th>
+                <th><?= l('admin_taxes.billing_type') ?></th>
                 <th></th>
                 <th></th>
                 <th></th>
@@ -142,22 +150,34 @@
             </thead>
             <tbody>
             <?php foreach($data->taxes as $row): ?>
-                <tr data-tax-id="<?= $row->tax_id ?>">
+                <tr>
                     <td class="text-nowrap">
                         <div class="d-flex flex-column">
-                            <a href="<?= url('admin/tax-update/' . $row->tax_id) ?>"><?= $row->name ?></a>
-                            <small class="text-muted"><?= $row->description ?></small>
+                            <div><a href="<?= url('admin/tax-update/' . $row->tax_id) ?>"><?= $row->name ?></a></div>
+                            <small class="text-muted" data-toggle="tooltip" title="<?= $row->description ?>"><?= string_truncate($row->description, 30) ?></small>
                         </div>
                     </td>
+
                     <td class="text-nowrap">
                         <div class="d-flex flex-column">
-                            <span><?= $row->value_type == 'percentage' ? $row->value . '%' : $row->value . ' ' . settings()->payment->deafult_currency ?></span>
-                            <span class="text-muted"><?= $row->type == 'inclusive' ? l('admin_taxes.main.type_inclusive') : l('admin_taxes.main.type_exclusive') ?></span>
+                            <span class="badge badge-success"><?= $row->value_type == 'percentage' ? $row->value . '%' : $row->value . ' ' . settings()->payment->default_currency ?></span>
+                            <span class="small text-muted"><?= $row->type == 'inclusive' ? l('admin_taxes.type_inclusive') : l('admin_taxes.type_exclusive') ?></span>
                         </div>
                     </td>
+
                     <td class="text-nowrap">
-                        <?= l('admin_taxes.main.billing_type_' . $row->billing_type) ?>
+                        <?php
+                        $class = match($row->billing_type) {
+                            'business' => 'badge-info',
+                            'personal' => 'badge-light',
+                            'both' => 'badge-primary',
+                        }
+                        ?>
+                        <span class="badge <?= $class ?> w-100">
+                            <?= l('admin_taxes.billing_type_' . $row->billing_type) ?>
+                        </span>
                     </td>
+
                     <td class="text-nowrap">
                         <div class="d-flex align-items-center">
                             <a href="<?= url('admin/payments?taxes_ids=' . $row->tax_id) ?>" class="mr-2" data-toggle="tooltip" title="<?= l('admin_payments.menu') ?>">
@@ -165,14 +185,16 @@
                             </a>
                         </div>
                     </td>
+
                     <td class="text-nowrap">
-                        <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>') ?>">
+                        <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
                             <i class="fas fa-fw fa-calendar text-muted"></i>
                         </span>
                     </td>
+
                     <td>
                         <div class="d-flex justify-content-end">
-                            <?= include_view(THEME_PATH . 'views/admin/taxes/admin_tax_dropdown_button.php', ['id' => $row->tax_id]) ?>
+                            <?= include_view(THEME_PATH . 'views/admin/taxes/admin_tax_dropdown_button.php', ['id' => $row->tax_id, 'resource_name' => $row->name]) ?>
                         </div>
                     </td>
                 </tr>
@@ -200,7 +222,7 @@
                     <p class="text-muted"><?= l('admin_taxes.subheader_no_data') ?></p>
 
                     <div>
-                        <a href="<?= url('admin/tax-create') ?>" class="btn btn-primary"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_taxes.create') ?></a>
+                        <a href="<?= url('admin/tax-create') ?>" class="btn btn-primary text-nowrap"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_taxes.create') ?></a>
                     </div>
                 </div>
             </div>

@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -13,6 +20,8 @@ use Altum\Alerts;
 use Altum\Captcha;
 use Altum\Logger;
 
+defined('ALTUMCODE') || die();
+
 class ResendActivation extends Controller {
 
     public function index() {
@@ -20,7 +29,7 @@ class ResendActivation extends Controller {
         \Altum\Authentication::guard('guest');
 
         if(!settings()->users->email_confirmation) {
-            redirect();
+            redirect('not-found');
         }
 
         $redirect = process_and_get_redirect_params() ?? 'dashboard';
@@ -36,7 +45,7 @@ class ResendActivation extends Controller {
 
         if(!empty($_POST)) {
             /* Clean the posted variable */
-            $_POST['email'] = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+            $_POST['email'] = input_clean_email($_POST['email'] ?? '');
             $values['email'] = $_POST['email'];
 
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
@@ -95,7 +104,7 @@ class ResendActivation extends Controller {
             }
         }
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'values'    => $values,
             'captcha'   => $captcha,

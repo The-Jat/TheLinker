@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -13,10 +20,16 @@ use Altum\Models\Domain;
 use Altum\Response;
 use Altum\Traits\Apiable;
 
+defined('ALTUMCODE') || die();
+
 class ApiDomains extends Controller {
     use Apiable;
 
     public function index() {
+
+        if(!settings()->links->domains_is_enabled) {
+            redirect('not-found');
+        }
 
         $this->verify_request();
 
@@ -83,6 +96,7 @@ class ApiDomains extends Controller {
             /* Prepare the data */
             $row = [
                 'id' => (int) $row->domain_id,
+                'user_id' => (int) $row->user_id,
                 'scheme' => $row->scheme,
                 'host' => $row->host,
                 'custom_index_url' => $row->custom_index_url,
@@ -130,6 +144,7 @@ class ApiDomains extends Controller {
         /* Prepare the data */
         $data = [
             'id' => (int) $domain->domain_id,
+            'user_id' => (int) $domain->user_id,
             'scheme' => $domain->scheme,
             'host' => $domain->host,
             'custom_index_url' => $domain->custom_index_url,
@@ -161,15 +176,15 @@ class ApiDomains extends Controller {
             }
         }
 
-        if(in_array($_POST['host'], explode(',', settings()->status_pages->blacklisted_domains))) {
+        if(in_array($_POST['host'], settings()->links->blacklisted_domains)) {
             $this->response_error(l('link.error_message.blacklisted_domain'), 401);
         }
 
-        if(!empty($_POST['custom_index_url']) && in_array(get_domain_from_url($_POST['custom_index_url']), explode(',', settings()->status_pages->blacklisted_domains))) {
+        if(!empty($_POST['custom_index_url']) && in_array(get_domain_from_url($_POST['custom_index_url']), settings()->links->blacklisted_domains)) {
             $this->response_error(l('link.error_message.blacklisted_domain'), 401);
         }
 
-        if(!empty($_POST['custom_not_found_url']) && in_array(get_domain_from_url($_POST['custom_not_found_url']), explode(',', settings()->status_pages->blacklisted_domains))) {
+        if(!empty($_POST['custom_not_found_url']) && in_array(get_domain_from_url($_POST['custom_not_found_url']), settings()->links->blacklisted_domains)) {
             $this->response_error(l('link.error_message.blacklisted_domain'), 401);
         }
 
@@ -178,12 +193,13 @@ class ApiDomains extends Controller {
         }
 
         $_POST['scheme'] = isset($_POST['scheme']) && in_array($_POST['scheme'], ['http://', 'https://']) ? $_POST['scheme'] : 'https://';
-        $_POST['host'] = mb_strtolower(trim($_POST['host'] ?? null));
-        $_POST['custom_index_url'] = trim(filter_var($_POST['custom_index_url'] ?? null, FILTER_SANITIZE_URL));
-        $_POST['custom_not_found_url'] = trim(filter_var($_POST['custom_not_found_url'] ?? null, FILTER_SANITIZE_URL));
+        $_POST['host'] = str_replace(' ', '', mb_strtolower(input_clean($_POST['host'] ?? '', 128)));
+        $_POST['host'] = string_starts_with('http://', $_POST['host']) || string_starts_with('https://', $_POST['host']) ? parse_url($_POST['host'], PHP_URL_HOST) : $_POST['host'];
+        $_POST['custom_index_url'] = get_url($_POST['custom_index_url'] ?? null, 256);
+        $_POST['custom_not_found_url'] = get_url($_POST['custom_not_found_url'] ?? null, 256);
         $type = 0;
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         $domain_id = db()->insert('domains', [
             'user_id' => $this->api_user->user_id,
             'scheme' => $_POST['scheme'],
@@ -191,12 +207,14 @@ class ApiDomains extends Controller {
             'custom_index_url' => $_POST['custom_index_url'],
             'custom_not_found_url' => $_POST['custom_not_found_url'],
             'type' => $type,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItems(['domains?user_id=' . $this->api_user->user_id, 'domains_total?user_id=' . $this->api_user->user_id]);
-        \Altum\Cache::$adapter->deleteItemsByTag('domains?user_id=' . $this->api_user->user_id);
+        cache()->deleteItems([
+            'domains?user_id=' . $this->api_user->user_id,
+            'domains_total?user_id=' . $this->api_user->user_id
+        ]);
 
         /* Send notification to admin if needed */
         if(settings()->email_notifications->new_domain && !empty(settings()->email_notifications->emails)) {
@@ -218,16 +236,25 @@ class ApiDomains extends Controller {
 
         /* Send webhook notification if needed */
         if(settings()->webhooks->domain_new) {
-            \Unirest\Request::post(settings()->webhooks->domain_new, [], [
+            fire_and_forget('post', settings()->webhooks->domain_new, [
                 'user_id' => $this->api_user->user_id,
                 'domain_id' => $domain_id,
                 'host' => $_POST['host'],
+                'datetime' => get_date(),
             ]);
         }
 
         /* Prepare the data */
         $data = [
-            'id' => $domain_id
+            'id' => $domain_id,
+            'user_id' => (int) $this->api_user->user_id,
+            'scheme' => $_POST['scheme'],
+            'host' => $_POST['host'],
+            'custom_index_url' => $_POST['custom_index_url'],
+            'custom_not_found_url' => $_POST['custom_not_found_url'],
+            'is_enabled' => false,
+            'last_datetime' => null,
+            'datetime' => get_date(),
         ];
 
         Response::jsonapi_success($data, null, 201);
@@ -246,15 +273,15 @@ class ApiDomains extends Controller {
             $this->return_404();
         }
 
-        if(in_array($_POST['host'], explode(',', settings()->status_pages->blacklisted_domains))) {
+        if(in_array($_POST['host'], settings()->links->blacklisted_domains)) {
             $this->response_error(l('link.error_message.blacklisted_domain'), 401);
         }
 
-        if(!empty($_POST['custom_index_url']) && in_array(get_domain_from_url($_POST['custom_index_url']), explode(',', settings()->status_pages->blacklisted_domains))) {
+        if(!empty($_POST['custom_index_url']) && in_array(get_domain_from_url($_POST['custom_index_url']), settings()->links->blacklisted_domains)) {
             $this->response_error(l('link.error_message.blacklisted_domain'), 401);
         }
 
-        if(!empty($_POST['custom_not_found_url']) && in_array(get_domain_from_url($_POST['custom_not_found_url']), explode(',', settings()->status_pages->blacklisted_domains))) {
+        if(!empty($_POST['custom_not_found_url']) && in_array(get_domain_from_url($_POST['custom_not_found_url']), settings()->links->blacklisted_domains)) {
             $this->response_error(l('link.error_message.blacklisted_domain'), 401);
         }
 
@@ -263,9 +290,10 @@ class ApiDomains extends Controller {
         }
 
         $_POST['scheme'] = isset($_POST['scheme']) && in_array($_POST['scheme'], ['http://', 'https://']) ? $_POST['scheme'] : $domain->scheme;
-        $_POST['host'] = mb_strtolower(trim($_POST['host'] ?? null));
-        $_POST['custom_index_url'] = trim(filter_var($_POST['custom_index_url'] ?? $domain->custom_index_url, FILTER_SANITIZE_URL));
-        $_POST['custom_not_found_url'] = trim(filter_var($_POST['custom_not_found_url'] ?? $domain->custom_not_found_url, FILTER_SANITIZE_URL));
+        $_POST['host'] = str_replace(' ', '', mb_strtolower(input_clean($_POST['host'] ?? $domain->host, 128)));
+        $_POST['host'] = string_starts_with('http://', $_POST['host']) || string_starts_with('https://', $_POST['host']) ? parse_url($_POST['host'], PHP_URL_HOST) : $_POST['host'];
+        $_POST['custom_index_url'] = get_url($_POST['custom_index_url'] ?? $domain->custom_index_url, 256);
+        $_POST['custom_not_found_url'] = get_url($_POST['custom_not_found_url'] ?? $domain->custom_not_found_url, 256);
         $is_enabled = $domain->is_enabled;
 
         /* Set the domain to pending if domain has changed */
@@ -280,12 +308,15 @@ class ApiDomains extends Controller {
             'custom_index_url' => $_POST['custom_index_url'],
             'custom_not_found_url' => $_POST['custom_not_found_url'],
             'is_enabled' => $is_enabled,
-            'last_datetime' => \Altum\Date::$date,
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('domains?user_id=' . $domain->user_id);
-        \Altum\Cache::$adapter->deleteItemsByTag('domain_id=' . $domain->domain_id);
+        cache()->deleteItems([
+            'domains?user_id=' . $domain->user_id,
+            'domain?domain_id=' . $domain->domain_id,
+            'domain?host=' . md5($domain->host)
+        ]);
 
         /* Send notification to admin if needed */
         if(!$domain->host != $_POST['host'] && settings()->email_notifications->new_domain && !empty(settings()->email_notifications->emails)) {
@@ -307,17 +338,26 @@ class ApiDomains extends Controller {
 
         /* Send webhook notification if needed */
         if($domain->host != $_POST['host'] && settings()->webhooks->domain_update) {
-            \Unirest\Request::post(settings()->webhooks->domain_update, [], [
+            fire_and_forget('post', settings()->webhooks->domain_update, [
                 'user_id' => $this->api_user->user_id,
                 'domain_id' => $domain->domain_id,
                 'old_host' => $domain->host,
                 'new_host' => $_POST['host'],
+                'datetime' => get_date(),
             ]);
         }
 
         /* Prepare the data */
         $data = [
-            'id' => $domain->domain_id
+            'id' => $domain->domain_id,
+            'user_id' => (int) $this->api_user->user_id,
+            'scheme' => $_POST['scheme'],
+            'host' => $_POST['host'],
+            'custom_index_url' => $_POST['custom_index_url'],
+            'custom_not_found_url' => $_POST['custom_not_found_url'],
+            'is_enabled' => $is_enabled,
+            'last_datetime' => get_date(),
+            'datetime' => $domain->datetime,
         ];
 
         Response::jsonapi_success($data, null, 200);

@@ -1,26 +1,35 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
-namespace Altum\controllers;
+namespace Altum\Controllers;
 
 
 use Altum\Response;
+
+defined('ALTUMCODE') || die();
 
 class InternalNotifications extends Controller {
 
     public function index() {
 
-        \Altum\Authentication::guard();
-
         if(!settings()->internal_notifications->users_is_enabled) {
-            redirect();
+            redirect('not-found');
         }
+
+        \Altum\Authentication::guard();
 
         /* Prepare the filtering system */
         $filters = (new \Altum\Filters([], [], ['datetime']));
@@ -29,7 +38,7 @@ class InternalNotifications extends Controller {
 
         /* Prepare the paginator */
         $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `internal_notifications` WHERE (`user_id` = {$this->user->user_id} OR `user_id` IS NULL) AND `for_who` = 'user' {$filters->get_sql_where()}")->fetch_object()->total ?? 0;
-        $paginator = (new \Altum\Paginator($total_rows, $filters->get_results_per_page(), $_GET['page'] ?? 1, url('internal_notifications?' . $filters->get_get() . '&page=%d')));
+        $paginator = (new \Altum\Paginator($total_rows, $filters->get_results_per_page(), $_GET['page'] ?? 1, url('internal-notifications?' . $filters->get_get() . '&page=%d')));
 
         /* Get the internal_notifications list for the user */
         $internal_notifications = [];
@@ -37,13 +46,13 @@ class InternalNotifications extends Controller {
         while($row = $internal_notifications_result->fetch_object()) $internal_notifications[] = $row;
 
         /* Export handler */
-        process_export_json($internal_notifications, 'include', ['internal_notification_id', 'user_id', 'for_who', 'from_who', 'icon', 'title', 'description', 'url', 'is_read', 'datetime', 'read_datetime',]);
-        process_export_csv($internal_notifications, 'include', ['internal_notification_id', 'user_id', 'for_who', 'from_who', 'icon', 'title', 'description', 'url', 'is_read', 'datetime', 'read_datetime',]);
+        process_export_json($internal_notifications, ['internal_notification_id', 'user_id', 'for_who', 'from_who', 'icon', 'title', 'description', 'url', 'is_read', 'datetime', 'read_datetime',]);
+        process_export_csv($internal_notifications, ['internal_notification_id', 'user_id', 'for_who', 'from_who', 'icon', 'title', 'description', 'url', 'is_read', 'datetime', 'read_datetime',]);
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/pagination', (array) $this))->run(['paginator' => $paginator]);
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'internal_notifications' => $internal_notifications,
             'total_internal_notifications' => $total_rows,
@@ -71,7 +80,7 @@ class InternalNotifications extends Controller {
             case 'user':
 
                 if(!settings()->internal_notifications->users_is_enabled) {
-                    redirect();
+                    redirect('not-found');
                 }
 
                 $internal_notifications = db()->where('for_who', 'user')->where('(`user_id` = ? OR `user_id` IS NULL)', [$this->user->user_id])->orderBy('internal_notification_id', 'DESC')->get('internal_notifications', 3);
@@ -85,7 +94,7 @@ class InternalNotifications extends Controller {
                 if($should_set_all_read) {
                     db()->where('for_who', 'user')->where('(`user_id` = ? OR `user_id` IS NULL)', [$this->user->user_id])->update('internal_notifications', [
                         'is_read' => 1,
-                        'read_datetime' => \Altum\Date::$date,
+                        'read_datetime' => get_date(),
                     ]);
 
                     db()->where('user_id', $this->user->user_id)->update('users', [
@@ -93,7 +102,7 @@ class InternalNotifications extends Controller {
                     ]);
 
                     /* Clear the cache */
-                    \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $this->user->user_id);
+                    cache()->deleteItemsByTag('user_id=' . $this->user->user_id);
                 }
 
                 Response::json('', 'success', ['internal_notifications' => $internal_notifications]);
@@ -103,7 +112,7 @@ class InternalNotifications extends Controller {
             case 'admin':
 
                 if(!settings()->internal_notifications->admins_is_enabled) {
-                    redirect();
+                    redirect('not-found');
                 }
 
                 /* :) */

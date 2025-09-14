@@ -18,7 +18,7 @@ alter table links modify location_url varchar(2048) collate utf8mb4_unicode_ci n
 
 -- SEPARATOR --
 
-UPDATE `settings` SET `value` = '{"email_confirmation":true,"register_is_enabled":true,"auto_delete_inactive_users":0,"user_deletion_reminder":0,"blacklisted_domains":""}' WHERE `key` = 'users';
+UPDATE `settings` SET `value` = '{"email_confirmation":true,"register_is_enabled":true,"auto_delete_inactive_users":0,"user_deletion_reminder":0,"blacklisted_domains":[]}' WHERE `key` = 'users';
 
 -- SEPARATOR --
 

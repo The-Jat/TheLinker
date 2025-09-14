@@ -1,13 +1,95 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
+defined('ALTUMCODE') || die();
+
 return [
+    'aliexpress' => [
+        'name' => 'AliExpress',
+        'icon' => 'fas fa-shopping-cart',
+        'color' => '#ff4747',
+
+        'display_formats' => [
+            'aliexpress.com/item/{item_id}.html',
+        ],
+
+        'formats' => [
+            'aliexpress.com/item/%s.html' => [
+                'regex' => 'aliexpress\.com\/item\/([0-9]+)\.html',
+                'iOS' => 'aliexpress://product/detail?productId=%s',
+                'Android' => 'intent://www.aliexpress.com/item/%s.html?/#Intent;package=com.alibaba.aliexpresshd;scheme=https;end',
+            ],
+        ],
+    ],
+
+    'tiktok' => [
+        'name' => 'TikTok',
+        'icon' => 'fab fa-tiktok',
+        'color' => '#fc295d',
+
+        'display_formats' => [
+            'tiktok.com/@{username}/video/{video_id}',
+            'tiktok.com/@{username}/photo/{video_id}',
+        ],
+
+        'formats' => [
+            'tiktok.com/@%s' => [
+                'regex' => 'tiktok\.com\/@[a-zA-Z0-9_]+\/(?:video|photo)\/([0-9]+)',
+                'iOS' => 'intent://aweme/detail/%s#Intent;package=com.zhiliaoapp.musically;scheme=snssdk1233;end',
+                'Android' => 'intent://aweme/detail/%s#Intent;package=com.zhiliaoapp.musically;scheme=snssdk1233;end',
+            ],
+        ],
+    ],
+
+    'reddit' => [
+        'name' => 'Reddit',
+        'icon' => 'fab fa-reddit',
+        'color' => '#fc3a06',
+
+        'display_formats' => [
+            'reddit.com/r/{subreddit}',
+        ],
+
+        'formats' => [
+            'reddit.com/r/%s' => [
+                'regex' => 'reddit\.com\/r\/([a-zA-Z0-9_]+)',
+                'iOS' => 'reddit://reddit.com/r/%s',
+                'Android' => 'intent://reddit.com/r/%s#Intent;package=com.reddit.frontpage;scheme=https;end',
+            ],
+        ],
+    ],
+
+    'x' => [
+        'name' => 'X',
+        'icon' => 'fab fa-x-twitter',
+        'color' => '#1da1f2',
+
+        'display_formats' => [
+            'x.com/{username}',
+        ],
+
+        'formats' => [
+            'x.com/%s' => [
+                'regex' => 'x\.com\/([a-zA-Z0-9_]+)',
+                'iOS' => 'twitter://user?screen_name=%s',
+                'Android' => 'intent://twitter.com/%s#Intent;package=com.twitter.android;scheme=https;end',
+            ],
+        ],
+    ],
+
     'youtube' => [
         'name' => 'YouTube',
         'icon' => 'fab fa-youtube',
@@ -107,7 +189,7 @@ return [
     'snapchat' => [
         'name' => 'Snapchat',
         'icon' => 'fab fa-snapchat',
-        'color' => '#000000',
+        'color' => '#FFB700',
 
         'display_formats' => [
             'snapchat.com/add/{username}',
@@ -136,6 +218,24 @@ return [
                 'regex' => 'messenger\.com\/t\/(.+)',
                 'iOS' => 'fb-messenger-public://user-thread/%s',
                 'Android' => 'intent://user/%s/#Intent;scheme=fb-messenger;package=com.facebook.orca;end',
+            ],
+        ],
+    ],
+
+    'facebook' => [
+        'name' => 'Facebook',
+        'icon' => 'fab fa-facebook',
+        'color' => '#1877f2',
+
+        'display_formats' => [
+            'www.facebook.com/{page}',
+        ],
+
+        'formats' => [
+            'www.facebook.com/%s' => [
+                'regex' => 'facebook\.com\/(.+)',
+                'iOS' => 'https://www.facebook.com/%s',
+                'Android' => 'intent://%s#Intent;package=com.facebook.katana;scheme=https;end',
             ],
         ],
     ],
@@ -211,6 +311,36 @@ return [
         ],
     ],
 
+    'applemusic' => [
+        'name' => 'Apple Music',
+        'icon' => 'fab fa-apple',
+        'color' => '#f8506b',
+
+        'display_formats' => [
+            'music.apple.com/{language_code}/album/{id}',
+            'music.apple.com/{language_code}/playlist/{id}',
+            'music.apple.com/{language_code}/artist/{id}',
+        ],
+
+        'formats' => [
+            'music.apple.com/%s/album/%s' => [
+                'regex'   => 'music\.apple\.com\/(.*)\/album\/(.+)',
+                'iOS'     => 'music://album/%2$s',
+                'Android' => 'intent://music.apple.com/%s/album/%s#Intent;package=com.apple.android.music;scheme=https;end',
+            ],
+            'music.apple.com/%s/playlist/%s' => [
+                'regex'   => 'music\.apple\.com\/(.*)\/playlist\/(.+)',
+                'iOS'     => 'music://playlist/%2$s',
+                'Android' => 'intent://music.apple.com/%s/playlist/%s#Intent;package=com.apple.android.music;scheme=https;end',
+            ],
+            'music.apple.com/%s/artist/%s' => [
+                'regex'   => 'music\.apple\.com\/(.*)\/artist\/(.+)',
+                'iOS'     => 'music://artist/%2$s',
+                'Android' => 'intent://music.apple.com/%s/artist/%s#Intent;package=com.apple.android.music;scheme=https;end',
+            ],
+        ],
+    ],
+
     'linkedin' => [
         'name' => 'LinkedIn',
         'icon' => 'fab fa-linkedin',
@@ -269,7 +399,7 @@ return [
         ],
 
         'formats' => [
-            'twitch.com/%s' => [
+            'twitch.tv/%s' => [
                 'regex' => 'twitch\.tv\/(.+)',
                 'iOS' => 'twitch://stream/%s',
                 'Android' => 'twitch://stream/%s',
@@ -313,6 +443,42 @@ return [
         ],
     ],
 
+    'google_docs' => [
+        'name' => 'Google Docs',
+        'icon' => 'fas fa-file-word',
+        'color' => '#2a7efc',
+
+        'display_formats' => [
+            'docs.google.com/document/{id}',
+        ],
+
+        'formats' => [
+            'docs.google.com/document/%s' => [
+                'regex' => 'docs\.google\.com\/document\/(.+)',
+                'iOS' => 'googledocs://docs.google.com/document/%s',
+                'Android' => 'intent://docs.google.com/document/%s#Intent;package=com.google.android.apps.docs.editors.docs;scheme=https;end',
+            ],
+        ],
+    ],
+
+    'google_slides' => [
+        'name' => 'Google Slides',
+        'icon' => 'fas fa-image',
+        'color' => '#fabe0b',
+
+        'display_formats' => [
+            'docs.google.com/presentation/{id}',
+        ],
+
+        'formats' => [
+            'docs.google.com/presentation/%s' => [
+                'regex' => 'docs\.google\.com\/presentation\/(.+)',
+                'iOS' => 'googleslides://docs.google.com/presentation/%s',
+                'Android' => 'intent://docs.google.com/presentation/%s#Intent;package=com.google.android.apps.docs.editors.slides;scheme=https;end',
+            ],
+        ],
+    ],
+
     'google_maps' => [
         'name' => 'Google Maps',
         'icon' => 'fas fa-map-location-dot',
@@ -345,6 +511,198 @@ return [
                 'regex' => 'airbnb\.com\/rooms\/(.+)',
                 'iOS' => 'airbnb://rooms/%s',
                 'Android' => 'intent://www.airbnb.com/rooms/%s#Intent;package=com.airbnb.android;scheme=https;end',
+            ],
+        ],
+    ],
+
+    'tripadvisor' => [
+        'name' => 'TripAdvisor',
+        'icon' => 'fas fa-plane',
+        'color' => '#00AF87',
+
+        'display_formats' => [
+            'tripadvisor.com/{location}',
+        ],
+
+        'formats' => [
+            'tripadvisor.com/%s' => [
+                'regex' => 'tripadvisor\.com\/(.+)',
+                'iOS' => 'tripadvisor://www.tripadvisor.com/%s',
+                'Android' => 'intent://www.tripadvisor.com/%s#Intent;package=com.tripadvisor.tripadvisor;scheme=https;end',
+            ],
+        ],
+    ],
+
+    'amazon' => [
+        'name' => 'Amazon',
+        'icon' => 'fab fa-amazon',
+        'color' => '#ff9900',
+
+        'display_formats' => [
+            'amazon.com/{product}',
+            'amazon.co.uk/{product}',
+            'amazon.de/{product}',
+            'amazon.fr/{product}',
+            'amazon.es/{product}',
+            'amazon.it/{product}',
+            'amazon.nl/{product}',
+            'amazon.co.jp/{product}',
+            'amazon.in/{product}',
+            'amazon.com.br/{product}',
+            'amazon.com.mx/{product}',
+            'amazon.com.au/{product}',
+            'amazon.sg/{product}',
+            'amazon.ae/{product}',
+            'amazon.sa/{product}',
+            'amazon.se/{product}',
+            'amazon.pl/{product}',
+            'amazon.be/{product}',
+            'amazon.com.tr/{product}',
+            'amazon.cn/{product}',
+            'amazon.eg/{product}',
+        ],
+
+        'formats' => [
+            'amazon.com/%s' => [
+                'regex' => 'amazon\.com\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.com/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.co.uk/%s' => [
+                'regex' => 'amazon\.co\.uk\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.co.uk/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.de/%s' => [
+                'regex' => 'amazon\.de\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.de/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.fr/%s' => [
+                'regex' => 'amazon\.fr\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.fr/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.es/%s' => [
+                'regex' => 'amazon\.es\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.es/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.it/%s' => [
+                'regex' => 'amazon\.it\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.it/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.nl/%s' => [
+                'regex' => 'amazon\.nl\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.nl/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.co.jp/%s' => [
+                'regex' => 'amazon\.co\.jp\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.co.jp/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.in/%s' => [
+                'regex' => 'amazon\.in\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.in/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.com.br/%s' => [
+                'regex' => 'amazon\.com\.br\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.com.br/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.com.mx/%s' => [
+                'regex' => 'amazon\.com\.mx\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.com.mx/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.com.au/%s' => [
+                'regex' => 'amazon\.com\.au\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.com.au/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.sg/%s' => [
+                'regex' => 'amazon\.sg\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.sg/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.ae/%s' => [
+                'regex' => 'amazon\.ae\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.ae/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.sa/%s' => [
+                'regex' => 'amazon\.sa\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.sa/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.se/%s' => [
+                'regex' => 'amazon\.se\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.se/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.pl/%s' => [
+                'regex' => 'amazon\.pl\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.pl/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.be/%s' => [
+                'regex' => 'amazon\.be\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.be/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.com.tr/%s' => [
+                'regex' => 'amazon\.com\.tr\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.com.tr/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.cn/%s' => [
+                'regex' => 'amazon\.cn\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.cn/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+            'amazon.eg/%s' => [
+                'regex' => 'amazon\.eg\/(.+)',
+                'iOS' => 'com.amazon.mobile.shopping.web://amazon.eg/%s',
+                'Android' => 'com.amazon.mobile.shopping.web://%s',
+            ],
+        ],
+    ],
+
+    'stockx' => [
+        'name' => 'StockX',
+        'icon' => 'fab fa-mixer',
+        'color' => '#00AF87',
+
+        'display_formats' => [
+            'stockx.com/{product}',
+        ],
+
+        'formats' => [
+            'stockx.com/%s' => [
+                'regex' => 'stockx\.com\/(.+)',
+                'iOS' => 'stockx://stockx.com/%s',
+                'Android' => 'intent://stockx.com/%s/#Intent;package=com.stockx.stockx;scheme=https;end',
+            ],
+        ],
+    ],
+
+    'booking' => [
+        'name' => 'Booking.com',
+        'icon' => 'fas fa-hotel',
+        'color' => '#003580',
+
+        'display_formats' => [
+            'booking.com/hotel/{id}',
+        ],
+
+        'formats' => [
+            'booking.com/hotel/%s' => [
+                'regex' => 'booking\.com\/hotel\/(.+)',
+                'iOS' => 'https://www.booking.com/hotel/%s',
+                'Android' => 'intent://www.booking.com/hotel/%s#Intent;package=com.booking;scheme=https;end',
             ],
         ],
     ],

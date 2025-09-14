@@ -3,6 +3,7 @@
 <?php ob_start() ?>
 <script>
     'use strict';
+    
     /* PWA */
     <?php if(\Altum\Plugin::is_active('pwa') && settings()->pwa->is_enabled): ?>
     if('setAppBadge' in navigator) {
@@ -92,10 +93,12 @@
                 `;
             } else {
                 notifications_html = `
-                <div class="d-flex flex-column align-items-center justify-content-center py-2">
-                    <img src="<?= ASSETS_FULL_URL . 'images/no_rows.svg' ?>" class="col-10 col-md-7 col-lg-4 mb-3" alt="<?= l('global.no_data') ?>" />
-                    <h3 class="h5 text-muted"><?= l('internal_notifications.no_data') ?></h3>
-                </div>
+                <?= include_view(THEME_PATH . 'views/partials/no_data.php', [
+                    'filters_get' => $data->filters->get ?? [],
+                    'name' => 'internal_notifications',
+                    'has_secondary_text' => false,
+                    'has_wrapper' => false,
+                ]); ?>
                 `;
             }
 

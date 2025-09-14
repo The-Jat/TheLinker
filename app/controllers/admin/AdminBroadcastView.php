@@ -1,15 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+
+defined('ALTUMCODE') || die();
 
 class AdminBroadcastView extends Controller {
 
@@ -21,27 +30,24 @@ class AdminBroadcastView extends Controller {
             redirect('admin/broadcasts');
         }
 
-        if($broadcast->status == 'processing') {
-            Alerts::add_error(l('admin_broadcast_update.error_message.processing'));
-            redirect('admin/broadcasts');
-        }
-
         $broadcast->users_ids = implode(',', json_decode($broadcast->users_ids));
 
-        $datetime = \Altum\Date::get_start_end_dates_new();
+        $start_date = (new \DateTime($_GET['start_date'] ?? $broadcast->datetime))->format('Y-m-d');
+        $datetime = \Altum\Date::get_start_end_dates_new($start_date);
 
         /* Get statistics */
         $statistics_chart = [];
+        $convert_tz_sql = get_convert_tz_sql('`datetime`', $this->user->timezone);
         $result = database()->query("
             SELECT 
                 `type`,
                 COUNT(*) AS `total`,
-                DATE_FORMAT(`datetime`, '{$datetime['query_date_format']}') AS `formatted_date`
+                DATE_FORMAT({$convert_tz_sql}, '{$datetime['query_date_format']}') AS `formatted_date`
             FROM 
                 `broadcasts_statistics`
             WHERE 
                 `broadcast_id` = {$broadcast->broadcast_id} 
-              AND `datetime` BETWEEN '{$datetime['query_start_date']}' 
+              AND {$convert_tz_sql} BETWEEN '{$datetime['query_start_date']}' 
               AND '{$datetime['query_end_date']}' 
             GROUP BY 
                 `formatted_date`,
@@ -49,7 +55,7 @@ class AdminBroadcastView extends Controller {
         ");
 
         while($row = $result->fetch_object()) {
-            $row->formatted_date = $datetime['process']($row->formatted_date);
+            $row->formatted_date = $datetime['process']($row->formatted_date, true);
 
             $statistics_chart[$row->formatted_date] =
                 isset($statistics_chart[$row->formatted_date]) ?
@@ -69,7 +75,7 @@ class AdminBroadcastView extends Controller {
         $users = [];
         $users_result = database()->query("
             SELECT
-                `users`.`name`, `users`.`email`, `broadcasts_statistics`.`datetime`
+                `users`.`user_id`, `users`.`name`, `users`.`email`, `users`.`avatar`, `broadcasts_statistics`.`datetime`
             FROM
                 `broadcasts_statistics`
             LEFT JOIN

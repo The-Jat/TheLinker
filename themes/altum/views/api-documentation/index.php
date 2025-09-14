@@ -2,13 +2,13 @@
 
 <div class="container">
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li class="active" aria-current="page"><?= l('api_documentation.breadcrumb') ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li class="active" aria-current="page"><?= l('api_documentation.breadcrumb') ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
     <h1 class="h4"><?= l('api_documentation.header') ?></h1>
     <p class="text-muted"><?= l('api_documentation.subheader') ?></p>
@@ -16,7 +16,7 @@
     <div class="card mb-5">
         <div class="card-body">
             <div class="mb-5">
-                <?php if(\Altum\Authentication::check()): ?>
+                <?php if(is_logged_in()): ?>
                     <div class="form-group">
                         <label for="api_key"><?= l('api_documentation.api_key') ?></label>
                         <input type="text" id="api_key" value="<?= $this->user->api_key ?>" class="form-control" onclick="this.select();" readonly="readonly" />
@@ -44,15 +44,19 @@
                     <div class="card-body">
                         curl --request GET \<br />
                         --url '<?= SITE_URL . 'api/' ?><span class="text-primary">{endpoint}</span>' \<br />
-                        --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \
+                        --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \
                     </div>
                 </div>
+            </div>
+
+            <div class="alert alert-light">
+                <i class="fas fa-fw fa-sm fa-info-circle mr-1"></i> <?= sprintf(l('api_documentation.timezone_info'), \Altum\Date::$default_timezone) ?>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+        <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
             <div class="card d-flex flex-row h-100 overflow-hidden">
                 <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                     <a href="<?= url('api-documentation/user') ?>" class="stretched-link">
@@ -60,13 +64,13 @@
                     </a>
                 </div>
 
-                <div class="card-body">
+                <div class="card-body d-flex align-items-center">
                     <?= l('api_documentation.user') ?>
                 </div>
             </div>
         </div>
 
-        <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+        <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
             <div class="card d-flex flex-row h-100 overflow-hidden">
                 <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                     <a href="<?= url('api-documentation/links') ?>" class="stretched-link">
@@ -74,13 +78,13 @@
                     </a>
                 </div>
 
-                <div class="card-body">
+                <div class="card-body d-flex align-items-center">
                     <?= l('api_documentation.links') ?>
                 </div>
             </div>
         </div>
 
-        <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+        <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
             <div class="card d-flex flex-row h-100 overflow-hidden">
                 <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                     <a href="<?= url('api-documentation/statistics') ?>" class="stretched-link">
@@ -88,13 +92,14 @@
                     </a>
                 </div>
 
-                <div class="card-body">
+                <div class="card-body d-flex align-items-center">
                     <?= l('api_documentation.statistics') ?>
                 </div>
             </div>
         </div>
 
-        <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+        <?php if(settings()->links->projects_is_enabled): ?>
+        <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
             <div class="card d-flex flex-row h-100 overflow-hidden">
                 <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                     <a href="<?= url('api-documentation/projects') ?>" class="stretched-link">
@@ -102,28 +107,31 @@
                     </a>
                 </div>
 
-                <div class="card-body">
-                    <?= l('api_documentation.projects') ?>
+                <div class="card-body d-flex align-items-center">
+                    <?= l('projects.title') ?>
                 </div>
             </div>
         </div>
+        <?php endif ?>
 
-        <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
-            <div class="card d-flex flex-row h-100 overflow-hidden">
-                <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
-                    <a href="<?= url('api-documentation/pixels') ?>" class="stretched-link">
-                        <i class="fas fa-fw fa-adjust text-primary-600"></i>
-                    </a>
-                </div>
+        <?php if(settings()->links->pixels_is_enabled): ?>
+            <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
+                <div class="card d-flex flex-row h-100 overflow-hidden">
+                    <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
+                        <a href="<?= url('api-documentation/pixels') ?>" class="stretched-link">
+                            <i class="fas fa-fw fa-adjust text-primary-600"></i>
+                        </a>
+                    </div>
 
-                <div class="card-body">
-                    <?= l('api_documentation.pixels') ?>
+                    <div class="card-body">
+                        <?= l('pixels.title') ?>
+                    </div>
                 </div>
             </div>
-        </div>
+        <?php endif ?>
 
         <?php if(settings()->links->splash_page_is_enabled): ?>
-            <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+            <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
                 <div class="card d-flex flex-row h-100 overflow-hidden">
                     <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                         <a href="<?= url('api-documentation/splash-pages') ?>" class="stretched-link">
@@ -132,14 +140,14 @@
                     </div>
 
                     <div class="card-body">
-                        <?= l('api_documentation.splash_pages') ?>
+                        <?= l('splash_pages.title') ?>
                     </div>
                 </div>
             </div>
         <?php endif ?>
 
-        <?php if(settings()->links->qr_codes_is_enabled): ?>
-            <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+        <?php if(settings()->codes->qr_codes_is_enabled): ?>
+            <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
                 <div class="card d-flex flex-row h-100 overflow-hidden">
                     <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                         <a href="<?= url('api-documentation/qr-codes') ?>" class="stretched-link">
@@ -148,14 +156,14 @@
                     </div>
 
                     <div class="card-body">
-                        <?= l('api_documentation.qr_codes') ?>
+                        <?= l('qr_codes.title') ?>
                     </div>
                 </div>
             </div>
         <?php endif ?>
 
         <?php if(\Altum\Plugin::is_active('email-signatures') && settings()->signatures->is_enabled): ?>
-            <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+            <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
                 <div class="card d-flex flex-row h-100 overflow-hidden">
                     <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                         <a href="<?= url('api-documentation/signatures') ?>" class="stretched-link">
@@ -164,13 +172,13 @@
                     </div>
 
                     <div class="card-body">
-                        <?= l('api_documentation.signatures') ?>
+                        <?= l('signatures.title') ?>
                     </div>
                 </div>
             </div>
         <?php endif ?>
 
-        <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+        <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
             <div class="card d-flex flex-row h-100 overflow-hidden">
                 <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                     <a href="<?= url('api-documentation/data') ?>" class="stretched-link">
@@ -178,14 +186,30 @@
                     </a>
                 </div>
 
-                <div class="card-body">
-                    <?= l('api_documentation.data') ?>
+                <div class="card-body d-flex align-items-center">
+                    <?= l('data.title') ?>
                 </div>
             </div>
         </div>
 
+        <?php if(settings()->links->biolinks_is_enabled || settings()->links->shortener_is_enabled || settings()->links->files_is_enabled || settings()->links->vcards_is_enabled || settings()->links->events_is_enabled || settings()->links->static_is_enabled): ?>
+        <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
+            <div class="card d-flex flex-row h-100 overflow-hidden">
+                <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
+                    <a href="<?= url('api-documentation/notification-handlers') ?>" class="stretched-link">
+                        <i class="fas fa-fw fa-bell text-primary-600"></i>
+                    </a>
+                </div>
+
+                <div class="card-body d-flex align-items-center">
+                    <?= l('api_documentation.notification_handlers') ?>
+                </div>
+            </div>
+        </div>
+        <?php endif ?>
+
         <?php if(settings()->links->domains_is_enabled): ?>
-            <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+            <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
                 <div class="card d-flex flex-row h-100 overflow-hidden">
                     <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                         <a href="<?= url('api-documentation/domains') ?>" class="stretched-link">
@@ -194,14 +218,14 @@
                     </div>
 
                     <div class="card-body">
-                        <?= l('api_documentation.domains') ?>
+                        <?= l('domains.title') ?>
                     </div>
                 </div>
             </div>
         <?php endif ?>
 
         <?php if(\Altum\Plugin::is_active('teams')): ?>
-            <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+            <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
                 <div class="card d-flex flex-row h-100 overflow-hidden">
                     <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                         <a href="<?= url('api-documentation/teams') ?>" class="stretched-link">
@@ -210,12 +234,12 @@
                     </div>
 
                     <div class="card-body">
-                        <?= l('api_documentation.teams') ?>
+                        <?= l('teams.title') ?>
                     </div>
                 </div>
             </div>
 
-            <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+            <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
                 <div class="card d-flex flex-row h-100 overflow-hidden">
                     <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                         <a href="<?= url('api-documentation/team-members') ?>" class="stretched-link">
@@ -229,7 +253,7 @@
                 </div>
             </div>
 
-            <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+            <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
                 <div class="card d-flex flex-row h-100 overflow-hidden">
                     <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                         <a href="<?= url('api-documentation/teams-member') ?>" class="stretched-link">
@@ -244,7 +268,7 @@
             </div>
         <?php endif ?>
 
-        <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+        <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
             <div class="card d-flex flex-row h-100 overflow-hidden">
                 <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                     <a href="<?= url('api-documentation/payments') ?>" class="stretched-link">
@@ -252,13 +276,13 @@
                     </a>
                 </div>
 
-                <div class="card-body">
-                    <?= l('api_documentation.payments') ?>
+                <div class="card-body d-flex align-items-center">
+                    <?= l('account_payments.title') ?>
                 </div>
             </div>
         </div>
 
-        <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+        <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
             <div class="card d-flex flex-row h-100 overflow-hidden">
                 <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
                     <a href="<?= url('api-documentation/users-logs') ?>" class="stretched-link">
@@ -266,10 +290,33 @@
                     </a>
                 </div>
 
-                <div class="card-body">
-                    <?= l('api_documentation.users_logs') ?>
+                <div class="card-body d-flex align-items-center">
+                    <?= l('account_logs.title') ?>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<?php ob_start() ?>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "<?= l('index.title') ?>",
+                    "item": "<?= url() ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "<?= l('api_documentation.title') ?>",
+                    "item": "<?= url('api-documentation') ?>"
+                }
+            ]
+        }
+    </script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

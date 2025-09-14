@@ -6,8 +6,8 @@
     <?= \Altum\Alerts::output_alerts() ?>
 
     <div class="row mb-4">
-        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0">
-            <h1 class="h4 m-0"><i class="fas fa-fw fa-xs fa-credit-card mr-1"></i> <?= l('payment_processors.header') ?></h1>
+        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0 text-truncate">
+            <h1 class="h4 m-0 text-truncate"><i class="fas fa-fw fa-xs fa-credit-card mr-1"></i> <?= l('payment_processors.header') ?></h1>
 
             <div class="ml-2">
                 <span data-toggle="tooltip" title="<?= l('payment_processors.subheader') ?>">
@@ -16,39 +16,42 @@
             </div>
         </div>
 
-        <div class="col-12 col-lg-auto d-flex">
+        <div class="col-12 col-lg-auto d-flex flex-wrap gap-3 d-print-none">
             <div>
                 <?php if($this->user->plan_settings->payment_processors_limit != -1 && $data->total_payment_processors >= $this->user->plan_settings->payment_processors_limit): ?>
                     <button type="button" data-toggle="tooltip" title="<?= l('global.info_message.plan_feature_limit') ?>" class="btn btn-primary disabled">
                         <i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('payment_processors.create') ?>
                     </button>
                 <?php else: ?>
-                    <a href="<?= url('payment-processor-create') ?>" class="btn btn-primary" data-toggle="tooltip" data-html="true" title="<?= get_plan_feature_limit_info($data->total_payment_processors, $this->user->plan_settings->payment_processors_limit) ?>">
+                    <a href="<?= url('payment-processor-create') ?>" class="btn btn-primary" data-toggle="tooltip" data-html="true" title="<?= get_plan_feature_limit_info($data->total_payment_processors, $this->user->plan_settings->payment_processors_limit, isset($data->filters) ? !$data->filters->has_applied_filters : true) ?>">
                         <i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('payment_processors.create') ?>
                     </a>
                 <?php endif ?>
             </div>
 
-            <div class="ml-3">
+            <div>
                 <div class="dropdown">
-                    <button type="button" class="btn btn-light dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>">
+                    <button type="button" class="btn btn-light dropdown-toggle-simple <?= count($data->payment_processors) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-download"></i>
                     </button>
 
                     <div class="dropdown-menu dropdown-menu-right d-print-none">
-                        <a href="<?= url('payment-processors?' . $data->filters->get_get() . '&export=csv')  ?>" target="_blank" class="dropdown-item">
-                            <i class="fas fa-fw fa-sm fa-file-csv mr-1"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
+                        <a href="<?= url('payment-processors?' . $data->filters->get_get() . '&export=csv')  ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->csv ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->csv ? null : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-csv mr-2"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
                         </a>
-                        <a href="<?= url('payment-processors?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item">
-                            <i class="fas fa-fw fa-sm fa-file-code mr-1"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
+                        <a href="<?= url('payment-processors?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
+                        </a>
+                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                         </a>
                     </div>
                 </div>
             </div>
 
-            <div class="ml-3">
+            <div>
                 <div class="dropdown">
-                    <button type="button" class="btn <?= count($data->filters->get) ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.filters.header') ?>">
+                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= count($data->payment_processors) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-filter"></i>
                     </button>
 
@@ -56,8 +59,8 @@
                         <div class="dropdown-header d-flex justify-content-between">
                             <span class="h6 m-0"><?= l('global.filters.header') ?></span>
 
-                            <?php if(count($data->filters->get)): ?>
-                                <a href="<?= url('payment-processors') ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
+                            <?php if($data->filters->has_applied_filters): ?>
+                                <a href="<?= url(\Altum\Router::$original_request) ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
                             <?php endif ?>
                         </div>
 
@@ -77,19 +80,22 @@
                             </div>
 
                             <div class="form-group px-4">
-                                <label for="processor" class="small"><?= l('payment_processors.input.processor') ?></label>
+                                <label for="processor" class="small"><?= l('payment_processors.processor') ?></label>
                                 <select name="processor" id="processor" class="custom-select custom-select-sm">
                                     <option value=""><?= l('global.all') ?></option>
-                                    <option value="paypal" <?= isset($data->filters->filters['processor']) && $data->filters->filters['processor'] == 'paypal' ? 'selected="selected"' : null ?>><?= l('pay.custom_plan.paypal') ?></option>
-                                    <option value="stripe" <?= isset($data->filters->filters['processor']) && $data->filters->filters['processor'] == 'stripe' ? 'selected="selected"' : null ?>><?= l('pay.custom_plan.stripe') ?></option>
+                                    <?php foreach(['paypal', 'stripe', 'crypto_com', 'razorpay', 'paystack', 'mollie'] as $processor): ?>
+                                    <option value="<?= $processor ?>" <?= isset($data->filters->filters['processor']) && $data->filters->filters['processor'] == $processor ? 'selected="selected"' : null ?>><?= l('pay.custom_plan.' . $processor) ?></option>
+                                    <?php endforeach ?>
                                 </select>
                             </div>
 
                             <div class="form-group px-4">
                                 <label for="filters_order_by" class="small"><?= l('global.filters.order_by') ?></label>
                                 <select name="order_by" id="filters_order_by" class="custom-select custom-select-sm">
+                                    <option value="payment_processor_id" <?= $data->filters->order_by == 'payment_processor_id' ? 'selected="selected"' : null ?>><?= l('global.id') ?></option>
                                     <option value="datetime" <?= $data->filters->order_by == 'datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_datetime') ?></option>
                                     <option value="last_datetime" <?= $data->filters->order_by == 'last_datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_last_datetime') ?></option>
+                                    <option value="name" <?= $data->filters->order_by == 'name' ? 'selected="selected"' : null ?>><?= l('global.name') ?></option>
                                 </select>
                             </div>
 
@@ -118,60 +124,114 @@
                     </div>
                 </div>
             </div>
+
+            <div>
+                <button id="bulk_enable" type="button" class="btn btn-light" data-toggle="tooltip" title="<?= l('global.bulk_actions') ?>"><i class="fas fa-fw fa-sm fa-list"></i></button>
+
+                <div id="bulk_group" class="btn-group d-none" role="group">
+                    <div class="btn-group dropdown" role="group">
+                        <button id="bulk_actions" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
+                            <?= l('global.bulk_actions') ?> <span id="bulk_counter" class="d-none"></span>
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="bulk_actions">
+                            <a href="#" class="dropdown-item" data-toggle="modal" data-target="#bulk_delete_modal"><i class="fas fa-fw fa-sm fa-trash-alt mr-2"></i> <?= l('global.delete') ?></a>
+                        </div>
+                    </div>
+
+                    <button id="bulk_disable" type="button" class="btn btn-secondary" data-toggle="tooltip" title="<?= l('global.close') ?>"><i class="fas fa-fw fa-times"></i></button>
+                </div>
+            </div>
         </div>
     </div>
 
     <?php if(count($data->payment_processors)): ?>
 
-        <?php foreach($data->payment_processors as $row): ?>
-            <div class="custom-row mb-4">
-                <div class="row">
-                    <div class="col-3 col-lg-3 d-flex align-items-center text-truncate">
-                        <a href="<?= url('payment-processor-update/' . $row->payment_processor_id) ?>" class="text-truncate"><?= $row->name ?></a>
-                    </div>
+        <form id="table" action="<?= SITE_URL . 'payment-processors/bulk' ?>" method="post" role="form">
+            <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
+            <input type="hidden" name="type" value="" data-bulk-type />
+            <input type="hidden" name="original_request" value="<?= base64_encode(\Altum\Router::$original_request) ?>" />
+            <input type="hidden" name="original_request_query" value="<?= base64_encode(\Altum\Router::$original_request_query) ?>" />
 
-                    <div class="col-3 col-lg-2 d-flex align-items-center justify-content-center">
-                        <span class="badge badge-light">
-                            <i class="<?= $payment_processors[$row->processor]['icon'] ?> fa-sm fa-fw mr-1" style="color: <?= $payment_processors[$row->processor]['color'] ?>"></i> <?= l('pay.custom_plan.' . $row->processor) ?>
-                        </span>
-                    </div>
+            <div class="table-responsive table-custom-container">
+                <table class="table table-custom">
+                    <thead>
+                    <tr>
+                        <th data-bulk-table class="d-none">
+                            <div class="custom-control custom-checkbox">
+                                <input id="bulk_select_all" type="checkbox" class="custom-control-input" />
+                                <label class="custom-control-label" for="bulk_select_all"></label>
+                            </div>
+                        </th>
+                        <th><?= l('global.name') ?></th>
+                        <th><?= l('global.type') ?></th>
+                        <th><?= l('global.status') ?></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
 
-                    <div class="col-4 col-lg-3 d-flex align-items-center justify-content-center">
-                        <?php if($row->is_enabled == 0): ?>
-                        <span class="badge badge-warning"><i class="fas fa-fw fa-eye-slash"></i> <?= l('global.disabled') ?>
-                        <?php elseif($row->is_enabled == 1): ?>
-                        <span class="badge badge-success"><i class="fas fa-fw fa-check"></i> <?= l('global.active') ?>
-                        <?php endif ?>
-                    </div>
+                    <?php foreach($data->payment_processors as $row): ?>
 
-                    <div class="col-2 col-lg-2 d-none d-lg-flex justify-content-center justify-content-lg-end align-items-center">
-                        <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>') ?>">
-                            <i class="fas fa-fw fa-calendar text-muted"></i>
-                        </span>
+                        <tr>
+                            <td data-bulk-table class="d-none">
+                                <div class="custom-control custom-checkbox">
+                                    <input id="selected_payment_processor_id_<?= $row->payment_processor_id ?>" type="checkbox" class="custom-control-input" name="selected[]" value="<?= $row->payment_processor_id ?>" />
+                                    <label class="custom-control-label" for="selected_payment_processor_id_<?= $row->payment_processor_id ?>"></label>
+                                </div>
+                            </td>
 
-                        <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.last_datetime_tooltip'), ($row->last_datetime ? '<br />' . \Altum\Date::get($row->last_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_datetime, 3) . '</small>' : '-')) ?>">
-                            <i class="fas fa-fw fa-history text-muted"></i>
-                        </span>
-                    </div>
+                            <td class="text-nowrap">
+                                <a href="<?= url('payment-processor-update/' . $row->payment_processor_id) ?>" class="text-truncate"><?= $row->name ?></a>
+                            </td>
 
-                    <div class="col-2 col-lg-2 d-flex justify-content-center justify-content-lg-end align-items-center">
-                        <?= include_view(THEME_PATH . 'views/payment-processors/payment_processor_dropdown_button.php', ['id' => $row->payment_processor_id, 'resource_name' => $row->name]) ?>
-                    </div>
-                </div>
+                            <td class="text-nowrap">
+                                <span class="badge badge-light">
+                                    <i class="<?= $payment_processors[$row->processor]['icon'] ?> fa-sm fa-fw mr-1" style="color: <?= $payment_processors[$row->processor]['color'] ?>"></i> <?= l('pay.custom_plan.' . $row->processor) ?>
+                                </span>
+                            </td>
+
+                            <td class="text-nowrap">
+                                <?php if($row->is_enabled == 0): ?>
+                                <span class="badge badge-warning"><i class="fas fa-fw fa-eye-slash"></i> <?= l('global.disabled') ?>
+                                <?php elseif($row->is_enabled == 1): ?>
+                                <span class="badge badge-success"><i class="fas fa-fw fa-check"></i> <?= l('global.active') ?>
+                                <?php endif ?>
+                            </td>
+
+                            <td class="text-nowrap text-muted">
+                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
+                                    <i class="fas fa-fw fa-calendar text-muted"></i>
+                                </span>
+
+                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.last_datetime_tooltip'), ($row->last_datetime ? '<br />' . \Altum\Date::get($row->last_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->last_datetime) . ')</small>' : '<br />' . l('global.na'))) ?>">
+                                    <i class="fas fa-fw fa-history text-muted"></i>
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="d-flex justify-content-end">
+                                    <?= include_view(THEME_PATH . 'views/payment-processors/payment_processor_dropdown_button.php', ['id' => $row->payment_processor_id, 'resource_name' => $row->name]) ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach ?>
+
+                    </tbody>
+                </table>
             </div>
-        <?php endforeach ?>
+        </form>
 
         <div class="mt-3"><?= $data->pagination ?></div>
 
     <?php else: ?>
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex flex-column align-items-center justify-content-center py-3">
-                    <img src="<?= ASSETS_FULL_URL . 'images/no_rows.svg' ?>" class="col-10 col-md-7 col-lg-4 mb-3" alt="<?= l('payment_processors.no_data') ?>" />
-                    <h2 class="h4 text-muted"><?= l('payment_processors.no_data') ?></h2>
-                </div>
-            </div>
-        </div>
+
+        <?= include_view(THEME_PATH . 'views/partials/no_data.php', [
+            'filters_get' => $data->filters->get ?? [],
+            'name' => 'payment_processors',
+            'has_secondary_text' => false,
+        ]); ?>
+
     <?php endif ?>
 
 </section>
@@ -182,3 +242,6 @@
     'has_dynamic_resource_name' => true,
     'path' => 'payment-processors/delete'
 ]), 'modals'); ?>
+<?php require THEME_PATH . 'views/partials/js_bulk.php' ?>
+<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/bulk_delete_modal.php'), 'modals'); ?>
+

@@ -1,15 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+
+defined('ALTUMCODE') || die();
 
 class AdminPlanUpdate extends Controller {
 
@@ -39,6 +48,7 @@ class AdminPlanUpdate extends Controller {
 
                 /* Parse the settings of the plan */
                 $plan->settings = json_decode($plan->settings ?? '');
+                $plan->translations = json_decode($plan->translations ?? '');
                 $plan->prices = json_decode($plan->prices);
 
                 /* Parse codes & taxes */
@@ -54,6 +64,8 @@ class AdminPlanUpdate extends Controller {
         }
 
         $additional_domains = db()->where('is_enabled', 1)->where('type', 1)->get('domains');
+        $biolinks_templates = (new \Altum\Models\BiolinksTemplates())->get_biolinks_templates();
+        $biolinks_themes = (new \Altum\Models\BiolinksThemes())->get_biolinks_themes();
 
         if(!empty($_POST)) {
 
@@ -70,24 +82,41 @@ class AdminPlanUpdate extends Controller {
                 $enabled_biolink_blocks[$key] = isset($_POST['enabled_biolink_blocks']) && in_array($key, $_POST['enabled_biolink_blocks']);
             }
 
+            /* Translations */
+            foreach($_POST['translations'] as $language_name => $array) {
+                foreach($array as $key => $value) {
+                    $_POST['translations'][$language_name][$key] = input_clean($value);
+                }
+                if(!array_key_exists($language_name, \Altum\Language::$active_languages)) {
+                    unset($_POST['translations'][$language_name]);
+                }
+            }
+
             /* Filter variables */
-            $_POST['color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['color']) ? null : $_POST['color'];
+            $_POST['color'] = !verify_hex_color($_POST['color']) ? null : $_POST['color'];
 
             $_POST['settings'] = [
                 'url_minimum_characters' => (int) $_POST['url_minimum_characters'],
                 'url_maximum_characters' => (int) $_POST['url_maximum_characters'],
                 'additional_domains' => $_POST['additional_domains'] ?? [],
+                'biolinks_templates' => $_POST['biolinks_templates'] ?? [],
+                'biolinks_themes' => $_POST['biolinks_themes'] ?? [],
                 'custom_url' => isset($_POST['custom_url']),
                 'deep_links' => isset($_POST['deep_links']),
                 'no_ads' => isset($_POST['no_ads']),
+                'white_labeling_is_enabled' => isset($_POST['white_labeling_is_enabled']),
+                'export' => [
+                    'pdf'                           => isset($_POST['export']) && in_array('pdf', $_POST['export']),
+                    'csv'                           => isset($_POST['export']) && in_array('csv', $_POST['export']),
+                    'json'                          => isset($_POST['export']) && in_array('json', $_POST['export']),
+                ],
                 'removable_branding' => isset($_POST['removable_branding']),
                 'custom_branding' => isset($_POST['custom_branding']),
                 'statistics' => isset($_POST['statistics']),
-                'custom_backgrounds' => isset($_POST['custom_backgrounds']),
-                'verified' => isset($_POST['verified']),
                 'temporary_url_is_enabled' => isset($_POST['temporary_url_is_enabled']),
                 'cloaking_is_enabled' => isset($_POST['cloaking_is_enabled']),
                 'app_linking_is_enabled' => isset($_POST['app_linking_is_enabled']),
+                'targeting_is_enabled'              => isset($_POST['targeting_is_enabled']),
                 'seo' => isset($_POST['seo']),
                 'utm' => isset($_POST['utm']),
                 'fonts' => isset($_POST['fonts']),
@@ -96,13 +125,16 @@ class AdminPlanUpdate extends Controller {
                 'leap_link' => isset($_POST['leap_link']),
                 'api_is_enabled' => isset($_POST['api_is_enabled']),
                 'dofollow_is_enabled' => isset($_POST['dofollow_is_enabled']),
+                'custom_pwa_is_enabled' => isset($_POST['custom_pwa_is_enabled']),
                 'biolink_blocks_limit' => (int) $_POST['biolink_blocks_limit'],
                 'projects_limit' => (int) $_POST['projects_limit'],
                 'splash_pages_limit' => (int) $_POST['splash_pages_limit'],
                 'pixels_limit' => (int) $_POST['pixels_limit'],
                 'qr_codes_limit' => (int) $_POST['qr_codes_limit'],
+                'qr_codes_bulk_limit' => (int) max(0, $_POST['qr_codes_bulk_limit']),
                 'biolinks_limit' => (int) $_POST['biolinks_limit'],
                 'links_limit' => (int) $_POST['links_limit'],
+                'links_bulk_limit' => (int) max(0, $_POST['links_bulk_limit']),
                 'files_limit' => (int) $_POST['files_limit'],
                 'vcards_limit' => (int) $_POST['vcards_limit'],
                 'events_limit' => (int) $_POST['events_limit'],
@@ -128,15 +160,24 @@ class AdminPlanUpdate extends Controller {
                 'chats_model'                       => $_POST['chats_model'],
                 'chats_per_month_limit'             => (int) $_POST['chats_per_month_limit'],
                 'chat_messages_per_chat_limit'      => (int) $_POST['chat_messages_per_chat_limit'],
-                'chat_image_size_limit'    => $_POST['chat_image_size_limit'] > get_max_upload() || $_POST['chat_image_size_limit'] < 0 || $_POST['chat_image_size_limit'] > 2 ? (get_max_upload() > 2 ? 2 : get_max_upload()) : (float) $_POST['chat_image_size_limit'],
+                'chat_image_size_limit'    => $_POST['chat_image_size_limit'] > get_max_upload() || $_POST['chat_image_size_limit'] < 0 || $_POST['chat_image_size_limit'] > 20 ? (get_max_upload() > 20 ? 20 : get_max_upload()) : (float) $_POST['chat_image_size_limit'],
                 'syntheses_api'                     => $_POST['syntheses_api'],
                 'syntheses_per_month_limit'         => (int) $_POST['syntheses_per_month_limit'],
                 'synthesized_characters_per_month_limit' => (int) $_POST['synthesized_characters_per_month_limit'],
+
+                'active_notification_handlers_per_resource_limit' => (int) $_POST['active_notification_handlers_per_resource_limit'],
+                'email_reports_is_enabled' => isset($_POST['email_reports_is_enabled']),
             ];
 
             foreach(require APP_PATH . 'includes/links_types.php' as $key => $value) {
                 $_POST['settings']['force_splash_page_on_' . $key] = isset($_POST['force_splash_page_on_' . $key]);
             }
+
+            foreach(array_keys(require APP_PATH . 'includes/notification_handlers.php') as $notification_handler) {
+                $_POST['settings']['notification_handlers_' . $notification_handler . '_limit'] = (int) $_POST['notification_handlers_' . $notification_handler . '_limit'];
+            }
+
+            $_POST['settings']['tag'] = input_clean($_POST['tag'], 64);
 
             switch($plan_id) {
 
@@ -170,6 +211,7 @@ class AdminPlanUpdate extends Controller {
                         'plan_id' => 'free',
                         'name' => $_POST['name'],
                         'description' => $_POST['description'],
+                        'translations' => $_POST['translations'],
                         'price' => $_POST['price'],
                         'color' => $_POST['color'],
                         'status' => $_POST['status'],
@@ -199,6 +241,7 @@ class AdminPlanUpdate extends Controller {
                         'plan_id' => 'custom',
                         'name' => $_POST['name'],
                         'description' => $_POST['description'],
+                        'translations' => $_POST['translations'],
                         'price' => $_POST['price'],
                         'custom_button_url' => $_POST['custom_button_url'],
                         'color' => $_POST['color'],
@@ -216,16 +259,21 @@ class AdminPlanUpdate extends Controller {
                     $_POST['status'] = (int) $_POST['status'];
                     $_POST['order'] = (int) $_POST['order'];
                     $_POST['taxes_ids'] = json_encode($_POST['taxes_ids'] ?? []);
+                    $_POST['settings']['custom_redirect_url'] = get_url($_POST['custom_redirect_url']);
 
                     /* Prices */
                     $prices = [
                         'monthly' => [],
+                        'quarterly' => [],
+                        'biannual' => [],
                         'annual' => [],
                         'lifetime' => [],
                     ];
 
                     foreach((array) settings()->payment->currencies as $currency => $currency_data) {
                         $prices['monthly'][$currency] = (float) $_POST['monthly_price'][$currency];
+                        $prices['quarterly'][$currency] = (float) $_POST['quarterly_price'][$currency];
+                        $prices['biannual'][$currency] = (float) $_POST['biannual_price'][$currency];
                         $prices['annual'][$currency] = (float) $_POST['annual_price'][$currency];
                         $prices['lifetime'][$currency] = (float) $_POST['lifetime_price'][$currency];
                     }
@@ -270,17 +318,19 @@ class AdminPlanUpdate extends Controller {
                         db()->where('`key`', $setting_key)->update('settings', ['value' => $setting_value]);
 
                         /* Clear the cache */
-                        \Altum\Cache::$adapter->deleteItem('settings');
+                        cache()->deleteItem('settings');
 
                         break;
 
                     default:
 
                         $settings = json_encode($_POST['settings']);
+                        $translations = json_encode($_POST['translations']);
 
                         db()->where('plan_id', $plan_id)->update('plans', [
                             'name' => $_POST['name'],
                             'description' => $_POST['description'],
+                            'translations' => $translations,
                             'prices' => $prices,
                             'trial_days' => $_POST['trial_days'],
                             'settings' => $settings,
@@ -291,7 +341,7 @@ class AdminPlanUpdate extends Controller {
                         ]);
 
                         /* Clear the cache */
-                        \Altum\Cache::$adapter->deleteItem('plans');
+                        cache()->deleteItem('plans');
 
                         break;
 
@@ -305,7 +355,7 @@ class AdminPlanUpdate extends Controller {
                     db()->where('plan_id', $plan_id)->update('users', ['plan_settings' => $plan_settings]);
 
                     /* Clear the cache */
-                    \Altum\Cache::$adapter->deleteItemsByTag('users');
+                    cache()->clear();
 
                 }
 
@@ -325,6 +375,8 @@ class AdminPlanUpdate extends Controller {
             'plan' => $plan,
             'taxes' => $taxes ?? null,
             'additional_domains' => $additional_domains,
+            'biolinks_templates' => $biolinks_templates,
+            'biolinks_themes' => $biolinks_themes,
         ];
 
         $view = new \Altum\View('admin/plan-update/index', (array) $this);

@@ -1,22 +1,31 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class AdminBiolinksThemes extends Controller {
 
     public function index() {
 
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['is_enabled'], ['name'], ['datetime', 'last_datetime', 'name', 'order']));
+        $filters = (new \Altum\Filters(['is_enabled'], ['name'], ['biolink_theme_id', 'datetime', 'last_datetime', 'name', 'order']));
         $filters->set_default_order_by('biolink_theme_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
@@ -28,23 +37,25 @@ class AdminBiolinksThemes extends Controller {
         $biolinks_themes = [];
         $biolinks_themes_result = database()->query("
             SELECT
-                `biolinks_themes`.*
+                `biolinks_themes`.*,
+                COUNT(`links`.`biolink_theme_id`) AS `total_usage`
             FROM
                 `biolinks_themes`
+            LEFT JOIN `links` ON `biolinks_themes`.`biolink_theme_id` = `links`.`biolink_theme_id`
             WHERE
                 1 = 1
                 {$filters->get_sql_where()}
+            GROUP BY `biolinks_themes`.`biolink_theme_id`
                 {$filters->get_sql_order_by()}
-
-            {$paginator->get_sql_limit()}
+                {$paginator->get_sql_limit()}
         ");
         while($row = $biolinks_themes_result->fetch_object()) {
             $biolinks_themes[] = $row;
         }
 
         /* Export handler */
-        process_export_csv($biolinks_themes, 'include', ['biolink_theme_id', 'name', 'is_enabled', 'last_datetime', 'datetime'], sprintf(l('admin_biolinks_themes.title')));
-        process_export_json($biolinks_themes, 'include', ['biolink_theme_id', 'name', 'settings', 'is_enabled', 'last_datetime', 'datetime'], sprintf(l('admin_biolinks_themes.title')));
+        process_export_csv($biolinks_themes, ['biolink_theme_id', 'name', 'is_enabled', 'last_datetime', 'datetime'], sprintf(l('admin_biolinks_themes.title')));
+        process_export_json($biolinks_themes, ['biolink_theme_id', 'name', 'settings', 'is_enabled', 'last_datetime', 'datetime'], sprintf(l('admin_biolinks_themes.title')));
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/admin_pagination', (array) $this))->run(['paginator' => $paginator]);
@@ -75,7 +86,7 @@ class AdminBiolinksThemes extends Controller {
             redirect('admin/biolinks-themes');
         }
 
-        if(!isset($_POST['type']) || (isset($_POST['type']) && !in_array($_POST['type'], ['delete']))) {
+        if(!isset($_POST['type'])) {
             redirect('admin/biolinks-themes');
         }
 
@@ -84,6 +95,10 @@ class AdminBiolinksThemes extends Controller {
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+
+            set_time_limit(0);
+
+            session_write_close();
 
             switch($_POST['type']) {
                 case 'delete':
@@ -101,13 +116,6 @@ class AdminBiolinksThemes extends Controller {
                         if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
                             $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
 
-                            if(!empty($biolink_theme->image)) {
-                                $s3->deleteObject([
-                                    'Bucket' => settings()->offload->storage_name,
-                                    'Key' => 'uploads/biolinks_themes/' . $biolink_theme->image,
-                                ]);
-                            }
-
                             if(!empty($biolink_theme->settings->biolink->background) && file_exists(UPLOADS_PATH . 'backgrounds' . '/' . $biolink_theme->settings->biolink->background)) {
                                 $s3->deleteObject([
                                     'Bucket' => settings()->offload->storage_name,
@@ -118,26 +126,65 @@ class AdminBiolinksThemes extends Controller {
 
                         /* Local deleting */
                         else {
-                            if(!empty($biolink_theme->image) && file_exists(UPLOADS_PATH . 'biolinks_themes/' . $biolink_theme->image)) {
-                                unlink(UPLOADS_PATH . 'biolinks_themes/' . $biolink_theme->image);
-                            }
                             if(!empty($biolink_theme->settings->biolink->background) && file_exists(UPLOADS_PATH . 'backgrounds/' . $biolink_theme->settings->biolink->background)) {
                                 unlink(UPLOADS_PATH . 'backgrounds/' . $biolink_theme->settings->biolink->background);
                             }
                         }
 
-                        /* Delete the project */
+                        /* Delete the resource */
                         db()->where('biolink_theme_id', $biolink_theme_id)->delete('biolinks_themes');
                     }
 
                     /* Clear the cache */
-                    \Altum\Cache::$adapter->deleteItem('biolinks_themes');
+                    cache()->deleteItem('biolinks_themes');
 
                     break;
             }
 
+            session_start();
+            
             /* Set a nice success message */
-            Alerts::add_success(l('admin_bulk_delete_modal.success_message'));
+            Alerts::add_success(l('bulk_delete_modal.success_message'));
+
+        }
+
+        redirect('admin/biolinks-themes');
+    }
+
+    public function duplicate() {
+
+        if(empty($_POST)) {
+            redirect('admin/biolinks-themes');
+        }
+
+        $biolink_theme_id = (int) $_POST['biolink_theme_id'];
+
+        //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+        if(!\Altum\Csrf::check()) {
+            Alerts::add_error(l('global.error_message.invalid_csrf_token'));
+        }
+
+        if(!$biolink_theme = db()->where('biolink_theme_id', $biolink_theme_id)->getOne('biolinks_themes')) {
+            redirect('admin/biolinks-themes');
+        }
+
+        if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+
+            /* Insert to database */
+            $biolink_theme_id = db()->insert('biolinks_themes', [
+                'name' => string_truncate($biolink_theme->name . ' - ' . l('global.duplicated'), 64, null),
+                'settings' => $biolink_theme->settings,
+                'is_enabled' => $biolink_theme->is_enabled,
+                'order' => $biolink_theme->order + 1,
+                'datetime' => get_date(),
+            ]);
+
+            /* Set a nice success message */
+            Alerts::add_success(sprintf(l('global.success_message.create1'), '<strong>' . input_clean($biolink_theme->name) . '</strong>'));
+
+            /* Redirect */
+            redirect('admin/biolink-theme-update/' . $biolink_theme_id);
 
         }
 
@@ -166,13 +213,6 @@ class AdminBiolinksThemes extends Controller {
             if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
                 $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
 
-                if(!empty($biolink_theme->image)) {
-                    $s3->deleteObject([
-                        'Bucket' => settings()->offload->storage_name,
-                        'Key' => 'uploads/biolinks_themes/' . $biolink_theme->image,
-                    ]);
-                }
-
                 if(!empty($biolink_theme->settings->biolink->background) && file_exists(UPLOADS_PATH . 'backgrounds' . '/' . $biolink_theme->settings->biolink->background)) {
                     $s3->deleteObject([
                         'Bucket' => settings()->offload->storage_name,
@@ -183,19 +223,16 @@ class AdminBiolinksThemes extends Controller {
 
             /* Local deleting */
             else {
-                if(!empty($biolink_theme->image) && file_exists(UPLOADS_PATH . 'biolinks_themes/' . $biolink_theme->image)) {
-                    unlink(UPLOADS_PATH . 'biolinks_themes/' . $biolink_theme->image);
-                }
                 if(!empty($biolink_theme->settings->biolink->background) && file_exists(UPLOADS_PATH . 'backgrounds/' . $biolink_theme->settings->biolink->background)) {
                     unlink(UPLOADS_PATH . 'backgrounds/' . $biolink_theme->settings->biolink->background);
                 }
             }
 
-            /* Delete the project */
+            /* Delete the resource */
             db()->where('biolink_theme_id', $biolink_theme->biolink_theme_id)->delete('biolinks_themes');
 
             /* Clear the cache */
-            \Altum\Cache::$adapter->deleteItem('biolinks_themes');
+            cache()->deleteItem('biolinks_themes');
 
             /* Set a nice success message */
             Alerts::add_success(sprintf(l('global.success_message.delete1'), '<strong>' . $biolink_theme->name . '</strong>'));

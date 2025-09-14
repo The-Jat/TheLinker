@@ -1,6 +1,7 @@
 <?php defined('ALTUMCODE') || die() ?>
 
 <?php ob_start() ?>
+<?php if(count($data->total)): ?>
 <?php foreach($data->total as $key => $value): ?>
 <div class="card mb-5">
     <div class="card-body">
@@ -18,21 +19,24 @@
     </div>
 </div>
 <?php endforeach ?>
+<?php else: ?>
+    <?= include_view(THEME_PATH . 'views/partials/no_chart_data.php', ['has_wrapper' => true]); ?>
+<?php endif ?>
 <?php $html = ob_get_clean() ?>
 
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    let color = css.getPropertyValue('--primary');
+    
+let color = css.getPropertyValue('--primary');
     let color_gradient = null;
 
     <?php foreach($data->total as $key => $value): ?>
     let <?= $key ?>_chart = document.getElementById('<?= $key ?>').getContext('2d');
 
     color_gradient = <?= $key ?>_chart.createLinearGradient(0, 0, 0, 250);
-    color_gradient.addColorStop(0, 'rgba(63, 136, 253, .1)');
-    color_gradient.addColorStop(1, 'rgba(63, 136, 253, 0.025)');
+    color_gradient.addColorStop(0, set_hex_opacity(color, 0.1));
+    color_gradient.addColorStop(1, set_hex_opacity(color, 0.025));
 
     new Chart(<?= $key ?>_chart, {
         type: 'line',

@@ -4,21 +4,21 @@
     <?= \Altum\Alerts::output_alerts() ?>
 
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li>
-                <a href="<?= url('teams-system') ?>"><?= l('teams_system.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
-            </li>
-            <li>
-                <a href="<?= url('teams') ?>"><?= l('teams.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
-            </li>
-            <li>
-                <a href="<?= url('team/' . $data->team->team_id) ?>"><?= l('team.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
-            </li>
-            <li class="active" aria-current="page"><?= l('team_member_update.breadcrumb') ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li>
+                    <a href="<?= url('teams-system') ?>"><?= l('teams_system.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
+                </li>
+                <li>
+                    <a href="<?= url('teams') ?>"><?= l('teams.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
+                </li>
+                <li>
+                    <a href="<?= url('team/' . $data->team->team_id) ?>"><?= l('team.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
+                </li>
+                <li class="active" aria-current="page"><?= l('team_member_update.breadcrumb') ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
     <div class="d-flex align-items-center justify-content-between mb-4">
         <h1 class="h4 mb-0 text-truncate"><i class="fas fa-fw fa-xs fa-user-tag mr-1"></i> <?= l('team_member_update.header') ?></h1>
@@ -38,21 +38,42 @@
                     <?= \Altum\Alerts::output_field_error('user_email') ?>
                 </div>
 
-                <div class="form-group">
-                    <label for="access"><i class="fas fa-fw fa-sm fa-check-double text-muted mr-1"></i> <?= l('team_members.input.access') ?></label>
-                    <select id="access" name="access[]" class="custom-select" multiple="multiple">
-                        <?php foreach($data->teams_access as $key => $value): ?>
-                        <optgroup label="<?=  l('team_members.input.access.' . $key) ?>">
+                <?php
+                $icons = [
+                    'read' => 'fa-eye',
+                    'create' => 'fa-plus',
+                    'update' => 'fa-edit',
+                    'delete' => 'fa-trash'
+                ]
+                ?>
+
+                <?php foreach($data->teams_access as $key => $value): ?>
+                    <div class="form-group">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <label class="h6" for="access"><i class="fas fa-fw fa-sm <?= $icons[$key] ?> text-muted mr-1"></i> <?= sprintf(l('team_members.access'), l('team_members.access.' . $key)) ?></label>
+
+                            <?php if($key != 'read'): ?>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="<?= l('global.select_all') ?>" data-tooltip-hide-on-click onclick="document.querySelectorAll(`<?= '#' . $key . '_container' ?> [name='access[]']`).forEach(element => element.checked ? null : element.checked = true)"><i class="fas fa-fw fa-check-square"></i></button>
+                                    <button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="<?= l('global.deselect_all') ?>" data-tooltip-hide-on-click onclick="document.querySelectorAll(`<?= '#' . $key . '_container' ?> [name='access[]']`).forEach(element => element.checked ? element.checked = false : null)"><i class="fas fa-fw fa-minus-square"></i></button>
+                                </div>
+                            <?php endif ?>
+                        </div>
+
+                        <div id="<?= $key . '_container' ?>" class="row">
                             <?php foreach($data->teams_access[$key] as $access_key => $access_translation): ?>
-                                <option value="<?= $access_key ?>" <?= $data->team_member->access->{$access_key} ? 'selected="selected"' : null ?>>
-                                    <?= $access_translation ?>
-                                </option>
+                                <div class="col-12 col-lg-6">
+                                    <div class="custom-control custom-checkbox my-2">
+                                        <input id="<?= 'access_' . $access_key ?>" name="access[]" value="<?= $access_key ?>" type="checkbox" class="custom-control-input" <?= $data->team_member->access->{$access_key} ? 'checked="checked"' : null ?> <?= $key == 'read' ? 'disabled="disabled"' : null ?>>
+                                        <label class="custom-control-label" for="<?= 'access_' . $access_key ?>">
+                                            <span><?= $access_translation ?></span>
+                                        </label>
+                                    </div>
+                                </div>
                             <?php endforeach ?>
-                        </optgroup>
-                        <?php endforeach ?>
-                    </select>
-                    <small class="form-text text-muted"><?= l('team_members.input.access_help') ?></small>
-                </div>
+                        </div>
+                    </div>
+                <?php endforeach ?>
 
                 <div class="alert alert-info"><?= l('team_members.info_message.access') ?></div>
 

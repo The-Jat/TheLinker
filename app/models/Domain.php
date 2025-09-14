@@ -1,23 +1,33 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Models;
 
+defined('ALTUMCODE') || die();
+
 class Domain extends Model {
 
     public function get_available_domains_by_user($user) {
+        if(!settings()->links->domains_is_enabled) return [];
 
         /* Get the domains */
         $domains = [];
 
         /* Try to check if the domain posts exists via the cache */
-        $cache_instance = \Altum\Cache::$adapter->getItem('domains?user_id=' . $user->user_id);
+        $cache_instance = cache()->getItem('domains?user_id=' . $user->user_id);
 
         /* Set cache if not existing */
         if(is_null($cache_instance->get())) {
@@ -50,13 +60,9 @@ class Domain extends Model {
             }
 
             /* Properly tag the cache */
-            $cache_instance->set($domains)->expiresAfter(CACHE_DEFAULT_SECONDS)->addTag('domains?user_id=' . $user->user_id);
+            $cache_instance->set($domains)->expiresAfter(CACHE_DEFAULT_SECONDS);
 
-            foreach($domains as $domain) {
-                $cache_instance->addTag('domain_id=' . $domain->domain_id);
-            }
-
-            \Altum\Cache::$adapter->save($cache_instance);
+            cache()->save($cache_instance);
 
         } else {
 
@@ -70,12 +76,13 @@ class Domain extends Model {
     }
 
     public function get_available_additional_domains() {
+        if(!settings()->links->additional_domains_is_enabled) return [];
 
         /* Get the domains */
         $domains = [];
 
         /* Try to check if the user posts exists via the cache */
-        $cache_instance = \Altum\Cache::$adapter->getItem('available_additional_domains');
+        $cache_instance = cache()->getItem('available_additional_domains');
 
         /* Set cache if not existing */
         if(is_null($cache_instance->get())) {
@@ -90,7 +97,7 @@ class Domain extends Model {
                 $domains[$row->domain_id] = $row;
             }
 
-            \Altum\Cache::$adapter->save(
+            cache()->save(
                 $cache_instance->set($domains)->expiresAfter(CACHE_DEFAULT_SECONDS)
             );
 
@@ -104,13 +111,14 @@ class Domain extends Model {
         return $domains;
     }
 
-    public function get_domain($domain_id) {
+    public function get_domain_by_domain_id($domain_id) {
+        if(!settings()->links->domains_is_enabled) return null;
 
         /* Get the domain */
         $domain = null;
 
         /* Try to check if the domain exists via the cache */
-        $cache_instance = \Altum\Cache::$adapter->getItem('domain?domain_id=' . md5($domain_id));
+        $cache_instance = cache()->getItem('domain?domain_id=' . md5($domain_id));
 
         /* Set cache if not existing */
         if(is_null($cache_instance->get())) {
@@ -122,8 +130,8 @@ class Domain extends Model {
                 /* Build the url */
                 $domain->url = $domain->scheme . $domain->host . '/';
 
-                \Altum\Cache::$adapter->save(
-                    $cache_instance->set($domain)->expiresAfter(CACHE_DEFAULT_SECONDS)->addTag('domain_id=' . $domain->domain_id)->addTag('domains?user_id=' . $domain->user_id)
+                cache()->save(
+                    $cache_instance->set($domain)->expiresAfter(CACHE_DEFAULT_SECONDS)
                 );
             }
 
@@ -139,12 +147,13 @@ class Domain extends Model {
     }
 
     public function get_domain_by_host($host) {
+        if(!settings()->links->domains_is_enabled) return null;
 
         /* Get the domain */
         $domain = null;
 
         /* Try to check if the domain exists via the cache */
-        $cache_instance = \Altum\Cache::$adapter->getItem('domain?host=' . md5($host));
+        $cache_instance = cache()->getItem('domain?host=' . md5($host));
 
         /* Set cache if not existing */
         if(is_null($cache_instance->get())) {
@@ -156,8 +165,8 @@ class Domain extends Model {
                 /* Build the url */
                 $domain->url = $domain->scheme . $domain->host . '/';
 
-                \Altum\Cache::$adapter->save(
-                    $cache_instance->set($domain)->expiresAfter(CACHE_DEFAULT_SECONDS)->addTag('domain_id=' . $domain->domain_id)->addTag('domains?user_id=' . $domain->user_id)
+                cache()->save(
+                    $cache_instance->set($domain)->expiresAfter(CACHE_DEFAULT_SECONDS)
                 );
             }
 
@@ -190,9 +199,8 @@ class Domain extends Model {
         db()->where('domain_id', $domain_id)->delete('domains');
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItems(['domains?user_id=' . $domain->user_id, 'domains_total?user_id=' . $domain->user_id]);
-        \Altum\Cache::$adapter->deleteItemsByTag('domain_id=' . $domain_id);
-        \Altum\Cache::$adapter->deleteItem('available_additional_domains');
+        cache()->deleteItems(['domain?domain_id=' . $domain_id, 'domains?user_id=' . $domain->user_id, 'domains_total?user_id=' . $domain->user_id]);
+        cache()->deleteItem('available_additional_domains');
 
     }
 }

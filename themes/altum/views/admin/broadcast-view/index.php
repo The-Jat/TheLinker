@@ -26,9 +26,9 @@
                 <i class="fas fa-fw fa-calendar mr-lg-1"></i>
                 <span class="d-none d-lg-inline-block">
                 <?php if($data->datetime['start_date'] == $data->datetime['end_date']): ?>
-                    <?= \Altum\Date::get($data->datetime['start_date'], 2, \Altum\Date::$default_timezone) ?>
+                    <?= \Altum\Date::get($data->datetime['start_date'], 6, \Altum\Date::$default_timezone) ?>
                 <?php else: ?>
-                    <?= \Altum\Date::get($data->datetime['start_date'], 2, \Altum\Date::$default_timezone) . ' - ' . \Altum\Date::get($data->datetime['end_date'], 2, \Altum\Date::$default_timezone) ?>
+                    <?= \Altum\Date::get($data->datetime['start_date'], 6, \Altum\Date::$default_timezone) . ' - ' . \Altum\Date::get($data->datetime['end_date'], 6, \Altum\Date::$default_timezone) ?>
                 <?php endif ?>
             </span>
                 <i class="fas fa-fw fa-caret-down d-none d-lg-inline-block ml-lg-1"></i>
@@ -47,7 +47,7 @@
 <div class="mb-4 row justify-content-between">
     <div class="col-12 col-sm-6 col-xl mb-4 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
-            <div class="card-body">
+            <div class="card-body text-truncate">
                 <small class="text-muted">
                     <?php if($data->broadcast->status == 'draft'): ?>
                         <i class="fas fa-fw fa-sm fa-save text-light mr-1"></i>
@@ -63,11 +63,11 @@
                 <div class="mt-3">
                     <span class="h4">
                         <?php if($data->broadcast->status == 'draft'): ?>
-                            <?= l('admin_broadcasts.main.status.draft') ?>
+                            <?= l('admin_broadcasts.status.draft') ?>
                         <?php elseif($data->broadcast->status == 'processing'): ?>
-                            <?= l('admin_broadcasts.main.status.processing') ?>
+                            <?= l('admin_broadcasts.status.processing') ?>
                         <?php elseif($data->broadcast->status == 'sent'): ?>
-                            <?= l('admin_broadcasts.main.status.sent') ?>
+                            <?= l('admin_broadcasts.status.sent') ?>
                         <?php endif ?>
                     </span>
                 </div>
@@ -78,7 +78,7 @@
     <div class="col-12 col-sm-6 col-xl mb-4 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden" data-toggle="tooltip" title="<?= nr(get_percentage_between_two_numbers($data->broadcast->sent_emails, $data->broadcast->total_emails)) . '%' ?>">
             <div class="card-body">
-                <small class="text-muted"><i class="fas fa-fw fa-sm fa-envelope mr-1"></i> <?= l('admin_broadcasts.main.sent_emails') ?></small>
+                <small class="text-muted"><i class="fas fa-fw fa-sm fa-envelope mr-1"></i> <?= l('admin_broadcasts.sent_emails') ?></small>
 
                 <div class="mt-3"><span class="h4"><?= nr($data->broadcast->sent_emails) . '/' . nr($data->broadcast->total_emails) ?></span></div>
             </div>
@@ -89,7 +89,7 @@
         <div class="col-12 col-sm-6 col-xl mb-4 position-relative" data-toggle="tooltip" title="<?= nr(get_percentage_between_two_numbers($data->broadcast->views, $data->broadcast->total_emails)) . '%' ?>">
             <div class="card d-flex flex-row h-100 overflow-hidden">
                 <div class="card-body">
-                    <small class="text-muted"><i class="fas fa-fw fa-sm fa-eye mr-1"></i> <?= l('admin_broadcasts.main.views') ?></small>
+                    <small class="text-muted"><i class="fas fa-fw fa-sm fa-eye mr-1"></i> <?= l('admin_broadcasts.views') ?></small>
 
                     <div class="mt-3"><span class="h4"><?= nr($data->broadcast->views) ?></span></div>
                 </div>
@@ -99,7 +99,7 @@
         <div class="col-12 col-sm-6 col-xl mb-4 position-relative">
             <div class="card d-flex flex-row h-100 overflow-hidden" data-toggle="tooltip" title="<?= nr(get_percentage_between_two_numbers($data->broadcast->clicks, $data->broadcast->total_emails)) . '%' ?>">
                 <div class="card-body">
-                    <small class="text-muted"><i class="fas fa-fw fa-sm fa-mouse mr-1"></i> <?= l('admin_broadcasts.main.clicks') ?></small>
+                    <small class="text-muted"><i class="fas fa-fw fa-sm fa-mouse mr-1"></i> <?= l('admin_broadcasts.clicks') ?></small>
 
                     <div class="mt-3"><span class="h4"><?= nr($data->broadcast->clicks) ?></span></div>
                 </div>
@@ -110,9 +110,10 @@
 
 <div class="card mb-5">
     <div class="card-body">
-        <div class="chart-container">
+        <div class="chart-container <?= !$data->statistics_chart['is_empty'] ? null : 'd-none' ?>">
             <canvas id="statistics"></canvas>
         </div>
+        <?= !$data->statistics_chart['is_empty'] ? null : include_view(THEME_PATH . 'views/partials/no_chart_data.php', ['has_wrapper' => false]); ?>
     </div>
 </div>
 
@@ -126,33 +127,33 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="subject" class="font-weight-bold"><i class="fas fa-fw fa-sm fa-heading text-muted mr-1"></i> <?= l('admin_broadcasts.main.subject') ?></label>
+                    <label for="subject" class="font-weight-bold"><i class="fas fa-fw fa-sm fa-heading text-muted mr-1"></i> <?= l('admin_broadcasts.subject') ?></label>
                     <input id="subject" type="text" class="form-control-plaintext" value="<?= $data->broadcast->subject ?>" readonly />
                 </div>
 
                 <div class="form-group">
-                    <label for="segment" class="font-weight-bold"><i class="fas fa-fw fa-sm fa-layer-group text-muted mr-1"></i> <?= l('admin_broadcasts.main.segment') ?></label>
-                    <input id="segment" type="text" class="form-control-plaintext" value="<?= l('admin_broadcasts.main.segment.' . $data->broadcast->segment) ?>" readonly />
+                    <label for="segment" class="font-weight-bold"><i class="fas fa-fw fa-sm fa-layer-group text-muted mr-1"></i> <?= l('admin_broadcasts.segment') ?></label>
+                    <input id="segment" type="text" class="form-control-plaintext" value="<?= l('admin_broadcasts.segment.' . $data->broadcast->segment) ?>" readonly />
                 </div>
 
                 <div class="form-group">
                     <label class="font-weight-bold">
                         <i class="fas fa-fw fa-sm fa-paper-plane text-muted mr-1"></i>
-                        <?= sprintf(l('admin_broadcasts.main.last_sent_email_datetime'), ($data->broadcast->last_sent_email_datetime ? \Altum\Date::get($data->broadcast->last_sent_email_datetime, 2) . ' - <small>' . \Altum\Date::get($data->broadcast->last_sent_email_datetime, 3) . '</small>' : '-')) ?>
+                        <?= sprintf(l('admin_broadcasts.last_sent_email_datetime'), ($data->broadcast->last_sent_email_datetime ? \Altum\Date::get($data->broadcast->last_sent_email_datetime, 2) . ' - <small>' . \Altum\Date::get($data->broadcast->last_sent_email_datetime, 3) . '</small>' : l('global.na'))) ?>
                     </label>
                 </div>
 
                 <div class="form-group">
                     <label class="font-weight-bold">
                         <i class="fas fa-fw fa-sm fa-clock text-muted mr-1"></i>
-                        <?= sprintf(l('admin_broadcasts.main.last_sent_email_datetime'), ($data->broadcast->last_sent_email_datetime ? \Altum\Date::get($data->broadcast->last_sent_email_datetime, 2) . ' - <small>' . \Altum\Date::get($data->broadcast->last_sent_email_datetime, 3) . '</small>' : '-')) ?>
+                        <?= sprintf(l('global.datetime_tooltip'), ($data->broadcast->datetime ? \Altum\Date::get($data->broadcast->datetime, 2) . ' - <small>' . \Altum\Date::get($data->broadcast->datetime, 3) . '</small>' : l('global.na'))) ?>
                     </label>
                 </div>
 
                 <div class="form-group">
                     <label class="font-weight-bold">
                         <i class="fas fa-fw fa-sm fa-history text-muted mr-1"></i>
-                        <?= sprintf(l('admin_broadcasts.main.last_sent_email_datetime'), ($data->broadcast->last_sent_email_datetime ? \Altum\Date::get($data->broadcast->last_sent_email_datetime, 2) . ' - <small>' . \Altum\Date::get($data->broadcast->last_sent_email_datetime, 3) . '</small>' : '-')) ?>
+                        <?= sprintf(l('global.last_datetime_tooltip'), ($data->broadcast->last_datetime ? \Altum\Date::get($data->broadcast->last_datetime, 2) . ' - <small>' . \Altum\Date::get($data->broadcast->last_datetime, 3) . '</small>' : l('global.na'))) ?>
                     </label>
                 </div>
 
@@ -164,7 +165,7 @@
         <div class="col-xl-6 mb-5">
             <div class="card h-100">
                 <div class="card-body">
-                    <h2 class="h5 mb-4"><?= l('admin_broadcasts.main.latest_views') ?></h2>
+                    <h2 class="h5 mb-4"><?= l('admin_broadcasts.latest_views') ?></h2>
 
                     <?php if(count($data->users)): ?>
 
@@ -173,7 +174,7 @@
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <div class="d-flex">
                                         <a href="<?= url('admin/user-view/' . $user->user_id) ?>">
-                                            <img src="<?= get_gravatar($user->email) ?>" class="user-avatar rounded-circle mr-3" alt="" />
+                                            <img src="<?= get_user_avatar($user->avatar, $user->email) ?>" class="user-avatar rounded-circle mr-3" alt="" />
                                         </a>
 
                                         <div class="d-flex flex-column">
@@ -181,7 +182,7 @@
                                                 <a href="<?= url('admin/user-view/' . $user->user_id) ?>"><?= $user->name ?></a>
                                             </div>
 
-                                            <span class="text-muted"><?= $user->email ?></span>
+                                            <span class="small text-muted"><?= $user->email ?></span>
                                         </div>
                                     </div>
 
@@ -193,10 +194,14 @@
                         </div>
 
                     <?php else: ?>
-                        <div class="d-flex flex-column align-items-center justify-content-center pt-7">
-                            <img src="<?= ASSETS_FULL_URL . 'images/no_rows.svg' ?>" class="col-5 mb-3" alt="<?= l('global.no_data') ?>" />
-                            <h3 class="h5 text-muted"><?= l('global.no_data') ?></h3>
-                        </div>
+
+                        <?= include_view(THEME_PATH . 'views/partials/no_data.php', [
+                            'filters_get' => $data->filters->get ?? [],
+                            'name' => 'global',
+                            'has_secondary_text' => false,
+                            'has_wrapper' => false,
+                        ]); ?>
+
                     <?php endif ?>
                 </div>
             </div>
@@ -208,7 +213,7 @@
 <?php if(settings()->main->broadcasts_statistics_is_enabled): ?>
     <div class="card h-100">
         <div class="card-body">
-            <h2 class="h5 mb-4"><?= l('admin_broadcasts.main.clicks') ?></h2>
+            <h2 class="h5 mb-4"><?= l('admin_broadcasts.clicks') ?></h2>
 
             <?php if(count($data->clicks)): ?>
 
@@ -216,7 +221,7 @@
                     <?php foreach($data->clicks as $click): ?>
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <div>
-                                <img src="<?= get_favicon_url_from_domain($click->target) ?>" class="img-fluid icon-favicon mr-1" loading="lazy" />
+                                <img referrerpolicy="no-referrer" src="<?= get_favicon_url_from_domain($click->target) ?>" class="img-fluid icon-favicon mr-1" loading="lazy" />
 
                                 <a href="<?= $click->target ?>" target="_blank" rel="noreferrer">
                                     <?= remove_url_protocol_from_url($click->target) ?>
@@ -231,25 +236,29 @@
                 </div>
 
             <?php else: ?>
-                <div class="d-flex flex-column align-items-center justify-content-center py-3">
-                    <img src="<?= ASSETS_FULL_URL . 'images/no_rows.svg' ?>" class="col-10 col-md-7 col-lg-4 mb-3" alt="<?= l('global.no_data') ?>" />
-                    <h3 class="h5 text-muted"><?= l('global.no_data') ?></h3>
-                </div>
+
+                <?= include_view(THEME_PATH . 'views/partials/no_data.php', [
+                    'filters_get' => $data->filters->get ?? [],
+                    'name' => 'global',
+                    'has_secondary_text' => false,
+                    'has_wrapper' => false,
+                ]); ?>
+
             <?php endif ?>
         </div>
     </div>
 <?php endif ?>
 
 <?php ob_start() ?>
-<link href="<?= ASSETS_FULL_URL . 'css/libraries/daterangepicker.min.css' ?>" rel="stylesheet" media="screen,print">
+<link href="<?= ASSETS_FULL_URL . 'css/libraries/daterangepicker.min.css?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
 <?php \Altum\Event::add_content(ob_get_clean(), 'head') ?>
 
+<?php require THEME_PATH . 'views/partials/js_chart_defaults.php' ?>
+
 <?php ob_start() ?>
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment.min.js' ?>"></script>
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/daterangepicker.min.js' ?>"></script>
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment-timezone-with-data-10-year-range.min.js' ?>"></script>
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/Chart.bundle.min.js' ?>"></script>
-<script src="<?= ASSETS_FULL_URL . 'js/admin_chartjs_defaults.js' ?>"></script>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment.min.js?v=' . PRODUCT_CODE ?>"></script>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/daterangepicker.min.js?v=' . PRODUCT_CODE ?>"></script>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment-timezone-with-data-10-year-range.min.js?v=' . PRODUCT_CODE ?>"></script>
 
 <script>
     'use strict'
@@ -276,7 +285,7 @@
     }, (start, end, label) => {
 
         /* Redirect */
-        redirect(`<?= url('admin/broadcast/' . $data->broadcast->broadcast_id) ?>?start_date=${start.format('YYYY-MM-DD')}&end_date=${end.format('YYYY-MM-DD')}`, true);
+        redirect(`<?= url('admin/broadcast-view/' . $data->broadcast->broadcast_id) ?>?start_date=${start.format('YYYY-MM-DD')}&end_date=${end.format('YYYY-MM-DD')}`, true);
 
     });
 
@@ -291,12 +300,12 @@
     let statistics_chart = document.getElementById('statistics').getContext('2d');
 
     views_color_gradient = statistics_chart.createLinearGradient(0, 0, 0, 250);
-    views_color_gradient.addColorStop(0, 'rgba(63, 136, 253, .1)');
-    views_color_gradient.addColorStop(1, 'rgba(63, 136, 253, 0.025)');
+    views_color_gradient.addColorStop(0, set_hex_opacity(views_color, 0.1));
+    views_color_gradient.addColorStop(1, set_hex_opacity(views_color, 0.025));
 
     clicks_color_gradient = statistics_chart.createLinearGradient(0, 0, 0, 250);
-    clicks_color_gradient.addColorStop(0, 'rgba(63, 136, 253, .1)');
-    clicks_color_gradient.addColorStop(1, 'rgba(63, 136, 253, 0.025)');
+    clicks_color_gradient.addColorStop(0, set_hex_opacity(clicks_color, 0.1));
+    clicks_color_gradient.addColorStop(1, set_hex_opacity(clicks_color, 0.025));
 
     new Chart(statistics_chart, {
         type: 'line',
@@ -304,7 +313,7 @@
             labels: <?= $data->statistics_chart['labels'] ?>,
             datasets: [
                 {
-                    label: <?= json_encode(l('admin_broadcasts.main.views')) ?>,
+                    label: <?= json_encode(l('admin_broadcasts.views')) ?>,
                     data: <?= $data->statistics_chart['views'] ?? '[]' ?>,
                     backgroundColor: views_color_gradient,
                     borderColor: views_color,
@@ -312,7 +321,7 @@
                 },
 
                 {
-                    label: <?= json_encode(l('admin_broadcasts.main.clicks')) ?>,
+                    label: <?= json_encode(l('admin_broadcasts.clicks')) ?>,
                     data: <?= $data->statistics_chart['clicks'] ?? '[]' ?>,
                     backgroundColor: clicks_color_gradient,
                     borderColor: clicks_color,
@@ -324,4 +333,6 @@
     });
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+
+
 

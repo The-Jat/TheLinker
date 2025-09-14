@@ -1,7 +1,7 @@
 <?php defined('ALTUMCODE') || die() ?>
 
 <div class="dropdown">
-    <button type="button" class="btn btn-link text-secondary dropdown-toggle dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport">
+    <button type="button" class="btn btn-link <?= $data->button_text_class ?? 'text-secondary' ?> dropdown-toggle dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport">
         <i class="fas fa-fw fa-ellipsis-v"></i>
     </button>
 
@@ -16,4 +16,4 @@
     'resource_id' => 'biolink_template_id',
     'has_dynamic_resource_name' => true,
     'path' => 'admin/biolinks-templates/delete/'
-]), 'modals', 'biolink_template_delete_modal'); ?>
+]), 'modals', 'biolink_template_delete'); ?>

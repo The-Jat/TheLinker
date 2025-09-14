@@ -1,22 +1,31 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class AdminTaxCreate extends Controller {
 
     public function index() {
 
         if(!empty($_POST)) {
-            /* Filter some the variables */
+            /* Filter some of the variables */
             $_POST['name'] = input_clean($_POST['name'], 64);
             $_POST['description'] = input_clean($_POST['description'], 256);
             $_POST['value'] = (float) $_POST['value'];
@@ -42,7 +51,7 @@ class AdminTaxCreate extends Controller {
                     'type' => $_POST['type'],
                     'billing_type' => $_POST['billing_type'],
                     'countries' => json_encode($_POST['countries']),
-                    'datetime' => \Altum\Date::$date,
+                    'datetime' => get_date(),
                 ]);
 
                 /* Set a nice success message */

@@ -16,9 +16,10 @@
             </div>
         </div>
 
-        <div class="chart-container">
+        <div class="chart-container <?= $data->total['discount_codes'] + $data->total['redeemable_codes'] ? null : 'd-none' ?>">
             <canvas id="redeemed_codes"></canvas>
         </div>
+        <?= $data->total['discount_codes'] + $data->total['redeemable_codes'] ? null : include_view(THEME_PATH . 'views/partials/no_chart_data.php', ['has_wrapper' => false]); ?>
     </div>
 </div>
 <?php $html = ob_get_clean() ?>
@@ -34,12 +35,12 @@
         let chart = document.getElementById('redeemed_codes').getContext('2d');
 
         let redeemable_codes_color_gradient = chart.createLinearGradient(0, 0, 0, 250);
-        redeemable_codes_color_gradient.addColorStop(0, 'rgba(63, 136, 253, .1)');
-        redeemable_codes_color_gradient.addColorStop(1, 'rgba(63, 136, 253, 0.025)')
+        redeemable_codes_color_gradient.addColorStop(0, set_hex_opacity(redeemable_codes_color, 0.1));
+        redeemable_codes_color_gradient.addColorStop(1, set_hex_opacity(redeemable_codes_color, 0.025));
 
         let discount_codes_color_gradient = chart.createLinearGradient(0, 0, 0, 250);
-        discount_codes_color_gradient.addColorStop(0, 'rgba(160, 174, 192, .1)');
-        discount_codes_color_gradient.addColorStop(1, 'rgba(160, 174, 192, 0.025)')
+        discount_codes_color_gradient.addColorStop(0, set_hex_opacity(discount_codes_color, 0.1));
+        discount_codes_color_gradient.addColorStop(1, set_hex_opacity(discount_codes_color, 0.025));
 
         new Chart(chart, {
             type: 'line',

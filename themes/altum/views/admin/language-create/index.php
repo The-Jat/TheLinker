@@ -24,25 +24,17 @@
             <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
 
             <div class="form-group">
-                <label for="language_name"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('admin_languages.main.language_name') ?></label>
+                <label for="language_name"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('admin_languages.language_name') ?></label>
                 <input id="language_name" type="text" name="language_name" class="form-control <?= \Altum\Alerts::has_field_errors('language_name') ? 'is-invalid' : null ?>" value="<?= $data->values['language_name'] ?>" required="required" />
                 <?= \Altum\Alerts::output_field_error('language_name') ?>
-                <small class="form-text text-muted"><?= l('admin_languages.main.language_name_help') ?></small>
+                <small class="form-text text-muted"><?= l('admin_languages.language_name_help') ?></small>
             </div>
 
             <div class="form-group">
-                <label for="language_code"><i class="fas fa-fw fa-sm fa-language text-muted mr-1"></i> <?= l('admin_languages.main.language_code') ?></label>
+                <label for="language_code"><i class="fas fa-fw fa-sm fa-language text-muted mr-1"></i> <?= l('admin_languages.language_code') ?></label>
                 <input id="language_code" type="text" name="language_code" class="form-control <?= \Altum\Alerts::has_field_errors('language_code') ? 'is-invalid' : null ?>" value="<?= $data->values['language_code'] ?>" required="required" />
                 <?= \Altum\Alerts::output_field_error('language_code') ?>
-                <small class="form-text text-muted"><?= l('admin_languages.main.language_code_help') ?></small>
-            </div>
-
-            <div class="form-group">
-                <label for="status"><i class="fas fa-fw fa-sm fa-dot-circle text-muted mr-1"></i> <?= l('global.status') ?></label>
-                <select id="status" name="status" class="custom-select">
-                    <option value="active" <?= $data->values['status'] == 'active' ? 'selected="selected"' : null ?>><?= l('global.active') ?></option>
-                    <option value="disabled" <?= $data->values['status'] == 'disabled' ? 'selected="selected"' : null ?>><?= l('global.disabled') ?></option>
-                </select>
+                <small class="form-text text-muted"><?= l('admin_languages.language_code_help') ?></small>
             </div>
 
             <div class="form-group">
@@ -51,8 +43,13 @@
             </div>
 
             <div class="form-group">
-                <label for="language_flag"><i class="fas fa-fw fa-sm fa-flag text-muted mr-1"></i> <?= l('admin_languages.main.language_flag') ?></label>
-                <input id="language_flag" type="text" name="language_flag" value="<?= $data->values['language_flag'] ?>" class="form-control" placeholder="<?= l('admin_languages.main.language_flag_placeholder') ?>" />
+                <label for="language_flag"><i class="fas fa-fw fa-sm fa-flag text-muted mr-1"></i> <?= l('admin_languages.language_flag') ?></label>
+                <input id="language_flag" type="text" name="language_flag" value="<?= $data->values['language_flag'] ?>" class="form-control" placeholder="<?= l('admin_languages.language_flag_placeholder') ?>" />
+            </div>
+
+            <div class="form-group custom-control custom-switch">
+                <input id="status" name="status" type="checkbox" class="custom-control-input" <?= $data->values['status'] ? 'checked="checked"' : null?>>
+                <label class="custom-control-label" for="status"><?= l('global.status') ?></label>
             </div>
 
             <div class="alert alert-info" role="alert">

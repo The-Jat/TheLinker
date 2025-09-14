@@ -1,12 +1,12 @@
 <?php defined('ALTUMCODE') || die() ?>
 
 <?php ob_start() ?>
-<script src="https://cdn.jsdelivr.net/npm/shiki"></script>
+<script src="https://cdn.jsdelivr.net/npm/shiki@0.14.7/dist/index.jsdelivr.iife.min.js"></script>
 
 <script>
     'use strict';
-
-    shiki
+    
+shiki
         .getHighlighter({
             theme: 'dracula-soft',
             langs: ['json']

@@ -29,8 +29,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* On modal show load new data */
+    
+/* On modal show load new data */
     $('#plan_delete_modal').on('show.bs.modal', event => {
         let plan_id = $(event.relatedTarget).data('plan-id');
 

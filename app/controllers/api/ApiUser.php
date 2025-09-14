@@ -1,16 +1,25 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Response;
 use Altum\Traits\Apiable;
+
+defined('ALTUMCODE') || die();
 
 class ApiUser extends Controller {
     use Apiable;
@@ -65,6 +74,7 @@ class ApiUser extends Controller {
             'last_activity' => $this->api_user->last_activity,
             'total_logins' => (int) $this->api_user->total_logins,
             'datetime' => $this->api_user->datetime,
+            'next_cleanup_datetime' => $this->api_user->next_cleanup_datetime,
         ];
 
         Response::jsonapi_success($data);

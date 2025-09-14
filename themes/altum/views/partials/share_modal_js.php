@@ -17,11 +17,11 @@
 
                 <div data-qr></div>
 
-                <div class="d-flex align-items-center justify-content-between flex-wrap my-3">
-                    <?= include_view(THEME_PATH . 'views/partials/share_buttons.php', ['url' => '%s', 'class' => 'btn btn-gray-100 mb-2', 'print_is_enabled' => false]) ?>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <?= include_view(THEME_PATH . 'views/partials/share_buttons.php', ['url' => '%s', 'class' => 'btn btn-gray-100', 'print_is_enabled' => false]) ?>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group mt-3">
                     <div class="input-group">
                         <input id="share_modal_value" type="text" class="form-control" value="%s" onclick="this.select();" readonly="readonly" />
 
@@ -29,7 +29,7 @@
                             <button
                                     id="share_modal_value_copy"
                                     type="button"
-                                    class="btn btn-light"
+                                    class="btn btn-light border border-left-0"
                                     data-toggle="tooltip"
                                     title="<?= l('global.clipboard_copy') ?>"
                                     aria-label="<?= l('global.clipboard_copy') ?>"
@@ -50,12 +50,12 @@
 <?php \Altum\Event::add_content(ob_get_clean(), 'modals') ?>
 
 <?php ob_start() ?>
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/jquery-qrcode.min.js' ?>"></script>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/jquery-qrcode.min.js?v=' . PRODUCT_CODE ?>"></script>
 
 <script>
     'use strict';
-
-    /* On modal show load new data */
+    
+/* On modal show load new data */
     $('#share_modal').on('show.bs.modal', event => {
         let url = $(event.relatedTarget).data('url');
         let qr = event.currentTarget.querySelector('[data-qr]');
@@ -83,6 +83,8 @@
 
             /* Set class to QR */
             qr.querySelector('img').classList.add('w-100');
+            qr.querySelector('img').classList.add('rounded');
+
         }
 
         generate_qr(url);

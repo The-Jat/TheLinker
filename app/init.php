@@ -1,13 +1,6 @@
 <?php
-/*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
- *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
- */
 
-const ALTUMCODE = 1;
+defined('ALTUMCODE') || die();
 define('ROOT_PATH', realpath(__DIR__ . '/..') . '/');
 const APP_PATH = ROOT_PATH . 'app/';
 const PLUGINS_PATH = ROOT_PATH . 'plugins/';
@@ -19,6 +12,11 @@ const UPLOADS_PATH = ROOT_PATH . 'uploads/';
 const UPLOADS_URL_PATH = 'uploads/';
 const CACHE_DEFAULT_SECONDS = 2592000;
 
+/* Starting to include the required files */
+require_once APP_PATH . 'includes/debug.php';
+if(!DEBUG) require_once APP_PATH . 'includes/500.php';
+require_once APP_PATH . 'includes/product.php';
+
 /* Config file */
 require_once ROOT_PATH . 'config.php';
 
@@ -29,24 +27,22 @@ define('COOKIE_PATH', preg_replace('|https?://[^/]+|i', '', SITE_URL));
 session_set_cookie_params([
     'lifetime' => null,
     'path' => COOKIE_PATH,
-    'samesite' => 'Lax'
+    'samesite' => 'Lax',
+    'secure' => str_starts_with(SITE_URL, 'https://'),
 ]);
 
 /* Only start a session handler if we need to */
 $should_start_session = !isset($_GET['altum'])
     || (
-        isset($_GET['altum'])
-        && !(mb_strpos($_GET['altum'], 'cron') === 0)
-        && !(mb_strpos($_GET['altum'], 'sitemap') === 0)
+        !str_starts_with($_GET['altum'], 'cron')
+        && !str_starts_with($_GET['altum'], 'sitemap')
+        && !str_starts_with($_GET['altum'], 'webhook-')
+        && !str_starts_with($_GET['altum'], 'api/')
     );
 
 if($should_start_session) {
     session_start();
 }
-
-/* Starting to include the required files */
-require_once APP_PATH . 'includes/debug.php';
-require_once APP_PATH . 'includes/product.php';
 
 /* Autoloader */
 spl_autoload_register (function ($class) {
@@ -86,7 +82,6 @@ require_once APP_PATH . 'core/Model.php';
 /* Load some helpers */
 require_once APP_PATH . 'helpers/Link.php';
 require_once APP_PATH . 'helpers/core.php';
-require_once APP_PATH . 'helpers/notifications.php';
 require_once APP_PATH . 'helpers/others.php';
 require_once APP_PATH . 'helpers/links.php';
 require_once APP_PATH . 'helpers/strings.php';

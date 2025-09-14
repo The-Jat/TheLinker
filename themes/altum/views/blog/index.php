@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div class="container">
+<div class="container <?= settings()->content->blog_columns == 1 ? 'col-lg-8' : null ?>">
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
         <nav aria-label="breadcrumb">
             <ol class="custom-breadcrumbs small">
@@ -33,14 +33,14 @@
     </div>
 
     <div class="row mt-4">
-        <div class="col-12 col-lg-8 mb-5 mb-lg-0">
+        <div class="<?= settings()->content->blog_columns == 1 ? 'col-12 mb-5' : 'col-12 col-lg-8 mb-lg-0' ?>">
             <?php if(count($data->blog_posts)): ?>
                 <?php foreach($data->blog_posts as $blog_post): ?>
                     <div class="card mb-4">
                         <div class="card-body">
                             <?php if($blog_post->image): ?>
                                 <a href="<?= SITE_URL . ($blog_post->language ? \Altum\Language::$active_languages[$blog_post->language] . '/' : null) . 'blog/' . $blog_post->url ?>">
-                                    <img src="<?= \Altum\Uploads::get_full_url('blog') . $blog_post->image ?>" class="blog-post-image img-fluid w-100 rounded mb-3" />
+                                    <img src="<?= \Altum\Uploads::get_full_url('blog') . $blog_post->image ?>" class="blog-post-image img-fluid w-100 rounded mb-3" alt="<?= $blog_post->image_description ?>" />
                                 </a>
                             <?php endif ?>
 
@@ -67,20 +67,16 @@
 
                 <div class="mt-3"><?= $data->pagination ?></div>
             <?php else: ?>
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex flex-column align-items-center justify-content-center py-3">
-                            <img src="<?= ASSETS_FULL_URL . 'images/no_rows.svg' ?>" class="col-10 col-md-7 col-lg-4 mb-3" alt="<?= l('blog.no_data') ?>" />
-                            <h2 class="h4 text-muted"><?= l('blog.no_data') ?></h2>
-                            <p class="text-muted"><?= l('blog.no_data_help') ?></p>
-                        </div>
-                    </div>
-                </div>
+                <?= include_view(THEME_PATH . 'views/partials/no_data.php', [
+                    'filters_get' => $data->filters->get ?? [],
+                    'name' => 'blog',
+                    'has_secondary_text' => true,
+                ]); ?>
             <?php endif ?>
         </div>
 
         <?php if(settings()->content->blog_popular_widget_is_enabled || settings()->content->blog_categories_widget_is_enabled || settings()->content->blog_search_widget_is_enabled): ?>
-            <div class="col-12 col-lg-4">
+            <div class="<?= settings()->content->blog_columns == 1 ? 'col-12' : 'col-12 col-lg-4' ?>">
                 <?php if(settings()->content->blog_search_widget_is_enabled): ?>
                     <div class="card mb-4">
                         <div class="card-body">
@@ -123,22 +119,26 @@
                             <ul class="list-style-none m-0">
                                 <?php $i = 800; ?>
                                 <?php foreach($data->blog_posts_popular as $blog_post): ?>
-                                    <li class="mb-2 d-flex align-items-center">
-                                        <div class="mr-2 rounded <?= 'bg-gray-' . $i ?>" style="min-width: 1.5rem; min-height: 1.5rem;">
+                                    <li class="mb-3 d-flex align-items-center">
+                                        <div class="mr-3 rounded <?= 'bg-gray-' . $i ?>" style="min-width: 1.75rem; min-height: 1.75rem;border-radius: 50% !important;">
                                             &nbsp;
                                         </div>
 
                                         <?php $i = $i - 100; ?>
 
                                         <div>
-                                            <a href="<?= SITE_URL . ($blog_post->language ? \Altum\Language::$active_languages[$blog_post->language] . '/' : null) . 'blog/' . $blog_post->url ?>"><?= $blog_post->title ?></a>
+                                            <a href="<?= SITE_URL . ($blog_post->language ? \Altum\Language::$active_languages[$blog_post->language] . '/' : null) . 'blog/' . $blog_post->url ?>" class="font-size-small"><?= $blog_post->title ?></a>
                                             <div class="small">
                                                 <?php if($blog_post->blog_posts_category_id && isset($data->blog_posts_categories[$blog_post->blog_posts_category_id])): ?>
                                                     <a href="<?= SITE_URL . ($data->blog_posts_categories[$blog_post->blog_posts_category_id]->language ? \Altum\Language::$active_languages[$data->blog_posts_categories[$blog_post->blog_posts_category_id]->language] . '/' : null) . 'blog/category/' . $data->blog_posts_categories[$blog_post->blog_posts_category_id]->url ?>" class="text-muted"><?= $data->blog_posts_categories[$blog_post->blog_posts_category_id]->title ?></a>
+
+                                                    <?php if(settings()->content->blog_views_is_enabled): ?>
+                                                        <span class="text-muted"> • </span>
+                                                    <?php endif ?>
                                                 <?php endif ?>
 
                                                 <?php if(settings()->content->blog_views_is_enabled): ?>
-                                                    <span class="text-muted"> • <?= sprintf(l('blog.total_views'), nr($blog_post->total_views)) ?></span>
+                                                    <span class="text-muted"><?= sprintf(l('blog.total_views'), nr($blog_post->total_views)) ?></span>
                                                 <?php endif ?>
                                             </div>
                                         </div>
@@ -152,3 +152,26 @@
         <?php endif ?>
     </div>
 </div>
+
+<?php ob_start() ?>
+<script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "<?= l('index.title') ?>",
+                    "item": "<?= url() ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "<?= l('blog.title') ?>",
+                    "item": "<?= url('blog') ?>"
+                }
+            ]
+        }
+</script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

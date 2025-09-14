@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,6 +19,8 @@ namespace Altum\Controllers;
 use Altum\Language;
 use Altum\Meta;
 use Altum\Title;
+
+defined('ALTUMCODE') || die();
 
 class Page extends Controller {
 
@@ -42,10 +51,22 @@ class Page extends Controller {
             redirect('not-found');
         }
 
+        $page->plans_ids = json_decode($page->plans_ids ?? '');
+
+        if(!empty($page->plans_ids)) {
+            if(!is_logged_in()) {
+                redirect('not-found');
+            };
+
+            if(!in_array(user()->plan_id, $page->plans_ids)) {
+                redirect('not-found');
+            }
+        }
+
         /* Get the page category */
-        $pages_category = \Altum\Cache::cache_function_result('pages_category?hash=' . md5($page->pages_category_id), 'pages_categories', function() use ($page) {
+        $pages_category = $page->pages_category_id ? \Altum\Cache::cache_function_result('pages_category?hash=' . md5($page->pages_category_id), 'pages_categories', function() use ($page) {
             return db()->where('pages_category_id', $page->pages_category_id)->getOne('pages_categories');
-        });
+        }) : null;
 
         /* Add a new view to the page */
         $cookie_name = 'page_view_' . $page->page_id;
@@ -55,9 +76,9 @@ class Page extends Controller {
         }
 
         /* Transform content if needed */
-        $page->content = json_decode($page->content) ? convert_editorjs_json_to_html($page->content) : nl2br($page->content);
+        $page->content = json_decode($page->content) ? convert_editorjs_json_to_html($page->content) : output_blog_post_content($page->content);
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'page'  => $page,
             'pages_category' => $pages_category,
@@ -71,9 +92,12 @@ class Page extends Controller {
         Title::set($page->title);
 
         /* Meta */
-        Meta::set_canonical_url();
+
         Meta::set_description($page->description);
         Meta::set_keywords($page->keywords);
+
+        /* Disable automated link language alternate */
+        Meta::set_link_alternate(false);
     }
 
 }

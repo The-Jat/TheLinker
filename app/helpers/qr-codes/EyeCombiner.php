@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\QrCodes;
@@ -28,6 +35,21 @@ final class EyeCombiner implements EyeInterface, Singleton
         'diamond' => DiamondEye::class,
         'flower' => FlowerEye::class,
         'leaf' => LeafEye::class,
+        'sun' => SunEye::class,
+        'heart' => HeartEye::class,
+        'bold_plus' => BoldPlusEye::class,
+        'star' => StarEye::class,
+        'shine' => ShineEye::class,
+        'rounded_cross' => RoundedCrossEye::class,
+        'cross_x' => CrossXEye::class,
+        'curvy_x' => CurvyXEye::class,
+        'ninja' => NinjaEye::class,
+        'elastic_square' => ElasticSquareEye::class,
+        'inverted_squircle' => InvertedSquircleEye::class,
+        'hexagon' => HexagonEye::class,
+        'octagon' => OctagonEye::class,
+        'shield' => ShieldEye::class,
+        'thick_star' => ThickStarEye::class,
     ];
 
     private static $outer_eyes = [
@@ -36,6 +58,9 @@ final class EyeCombiner implements EyeInterface, Singleton
         'rounded' => RoundedEye::class,
         'flower' => FlowerEye::class,
         'leaf' => LeafEye::class,
+        'ninja' => NinjaEye::class,
+        'hexagon' => HexagonEye::class,
+        'octagon' => OctagonEye::class,
     ];
 
     private static $outer_eye;

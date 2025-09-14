@@ -29,8 +29,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* On modal show load new data */
+    
+/* On modal show load new data */
     $('#user_login_modal').on('show.bs.modal', event => {
         let user_id = $(event.relatedTarget).data('user-id');
 

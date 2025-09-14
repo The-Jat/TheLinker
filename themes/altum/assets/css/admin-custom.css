@@ -1,10 +1,13 @@
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     width: 100%;
     height: 100%;
 }
 
 .admin-container {
-    width: 100%;
     height: 100%;
 }
 
@@ -136,6 +139,8 @@ body.admin-sidebar-opened .admin-sidebar {
 
 .admin-sidebar-links li > a {
     color: var(--gray-800);
+    font-size: .95rem;
+    font-weight: 450;
 }
 
 .admin-sidebar-links li > a svg {
@@ -195,10 +200,20 @@ body.admin-sidebar-opened .admin-sidebar {
 }
 
 .chart-container {
-    position: relative;
-    margin: auto;
-    height: 300px;
-    width: 100%;
+	position: relative;
+	margin: auto;
+	height: 275px;
+	width: 100%;
+}
+
+@media print {
+	.chart-container canvas {
+		min-height: 100%;
+		max-width: 100%;
+		max-height: 100%;
+		height: auto!important;
+		width: auto!important;
+	}
 }
 
 /* Top Navbar */
@@ -231,6 +246,7 @@ body.admin-sidebar-opened .admin-sidebar {
     width: 20px;
     height: 20px;
     border-radius: 50%;
+    vertical-align: middle !important;
 }
 
 /* Other */
@@ -240,11 +256,30 @@ body.admin-sidebar-opened .admin-sidebar {
     width: 45px;
     height: 45px;
     object-fit: cover;
+    background: var(--primary-100);
+}
+
+.plugin-avatar {
+    min-width: 60px;
+    min-height: 60px;
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    font-size: 1.25rem;
+}
+
+img {
+	vertical-align: inherit !important;
 }
 
 .icon-favicon {
-    width: 1rem;
-    height: 1rem;
+	width: .95rem;
+	height: auto;
+}
+
+.icon-favicon-small {
+	width: .75rem;
+	height: auto;
 }
 
 /* Tables */
@@ -318,90 +353,7 @@ footer button, footer button:hover {
     opacity: .5;
 }
 
-/* Badge colors */
-.badge {
-    padding: 0.45em 0.9em;
-}
 
-.badge-primary {
-    color: hsl(211, 100%, 35%);
-    background-color: hsl(211, 100%, 85%);
-}
-
-[data-theme-style="dark"] .badge-primary {
-    background-color: hsl(211, 100%, 35%);
-    color: hsl(211, 100%, 85%);
-}
-
-.badge-secondary {
-    color: hsl(208, 7%, 35%);
-    background-color: hsl(208, 7%, 85%);
-}
-
-[data-theme-style="dark"] .badge-secondary {
-    background-color: hsl(208, 7%, 35%);
-    color: hsl(208, 7%, 85%);
-}
-
-.badge-success {
-    color: hsla(134, 50%, 30%, 1);
-    background-color: hsla(134, 50%, 85%, 1);
-}
-
-[data-theme-style="dark"] .badge-success {
-    background-color: hsla(134, 50%, 30%, 1);
-    color: hsla(134, 50%, 85%, 1);
-}
-
-.badge-danger {
-    color: hsla(354, 70%, 35%, 1);
-    background-color: hsla(354, 70%, 85%, 1);
-}
-
-[data-theme-style="dark"] .badge-danger {
-    background-color: hsla(354, 70%, 35%, 1);
-    color: hsla(354, 70%, 85%, 1);
-}
-
-.badge-warning {
-    background-color: hsla(45, 100%, 85%, 1);
-    color: hsla(40, 80%, 30%, 1);
-}
-
-[data-theme-style="dark"] .badge-warning {
-    background-color: hsla(50, 10%, 20%, 1);
-    color: hsla(45, 100%, 85%, 1);
-}
-
-.badge-info {
-    color: hsla(188, 60%, 30%, 1);
-    background-color: hsla(188, 78%, 85%, 1);
-}
-
-[data-theme-style="dark"] .badge-info {
-    background-color: hsla(188, 60%, 30%, 1);
-    color: hsla(188, 78%, 85%, 1);
-}
-
-.badge-light {
-    color: hsla(210, 15%, 35%, 1);
-    background-color: hsl(210, 17%, 95%);
-}
-
-[data-theme-style="dark"] .badge-light {
-    background-color: hsla(210, 15%, 35%, 1);
-    color: hsl(210, 17%, 95%);
-}
-
-.badge-dark {
-    color: hsla(210, 10%, 90%, 1);
-    background-color: hsla(210, 10%, 20%, 1);
-}
-
-[data-theme-style="dark"] .badge-dark {
-    background-color: hsla(210, 10%, 90%, 1);
-    color: hsla(210, 10%, 20%, 1);
-}
 
 /* Round circles */
 .round-circle-md {
@@ -420,6 +372,26 @@ footer button, footer button:hover {
     justify-content: center;
     align-items: center;
     border-radius: 50%;
+}
+
+/* Invoice css */
+.invoice-table th {
+    border-top: 0 !important;
+}
+
+.invoice-table td {
+    vertical-align: baseline !important;
+}
+
+.invoice-logo {
+    max-height: 2.5rem;
+    height: 2.5rem;
+}
+
+@media print {
+    .invoice-logo {
+        filter: grayscale(100%);
+    }
 }
 
 /* Modal */
@@ -469,9 +441,6 @@ footer button, footer button:hover {
     margin-left: .5rem;
 }
 
-.custom-breadcrumbs > li.active {
-}
-
 /* Base animation */
 .altum-animate {
     -webkit-animation-duration:1s;
@@ -509,9 +478,7 @@ footer button, footer button:hover {
     animation-name:fadeIn
 }
 
-.clickable {
-    cursor: pointer;
-}
+
 
 /* File input */
 .altum-file-input {
@@ -546,6 +513,14 @@ footer button, footer button:hover {
     margin-right: 1rem;
 }
 
+/* File input preview */
+.altum-file-input-preview {
+    max-width: 100%;
+    max-height: 68px;
+    min-height: 68px;
+    object-fit: cover;
+}
+
 /* Icons on links animations */
 a svg {
     transition: transform .15s;
@@ -572,7 +547,7 @@ a:active svg {
     color: var(--white);
 }
 
-/* Color picker border */
+/* Color picker */
 .pcr-button {
     border: 1px solid white !important;
     outline: 1px solid var(--gray-300) !important;
@@ -583,6 +558,31 @@ a:active svg {
 
 .pcr-button::before, .pcr-button::after {
     border-radius: var(--border-radius) !important;
+}
+
+/* Helper for quill editor code block */
+.ql-code-block {
+    background-color: var(--gray-200);
+    color: var(--gray-600);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    overflow-x: auto;
+    font-family: 'Courier New', Courier, monospace;
+    white-space: pre;
+    font-size: .9rem;
+    line-height: 1.5;
+}
+
+blockquote {
+    border-left: 4px solid var(--gray-400) !important;
+    padding: 1rem 1.5rem !important;
+    margin: 1.5rem 0 !important;
+    background-color: var(--gray-100);
+    font-style: italic;
+    color: var(--gray-600);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    border-radius: var(--border-radius);
 }
 
 /* Shiki code highlighter */
@@ -623,3 +623,152 @@ body *::-webkit-scrollbar, body *::-webkit-scrollbar-track {
     height: 6px;
 }
 
+/* Custom input range */
+.form-control-range {
+    /* removing default appearance */
+    -webkit-appearance: none;
+    appearance: none;
+
+    /*  slider progress trick  */
+    overflow: hidden;
+
+    /* creating a custom design */
+    accent-color: var(--primary);
+    background: var(--gray-200);
+    border-radius: var(--border-radius);
+    height: .5rem;
+    margin: 0.75rem 0;
+}
+
+/* Track: webkit browsers */
+.form-control-range::-webkit-slider-runnable-track, .form-control-range::-moz-range-track {
+    background: var(--gray-200);
+}
+
+/* Thumb: webkit */
+.form-control-range::-webkit-slider-thumb {
+    /* removing default appearance */
+    -webkit-appearance: none;
+    appearance: none;
+
+    /* creating a custom design */
+    height: .75rem;
+    width: .75rem;
+    background-color: var(--primary);
+    border-radius: 50%;
+    border: 2px solid var(--white);
+
+    /*  slider progress trick  */
+    box-shadow: -2007px 0 0 2000px var(--primary-300);
+}
+
+.form-control-range::-moz-range-thumb {
+    /* removing default appearance */
+    -webkit-appearance: none;
+    appearance: none;
+
+    /* creating a custom design */
+    height: .75rem;
+    width: .75rem;
+    background-color: var(--primary);
+    border-radius: 50%;
+    border: 2px solid var(--white);
+
+    /*  slider progress trick  */
+    box-shadow: -2007px 0 0 2000px var(--primary-300);
+}
+
+/* Zoom animation */
+.zoom-animation-subtle {
+    transition: transform .3s;
+}
+
+.zoom-animation-subtle:hover {
+    transform: scale(1.025);
+}
+
+/* Prevent fontawesome layout shifts */
+i.fa-fw {
+    width: 1.25em;
+}
+
+i.fa-xs {
+    font-size: .85em;
+}
+
+i.fa-sm {
+    font-size: .875em;
+}
+
+i.fa-lg {
+    font-size: 1.25em;
+}
+
+i.xl {
+    font-size: 1.5em;
+}
+
+i {
+    display: inline-block;
+}
+
+.cursor-grab {
+    cursor: grab !important;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Custom Radio Boxes */
+.custom-radio-box {
+    cursor: pointer;
+}
+
+.custom-radio-box .custom-radio-box-main-text {
+    font-size: 1.15rem;
+    font-weight: bold;
+}
+
+.custom-radio-box .custom-radio-box-main-icon {
+    font-size: 1.25rem;
+}
+
+.custom-radio-box input[type="radio"] + div {
+    transition: all .3s ease-in-out;
+    border: 2px solid var(--gray-200);
+    background: var(--white);
+}
+
+.custom-radio-box input[type="radio"]:checked + div {
+    border: 2px solid var(--primary);
+}
+
+.custom-radio-box input[type="radio"]:hover + div {
+    border: 2px solid var(--primary);
+}
+
+/* Code editor */
+.CodeMirror {
+    width: 100%;
+    height: auto;
+    min-height: 150px;
+    resize: vertical;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--gray-200);
+    font-size: .9rem;
+}
+
+/* Teams */
+.team-user-avatar {
+    width: 45px;
+    height: 45px;
+}
+
+/* Links */
+.link-type-icon {
+    min-width: 2.25rem;
+    max-height: 2.25rem;
+    width: 2.25rem;
+    height: 2.25rem;
+}

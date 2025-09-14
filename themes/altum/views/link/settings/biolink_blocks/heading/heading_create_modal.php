@@ -6,7 +6,7 @@
 
             <div class="modal-header">
                 <button type="button" data-toggle="modal" data-target="#biolink_link_create_modal" data-dismiss="modal" class="btn btn-sm btn-link"><i class="fas fa-fw fa-chevron-circle-left text-muted"></i></button>
-                <h5 class="modal-title"><?= l('create_biolink_heading_modal.header') ?></h5>
+                <h5 class="modal-title"><?= l('biolink_heading.header') ?></h5>
                 <button type="button" class="close" data-dismiss="modal" title="<?= l('global.close') ?>">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -22,7 +22,7 @@
                     <div class="notification-container"></div>
 
                     <div class="form-group">
-                        <label for="heading_heading_type"><i class="fas fa-fw fa-heading fa-sm text-muted mr-1"></i> <?= l('create_biolink_heading_modal.heading_type') ?></label>
+                        <label for="heading_heading_type"><i class="fas fa-fw fa-heading fa-sm text-muted mr-1"></i> <?= l('global.type') ?></label>
                         <select id="heading_heading_type" name="heading_type" class="custom-select">
                             <option value="h1">H1</option>
                             <option value="h2">H2</option>
@@ -34,12 +34,14 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="heading_text"><i class="fas fa-fw fa-signature fa-sm text-muted mr-1"></i> <?= l('create_biolink_link_modal.input.text') ?></label>
+                        <label for="heading_text"><i class="fas fa-fw fa-signature fa-sm text-muted mr-1"></i> <?= l('biolink_link.text') ?></label>
                         <input id="heading_text" type="text" class="form-control" name="text" maxlength="256" />
                     </div>
 
+                    <p class="small text-muted"><i class="fas fa-fw fa-sm fa-circle-info mr-1"></i> <?= l('link.create_info') ?></p>
+                    
                     <div class="text-center mt-4">
-                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('global.submit') ?></button>
+                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('link.biolink.create_block') ?></button>
                     </div>
                 </form>
             </div>

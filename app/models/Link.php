@@ -1,19 +1,61 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Models;
 
+defined('ALTUMCODE') || die();
+
 class Link extends Model {
+
+    public function get_full_links_by_user_id($user_id) {
+
+        /* Get the user links */
+        $links = [];
+
+        /* Try to check if the user posts exists via the cache */
+        $cache_instance = cache()->getItem('links?user_id=' . $user_id);
+
+        /* Set cache if not existing */
+        if(is_null($cache_instance->get())) {
+
+            /* Get data from the database */
+            $links_result = database()->query("SELECT `links`.*, `domains`.`scheme`, `domains`.`host`, `domains`.`link_id` as `domain_link_id` FROM `links` LEFT JOIN `domains` ON `links`.`domain_id` = `domains`.`domain_id` WHERE `links`.`user_id` = {$user_id}");
+            while($row = $links_result->fetch_object()) {
+                $row->full_url = $row->domain_id ? $row->scheme . $row->host . '/' . ($row->domain_link_id == $row->link_id ? null : $row->url) : SITE_URL . $row->url;
+                $links[$row->link_id] = $row;
+            }
+
+            cache()->save(
+                $cache_instance->set($links)->expiresAfter(CACHE_DEFAULT_SECONDS)->addTag('user_id=' . $user_id)
+            );
+
+        } else {
+
+            /* Get cache */
+            $links = $cache_instance->get();
+
+        }
+
+        return $links;
+
+    }
 
     public function delete($link_id) {
 
-        if(!$link = db()->where('link_id', $link_id)->getOne('links', ['user_id', 'link_id', 'type', 'settings'])) {
+        if(!$link = db()->where('link_id', $link_id)->getOne('links', ['user_id', 'link_id', 'biolink_theme_id', 'type', 'settings'])) {
             return;
         }
 
@@ -35,9 +77,15 @@ class Link extends Model {
         if($link->type == 'biolink') {
             $link->settings = json_decode($link->settings ?? '');
 
-            \Altum\Uploads::delete_uploaded_file($link->settings->image, 'favicons');
+            if(!empty($link->settings->pwa_file_name)) {
+                \Altum\Uploads::delete_uploaded_file($link->settings->pwa_file_name, 'pwa');
+            }
+
+            \Altum\Uploads::delete_uploaded_file($link->settings->favicon, 'favicons');
             \Altum\Uploads::delete_uploaded_file($link->settings->seo->image, 'block_images');
-            if($link->settings->background_type == 'image') {
+            \Altum\Uploads::delete_uploaded_file($link->settings->pwa_icon, 'app_icon');
+
+            if($link->settings->background_type == 'image' && !$link->biolink_theme_id) {
                 \Altum\Uploads::delete_uploaded_file($link->settings->background, 'backgrounds');
             }
 
@@ -62,12 +110,13 @@ class Link extends Model {
         db()->where('link_id', $link_id)->delete('links');
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem($link->type . '_links_total?user_id=' . $link->user_id);
-        \Altum\Cache::$adapter->deleteItem('links_total?user_id=' . $link->user_id);
+        cache()->deleteItem($link->type . '_links_total?user_id=' . $link->user_id);
+        cache()->deleteItem('links_total?user_id=' . $link->user_id);
+        cache()->deleteItem('links?user_id=' . $link->user_id);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $link->link_id);
-        \Altum\Cache::$adapter->deleteItemsByTag('link_id=' . $link->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $link->link_id);
+        cache()->deleteItemsByTag('link_id=' . $link->link_id);
 
     }
 }

@@ -1,22 +1,31 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class AdminBiolinksTemplates extends Controller {
 
     public function index() {
 
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['is_enabled'], ['name'], ['datetime', 'last_datetime', 'name', 'order', 'total_usage']));
+        $filters = (new \Altum\Filters(['is_enabled'], ['name'], ['biolink_template_id', 'datetime', 'last_datetime', 'name', 'order', 'total_usage']));
         $filters->set_default_order_by('biolink_template_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
@@ -43,8 +52,8 @@ class AdminBiolinksTemplates extends Controller {
         }
 
         /* Export handler */
-        process_export_csv($biolinks_templates, 'include', ['biolink_template_id', 'name', 'is_enabled', 'total_usage', 'last_datetime', 'datetime'], sprintf(l('admin_biolinks_templates.title')));
-        process_export_json($biolinks_templates, 'include', ['biolink_template_id', 'name', 'settings', 'is_enabled', 'total_usage', 'last_datetime', 'datetime'], sprintf(l('admin_biolinks_templates.title')));
+        process_export_csv($biolinks_templates, ['biolink_template_id', 'name', 'is_enabled', 'total_usage', 'last_datetime', 'datetime'], sprintf(l('admin_biolinks_templates.title')));
+        process_export_json($biolinks_templates, ['biolink_template_id', 'name', 'settings', 'is_enabled', 'total_usage', 'last_datetime', 'datetime'], sprintf(l('admin_biolinks_templates.title')));
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/admin_pagination', (array) $this))->run(['paginator' => $paginator]);
@@ -75,7 +84,7 @@ class AdminBiolinksTemplates extends Controller {
             redirect('admin/biolinks-templates');
         }
 
-        if(!isset($_POST['type']) || (isset($_POST['type']) && !in_array($_POST['type'], ['delete']))) {
+        if(!isset($_POST['type'])) {
             redirect('admin/biolinks-templates');
         }
 
@@ -84,6 +93,10 @@ class AdminBiolinksTemplates extends Controller {
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+
+            set_time_limit(0);
+
+            session_write_close();
 
             switch($_POST['type']) {
                 case 'delete':
@@ -95,20 +108,20 @@ class AdminBiolinksTemplates extends Controller {
                             continue;
                         }
 
-                        \Altum\Uploads::delete_uploaded_file($biolink_template->image, 'biolinks_templates');
-
-                        /* Delete the project */
+                        /* Delete the resource */
                         db()->where('biolink_template_id', $biolink_template_id)->delete('biolinks_templates');
                     }
 
                     /* Clear the cache */
-                    \Altum\Cache::$adapter->deleteItem('biolinks_templates');
+                    cache()->deleteItem('biolinks_templates');
 
                     break;
             }
 
+            session_start();
+            
             /* Set a nice success message */
-            Alerts::add_success(l('admin_bulk_delete_modal.success_message'));
+            Alerts::add_success(l('bulk_delete_modal.success_message'));
 
         }
 
@@ -133,40 +146,11 @@ class AdminBiolinksTemplates extends Controller {
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
-            /* Offload deleting */
-            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-
-                if(!empty($biolink_template->image)) {
-                    $s3->deleteObject([
-                        'Bucket' => settings()->offload->storage_name,
-                        'Key' => 'uploads/biolinks_templates/' . $biolink_template->image,
-                    ]);
-                }
-
-                if(!empty($biolink_template->settings->biolink->background) && file_exists(UPLOADS_PATH . 'backgrounds' . '/' . $biolink_template->settings->biolink->background)) {
-                    $s3->deleteObject([
-                        'Bucket' => settings()->offload->storage_name,
-                        'Key' => 'uploads/backgrounds/' . $biolink_template->settings->biolink->background,
-                    ]);
-                }
-            }
-
-            /* Local deleting */
-            else {
-                if(!empty($biolink_template->image) && file_exists(UPLOADS_PATH . 'biolinks_templates/' . $biolink_template->image)) {
-                    unlink(UPLOADS_PATH . 'biolinks_templates/' . $biolink_template->image);
-                }
-                if(!empty($biolink_template->settings->biolink->background) && file_exists(UPLOADS_PATH . 'backgrounds/' . $biolink_template->settings->biolink->background)) {
-                    unlink(UPLOADS_PATH . 'backgrounds/' . $biolink_template->settings->biolink->background);
-                }
-            }
-
-            /* Delete the project */
+            /* Delete the resource */
             db()->where('biolink_template_id', $biolink_template->biolink_template_id)->delete('biolinks_templates');
 
             /* Clear the cache */
-            \Altum\Cache::$adapter->deleteItem('biolinks_templates');
+            cache()->deleteItem('biolinks_templates');
 
             /* Set a nice success message */
             Alerts::add_success(sprintf(l('global.success_message.delete1'), '<strong>' . $biolink_template->name . '</strong>'));

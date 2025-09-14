@@ -13,8 +13,8 @@
 <?php endif ?>
 
     <div class="row mb-4">
-        <div class="col-12 col-xl d-flex align-items-center mb-3 mb-xl-0">
-            <h1 class="h4 m-0"><?= l('tools.youtube_thumbnail_downloader.name') ?></h1>
+        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0 text-truncate">
+            <h1 class="h4 m-0 text-truncate"><?= l('tools.youtube_thumbnail_downloader.name') ?></h1>
 
             <div class="ml-2">
                 <span data-toggle="tooltip" title="<?= l('tools.youtube_thumbnail_downloader.description') ?>">
@@ -22,6 +22,8 @@
                 </span>
             </div>
         </div>
+
+        <?= $this->views['ratings'] ?>
     </div>
 
     <div class="card">
@@ -32,7 +34,7 @@
 
                 <div class="form-group">
                     <label for="url"><i class="fas fa-fw fa-link fa-sm text-muted mr-1"></i> <?= l('tools.youtube_thumbnail_downloader.url') ?></label>
-                    <input type="url" id="url" name="url" class="form-control <?= \Altum\Alerts::has_field_errors('url') ? 'is-invalid' : null ?>" value="<?= $data->values['url'] ?>" required="required" />
+                    <input type="url" id="url" name="url" class="form-control <?= \Altum\Alerts::has_field_errors('url') ? 'is-invalid' : null ?>" value="<?= $data->values['url'] ?>" placeholder="<?= l('global.url_placeholder') ?>" required="required" />
                     <?= \Altum\Alerts::output_field_error('url') ?>
                 </div>
 
@@ -66,7 +68,7 @@
                                         <label for="<?= 'result_' . $key ?>"><?= l('tools.youtube_thumbnail_downloader.result.' . $key) ?></label>
                                         <div>
                                             <a
-                                                    href="<?= url('tools/download?url=' . urlencode($data->result[$key]) . '&name=' . urlencode($key . '.jpg') . '&mime_content_type=' . urlencode('image/jpeg') . '&global_token=' . \Altum\Csrf::get('global_token')) ?>"
+                                                    href="<?= url('tools/download?url=' . base64_encode($data->result[$key]) . '&name=' . urlencode($key . '.jpg') . '&mime_content_type=' . urlencode('image/jpeg') . '&global_token=' . \Altum\Csrf::get('global_token')) ?>"
                                                     target="_blank"
                                                     class="btn btn-link text-secondary"
                                                     data-toggle="tooltip"
@@ -115,6 +117,8 @@
     <?= $this->views['extra_content'] ?>
 
     <?= $this->views['similar_tools'] ?>
+
+    <?= $this->views['popular_tools'] ?>
 </div>
 
 <?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>

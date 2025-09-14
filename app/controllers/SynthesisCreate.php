@@ -1,25 +1,34 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
-namespace Altum\controllers;
+namespace Altum\Controllers;
 
 use Altum\Alerts;
 use Altum\Response;
 use Altum\Uploads;
+
+defined('ALTUMCODE') || die();
 
 class SynthesisCreate extends Controller {
 
     public function index() {
         \Altum\Authentication::guard();
 
-        if(!settings()->aix->syntheses_is_enabled) {
-            redirect('dashboard');
+        if(!\Altum\Plugin::is_active('aix') || !settings()->aix->syntheses_is_enabled) {
+            redirect('not-found');
         }
 
         /* Team checks */
@@ -68,7 +77,7 @@ class SynthesisCreate extends Controller {
         }
 
         $values = [
-            'name' => $_GET['name'] ?? $_POST['name'] ?? sprintf(l('synthesis_create.name_x'), \Altum\Date::get()),
+            'name' => $_POST['name'] ?? $_GET['name'] ?? sprintf(l('synthesis_create.name_x'), \Altum\Date::get()),
             'input' => $_GET['input'] ?? $_POST['input'] ?? '',
             'language' => $_GET['language'] ?? $_POST['language'] ?? 'en-US',
             'voice_id' => $_GET['voice_id'] ?? $_POST['voice_id'] ?? 'Joanna',
@@ -77,7 +86,7 @@ class SynthesisCreate extends Controller {
             'project_id' => $_GET['project_id'] ?? $_POST['project_id'] ?? null,
         ];
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'values' => $values,
             'ai_languages' => $ai_languages,
@@ -105,8 +114,8 @@ class SynthesisCreate extends Controller {
 
         \Altum\Authentication::guard();
 
-        if(!settings()->aix->syntheses_is_enabled) {
-            redirect('dashboard');
+        if(!\Altum\Plugin::is_active('aix') || !settings()->aix->syntheses_is_enabled) {
+            redirect('not-found');
         }
 
         /* Team checks */
@@ -152,7 +161,7 @@ class SynthesisCreate extends Controller {
         /* Formats */
         $ai_formats = require \Altum\Plugin::get('aix')->path . 'includes/ai_syntheses_' . $this->user->plan_settings->syntheses_api . '_formats.php';
 
-        /* Filter some the variables */
+        /* Filter some of the variables */
         $_POST['language'] = !empty($_POST['language']) && array_key_exists($_POST['language'], $ai_languages) ? $_POST['language'] : 'en-US';
         $_POST['voice_id'] = !empty($_POST['voice_id']) && array_key_exists($_POST['voice_id'], $ai_voices) ? $_POST['voice_id'] : 'Joanna';
         $_POST['voice_engine'] = !empty($_POST['voice_engine']) && in_array($_POST['voice_engine'], $ai_engines) ? $_POST['voice_engine'] : reset($ai_engines);
@@ -275,7 +284,7 @@ class SynthesisCreate extends Controller {
         /* Prepare a custom name if needed */
         $name = $_POST['name'];
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         $synthesis_id = db()->insert('syntheses', [
             'user_id' => $this->user->user_id,
             'project_id' => $_POST['project_id'],
@@ -290,10 +299,10 @@ class SynthesisCreate extends Controller {
             'settings' => $settings,
             'characters' => $characters,
             'api_response_time' => $api_response_time,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         db()->where('user_id', $this->user->user_id)->update('users', [
             'aix_syntheses_current_month' => db()->inc(),
             'aix_synthesized_characters_current_month' => db()->inc($characters)

@@ -1,0 +1,70 @@
+UPDATE `settings` SET `value` = '{\"version\":\"54.0.0\", \"code\":\"5400\"}' WHERE `key` = 'product_info';
+
+-- SEPARATOR --
+
+alter table qr_codes drop foreign key qr_codes_links_link_id_fk;
+
+-- SEPARATOR --
+
+alter table qr_codes add constraint qr_codes_links_link_id_fk foreign key (link_id) references links (link_id) on update cascade on delete cascade;
+
+-- SEPARATOR --
+
+alter table tools_usage add total_submissions bigint default 0 null;
+
+-- SEPARATOR --
+
+alter table tools_usage add data text null;
+
+-- SEPARATOR --
+
+alter table tools_usage add total_ratings bigint unsigned not null default 0 after total_submissions;
+
+-- SEPARATOR --
+
+alter table tools_usage add average_rating float unsigned not null default 0 after total_ratings;
+
+-- SEPARATOR --
+
+CREATE TABLE `tools_ratings` (
+`id` bigint unsigned NOT NULL AUTO_INCREMENT,
+`tool_id` varchar(64) DEFAULT NULL,
+`user_id` int DEFAULT NULL,
+`ip_binary` varbinary(16) DEFAULT '0',
+`rating` tinyint(1) DEFAULT '0',
+`datetime` datetime DEFAULT NULL,
+PRIMARY KEY (`id`),
+UNIQUE KEY `tools_usage_tool_id_idx` (`tool_id`) USING BTREE,
+UNIQUE KEY `tools_ratings_tool_id_ip_binary_idx` (`tool_id`,`ip_binary`) USING BTREE,
+KEY `user_id` (`user_id`),
+CONSTRAINT `tools_ratings_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- SEPARATOR --
+
+CREATE TABLE `blog_posts_ratings` (
+`id` bigint unsigned NOT NULL AUTO_INCREMENT,
+`blog_post_id` bigint unsigned DEFAULT NULL,
+`user_id` int DEFAULT NULL,
+`ip_binary` varbinary(16) DEFAULT NULL,
+`rating` tinyint(1) DEFAULT NULL,
+`datetime` datetime DEFAULT NULL,
+PRIMARY KEY (`id`),
+UNIQUE KEY `blog_posts_ratings_blog_post_id_ip_binary_idx` (`blog_post_id`,`ip_binary`) USING BTREE,
+KEY `user_id` (`user_id`),
+CONSTRAINT `blog_posts_ratings_ibfk_1` FOREIGN KEY (`blog_post_id`) REFERENCES `blog_posts` (`blog_post_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+CONSTRAINT `blog_posts_ratings_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- SEPARATOR --
+
+alter table blog_posts add total_ratings bigint unsigned not null default 0 after total_views;
+
+-- SEPARATOR --
+
+alter table blog_posts add average_rating float unsigned not null default 0 after total_views;
+
+-- SEPARATOR --
+
+INSERT INTO `settings` (`key`, `value`) VALUES ('lemonsqueezy', '{"is_enabled":false,"api_key":"","signing_secret":"","store_id":"","one_time_monthly_variant_id":"","one_time_annual_variant_id":"","one_time_lifetime_variant_id":"","recurring_monthly_variant_id":"","recurring_annual_variant_id":"","currencies":["USD"]}');

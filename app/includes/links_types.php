@@ -1,32 +1,41 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
+
+defined('ALTUMCODE') || die();
 
 return [
     'link' => [
         'icon' => 'fas fa-link',
-        'color' => '#14b8a6',
+        'color' => '#8b5cf6', /* violet-500 */
     ],
     'biolink' => [
         'icon' => 'fas fa-fw fa-hashtag',
-        'color' => '#3b82f6',
+        'color' => '#3b82f6', /* blue-500 */
     ],
     'file' => [
         'icon' => 'fas fa-file',
-        'color' => '#10b981',
+        'color' => '#06b6d4', /* cyan-500 */
     ],
     'static' => [
-        'icon' => 'fas fa-code',
-        'color' => '#fb972e',
+        'icon' => 'fas fa-file-code',
+        'color' => '#f59e0b', /* amber-500 */
     ],
     'vcard' => [
         'icon' => 'fas fa-id-card',
-        'color' => '#06b6d4',
+        'color' => '#10b981', /* teal-500 */
         'fields' => [
             'first_name' => [
                 'max_length' => 64,
@@ -65,7 +74,7 @@ return [
                 'max_length' => 32,
             ],
             'note' => [
-                'max_length' => 256,
+                'max_length' => 512,
             ],
             'phone_number_label' => [
                 'max_length' => 32,
@@ -83,13 +92,13 @@ return [
     ],
     'event' => [
         'icon' => 'fas fa-calendar-alt',
-        'color' => '#6366f1',
+        'color' => '#f43f5e', /* rose-500 */
         'fields' => [
             'name' => [
                 'max_length' => 128,
             ],
             'note' => [
-                'max_length' => 256,
+                'max_length' => 512,
             ],
             'url' => [
                 'max_length' => 1024,

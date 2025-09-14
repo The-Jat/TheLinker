@@ -36,6 +36,8 @@
 
 <?php ob_start() ?>
 <script>
+    'use strict';
+    
     /* On modal show load new data */
     $('#link_delete_modal').on('show.bs.modal', event => {
         let link_id = $(event.relatedTarget).data('link-id');
@@ -70,7 +72,7 @@
                     setTimeout(() => {
                         $('#link_delete_modal').modal('hide');
                         redirect(data.details.url, true);
-                    }, 500);
+                    }, 750);
                 }
             },
             error: () => {

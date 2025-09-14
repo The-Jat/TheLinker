@@ -9,7 +9,7 @@ alter table biolinks_themes add `order` int default 0 after is_enabled;
 CREATE TABLE `biolinks_templates` (
 `biolink_template_id` bigint unsigned NOT NULL AUTO_INCREMENT,
 `link_id` int DEFAULT NULL,
-`name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+`name` varchar(64) NOT NULL,
 `url` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
 `image` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
 `settings` text COLLATE utf8mb4_unicode_ci,
@@ -25,7 +25,7 @@ CONSTRAINT `biolinks_templates_ibfk_1` FOREIGN KEY (`link_id`) REFERENCES `links
 
 -- SEPARATOR --
 
-alter table users add is_newsletter_subscribed tinyint unsigned default 0 null after type;
+alter table users add is_newsletter_subscribed tinyint default 0 null after type;
 
 -- SEPARATOR --
 
@@ -66,7 +66,7 @@ CREATE TABLE `templates_categories` (
 `color` varchar(16) DEFAULT NULL,
 `background` varchar(16) DEFAULT NULL,
 `order` int DEFAULT NULL,
-`is_enabled` tinyint unsigned DEFAULT '1',
+`is_enabled` tinyint DEFAULT '1',
 `datetime` datetime DEFAULT NULL,
 `last_datetime` datetime DEFAULT NULL,
 PRIMARY KEY (`template_category_id`)
@@ -87,7 +87,7 @@ CREATE TABLE `templates` (
 `icon` varchar(32) DEFAULT NULL,
 `order` int DEFAULT NULL,
 `total_usage` bigint unsigned DEFAULT '0',
-`is_enabled` tinyint unsigned DEFAULT '1',
+`is_enabled` tinyint DEFAULT '1',
 `datetime` datetime DEFAULT NULL,
 `last_datetime` datetime DEFAULT NULL,
 PRIMARY KEY (`template_id`),
@@ -115,7 +115,7 @@ INSERT INTO `templates` (`template_id`, `template_category_id`, `name`, `prompt`
 (17, 3, 'Video Idea', 'Write ideas for a video scenario, based on the following: {text}', '{\"translations\":{\"english\":{\"name\":\"Video Idea\",\"description\":\"Generate a random video idea based on the topics that you want.\"}},\"inputs\":{\"text\":{\"icon\":\"fas fa-paragraph\",\"type\":\"textarea\",\"translations\":{\"english\":{\"name\":\"Title or Keywords\",\"placeholder\":null,\"help\":null}}}}}', 'fas fa-video', 17, 1, 1, '2023-03-25 23:29:00', NULL),
 (18, 3, 'Video Title', 'Write a video title, based on the following: {text}', '{\"translations\":{\"english\":{\"name\":\"Video Title\",\"description\":\"Generate a catchy video title for your video.\"}},\"inputs\":{\"text\":{\"icon\":\"fas fa-paragraph\",\"type\":\"textarea\",\"translations\":{\"english\":{\"name\":\"Title or Keywords\",\"placeholder\":null,\"help\":null}}}}}', 'fas fa-play', 18, 1, 1, '2023-03-25 23:29:00', NULL),
 (19, 3, 'Video Description', 'Write a video description, based on the following: {text}', '{\"translations\":{\"english\":{\"name\":\"Video Description\",\"description\":\"Generate a brief and quality video description.\"}},\"inputs\":{\"text\":{\"icon\":\"fas fa-paragraph\",\"type\":\"textarea\",\"translations\":{\"english\":{\"name\":\"Title or Keywords\",\"placeholder\":null,\"help\":null}}}}}', 'fas fa-film', 19, 1, 1, '2023-03-25 23:29:00', NULL),
-(20, 3, 'Tweet generator', 'Generate a tweet based on the following text/keywords: {text}', '{\"translations\":{\"english\":{\"name\":\"Tweet generator\",\"description\":\"Generate tweets based on your ideas/topics/keywords.\"}},\"inputs\":{\"text\":{\"icon\":\"fas fa-paragraph\",\"type\":\"textarea\",\"translations\":{\"english\":{\"name\":\"Text or keywords to be used\",\"placeholder\":null,\"help\":null}}}}}', 'fab fa-twitter', 20, 1, 1, '2023-03-25 23:29:00', NULL),
+(20, 3, 'Tweet generator', 'Generate a tweet based on the following text/keywords: {text}', '{\"translations\":{\"english\":{\"name\":\"Tweet generator\",\"description\":\"Generate tweets based on your ideas/topics/keywords.\"}},\"inputs\":{\"text\":{\"icon\":\"fas fa-paragraph\",\"type\":\"textarea\",\"translations\":{\"english\":{\"name\":\"Text or keywords to be used\",\"placeholder\":null,\"help\":null}}}}}', 'fab fa-x-twitter', 20, 1, 1, '2023-03-25 23:29:00', NULL),
 (21, 3, 'Instagram caption', 'Generate an instagram caption for a post based on the following text/keywords: {text}', '{\"translations\":{\"english\":{\"name\":\"Instagram caption\",\"description\":\"Generate an instagram post caption based on text or keywords.\"}},\"inputs\":{\"text\":{\"icon\":\"fas fa-paragraph\",\"type\":\"textarea\",\"translations\":{\"english\":{\"name\":\"Text or keywords to be used\",\"placeholder\":null,\"help\":null}}}}}', 'fab fa-instagram', 21, 1, 1, '2023-03-25 23:29:00', NULL),
 (22, 2, 'Website Headline', 'Write a website short headline for the \"{name}\" product with the following description: {description}', '{\"translations\":{\"english\":{\"name\":\"Website Headline\",\"description\":\"Generate creative, catchy and unique headlines for your website.\"}},\"inputs\":{\"name\":{\"icon\":\"fas fa-heading\",\"type\":\"input\",\"translations\":{\"english\":{\"name\":\"Product or service name\",\"placeholder\":\"Sunset Agents: Best summer destinations\",\"help\":null}}},\"description\":{\"icon\":\"fas fa-paragraph\",\"type\":\"textarea\",\"translations\":{\"english\":{\"name\":\"Description\",\"placeholder\":\"Our blog helps you find and plan your next summer vacation.\",\"help\":null}}}}}', 'fas fa-feather', 22, 1, 1, '2023-03-25 23:29:00', NULL),
 (23, 2, 'SEO Title', 'Write an SEO Title for a web page based on those keywords: {text}', '{\"translations\":{\"english\":{\"name\":\"SEO Title\",\"description\":\"Generate high quality & SEO ready titles for your web pages.\"}},\"inputs\":{\"text\":{\"icon\":\"fas fa-file-word\",\"type\":\"input\",\"translations\":{\"english\":{\"name\":\"Keywords to be used\",\"placeholder\":\"Traveling, Summer, Beach, Pool\",\"help\":null}}}}}', 'fas fa-heading', 23, 1, 1, '2023-03-25 23:29:00', NULL),

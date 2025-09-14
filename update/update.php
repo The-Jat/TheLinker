@@ -1,4 +1,5 @@
 <?php
+const ALTUMCODE = 66;
 define('ROOT', realpath(__DIR__ . '/..') . '/');
 define('DEBUG', 0);
 define('CACHE', 1);
@@ -109,7 +110,12 @@ foreach($updates_to_run as $value) {
 
 /* Delete the cache store for the settings */
 \Altum\Cache::initialize();
-\Altum\Cache::$adapter->clear();
+cache()->clear();
+
+/* Determine all the languages available in the directory */
+foreach(glob(ROOT . 'app/languages/cache/*.php') as $file_path) {
+    unlink($file_path);
+}
 
 /* Output */
 die(json_encode([

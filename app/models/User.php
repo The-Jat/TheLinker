@@ -1,25 +1,34 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Models;
 
 use Altum\Logger;
+use Altum\PaymentGateways\Lemonsqueezy;
 use Altum\PaymentGateways\Paystack;
-use MaxMind\Db\Reader;
 use Razorpay\Api\Api;
+
+defined('ALTUMCODE') || die();
 
 class User extends Model {
 
     public function get_user_by_user_id($user_id) {
 
         /* Try to check if the store exists via the cache */
-        $cache_instance = \Altum\Cache::$adapter->getItem('user?user_id=' . $user_id);
+        $cache_instance = cache()->getItem('user?user_id=' . $user_id);
 
         /* Set cache if not existing */
         if(is_null($cache_instance->get())) {
@@ -39,8 +48,8 @@ class User extends Model {
                 $data->preferences = json_decode($data->preferences ?? '');
 
                 /* Save to cache */
-                \Altum\Cache::$adapter->save(
-                    $cache_instance->set($data)->expiresAfter(CACHE_DEFAULT_SECONDS)->addTag('users')->addTag('user_id=' . $data->user_id)
+                cache()->save(
+                    $cache_instance->set($data)->expiresAfter(CACHE_DEFAULT_SECONDS)->addTag('user_id=' . $data->user_id)
                 );
             }
 
@@ -54,43 +63,6 @@ class User extends Model {
         return $data;
     }
 
-    public function get_user_by_user_id_and_token_code($user_id, $token_code) {
-
-        /* Try to check if the store exists via the cache */
-        $cache_instance = \Altum\Cache::$adapter->getItem('user?user_id=' . md5($user_id) . '&token_code=' . $token_code);
-
-        /* Set cache if not existing */
-        if(is_null($cache_instance->get())) {
-
-            /* Get data from the database */
-            $data = db()->where('user_id', $user_id)->where('token_code', $token_code)->getOne('users');
-
-            if($data) {
-
-                /* Parse the users plan settings */
-                $data->plan_settings = json_decode($data->plan_settings ?? '');
-
-                /* Parse billing details if existing */
-                $data->billing = json_decode($data->billing);
-
-                /* Parse preferences if existing */
-                $data->preferences = json_decode($data->preferences ?? '');
-
-                /* Save to cache */
-                \Altum\Cache::$adapter->save(
-                    $cache_instance->set($data)->expiresAfter(CACHE_DEFAULT_SECONDS)->addTag('users')->addTag('user_id=' . $data->user_id)
-                );
-            }
-
-        } else {
-
-            /* Get cache */
-            $data = $cache_instance->get();
-
-        }
-
-        return $data;
-    }
 
     /* Requires full user variable */
     public function process_user_plan_expiration_by_user($user) {
@@ -105,12 +77,18 @@ class User extends Model {
             ]);
 
             /* Clear the cache */
-            \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $user->user_id);
+            cache()->deleteItemsByTag('user_id=' . $user->user_id);
         }
 
     }
 
     public function delete($user_id) {
+
+        $user = db()->where('user_id', $user_id)->getOne('users', ['user_id', 'email', 'name', 'preferences']);
+
+        if(!$user) return;
+
+        $user->preferences = json_decode($user->preferences ?? '');
 
         /* Cancel his active subscriptions if active */
         try {
@@ -121,56 +99,29 @@ class User extends Model {
 
         /* Send webhook notification if needed */
         if(settings()->webhooks->user_delete) {
-
-            $user = db()->where('user_id', $user_id)->getOne('users', ['user_id', 'email', 'name']);
-
-            \Unirest\Request::post(settings()->webhooks->user_delete, [], [
+            fire_and_forget('post', settings()->webhooks->user_delete, [
                 'user_id' => $user->user_id,
                 'email' => $user->email,
-                'name' => $user->name
+                'name' => $user->name,
+                'datetime' => get_date(),
             ]);
-
         }
 
-        /* Delete everything related to the domain that the user owns */
-        $result = database()->query("SELECT `link_id` FROM `links` WHERE `user_id` = {$user_id}");
-        while($link = $result->fetch_object()) {
-            (new \Altum\Models\Link())->delete($link->link_id);
-        }
-
-        /* Delete everything related to the qr codes that the user owns */
-        if(settings()->links->qr_codes_is_enabled) {
-            $result = database()->query("SELECT `qr_code_id` FROM `qr_codes` WHERE `user_id` = {$user_id}");
-
-            while($qr_code = $result->fetch_object()) {
-                (new \Altum\Models\QrCode())->delete($qr_code->qr_code_id);
-            }
-        }
-
-        /* Delete everything related to the images that the user owns */
-        if(\Altum\Plugin::is_active('aix') && settings()->aix->images_is_enabled) {
-            $result = database()->query("SELECT `image_id`, `image` FROM `images` WHERE `user_id` = {$user_id}");
-
-            while($image = $result->fetch_object()) {
-                \Altum\Uploads::delete_uploaded_file($image->image, 'images');
-
-                /* Delete the resource */
-                db()->where('image_id', $image->image_id)->delete('images');
-            }
-        }
+        /* Run potential hooks */
+        \Altum\CustomHooks::user_delete(['user' => $user]);
 
         /* Delete the record from the database */
         db()->where('user_id', $user_id)->delete('users');
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $user_id);
+        cache()->deleteItemsByTag('user_id=' . $user_id);
 
     }
 
     public function update_last_activity($user_id) {
-        db()->where('user_id', $user_id)->update('users', ['last_activity' => \Altum\Date::$date]);
+        db()->where('user_id', $user_id)->update('users', ['last_activity' => get_date()]);
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $user_id);
+        cache()->deleteItemsByTag('user_id=' . $user_id);
     }
 
     public function verify_null_password($user_id, $email, $password) {
@@ -196,13 +147,14 @@ class User extends Model {
         $plan_settings = '',
         $plan_expiration_date = null,
         $timezone = 'UTC',
+        $extra = '',
         $is_admin_created = false
     ) {
 
         /* Define some needed variables */
         $password = is_null($raw_password) ? null : password_hash($raw_password, PASSWORD_DEFAULT);
-        $total_logins = $status == '1' && !$is_admin_created ? 1 : 0;
-        $plan_expiration_date = $plan_expiration_date ?? \Altum\Date::$date;
+        $total_logins = $status == '1' && !$is_admin_created && !in_array($source, ['admin_create', 'admin_api_create']) ? 1 : 0;
+        $plan_expiration_date = $plan_expiration_date ?? get_date();
         $plan_trial_done = 0;
         $language = \Altum\Language::$name;
         $api_key = md5($email . microtime() . microtime());
@@ -211,7 +163,7 @@ class User extends Model {
 
         /* Detect the location */
         try {
-            $maxmind = $is_admin_created ? null : (new Reader(APP_PATH . 'includes/GeoLite2-City.mmdb'))->get($ip);
+            $maxmind = $is_admin_created ? null : (get_maxmind_reader_city())->get($ip);
         } catch(\Exception $exception) {
             /* :) */
         }
@@ -227,13 +179,22 @@ class User extends Model {
         $browser_name = $whichbrowser->browser->name ?? null;
         $os_name = $whichbrowser->os->name ?? null;
         $browser_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? mb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
-        $device_type = get_device_type($_SERVER['HTTP_USER_AGENT']);
+        $device_type = get_this_device_type();
 
         /* Check for potential referral cookie */
         $referred_by = null;
         if(!$is_admin_created && isset($_COOKIE['referred_by']) && $user = db()->where('referral_key', $_COOKIE['referred_by'])->getOne('users', ['user_id', 'referral_key'])) {
             $referred_by = $user->user_id;
         }
+
+        /* Default preferences */
+        $preferences = json_encode([
+            'default_results_per_page' => 100,
+            'default_order_type' => 'DESC',
+            'links_default_order_by' => 'link_id',
+            'qr_codes_default_order_by' => 'qr_code_id',
+            'openai_api_key' => '',
+        ]);
 
         /* Add the user to the database */
         $registered_user_id = db()->insert('users', [
@@ -255,7 +216,7 @@ class User extends Model {
             'timezone' => $timezone,
             'status' => $status,
             'source' => $source,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
             'ip' => $ip,
             'continent_code' => $continent_code,
             'country' => $country_code,
@@ -265,6 +226,8 @@ class User extends Model {
             'browser_name' => $browser_name,
             'browser_language' => $browser_language,
             'total_logins' => $total_logins,
+            'extra' => json_encode($extra),
+            'preferences' => $preferences,
         ]);
 
         /* Clear out referral cookie if needed */
@@ -277,20 +240,28 @@ class User extends Model {
         return [
             'user_id' => $registered_user_id,
             'password' => $password,
+            'source' => $source,
+            'ip' => $ip,
+            'country' => $country_code,
+            'city_name' => $city_name,
+            'device_type' => $device_type,
+            'os_name' => $os_name,
+            'browser_name' => $browser_name,
         ];
     }
 
     /*
     * Function to update a user with more details on a login action
     */
-    public function login_aftermath_update($user_id, $method = 'default') {
+    public function login_aftermath_update($user_id, $method = 'classic') {
 
         $ip = get_ip();
 
+        setcookie('spotlight_has_results', '', time()-30, COOKIE_PATH);
 
         /* Detect the location */
         try {
-            $maxmind = (new Reader(APP_PATH . 'includes/GeoLite2-City.mmdb'))->get($ip);
+            $maxmind = (get_maxmind_reader_city())->get($ip);
         } catch(\Exception $exception) {
             /* :) */
         }
@@ -303,7 +274,7 @@ class User extends Model {
         $browser_name = $whichbrowser->browser->name ?? null;
         $os_name = $whichbrowser->os->name ?? null;
         $browser_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? mb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
-        $device_type = get_device_type($_SERVER['HTTP_USER_AGENT']);
+        $device_type = get_this_device_type();
 
         /* Database query */
         db()->where('user_id', $user_id)->update('users', [
@@ -322,7 +293,7 @@ class User extends Model {
         Logger::users($user_id, 'login.' . $method . '.success');
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $user_id);
+        cache()->deleteItemsByTag('user_id=' . $user_id);
 
     }
 
@@ -419,13 +390,29 @@ class User extends Model {
                 }
 
                 break;
+
+            case 'lemonsqueezy':
+
+                Lemonsqueezy::$api_key = settings()->lemonsqueezy->api_key;
+
+                $response = \Unirest\Request::delete(
+                    Lemonsqueezy::$api_url . 'subscriptions/' . $user->payment_subscription_id,
+                    Lemonsqueezy::get_headers()
+                );
+
+                /* Check against errors */
+                if($response->code >= 400) {
+                    throw new \Exception($response->body);
+                }
+
+                break;
         }
 
         /* Database query */
         db()->where('user_id', $user->user_id)->update('users', ['payment_subscription_id' => '']);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $user->user_id);
+        cache()->deleteItemsByTag('user_id=' . $user->user_id);
 
     }
 

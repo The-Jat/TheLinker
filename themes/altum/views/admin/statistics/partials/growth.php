@@ -11,9 +11,10 @@
             </div>
         </div>
 
-        <div class="chart-container">
+        <div class="chart-container <?= $data->total['users'] ? null : 'd-none' ?>">
             <canvas id="users"></canvas>
         </div>
+        <?= $data->total['users'] ? null : include_view(THEME_PATH . 'views/partials/no_chart_data.php', ['has_wrapper' => false]); ?>
     </div>
 </div>
 
@@ -27,9 +28,10 @@
             </div>
         </div>
 
-        <div class="chart-container">
+        <div class="chart-container <?= $data->total['users_logs'] ? null : 'd-none' ?>">
             <canvas id="users_logs"></canvas>
         </div>
+        <?= $data->total['users_logs'] ? null : include_view(THEME_PATH . 'views/partials/no_chart_data.php', ['has_wrapper' => false]); ?>
     </div>
 </div>
 <?php $html = ob_get_clean() ?>
@@ -37,15 +39,15 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    let color = css.getPropertyValue('--primary');
+    
+let color = css.getPropertyValue('--primary');
     let color_gradient = null;
 
     /* Display chart */
     let users_chart = document.getElementById('users').getContext('2d');
     color_gradient = users_chart.createLinearGradient(0, 0, 0, 250);
-    color_gradient.addColorStop(0, 'rgba(63, 136, 253, .1)');
-    color_gradient.addColorStop(1, 'rgba(63, 136, 253, 0.025)');
+    color_gradient.addColorStop(0, set_hex_opacity(color, 0.1));
+    color_gradient.addColorStop(1, set_hex_opacity(color, 0.025));
 
     new Chart(users_chart, {
         type: 'line',
@@ -67,8 +69,8 @@
 
     let users_logs_chart = document.getElementById('users_logs').getContext('2d');
     color_gradient = users_logs_chart.createLinearGradient(0, 0, 0, 250);
-    color_gradient.addColorStop(0, 'rgba(63, 136, 253, .1)');
-    color_gradient.addColorStop(1, 'rgba(63, 136, 253, 0.025)');
+    color_gradient.addColorStop(0, set_hex_opacity(color, 0.1));
+    color_gradient.addColorStop(1, set_hex_opacity(color, 0.025));
 
     new Chart(users_logs_chart, {
         type: 'line',

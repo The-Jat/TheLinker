@@ -7,6 +7,8 @@
 <input type="hidden" name="global_number_thousands_separator" value="<?= l('global.number.thousands_separator') ?>" />
 
 <script>
+    'use strict';
+    
     /* Some global variables */
     window.altum = {};
     let global_token = document.querySelector('input[name="global_token"]').value;

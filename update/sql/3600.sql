@@ -6,7 +6,7 @@ INSERT INTO `settings` (`key`, `value`) VALUES ('languages', '{}');
 
 -- SEPARATOR --
 
-INSERT INTO `settings` (`key`, `value`) VALUES ('content', '{"blog_is_enabled":true,"blog_share_is_enabled":true,"blog_categories_widget_is_enabled":true,"blog_popular_widget_is_enabled":true,"blog_views_is_enabled":true,"pages_is_enabled":true,"pages_share_is_enabled":true,"pages_popular_widget_is_enabled":true,"pages_views_is_enabled":true}');
+INSERT INTO `settings` (`key`, `value`) VALUES ('content', '{"blog_is_enabled":true,"blog_share_is_enabled":true,"blog_search_widget_is_enabled":false,"blog_categories_widget_is_enabled":true,"blog_popular_widget_is_enabled":true,"blog_views_is_enabled":true,"pages_is_enabled":true,"pages_share_is_enabled":true,"pages_popular_widget_is_enabled":true,"pages_views_is_enabled":true}');
 
 -- SEPARATOR --
 
@@ -36,12 +36,12 @@ alter table chats add chat_assistant_id bigint unsigned null after user_id;
 CREATE TABLE `chats_assistants` (
 `chat_assistant_id` bigint unsigned NOT NULL AUTO_INCREMENT,
 `name` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-`prompt` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`prompt` varchar(1024) DEFAULT NULL,
 `settings` text COLLATE utf8mb4_unicode_ci,
 `image` varchar(404) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
 `order` int DEFAULT NULL,
 `total_usage` bigint unsigned DEFAULT '0',
-`is_enabled` tinyint unsigned DEFAULT '1',
+`is_enabled` tinyint DEFAULT '1',
 `last_datetime` datetime DEFAULT NULL,
 `datetime` datetime DEFAULT NULL,
 PRIMARY KEY (`chat_assistant_id`)
@@ -56,7 +56,7 @@ update chats set chat_assistant_id = 1;
 INSERT IGNORE INTO `templates` (`template_category_id`, `name`, `prompt`, `settings`, `icon`, `order`, `total_usage`, `is_enabled`, `datetime`, `last_datetime`) VALUES
 (1, 'Quote generator', 'Generate a random quote on the following topic: {topic}', '{\"translations\":{\"english\":{\"name\":\"Quote generator\",\"description\":\"Get random quotes based on the topic you wish.\"}},\"inputs\":{\"topic\":{\"icon\":\"fas fa-pen\",\"type\":\"input\",\"translations\":{\"english\":{\"name\":\"Topic\",\"placeholder\":\"Motivational\",\"help\":\"Input the type of quote you wish to generate.\"}}}}}', 'fas fa-bolt', 1, 1, 1, '2023-03-28 20:32:15', '2023-05-13 21:08:06'),
 (3, 'LinkedIn post', 'Generate a LinkedIn post based on the following text/keywords: {text}', '{\"translations\":{\"english\":{\"name\":\"LinkedIn post\",\"description\":\"Generate a great LinkedIn post based on text or keywords.\"}},\"inputs\":{\"text\":{\"icon\":\"fas fa-paragraph\",\"type\":\"textarea\",\"translations\":{\"english\":{\"name\":\"Text or keywords to be used\",\"placeholder\":\"\",\"help\":\"\"}}}}}', 'fab fa-linkedin', 22, 0, 1, '2023-05-13 19:41:14', NULL),
-(3, 'Twitter thread generator', 'Generate a full Twitter thread based on the following text/keywords: {text}', '{\"translations\":{\"english\":{\"name\":\"Twitter thread generator\",\"description\":\"Generate a full thread based on any topic or idea.\"}},\"inputs\":{\"text\":{\"icon\":\"fas fa-paragraph\",\"type\":\"textarea\",\"translations\":{\"english\":{\"name\":\"Text or keywords to be used\",\"placeholder\":\"\",\"help\":\"\"}}}}}', 'fab fa-twitter', 23, 0, 1, '2023-05-13 19:49:32', NULL),
+(3, 'Twitter thread generator', 'Generate a full Twitter thread based on the following text/keywords: {text}', '{\"translations\":{\"english\":{\"name\":\"Twitter thread generator\",\"description\":\"Generate a full thread based on any topic or idea.\"}},\"inputs\":{\"text\":{\"icon\":\"fas fa-paragraph\",\"type\":\"textarea\",\"translations\":{\"english\":{\"name\":\"Text or keywords to be used\",\"placeholder\":\"\",\"help\":\"\"}}}}}', 'fab fa-x-twitter', 23, 0, 1, '2023-05-13 19:49:32', NULL),
 (3, 'Pinterest caption', 'Generate a Pinterest caption for a pin based on the following text/keywords: {text}', '{\"translations\":{\"english\":{\"name\":\"Pinterest caption\",\"description\":\"Generate a caption for your pins based on your keywords.\"}},\"inputs\":{\"text\":{\"icon\":\"fas fa-paragraph\",\"type\":\"textarea\",\"translations\":{\"english\":{\"name\":\"Text or keywords to be used\",\"placeholder\":\"\",\"help\":\"\"}}}}}', 'fab fa-pinterest', 24, 0, 1, '2023-05-13 20:40:38', NULL),
 (3, 'TikTok video caption', 'Generate a TikTok video caption based on the following text/keywords: {text}', '{\"translations\":{\"english\":{\"name\":\"TikTok video caption\",\"description\":\"Generate quick & trending captions for your TikTok content with ease.\"}},\"inputs\":{\"text\":{\"icon\":\"fas fa-paragraph\",\"type\":\"textarea\",\"translations\":{\"english\":{\"name\":\"Text or keywords to be used\",\"placeholder\":\"\",\"help\":\"\"}}}}}', 'fab fa-tiktok', 25, 0, 1, '2023-05-13 20:42:07', NULL),
 (3, 'TikTok video idea', 'Generate a random TikTok video idea in the following niche: {niche}', '{\"translations\":{\"english\":{\"name\":\"TikTok video idea\",\"description\":\"Generate quick & trending video idea your TikTok account.\"}},\"inputs\":{\"niche\":{\"icon\":\"fas fa-pen\",\"type\":\"input\",\"translations\":{\"english\":{\"name\":\"Niche or Category\",\"placeholder\":\"Breakdance tutorials, Interior design principles, Places to visit in New York\",\"help\":\"Input the niche of the idea that you want to get.\"}}}}}', 'fab fa-tiktok', 26, 0, 1, '2023-05-13 20:55:57', '2023-05-13 21:04:22'),

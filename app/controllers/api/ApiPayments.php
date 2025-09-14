@@ -1,16 +1,25 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Response;
 use Altum\Traits\Apiable;
+
+defined('ALTUMCODE') || die();
 
 class ApiPayments extends Controller {
     use Apiable;
@@ -67,10 +76,15 @@ class ApiPayments extends Controller {
             /* Prepare the data */
             $row = [
                 'id' => (int) $row->id,
+                'user_id' => (int) $row->user_id,
                 'plan_id' => (int) $row->plan_id,
+                'payment_id' => $row->payment_id,
+                'base_amount' => (float) $row->base_amount,
                 'processor' => $row->processor,
                 'type' => $row->type,
                 'frequency' => $row->frequency,
+                'code' => $row->code,
+                'discount_amount' => (float) $row->discount_amount,
                 'email' => $row->email,
                 'name' => $row->name,
                 'total_amount' => $row->total_amount,
@@ -117,10 +131,15 @@ class ApiPayments extends Controller {
         /* Prepare the data */
         $data = [
             'id' => (int) $payment->id,
+            'user_id' => (int) $payment->user_id,
             'plan_id' => (int) $payment->plan_id,
+            'payment_id' => $payment->payment_id,
+            'base_amount' => (float) $payment->base_amount,
             'processor' => $payment->processor,
             'type' => $payment->type,
             'frequency' => $payment->frequency,
+            'code' => $payment->code,
+            'discount_amount' => (float) $payment->discount_amount,
             'email' => $payment->email,
             'name' => $payment->name,
             'total_amount' => $payment->total_amount,

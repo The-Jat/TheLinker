@@ -4,40 +4,41 @@
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
         <div class="modal-content">
 
-            <div class="modal-header">
-                <h5 class="modal-title"><?= l('biolink_link_create_modal.header') ?></h5>
-                <button type="button" class="close" data-dismiss="modal" title="<?= l('global.close') ?>">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 class="modal-title">
+                        <i class="fas fa-fw fa-sm fa-circle-plus text-dark mr-2"></i>
+                        <?= l('biolink_link_create.header') ?>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" title="<?= l('global.close') ?>">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
 
-            <div class="px-3">
                 <form action="" method="get" role="form" id="search">
                     <div class="form-group">
                         <input type="search" name="search" class="form-control form-control-lg" value="" placeholder="<?= l('global.filters.search') ?>" aria-label="<?= l('global.filters.search') ?>" />
                     </div>
                 </form>
-            </div>
 
-            <div class="modal-body">
                 <?php foreach(require APP_PATH . 'includes/biolink_blocks_categories.php' as $biolink_block_category_key => $biolink_block_category): ?>
                     <?php $enabled_blocks_html = $disabled_blocks_html = ''; ?>
 
-                    <?php foreach(require APP_PATH . 'includes/biolink_blocks.php' as $key => $value): ?>
+                    <?php foreach(require APP_PATH . 'includes/enabled_biolink_blocks.php' as $key => $value): ?>
 
                         <?php if($value['category'] != $biolink_block_category_key) continue ?>
 
                         <?php ob_start() ?>
                         <?php if($this->user->plan_settings->enabled_biolink_blocks->{$key}): ?>
-                            <div class="col-12 col-lg-6" data-block-category="<?= $value['category'] ?>" data-block-id="<?= $key ?>" data-block-name="<?= l('link.biolink.blocks.' . $key) ?>">
+                            <div class="col-12 col-lg-6 p-3" data-block-category="<?= $value['category'] ?>" data-block-id="<?= $key ?>" data-block-name="<?= l('link.biolink.blocks.' . $key) ?>">
                                 <button
                                     type="button"
                                     data-dismiss="modal"
                                     data-toggle="modal"
                                     data-target="#create_biolink_<?= $key ?>"
                                     data-tooltip
-                                    title="<?= l('create_biolink_' . $key . '_modal.subheader') ?>"
-                                    class="btn btn-light btn-block btn-lg mb-3 text-left"
+                                    title="<?= l('biolink_' . $key . '.subheader') ?>"
+                                    class="btn btn-light btn-block btn-lg text-left d-flex align-items-center"
                                 >
                                     <span class="fa-stack fa-stack-small mr-2">
                                         <i class="fas fa-circle fa-stack-2x" style="color: <?= $data->biolink_blocks[$key]['color'] ?>"></i>
@@ -49,12 +50,11 @@
                             </div>
                             <?php $enabled_blocks_html .= ob_get_clean(); ?>
                         <?php else: ?>
-                            <div class="col-12 col-lg-6" data-block-category="<?= $value['category'] ?>" data-block-id="<?= $key ?>" data-block-name="<?= l('link.biolink.blocks.' . $key) ?>">
+                            <div class="col-12 col-lg-6 p-3" data-block-category="<?= $value['category'] ?>" data-block-id="<?= $key ?>" data-block-name="<?= l('link.biolink.blocks.' . $key) ?>">
                                 <button
                                     type="button"
-                                    data-toggle="tooltip"
-                                    title="<?= l('global.info_message.plan_feature_no_access') ?>"
-                                    class="btn btn-light btn-block btn-lg mb-3 disabled text-left"
+                                    class="btn btn-light btn-block btn-lg disabled text-left"
+                                    <?= get_plan_feature_disabled_info() ?>
                                 >
                                     <span class="fa-stack fa-stack-small mr-2">
                                         <i class="fas fa-circle fa-stack-2x" style="color: <?= $data->biolink_blocks[$key]['color'] ?>"></i>
@@ -73,8 +73,8 @@
                             <div class="card text-white border-0 mb-3" style="background: <?= $biolink_block_category['color'] ?>">
                                 <div class="card-body d-flex justify-content-between align-items-center">
                                     <div>
-                                        <span class="h6"><?= l('biolink_link_create_modal.category.' . $biolink_block_category_key) ?></span>
-                                        <p class="small mb-0"><?= l('biolink_link_create_modal.category.' . $biolink_block_category_key . '_subheader') ?></p>
+                                        <span class="h6"><?= l('biolink_link_create.' . $biolink_block_category_key) ?></span>
+                                        <p class="small mb-0"><?= l('biolink_link_create.' . $biolink_block_category_key . '_subheader') ?></p>
                                     </div>
 
                                     <div>
@@ -98,8 +98,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    document.querySelector('#search').addEventListener('submit', event => {
+    
+document.querySelector('#search').addEventListener('submit', event => {
         event.preventDefault();
     });
 

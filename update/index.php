@@ -27,13 +27,13 @@ if($product_info) {
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="assets/css/custom.css">
 
-    <link rel="shortcut icon" href="./assets/favicons/favicon.ico">
+    <link rel="icon" href="./assets/favicons/favicon.ico">
 
     <title><?= PRODUCT_NAME ?> Update</title>
 </head>

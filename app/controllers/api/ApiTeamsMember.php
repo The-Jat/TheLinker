@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,10 +19,16 @@ namespace Altum\Controllers;
 use Altum\Response;
 use Altum\Traits\Apiable;
 
+defined('ALTUMCODE') || die();
+
 class ApiTeamsMember extends Controller {
     use Apiable;
 
     public function index() {
+
+        if(!\Altum\Plugin::is_active('teams')) {
+            redirect('not-found');
+        }
 
         $this->verify_request();
 
@@ -30,7 +43,7 @@ class ApiTeamsMember extends Controller {
                     $this->get_all();
                 }
 
-            break;
+                break;
 
             case 'POST':
 
@@ -39,11 +52,11 @@ class ApiTeamsMember extends Controller {
                     $this->patch();
                 }
 
-            break;
+                break;
 
             case 'DELETE':
                 $this->delete();
-            break;
+                break;
         }
 
         $this->return_404();
@@ -86,6 +99,7 @@ class ApiTeamsMember extends Controller {
                 'last_datetime' => $row->last_datetime,
                 'datetime' => $row->datetime,
                 'team_id' => (int) $row->team_id,
+                'user_id' => (int) $row->user_id,
                 'name' => $row->name,
             ];
 
@@ -136,6 +150,7 @@ class ApiTeamsMember extends Controller {
             'last_datetime' => $team_member->last_datetime,
             'datetime' => $team_member->datetime,
             'team_id' => (int) $team->team_id,
+            'user_id' => (int) $team->user_id,
             'name' => $team->name,
         ];
 
@@ -174,11 +189,11 @@ class ApiTeamsMember extends Controller {
         db()->where('team_member_id', $team_member->team_member_id)->update('teams_members', [
             'user_id' => $this->api_user->user_id,
             'status' => $_POST['status'],
-            'last_datetime' => \Altum\Date::$date,
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('team_member?team_id=' . $team_member->team_id . '&user_id=' . $team_member->user_id);
+        cache()->deleteItem('team_member?team_id=' . $team_member->team_id . '&user_id=' . $team_member->user_id);
 
         /* Prepare the data */
         $data = [
@@ -209,7 +224,7 @@ class ApiTeamsMember extends Controller {
         db()->where('team_member_id', $team_member->team_member_id)->delete('teams_members');
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('team_member?team_id=' . $team_member->team_id . '&user_id=' . $team_member->user_id);
+        cache()->deleteItem('team_member?team_id=' . $team_member->team_id . '&user_id=' . $team_member->user_id);
 
         http_response_code(200);
         die();

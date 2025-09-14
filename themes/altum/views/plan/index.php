@@ -4,15 +4,15 @@
     <?= \Altum\Alerts::output_alerts() ?>
 
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li class="active" aria-current="page"><?= l('plan.breadcrumb') ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li class="active" aria-current="page"><?= l('plan.breadcrumb') ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
-    <?php if(\Altum\Authentication::check() && $this->user->plan_is_expired && $this->user->plan_id != 'free'): ?>
+    <?php if(is_logged_in() && $this->user->plan_is_expired && $this->user->plan_id != 'free'): ?>
         <div class="alert alert-info" role="alert">
             <?= l('global.info_message.user_plan_is_expired') ?>
         </div>
@@ -123,8 +123,24 @@
     <div class="mt-5">
         <h1 class="h4"><?= l('plan.faq.header') ?></h1>
 
+        <?php
+        $language_array = \Altum\Language::get(\Altum\Language::$name);
+        if(\Altum\Language::$main_name != \Altum\Language::$name) {
+            $language_array = array_merge(\Altum\Language::get(\Altum\Language::$main_name), $language_array);
+        }
+
+        $plan_language_keys = [];
+        foreach ($language_array as $key => $value) {
+            if(preg_match('/plan\.faq\.(\w+)\./', $key, $matches)) {
+                $plan_language_keys[] = $matches[1];
+            }
+        }
+
+        $plan_language_keys = array_unique($plan_language_keys);
+        ?>
+
         <div class="accordion index-faq mt-4" id="faq_accordion">
-            <?php foreach(['one', 'two', 'three', 'four'] as $key): ?>
+            <?php foreach($plan_language_keys as $key): ?>
                 <div class="card">
                     <div class="card-body">
                         <div class="" id="<?= 'faq_accordion_' . $key ?>">
@@ -166,3 +182,49 @@
     </script>
     <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
 </div>
+
+
+<?php ob_start() ?>
+<script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "<?= l('index.title') ?>",
+                    "item": "<?= url() ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "<?= \Altum\Title::$page_title ?>",
+                    "item": "<?= url('plan/' . $data->type) ?>"
+                }
+            ]
+        }
+</script>
+
+<?php
+$faqs = [];
+foreach($plan_language_keys as $key) {
+    $faqs[] = [
+        '@type' => 'Question',
+        'name' => l('plan.faq.' . $key . '.question'),
+        'acceptedAnswer' => [
+            '@type' => 'Answer',
+            'text' => l('plan.faq.' . $key . '.answer'),
+        ]
+    ];
+}
+?>
+<script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": <?= json_encode($faqs) ?>
+    }
+</script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+

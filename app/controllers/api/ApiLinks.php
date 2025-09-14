@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,6 +19,8 @@ namespace Altum\Controllers;
 use Altum\Date;
 use Altum\Response;
 use Altum\Traits\Apiable;
+
+defined('ALTUMCODE') || die();
 
 class ApiLinks extends Controller {
     use Apiable;
@@ -31,7 +40,7 @@ class ApiLinks extends Controller {
                     $this->get_all();
                 }
 
-            break;
+                break;
 
             case 'POST':
 
@@ -56,7 +65,7 @@ class ApiLinks extends Controller {
 
         /* Prepare the filtering system */
         $filters = (new \Altum\Filters([], [], []));
-        $filters->set_default_order_by('link_id', $this->api_user->preferences->default_order_type ?? settings()->main->default_order_type);
+        $filters->set_default_order_by($this->api_user->preferences->links_default_order_by, $this->api_user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->api_user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
         $filters->process();
 
@@ -83,9 +92,11 @@ class ApiLinks extends Controller {
             /* Prepare the data */
             $row = [
                 'id' => (int) $row->link_id,
+                'user_id' => (int) $row->user_id,
                 'project_id' => (int) $row->project_id,
                 'domain_id' => (int) $row->domain_id,
                 'pixels_ids' => json_decode($row->pixels_ids),
+                'email_reports' => json_decode($row->email_reports),
                 'biolink_theme_id' => (int) $row->biolink_theme_id,
                 'type' => $row->type,
                 'url' => $row->url,
@@ -138,9 +149,11 @@ class ApiLinks extends Controller {
         /* Prepare the data */
         $data = [
             'id' => (int) $link->link_id,
+            'user_id' => (int) $link->user_id,
             'project_id' => (int) $link->project_id,
             'domain_id' => (int) $link->domain_id,
             'pixels_ids' => json_decode($link->pixels_ids),
+            'email_reports' => json_decode($link->email_reports),
             'biolink_theme_id' => (int) $link->biolink_theme_id,
             'type' => $link->type,
             'url' => $link->url,
@@ -169,10 +182,13 @@ class ApiLinks extends Controller {
         }
 
         /* Type of link */
-        $_POST['type'] = in_array($_POST['type'], ['link']) ? query_clean($_POST['type']) : null;
+        $_POST['type'] = isset($_POST['type']) && in_array($_POST['type'], ['link']) ? query_clean($_POST['type']) : null;
+
+        /* Bulk */
+        $_POST['is_bulk'] = (int) isset($_POST['is_bulk']);
 
         /* Check for any errors */
-        $required_fields = ['location_url'];
+        $required_fields = $_POST['is_bulk'] ? ['location_urls'] : ['location_url'];
         foreach($required_fields as $field) {
             if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
                 $this->response_error(l('global.error_message.empty_fields'), 401);
@@ -185,17 +201,20 @@ class ApiLinks extends Controller {
         }
 
         /* Check if custom domain is set */
-        $domain_id = $this->get_domain_id($_POST['domain_id'] ?? false);
+        $_POST['domain_id'] = $domain_id = $this->get_domain_id($_POST['domain_id'] ?? false);
 
         /* Location & url */
-        $_POST['location_url'] = get_url($_POST['location_url']);
+        $_POST['location_url'] = get_url($_POST['location_url'] ?? '');
         $_POST['url'] = !empty($_POST['url']) ? get_slug($_POST['url'], '-', false) : false;
-        $this->check_url($_POST['url']);
-        $this->check_location_url($_POST['location_url']);
+
+        if(!$_POST['is_bulk']) {
+            $this->check_url($_POST['url']);
+            $this->check_location_url($_POST['location_url']);
+        }
 
         /* Process the rest of the data */
-        $_POST['is_enabled'] = isset($_POST['is_enabled']) ? (int) isset($_POST['is_enabled']) : 1;
-        $_POST['schedule'] = (int) (bool) ($_POST['schedule'] ?? false);
+        $_POST['is_enabled'] = isset($_POST['is_enabled']) ? (int) (bool) $_POST['is_enabled'] : 1;
+        $_POST['schedule'] = (int) isset($_POST['schedule']);
         if($_POST['schedule'] && !empty($_POST['start_date']) && !empty($_POST['end_date']) && Date::validate($_POST['start_date'], 'Y-m-d H:i:s') && Date::validate($_POST['end_date'], 'Y-m-d H:i:s')) {
             $_POST['start_date'] = (new \DateTime($_POST['start_date'], new \DateTimeZone($this->api_user->timezone)))->setTimezone(new \DateTimeZone(\Altum\Date::$default_timezone))->format('Y-m-d H:i:s');
             $_POST['end_date'] = (new \DateTime($_POST['end_date'], new \DateTimeZone($this->api_user->timezone)))->setTimezone(new \DateTimeZone(\Altum\Date::$default_timezone))->format('Y-m-d H:i:s');
@@ -203,15 +222,26 @@ class ApiLinks extends Controller {
             $_POST['start_date'] = $_POST['end_date'] = null;
         }
 
-        $_POST['expiration_url'] = get_url($_POST['expiration_url']);
+        $_POST['expiration_url'] = get_url($_POST['expiration_url'] ?? null);
         $_POST['clicks_limit'] = isset($_POST['clicks_limit']) ? (int) $_POST['clicks_limit'] : null;
         $this->check_location_url($_POST['expiration_url'], true);
         $_POST['sensitive_content'] = (int) isset($_POST['sensitive_content']);
         $_POST['app_linking_is_enabled'] = (int) isset($_POST['app_linking_is_enabled']);
         $_POST['cloaking_is_enabled'] = (int) isset($_POST['cloaking_is_enabled']);
-        $_POST['cloaking_title'] = input_clean($_POST['cloaking_title'], 70);
+        $_POST['cloaking_title'] = input_clean($_POST['cloaking_title'] ?? '', 70);
+        $_POST['cloaking_meta_description'] = input_clean($_POST['cloaking_meta_description'] ?? '', 160);
+        $_POST['cloaking_custom_js'] = isset($_POST['cloaking_custom_js']) ? mb_substr(trim($_POST['cloaking_custom_js']), 0, 10000) : null;
         $cloaking_favicon = \Altum\Uploads::process_upload(null, 'favicons', 'cloaking_favicon', 'cloaking_favicon_remove', settings()->links->favicon_size_limit, 'json_error');
-        $_POST['http_status_code'] = in_array($_POST['http_status_code'], [301, 302, 307, 308]) ? (int) $_POST['http_status_code'] : 301;
+        $cloaking_opengraph = \Altum\Uploads::process_upload(null, 'opengraphs', 'cloaking_opengraph', 'cloaking_opengraph_remove', settings()->links->seo_image_size_limit, 'json_error');
+        $_POST['http_status_code'] = isset($_POST['http_status_code']) && in_array($_POST['http_status_code'], [301, 302, 307, 308]) ? (int) $_POST['http_status_code'] : 301;
+
+        /* Query parameters forwarding */
+        $_POST['forward_query_parameters_is_enabled'] = (int) isset($_POST['forward_query_parameters_is_enabled']);
+
+        /* UTM */
+        $_POST['utm_medium'] = input_clean($_POST['utm_medium'] ?? '', 128);
+        $_POST['utm_source'] = input_clean($_POST['utm_source'] ?? '', 128);
+        $_POST['utm_campaign'] = input_clean($_POST['utm_campaign'] ?? '', 128);
 
         /* Existing pixels */
         $pixels = (new \Altum\Models\Pixel())->get_pixels($this->api_user->user_id);
@@ -235,18 +265,45 @@ class ApiLinks extends Controller {
         $_POST['password'] = !empty($_POST['password']) ? password_hash($_POST['password'], PASSWORD_DEFAULT) : null;
 
         /* Check for duplicate url if needed */
-        if($_POST['url']) {
-            if(db()->where('url', $_POST['url'])->where('domain_id', $domain_id)->getValue('links', 'link_id')) {
-                $this->response_error(l('link.error_message.url_exists'), 401);
+        if(!$_POST['is_bulk']) {
+            if ($_POST['url']) {
+                if (db()->where('url', $_POST['url'])->where('domain_id', $domain_id)->getValue('links', 'link_id')) {
+                    $this->response_error(l('link.error_message.url_exists'), 401);
+                }
+
+                $url = $_POST['url'];
+            } else {
+                $url = mb_strtolower(string_generate(settings()->links->random_url_length ?? 7));
+
+                /* Generate random url if not specified */
+                while (db()->where('url', $url)->where('domain_id', $domain_id)->getValue('links', 'link_id')) {
+                    $url = mb_strtolower(string_generate(settings()->links->random_url_length ?? 7));
+                }
+            }
+        }
+
+        /* Bulk processing */
+        if($_POST['is_bulk']) {
+            $location_urls = preg_split('/\r\n|\r|\n/', $_POST['location_urls']);
+
+            foreach($location_urls as $key => $location_url) {
+                /* Skip empty lines */
+                if(empty(trim($location_url))) {
+                    unset($location_urls[$key]);
+                    continue;
+                }
+
+                $this->check_location_url($location_url);
             }
 
-            $url = $_POST['url'];
-        } else {
-            $url = mb_strtolower(string_generate(settings()->links->random_url_length ?? 7));
+            /* error checks */
+            $total_bulk_urls = count($location_urls);
+            if(!$total_bulk_urls) {
+                $this->response_error(l('global.error_message.empty_field'), 401);
+            }
 
-            /* Generate random url if not specified */
-            while(db()->where('url', $url)->where('domain_id', $domain_id)->getValue('links', 'link_id')) {
-                $url = mb_strtolower(string_generate(settings()->links->random_url_length ?? 7));
+            if($this->api_user->plan_settings->links_limit != -1 && $total_rows + $total_bulk_urls > $this->api_user->plan_settings->links_limit) {
+                $this->response_error(l('global.info_message.plan_feature_limit'), 401);
             }
         }
 
@@ -261,23 +318,28 @@ class ApiLinks extends Controller {
             $supported_apps = require APP_PATH . 'includes/app_linking.php';
             foreach($supported_apps as $app_key => $app) {
                 foreach($app['formats'] as $format => $targets) {
-                    if(str_contains($_POST['location_url'], str_replace('%s', '', $format))) {
-                        preg_match('/' . $targets['regex'] . '/', $_POST['location_url'], $match);
 
-                        if(isset($match[1])) {
-                            $app_linking['ios_location_url'] = sprintf($targets['iOS'], $match[1]);
-                            $app_linking['android_location_url'] = sprintf($targets['Android'], $match[1]);
-                            $app_linking['app'] = $app_key;
+                    if(preg_match('/' . $targets['regex'] . '/', $_POST['location_url'], $match)) {
+                        if(
+                            parse_url($_POST['location_url'], PHP_URL_HOST) === parse_url('https://' . str_replace('%s', 'placeholder', $format), PHP_URL_HOST)
+                        ) {
+                            if(count($match) > 1) {
+                                array_shift($match);
+                                $app_linking['ios_location_url'] = vsprintf($targets['iOS'], $match);
+                                $app_linking['android_location_url'] = vsprintf($targets['Android'], $match);
+                                $app_linking['app'] = $app_key;
+                            }
+
+                            break 2;
                         }
-
-                        break 2;
                     }
+
                 }
             }
         }
 
         /* Prepare the settings */
-        $targeting_types = ['country_code', 'device_type', 'browser_language', 'rotation', 'os_name'];
+        $targeting_types = ['continent_code', 'country_code', 'city_name', 'device_type', 'browser_language', 'rotation', 'os_name', 'browser_name'];
         $_POST['targeting_type'] = isset($_POST['targeting_type']) && in_array($_POST['targeting_type'], array_merge(['false'], $targeting_types)) ? query_clean($_POST['targeting_type']) : 'false';
 
         $settings = [
@@ -292,7 +354,18 @@ class ApiLinks extends Controller {
             'app_linking' => $app_linking,
             'cloaking_is_enabled' => $_POST['cloaking_is_enabled'],
             'cloaking_title' => $_POST['cloaking_title'],
+            'cloaking_meta_description' => $_POST['cloaking_meta_description'],
+            'cloaking_custom_js' => $_POST['cloaking_custom_js'],
             'cloaking_favicon' => $cloaking_favicon,
+            'cloaking_opengraph' => $cloaking_opengraph,
+            'forward_query_parameters_is_enabled' => $_POST['forward_query_parameters_is_enabled'],
+
+            /* UTM */
+            'utm' => [
+                'source' => $_POST['utm_source'],
+                'medium' => $_POST['utm_medium'],
+                'campaign' => $_POST['utm_campaign'],
+            ]
         ];
 
         /* Process the targeting */
@@ -300,7 +373,7 @@ class ApiLinks extends Controller {
             ${'targeting_' . $targeting_type} = [];
 
             if(isset($_POST['targeting_' . $targeting_type . '_key'])) {
-                foreach ($_POST['targeting_' . $targeting_type . '_key'] as $key => $value) {
+                foreach($_POST['targeting_' . $targeting_type . '_key'] as $key => $value) {
                     if(empty(trim($_POST['targeting_' . $targeting_type . '_value'][$key]))) continue;
 
                     ${'targeting_' . $targeting_type}[] = [
@@ -313,32 +386,119 @@ class ApiLinks extends Controller {
             }
         }
 
-        $settings = json_encode($settings);
+        /* Get available notification handlers */
+        $notification_handlers = (new \Altum\Models\NotificationHandlers())->get_notification_handlers_by_user_id($this->api_user->user_id);
 
-        /* Prepare the statement and execute query */
-        $link_id = db()->insert('links', [
-            'user_id' => $this->api_user->user_id,
-            'project_id' => $_POST['project_id'],
-            'domain_id' => $domain_id,
-            'pixels_ids' => $_POST['pixels_ids'],
-            'type' => 'link',
-            'url' => $url,
-            'location_url' => $_POST['location_url'],
-            'settings' => $settings,
-            'start_date' => $_POST['start_date'],
-            'end_date' => $_POST['end_date'],
-            'is_enabled' => $_POST['is_enabled'],
-            'datetime' => \Altum\Date::$date,
-        ]);
+        /* Notification handlers */
+        $_POST['email_reports'] = array_map(
+            function($notification_handler_id) {
+                return (int) $notification_handler_id;
+            },
+            array_filter($_POST['email_reports'] ?? [], function($notification_handler_id) use ($notification_handlers) {
+                return array_key_exists($notification_handler_id, $notification_handlers);
+            })
+        );
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link_links_total?user_id=' . $this->api_user->user_id);
-        \Altum\Cache::$adapter->deleteItem('links_total?user_id=' . $this->api_user->user_id);
+        cache()->deleteItem('link_links_total?user_id=' . $this->api_user->user_id);
+        cache()->deleteItem('links_total?user_id=' . $this->api_user->user_id);
+        cache()->deleteItem('links?user_id=' . $this->api_user->user_id);
 
-        /* Prepare the data */
-        $data = [
-            'id' => $link_id
-        ];
+        /* Single url */
+        if(!$_POST['is_bulk']) {
+            $url = $_POST['url'] ?: $this->generate_random_url();
+
+            /* Settings */
+            $settings = json_encode($settings);
+
+            /* Database query */
+            $link_id = db()->insert('links', [
+                'user_id' => $this->api_user->user_id,
+                'project_id' => $_POST['project_id'],
+                'domain_id' => $domain_id,
+                'pixels_ids' => $_POST['pixels_ids'],
+                'email_reports' => json_encode($_POST['email_reports']),
+                'email_reports_last_datetime' => get_date(),
+                'email_reports_count' => count($_POST['email_reports']),
+                'type' => 'link',
+                'url' => $url,
+                'location_url' => $_POST['location_url'],
+                'settings' => $settings,
+                'start_date' => $_POST['start_date'],
+                'end_date' => $_POST['end_date'],
+                'is_enabled' => $_POST['is_enabled'],
+                'datetime' => get_date(),
+            ]);
+
+            /* Prepare the data */
+            $data = [
+                'id' => $link_id
+            ];
+        }
+
+        /* Bulk URLS */
+        if($_POST['is_bulk']) {
+            $i = 1;
+            $data = ['ids' => []];
+
+            foreach($location_urls as $location_url) {
+                $url = $this->generate_random_url();
+
+                /* App linking processing per each URL */
+                $app_linking = [
+                    'ios_location_url' => null,
+                    'android_location_url' => null,
+                    'app' => null,
+                ];
+
+                if($_POST['app_linking_is_enabled']) {
+                    $supported_apps = require APP_PATH . 'includes/app_linking.php';
+                    foreach($supported_apps as $app_key => $app) {
+                        foreach($app['formats'] as $format => $targets) {
+
+                            if(preg_match('/' . $targets['regex'] . '/', $location_url, $match)) {
+                                if(
+                                    str_contains($location_url, str_replace('%s', '', $format)) ||
+                                    str_contains($location_url, preg_replace('/%s.*/', '', $format))
+                                ) {
+                                    if(count($match) > 1) {
+                                        array_shift($match);
+                                        $app_linking['ios_location_url'] = vsprintf($targets['iOS'], $match);
+                                        $app_linking['android_location_url'] = vsprintf($targets['Android'], $match);
+                                        $app_linking['app'] = $app_key;
+                                    }
+
+                                    break 2;
+                                }
+                            }
+
+                        }
+                    }
+                }
+
+                /* Database query */
+                $link_id = db()->insert('links', [
+                    'user_id' => $this->api_user->user_id,
+                    'project_id' => $_POST['project_id'],
+                    'domain_id' => $domain_id,
+                    'pixels_ids' => $_POST['pixels_ids'],
+                    'email_reports' => json_encode($_POST['email_reports']),
+                    'email_reports_last_datetime' => get_date(),
+                    'email_reports_count' => count($_POST['email_reports']),
+                    'type' => 'link',
+                    'url' => $url,
+                    'location_url' => $location_url,
+                    'settings' => json_encode($settings),
+                    'start_date' => $_POST['start_date'],
+                    'end_date' => $_POST['end_date'],
+                    'is_enabled' => $_POST['is_enabled'],
+                    'datetime' => get_date(),
+                ]);
+
+                /* Prepare the data */
+                $data['ids'][] = $link_id;
+            }
+        }
 
         Response::jsonapi_success($data, null, 201);
     }
@@ -371,7 +531,7 @@ class ApiLinks extends Controller {
         $this->check_location_url($_POST['location_url']);
 
         /* Process the rest of the data */
-        $_POST['is_enabled'] = isset($_POST['is_enabled']) ? (int) isset($_POST['is_enabled']) : $link->is_enabled;
+        $_POST['is_enabled'] = isset($_POST['is_enabled']) ? (int) $_POST['is_enabled'] : $link->is_enabled;
         $_POST['schedule'] = isset($_POST['schedule']) ? (int) (bool) $_POST['schedule'] : $link->settings->schedule;
         if($_POST['schedule'] && !empty($_POST['start_date']) && !empty($_POST['end_date']) && Date::validate($_POST['start_date'], 'Y-m-d H:i:s') && Date::validate($_POST['end_date'], 'Y-m-d H:i:s')) {
             $_POST['start_date'] = (new \DateTime($_POST['start_date'], new \DateTimeZone($this->api_user->timezone)))->setTimezone(new \DateTimeZone(\Altum\Date::$default_timezone))->format('Y-m-d H:i:s');
@@ -387,9 +547,20 @@ class ApiLinks extends Controller {
         $_POST['sensitive_content'] = isset($_POST['sensitive_content']) ? (int) $_POST['sensitive_content'] : $link->settings->sensitive_content;
         $_POST['app_linking_is_enabled'] = isset($_POST['app_linking_is_enabled']) ? (int) $_POST['app_linking_is_enabled'] : $link->settings->app_linking_is_enabled;
         $_POST['cloaking_is_enabled'] = isset($_POST['cloaking_is_enabled']) ? (int) $_POST['cloaking_is_enabled'] : $link->settings->cloaking_is_enabled;
-        $_POST['cloaking_title'] = isset($_POST['cloaking_title']) ? input_clean($_POST['cloaking_title'], 70) : $link->settings->cloaking_title;;
+        $_POST['cloaking_title'] = isset($_POST['cloaking_title']) ? input_clean($_POST['cloaking_title'], 70) : $link->settings->cloaking_title;
+        $_POST['cloaking_meta_description'] = isset($_POST['cloaking_meta_description']) ? input_clean($_POST['cloaking_meta_description'], 160) : $link->settings->cloaking_meta_description;
+        $_POST['cloaking_custom_js'] = isset($_POST['cloaking_custom_js']) ? mb_substr(trim($_POST['cloaking_custom_js']), 0, 10000) : $link->settings->cloaking_custom_js;
         $link->settings->cloaking_favicon = \Altum\Uploads::process_upload($link->settings->cloaking_favicon, 'favicons', 'cloaking_favicon', 'cloaking_favicon_remove', settings()->links->favicon_size_limit, 'json_error');
+        $link->settings->cloaking_opengraph = \Altum\Uploads::process_upload($link->settings->cloaking_opengraph, 'opengraphs', 'cloaking_opengraph', 'cloaking_opengraph_remove', settings()->links->seo_image_size_limit, 'json_error');
         $_POST['http_status_code'] = isset($_POST['http_status_code']) && in_array($_POST['http_status_code'], [301, 302, 307, 308]) ? (int) $_POST['http_status_code'] : $link->settings->http_status_code;;
+
+        /* Query parameters forwarding */
+        $_POST['forward_query_parameters_is_enabled'] = isset($_POST['forward_query_parameters_is_enabled']) ? (int) $_POST['forward_query_parameters_is_enabled'] : $link->settings->forward_query_parameters_is_enabled;
+
+        /* UTM */
+        $_POST['utm_medium'] = input_clean($_POST['utm_medium'] ?? $link->settings->utm->medium, 128);
+        $_POST['utm_source'] = input_clean($_POST['utm_source'] ?? $link->settings->utm->source, 128);
+        $_POST['utm_campaign'] = input_clean($_POST['utm_campaign'] ?? $link->settings->utm->campaign, 128);
 
         /* Existing pixels */
         $pixels = (new \Altum\Models\Pixel())->get_pixels($this->api_user->user_id);
@@ -441,23 +612,28 @@ class ApiLinks extends Controller {
             $supported_apps = require APP_PATH . 'includes/app_linking.php';
             foreach($supported_apps as $app_key => $app) {
                 foreach($app['formats'] as $format => $targets) {
-                    if(str_contains($_POST['location_url'], str_replace('%s', '', $format))) {
-                        preg_match('/' . $targets['regex'] . '/', $_POST['location_url'], $match);
 
-                        if(isset($match[1])) {
-                            $app_linking['ios_location_url'] = sprintf($targets['iOS'], $match[1]);
-                            $app_linking['android_location_url'] = sprintf($targets['Android'], $match[1]);
-                            $app_linking['app'] = $app_key;
+                    if(preg_match('/' . $targets['regex'] . '/', $_POST['location_url'], $match)) {
+                        if(
+                            parse_url($_POST['location_url'], PHP_URL_HOST) === parse_url('https://' . str_replace('%s', 'placeholder', $format), PHP_URL_HOST)
+                        ) {
+                            if(count($match) > 1) {
+                                array_shift($match);
+                                $app_linking['ios_location_url'] = vsprintf($targets['iOS'], $match);
+                                $app_linking['android_location_url'] = vsprintf($targets['Android'], $match);
+                                $app_linking['app'] = $app_key;
+                            }
+
+                            break 2;
                         }
-
-                        break 2;
                     }
+
                 }
             }
         }
 
         /* Prepare the settings */
-        $targeting_types = ['country_code', 'device_type', 'browser_language', 'rotation', 'os_name'];
+        $targeting_types = ['continent_code', 'country_code', 'city_name', 'device_type', 'browser_language', 'rotation', 'os_name', 'browser_name'];
         $_POST['targeting_type'] = isset($_POST['targeting_type']) && in_array($_POST['targeting_type'], array_merge(['false'], $targeting_types)) ? query_clean($_POST['targeting_type']) : $link->settings->targeting_type;
 
         $settings = [
@@ -471,8 +647,19 @@ class ApiLinks extends Controller {
             'app_linking' => $app_linking,
             'cloaking_is_enabled' => $_POST['cloaking_is_enabled'],
             'cloaking_title' => $_POST['cloaking_title'],
+            'cloaking_meta_description' => $_POST['cloaking_meta_description'],
+            'cloaking_custom_js' => $_POST['cloaking_custom_js'],
             'cloaking_favicon' => $link->settings->cloaking_favicon,
+            'cloaking_opengraph' => $link->settings->cloaking_opengraph,
             'http_status_code' => $_POST['http_status_code'],
+            'forward_query_parameters_is_enabled' => $_POST['forward_query_parameters_is_enabled'],
+
+            /* UTM */
+            'utm' => [
+                'source' => $_POST['utm_source'],
+                'medium' => $_POST['utm_medium'],
+                'campaign' => $_POST['utm_campaign'],
+            ]
         ];
 
         /* Process the targeting */
@@ -480,7 +667,7 @@ class ApiLinks extends Controller {
             ${'targeting_' . $targeting_type} = [];
 
             if(isset($_POST['targeting_' . $targeting_type . '_key'])) {
-                foreach ($_POST['targeting_' . $targeting_type . '_key'] as $key => $value) {
+                foreach($_POST['targeting_' . $targeting_type . '_key'] as $key => $value) {
                     if(empty(trim($_POST['targeting_' . $targeting_type . '_value'][$key]))) continue;
 
                     ${'targeting_' . $targeting_type}[] = [
@@ -493,6 +680,19 @@ class ApiLinks extends Controller {
             }
         }
 
+        /* Get available notification handlers */
+        $notification_handlers = (new \Altum\Models\NotificationHandlers())->get_notification_handlers_by_user_id($this->api_user->user_id);
+
+        /* Notification handlers */
+        $_POST['email_reports'] = array_map(
+            function($notification_handler_id) {
+                return (int) $notification_handler_id;
+            },
+            array_filter($_POST['email_reports'] ?? $link->email_reports, function($notification_handler_id) use ($notification_handlers) {
+                return array_key_exists($notification_handler_id, $notification_handlers);
+            })
+        );
+
         $settings = json_encode($settings);
 
         /* Database query */
@@ -500,6 +700,9 @@ class ApiLinks extends Controller {
             'project_id' => $_POST['project_id'],
             'domain_id' => $domain_id,
             'pixels_ids' => $_POST['pixels_ids'],
+            'email_reports' => json_encode($_POST['email_reports']),
+            'email_reports_last_datetime' => !$link->email_reports_last_datetime ? get_date() : $link->email_reports_last_datetime,
+            'email_reports_count' => count($_POST['email_reports']),
             'url' => $url,
             'location_url' => $_POST['location_url'],
             'settings' => $settings,
@@ -509,8 +712,10 @@ class ApiLinks extends Controller {
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $link->link_id);
-        \Altum\Cache::$adapter->deleteItemsByTag('link_id=' . $link->link_id);
+        cache()->deleteItem('link?link_id=' . $link->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $link->link_id);
+        cache()->deleteItemsByTag('link_id=' . $link->link_id);
+        cache()->deleteItem('links?user_id=' . $link->user_id);
 
         /* Prepare the data */
         $data = [
@@ -550,7 +755,7 @@ class ApiLinks extends Controller {
             }
 
             /* Make sure the custom url is not blacklisted */
-            if(in_array(mb_strtolower($url), explode(',', settings()->links->blacklisted_keywords))) {
+            if(in_array(mb_strtolower($url), settings()->links->blacklisted_keywords)) {
                 $this->response_error(l('link.error_message.blacklisted_keyword'), 401);
             }
 
@@ -589,7 +794,7 @@ class ApiLinks extends Controller {
         /* Make sure the domain is not blacklisted */
         $domain = get_domain_from_url($url);
 
-        if($domain && in_array($domain, explode(',', settings()->links->blacklisted_domains))) {
+        if($domain && in_array($domain, settings()->links->blacklisted_domains)) {
             $this->response_error(l('link.error_message.blacklisted_domain'), 401);
         }
 
@@ -599,6 +804,21 @@ class ApiLinks extends Controller {
                 $this->response_error(l('link.error_message.blacklisted_location_url'), 401);
             }
         }
+    }
+
+    private function generate_random_url() {
+        $is_existing_link = true;
+        $url = null;
+
+        /* Generate random url if not specified */
+        while($is_existing_link) {
+            $url = mb_strtolower(string_generate(settings()->links->random_url_length ?? 7));
+
+            $domain_id_where = $_POST['domain_id'] ? "AND `domain_id` = {$_POST['domain_id']}" : "AND `domain_id` IS NULL";
+            $is_existing_link = database()->query("SELECT `link_id` FROM `links` WHERE `url` = '{$_POST['url']}' {$domain_id_where}")->num_rows;
+        }
+
+        return $url;
     }
 
     /* Check if custom domain is set and return the proper value */

@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,10 +19,16 @@ namespace Altum\Controllers;
 use Altum\Response;
 use Altum\Traits\Apiable;
 
+defined('ALTUMCODE') || die();
+
 class ApiTeamMembers extends Controller {
     use Apiable;
 
     public function index() {
+
+        if(!\Altum\Plugin::is_active('teams')) {
+            redirect('not-found');
+        }
 
         $this->verify_request();
 
@@ -143,12 +156,12 @@ class ApiTeamMembers extends Controller {
         /* Force read access */
         $access['read.all'] = true;
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         $team_member_id = db()->insert('teams_members', [
             'team_id' => $team->team_id,
             'user_email' => $_POST['user_email'],
             'access' => json_encode($access),
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Is the invited user already registered on the platform? */
@@ -157,13 +170,13 @@ class ApiTeamMembers extends Controller {
         /* Prepare the email */
         $email_template = get_email_template(
             [
-                '{{TEAM_NAME}}' => $team->name,
+                '{{TEAM:NAME}}' => $team->name,
             ],
             l('global.emails.team_member_create.subject'),
             [
-                '{{TEAM_NAME}}' => $team->name,
-                '{{USER_NAME}}' => str_replace('.', '. ', $this->api_user->name),
-                '{{USER_EMAIL}}' => $this->api_user->email,
+                '{{TEAM:NAME}}' => $team->name,
+                '{{USER:NAME}}' => str_replace('.', '. ', $this->api_user->name),
+                '{{USER:EMAIL}}' => $this->api_user->email,
                 '{{LOGIN_LINK}}' => url('login?redirect=teams-system&email=' . $_POST['user_email']),
                 '{{REGISTER_LINK}}' => url('register?redirect=teams-system&email=' . $_POST['user_email']) . '&unique_registration_identifier=' . md5($_POST['user_email'] . $_POST['user_email']),
             ],
@@ -209,11 +222,11 @@ class ApiTeamMembers extends Controller {
         /* Database query */
         db()->where('team_id', $team->team_id)->update('teams_members', [
             'access' => json_encode($access),
-            'last_datetime' => \Altum\Date::$date,
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('team_member?team_id=' . $team_member->team_id . '&user_id=' . $team_member->user_id);
+        cache()->deleteItem('team_member?team_id=' . $team_member->team_id . '&user_id=' . $team_member->user_id);
 
         /* Prepare the data */
         $data = [
@@ -241,7 +254,7 @@ class ApiTeamMembers extends Controller {
         db()->where('team_member_id', $team_member->team_member_id)->delete('teams_members');
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('team_member?team_id=' . $team_member->team_id . '&user_id=' . $team_member->user_id);
+        cache()->deleteItem('team_member?team_id=' . $team_member->team_id . '&user_id=' . $team_member->user_id);
 
         http_response_code(200);
         die();

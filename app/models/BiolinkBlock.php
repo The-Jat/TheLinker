@@ -1,13 +1,22 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Models;
+
+defined('ALTUMCODE') || die();
 
 class BiolinkBlock extends Model {
 
@@ -31,8 +40,14 @@ class BiolinkBlock extends Model {
             'video' => [['path' => 'files', 'uploaded_file_key' => 'file']],
             'file' => [['path' => 'files', 'uploaded_file_key' => 'file']],
             'pdf_document' => [['path' => 'files', 'uploaded_file_key' => 'file']],
+            'powerpoint_presentation' => [['path' => 'files', 'uploaded_file_key' => 'file']],
+            'excel_spreadsheet' => [['path' => 'files', 'uploaded_file_key' => 'file']],
             'avatar' => [['path' => 'avatars', 'uploaded_file_key' => 'image']],
             'review' => [['path' => 'block_images', 'uploaded_file_key' => 'image']],
+            'header' => [
+                ['path' => 'avatars', 'uploaded_file_key' => 'avatar'],
+                ['path' => 'backgrounds', 'uploaded_file_key' => 'background'],
+            ],
         ];
 
         if(array_key_exists($biolink_block->type, $blocks_with_storage)) {
@@ -76,8 +91,8 @@ class BiolinkBlock extends Model {
         db()->where('biolink_block_id', $biolink_block_id)->delete('biolinks_blocks');
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
-        \Altum\Cache::$adapter->deleteItem('biolink_block?block_id=' . $biolink_block->biolink_block_id . '&type=youtube_feed');
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_block?block_id=' . $biolink_block->biolink_block_id . '&type=youtube_feed');
 
     }
 }

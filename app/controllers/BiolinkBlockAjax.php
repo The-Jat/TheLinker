@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -14,6 +21,8 @@ use Altum\Date;
 use Altum\Models\BiolinksThemes;
 use Altum\Response;
 use Unirest\Request;
+
+defined('ALTUMCODE') || die();
 
 class BiolinkBlockAjax extends Controller {
     public $biolink_blocks = null;
@@ -48,7 +57,7 @@ class BiolinkBlockAjax extends Controller {
 
         }
 
-        die($_POST['request_type']);
+        die();
     }
 
     private function is_enabled_toggle() {
@@ -68,7 +77,7 @@ class BiolinkBlockAjax extends Controller {
             db()->where('biolink_block_id', $biolink_block->biolink_block_id)->update('biolinks_blocks', ['is_enabled' => $new_is_enabled]);
 
             /* Clear the cache */
-            \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+            cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
             Response::json('', 'success');
         }
@@ -111,15 +120,22 @@ class BiolinkBlockAjax extends Controller {
                 case 'audio':
                 case 'video':
                 case 'pdf_document':
+                case 'powerpoint_presentation':
+                case 'excel_spreadsheet':
                     $biolink_block->settings->file = \Altum\Uploads::copy_uploaded_file($biolink_block->settings->file, \Altum\Uploads::get_path('files'), \Altum\Uploads::get_path('files'), 'json_error');
                     break;
 
                 case 'review':
-                    $biolink_block->settings->file = \Altum\Uploads::copy_uploaded_file($biolink_block->settings->image, \Altum\Uploads::get_path('block_images'), \Altum\Uploads::get_path('block_images'), 'json_error');
+                    $biolink_block->settings->image = \Altum\Uploads::copy_uploaded_file($biolink_block->settings->image, \Altum\Uploads::get_path('block_images'), \Altum\Uploads::get_path('block_images'), 'json_error');
                     break;
 
                 case 'avatar':
                     $biolink_block->settings->image = \Altum\Uploads::copy_uploaded_file($biolink_block->settings->image, 'avatars/', 'avatars/', 'json_error');
+                    break;
+
+                case 'header':
+                    $biolink_block->settings->avatar = \Altum\Uploads::copy_uploaded_file($biolink_block->settings->avatar, 'avatars/', 'avatars/', 'json_error');
+                    $biolink_block->settings->background = \Altum\Uploads::copy_uploaded_file($biolink_block->settings->background, 'backgrounds/', 'backgrounds/', 'json_error');
                     break;
 
                 case 'vcard':
@@ -130,6 +146,20 @@ class BiolinkBlockAjax extends Controller {
                 case 'image':
                 case 'image_grid':
                     $biolink_block->settings->image = \Altum\Uploads::copy_uploaded_file($biolink_block->settings->image, 'block_images/', 'block_images/', 'json_error');
+                    break;
+
+                case 'heading':
+                    $biolink_block->settings->verified_location = '';
+                    break;
+
+                case 'image_slider':
+
+                    $biolink_block->settings->items = (array) $biolink_block->settings->items;
+
+                    foreach($biolink_block->settings->items as $key => $item) {
+                        $biolink_block->settings->items[$key]->image = \Altum\Uploads::copy_uploaded_file($biolink_block->settings->items[$key]->image, 'block_images/', 'block_images/', 'json_error');
+                    }
+
                     break;
 
                 default:
@@ -150,17 +180,17 @@ class BiolinkBlockAjax extends Controller {
                 'start_date' => $biolink_block->start_date,
                 'end_date' => $biolink_block->end_date,
                 'is_enabled' => $biolink_block->is_enabled,
-                'datetime' => \Altum\Date::$date,
+                'datetime' => get_date(),
             ]);
 
             /* Clear the cache */
-            \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+            cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
             /* Set a nice success message */
             Alerts::add_success(l('global.success_message.create2'));
 
             /* Redirect */
-            redirect('link/' . $biolink_block->link_id . '?tab=links');
+            redirect('link/' . $biolink_block->link_id . '?tab=blocks');
         }
 
         redirect('links');
@@ -193,7 +223,7 @@ class BiolinkBlockAjax extends Controller {
 
             if(isset($biolink_block)) {
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+                cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
             }
         }
 
@@ -219,9 +249,9 @@ class BiolinkBlockAjax extends Controller {
                 Response::json(l('global.info_message.plan_feature_limit'), 'error');
             }
 
-            $individual_blocks = ['link', 'heading', 'big_link', 'paragraph', 'markdown', 'avatar', 'socials', 'email_collector', 'rss_feed', 'custom_html', 'vcard', 'image', 'image_grid', 'divider', 'list', 'alert', 'faq', 'timeline', 'review', 'image_slider', 'discord', 'countdown', 'cta', 'external_item', 'share', 'youtube_feed', 'paypal', 'phone_collector', 'donation', 'product', 'service', 'map'];
-            $embeddable_blocks = ['telegram', 'anchor', 'applemusic', 'soundcloud', 'threads', 'snapchat', 'spotify', 'tidal', 'tiktok_video', 'typeform', 'tiktok_profile', 'twitch', 'twitter_tweet', 'twitter_profile', 'pinterest_profile', 'vimeo', 'youtube', 'instagram_media', 'facebook', 'reddit', 'rumble'];
-            $file_blocks = ['audio', 'video', 'file', 'pdf_document'];
+            $individual_blocks = ['link', 'heading', 'big_link', 'paragraph', 'business_hours', 'markdown', 'avatar', 'socials', 'email_collector', 'rss_feed', 'custom_html', 'vcard', 'image', 'image_grid', 'divider', 'list', 'alert', 'faq', 'timeline', 'review', 'image_slider', 'discord', 'countdown', 'cta', 'external_item', 'share', 'coupon', 'youtube_feed', 'paypal', 'phone_collector', 'contact_collector', 'donation', 'product', 'service', 'map', 'iframe', 'header', 'appointment_calendar', 'modal_text'];
+            $embeddable_blocks = ['telegram', 'anchor', 'applemusic', 'soundcloud', 'threads', 'snapchat', 'spotify', 'tidal', 'mixcloud', 'kick', 'tiktok_video', 'vk_video', 'typeform', 'calendly', 'tiktok_profile', 'twitch', 'twitter_tweet', 'twitter_video', 'twitter_profile', 'pinterest_profile', 'vimeo', 'youtube', 'instagram_media', 'facebook', 'reddit', 'rumble'];
+            $file_blocks = ['audio', 'video', 'file', 'pdf_document', 'powerpoint_presentation', 'excel_spreadsheet'];
 
             if(in_array($_POST['block_type'], $individual_blocks)) {
                 $this->{'create_biolink_' . $_POST['block_type']}();
@@ -253,9 +283,9 @@ class BiolinkBlockAjax extends Controller {
             if(isset($_POST['block_type']) && array_key_exists($_POST['block_type'], $this->biolink_blocks)) {
                 $_POST['block_type'] = query_clean($_POST['block_type']);
 
-                $individual_blocks = ['link', 'heading', 'big_link', 'paragraph', 'markdown', 'avatar', 'socials', 'email_collector', 'rss_feed', 'custom_html', 'vcard', 'image', 'image_grid', 'divider', 'list', 'alert', 'faq', 'timeline', 'review', 'image_slider', 'discord', 'countdown', 'cta', 'external_item', 'share', 'youtube_feed', 'paypal', 'phone_collector', 'donation', 'product', 'service', 'map'];
-                $embeddable_blocks = ['telegram', 'anchor', 'applemusic', 'soundcloud', 'threads', 'snapchat', 'spotify', 'tidal', 'tiktok_video', 'typeform', 'tiktok_profile', 'twitch', 'twitter_tweet', 'twitter_profile', 'pinterest_profile', 'vimeo', 'youtube', 'instagram_media', 'facebook', 'reddit', 'rumble'];
-                $file_blocks = ['audio', 'video', 'file', 'pdf_document'];
+                $individual_blocks = ['link', 'heading', 'big_link', 'paragraph', 'business_hours', 'markdown', 'avatar', 'socials', 'email_collector', 'rss_feed', 'custom_html', 'vcard', 'image', 'image_grid', 'divider', 'list', 'alert', 'faq', 'timeline', 'review', 'image_slider', 'discord', 'countdown', 'cta', 'external_item', 'share', 'coupon', 'youtube_feed', 'paypal', 'phone_collector', 'contact_collector', 'donation', 'product', 'service', 'map', 'iframe', 'header', 'appointment_calendar', 'modal_text'];
+                $embeddable_blocks = ['telegram', 'anchor', 'applemusic', 'soundcloud', 'threads', 'snapchat', 'spotify', 'tidal', 'mixcloud', 'kick', 'tiktok_video', 'vk_video', 'typeform', 'calendly', 'tiktok_profile', 'twitch', 'twitter_tweet', 'twitter_video', 'twitter_profile', 'pinterest_profile', 'vimeo', 'youtube', 'instagram_media', 'facebook', 'reddit', 'rumble'];
+                $file_blocks = ['audio', 'video', 'file', 'pdf_document', 'powerpoint_presentation', 'excel_spreadsheet'];
 
                 if(in_array($_POST['block_type'], $individual_blocks)) {
                     $this->{'update_biolink_' . $_POST['block_type']}();
@@ -306,12 +336,16 @@ class BiolinkBlockAjax extends Controller {
             'animation_runs' => 'repeat-1',
             'icon' => '',
             'image' => '',
+            'sensitive_content' => false,
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -324,13 +358,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => $_POST['location_url'],
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_link() {
@@ -341,18 +375,20 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
         $_POST['icon'] = query_clean($_POST['icon']);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['sensitive_content'] = (int) isset($_POST['sensitive_content']);
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
 
         /* Display settings */
         $this->process_display_settings();
@@ -378,27 +414,6 @@ class BiolinkBlockAjax extends Controller {
         /* Image upload */
         $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
 
-        /* Check for the removal of the already uploaded file */
-        if(isset($_POST['image_remove'])) {
-            /* Offload deleting */
-            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-                $s3->deleteObject([
-                    'Bucket' => settings()->offload->storage_name,
-                    'Key' => 'uploads/block_thumbnail_images/' . $biolink_block->settings->image,
-                ]);
-            }
-
-            /* Local deleting */
-            else {
-                /* Delete current file */
-                if(!empty($biolink_block->settings->image) && file_exists(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image)) {
-                    unlink(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image);
-                }
-            }
-            $db_image = null;
-        }
-
         $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
 
         $settings = json_encode([
@@ -420,12 +435,17 @@ class BiolinkBlockAjax extends Controller {
             'animation_runs' => $_POST['animation_runs'],
             'icon' => $_POST['icon'],
             'image' => $db_image,
+            'sensitive_content' => $_POST['sensitive_content'],
+            'columns' => $_POST['columns'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -434,10 +454,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url], 'location_url' => $_POST['location_url']]);
     }
@@ -476,12 +497,16 @@ class BiolinkBlockAjax extends Controller {
             'animation_runs' => 'repeat-1',
             'icon' => '',
             'image' => '',
+            'sensitive_content' => false,
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -494,13 +519,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => $_POST['location_url'],
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_big_link() {
@@ -512,19 +537,21 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
         $_POST['icon'] = query_clean($_POST['icon']);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
-        $_POST['description_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['description_color']) ? '#000000' : $_POST['description_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['description_color'] = !verify_hex_color($_POST['description_color']) ? '#000000' : $_POST['description_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['sensitive_content'] = (int) isset($_POST['sensitive_content']);
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
 
         /* Display settings */
         $this->process_display_settings();
@@ -550,27 +577,6 @@ class BiolinkBlockAjax extends Controller {
         /* Image upload */
         $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
 
-        /* Check for the removal of the already uploaded file */
-        if(isset($_POST['image_remove'])) {
-            /* Offload deleting */
-            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-                $s3->deleteObject([
-                    'Bucket' => settings()->offload->storage_name,
-                    'Key' => 'uploads/block_thumbnail_images/' . $biolink_block->settings->image,
-                ]);
-            }
-
-            /* Local deleting */
-            else {
-                /* Delete current file */
-                if(!empty($biolink_block->settings->image) && file_exists(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image)) {
-                    unlink(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image);
-                }
-            }
-            $db_image = null;
-        }
-
         $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
 
         $settings = json_encode([
@@ -594,12 +600,17 @@ class BiolinkBlockAjax extends Controller {
             'animation_runs' => $_POST['animation_runs'],
             'icon' => $_POST['icon'],
             'image' => $db_image,
+            'sensitive_content' => $_POST['sensitive_content'],
+            'columns' => $_POST['columns'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -608,10 +619,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url], 'location_url' => $_POST['location_url']]);
     }
@@ -634,10 +646,13 @@ class BiolinkBlockAjax extends Controller {
             'verified_location' => '',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -650,20 +665,20 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_heading() {
         $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
         $_POST['heading_type'] = in_array($_POST['heading_type'], ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']) ? query_clean($_POST['heading_type']) : 'h1';
         $_POST['text'] = mb_substr(query_clean($_POST['text']), 0, 256);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#ffffff' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#ffffff' : $_POST['text_color'];
         $_POST['verified_location'] = isset($_POST['verified_location']) && in_array($_POST['verified_location'], ['', 'left', 'right']) ? query_clean($_POST['verified_location']) : '';
 
         /* Display settings */
@@ -681,10 +696,13 @@ class BiolinkBlockAjax extends Controller {
             'verified_location' => $_POST['verified_location'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -692,17 +710,42 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
 
     private function create_biolink_paragraph() {
         $_POST['link_id'] = (int) $_POST['link_id'];
-        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 2048);
+
+        $_POST['text'] = quilljs_to_bootstrap($_POST['text']);
+
+        /* Purify the text */
+        $config = \HTMLPurifier_Config::createDefault();
+        $config->set('HTML.Allowed', 's,p,b,strong,i,em,u,strike,blockquote,code,pre,ul,ol,li,a[href],span[style|class],div[style|class],br');
+        $config->set('CSS.AllowedProperties', [
+            'color',
+            'background-color',
+            'text-align',
+            'font-size',
+        ]);
+
+        /* Allow class and style on selected tags */
+        $config->set('HTML.AllowedAttributes', 'span.class,span.style,div.class,div.style,p.class,p.style,a.href,a.style');
+
+        $config->set('Attr.AllowedClasses', null);
+        $config->set('AutoFormat.AutoParagraph', false);
+        $config->set('AutoFormat.Linkify', true);
+
+        $purifier = new \HTMLPurifier($config);
+        $_POST['text'] = @$purifier->purify($_POST['text']);
+
+        /* Limit max length */
+        $_POST['text'] = mb_substr($_POST['text'], 0, 10000);
 
         if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
             die();
@@ -712,23 +755,26 @@ class BiolinkBlockAjax extends Controller {
         $settings = json_encode([
             'text' => $_POST['text'],
             'text_color' => '#ffffff',
-            'background_color' => '#000000',
+            'background_color' => '#00000000',
             'border_radius' => 'rounded',
             'border_shadow_offset_x' => 0,
             'border_shadow_offset_y' => 0,
             'border_shadow_blur' => 20,
             'border_shadow_spread' => 0,
-            'border_shadow_color' => '#00000010',
+            'border_shadow_color' => '#00000000',
             'border_width' => 0,
             'border_style' => 'solid',
             'border_color' => 'white',
             'text_alignment' => 'center',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -741,29 +787,54 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_paragraph() {
         $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
-        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 2048);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#ffffff' : $_POST['text_color'];
+
+        $_POST['text'] = quilljs_to_bootstrap($_POST['text']);
+
+        /* Purify the text */
+        $config = \HTMLPurifier_Config::createDefault();
+        $config->set('HTML.Allowed', 's,p,b,strong,i,em,u,strike,blockquote,code,pre,ul,ol,li,a[href],span[style|class],div[style|class],br');
+        $config->set('CSS.AllowedProperties', [
+            'color',
+            'background-color',
+            'text-align',
+            'font-size',
+        ]);
+
+        /* Allow class and style on selected tags */
+        $config->set('HTML.AllowedAttributes', 'span.class,span.style,div.class,div.style,p.class,p.style,a.href,a.style');
+
+        $config->set('Attr.AllowedClasses', null);
+        $config->set('AutoFormat.AutoParagraph', false);
+        $config->set('AutoFormat.Linkify', true);
+
+        $purifier = new \HTMLPurifier($config);
+        $_POST['text'] = @$purifier->purify($_POST['text']);
+
+        /* Limit max length */
+        $_POST['text'] = mb_substr($_POST['text'], 0, 10000);
+
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#ffffff' : $_POST['text_color'];
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#00000000' : $_POST['border_shadow_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
 
         /* Display settings */
         $this->process_display_settings();
@@ -774,7 +845,6 @@ class BiolinkBlockAjax extends Controller {
 
         $settings = json_encode([
             'text' => $_POST['text'],
-            'text_alignment' => $_POST['text_alignment'],
             'text_color' => $_POST['text_color'],
             'background_color' => $_POST['background_color'],
             'border_radius' => $_POST['border_radius'],
@@ -788,10 +858,13 @@ class BiolinkBlockAjax extends Controller {
             'border_shadow_color' => $_POST['border_shadow_color'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -799,28 +872,408 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
+
+        Response::json(l('global.success_message.update2'), 'success');
+    }
+
+    private function create_biolink_modal_text() {
+        $_POST['link_id'] = (int) $_POST['link_id'];
+        $_POST['name'] = input_clean($_POST['name'], 128);
+
+        $_POST['text'] = quilljs_to_bootstrap($_POST['text']);
+
+        /* Purify the text */
+        $config = \HTMLPurifier_Config::createDefault();
+        $config->set('HTML.Allowed', 's,p,b,strong,i,em,u,strike,blockquote,code,pre,ul,ol,li,a[href],span[style|class],div[style|class],br');
+        $config->set('CSS.AllowedProperties', [
+            'color',
+            'background-color',
+            'text-align',
+            'font-size',
+        ]);
+
+        /* Allow class and style on selected tags */
+        $config->set('HTML.AllowedAttributes', 'span.class,span.style,div.class,div.style,p.class,p.style,a.href,a.style');
+
+        $config->set('Attr.AllowedClasses', null);
+        $config->set('AutoFormat.AutoParagraph', false);
+        $config->set('AutoFormat.Linkify', true);
+
+        $purifier = new \HTMLPurifier($config);
+        $_POST['text'] = @$purifier->purify($_POST['text']);
+
+        /* Limit max length */
+        $_POST['text'] = mb_substr($_POST['text'], 0, 10000);
+
+        if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
+            die();
+        }
+
+        $type = 'modal_text';
+        $settings = json_encode([
+            'name' => $_POST['name'],
+            'text' => $_POST['text'],
+            'button_text' => '',
+            'text_color' => 'black',
+            'text_alignment' => 'center',
+            'background_color' => 'white',
+            'border_shadow_offset_x' => 0,
+            'border_shadow_offset_y' => 0,
+            'border_shadow_blur' => 20,
+            'border_shadow_spread' => 0,
+            'border_shadow_color' => '#00000010',
+            'border_width' => 0,
+            'border_style' => 'solid',
+            'border_color' => 'white',
+            'border_radius' => 'rounded',
+            'animation' => false,
+            'animation_runs' => 'repeat-1',
+            'icon' => '',
+            'image' => '',
+
+
+            /* Display settings */
+            'display_continents' => [],
+            'display_countries' => [],
+            'display_cities' => [],
+            'display_devices' => [],
+            'display_languages' => [],
+            'display_operating_systems' => [],
+            'display_browsers' => [],
+        ]);
+
+        $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
+
+        /* Database query */
+        db()->insert('biolinks_blocks', [
+            'user_id' => $this->user->user_id,
+            'link_id' => $_POST['link_id'],
+            'type' => $type,
+            'location_url' => null,
+            'settings' => $settings,
+            'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
+            'datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
+
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
+    }
+
+    private function update_biolink_modal_text() {
+        $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
+        $_POST['location_url'] = get_url($_POST['location_url']);
+        $_POST['name'] = input_clean($_POST['name'], 128);
+        $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
+        $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
+        $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
+        $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
+        $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
+        $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
+        $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
+        $_POST['icon'] = query_clean($_POST['icon']);
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
+
+        $_POST['text'] = quilljs_to_bootstrap($_POST['text']);
+
+        /* Purify the text */
+        $config = \HTMLPurifier_Config::createDefault();
+        $config->set('HTML.Allowed', 's,p,b,strong,i,em,u,strike,blockquote,code,pre,ul,ol,li,a[href],span[style|class],div[style|class],br');
+        $config->set('CSS.AllowedProperties', [
+            'color',
+            'background-color',
+            'text-align',
+            'font-size',
+        ]);
+
+        /* Allow class and style on selected tags */
+        $config->set('HTML.AllowedAttributes', 'span.class,span.style,div.class,div.style,p.class,p.style,a.href,a.style');
+
+        $config->set('Attr.AllowedClasses', null);
+        $config->set('AutoFormat.AutoParagraph', false);
+        $config->set('AutoFormat.Linkify', true);
+
+        $purifier = new \HTMLPurifier($config);
+        $_POST['text'] = @$purifier->purify($_POST['text']);
+
+        /* Limit max length */
+        $_POST['text'] = mb_substr($_POST['text'], 0, 10000);
+
+        /* Display settings */
+        $this->process_display_settings();
+
+        if(!$biolink_block = db()->where('biolink_block_id', $_POST['biolink_block_id'])->where('user_id', $this->user->user_id)->getOne('biolinks_blocks')) {
+            die();
+        }
+
+        $this->check_location_url($_POST['location_url'], true);
+
+        /* Image upload */
+        $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
+
+        $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
+
+        $settings = json_encode([
+            'name' => $_POST['name'],
+            'text' => $_POST['text'],
+            'button_text' => $_POST['button_text'],
+            'text_color' => $_POST['text_color'],
+            'text_alignment' => $_POST['text_alignment'],
+            'background_color' => $_POST['background_color'],
+            'border_radius' => $_POST['border_radius'],
+            'border_width' => $_POST['border_width'],
+            'border_style' => $_POST['border_style'],
+            'border_color' => $_POST['border_color'],
+            'border_shadow_offset_x' => $_POST['border_shadow_offset_x'],
+            'border_shadow_offset_y' => $_POST['border_shadow_offset_y'],
+            'border_shadow_blur' => $_POST['border_shadow_blur'],
+            'border_shadow_spread' => $_POST['border_shadow_spread'],
+            'border_shadow_color' => $_POST['border_shadow_color'],
+            'animation' => $_POST['animation'],
+            'animation_runs' => $_POST['animation_runs'],
+            'icon' => $_POST['icon'],
+            'image' => $db_image,
+            'columns' => $_POST['columns'],
+
+            /* Display settings */
+            'display_continents' => $_POST['display_continents'],
+            'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
+            'display_devices' => $_POST['display_devices'],
+            'display_languages' => $_POST['display_languages'],
+            'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
+        ]);
+
+        /* Database query */
+        db()->where('biolink_block_id', $_POST['biolink_block_id'])->update('biolinks_blocks', [
+            'location_url' => $_POST['location_url'],
+            'settings' => $settings,
+            'start_date' => $_POST['start_date'],
+            'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
+
+        Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url], 'location_url' => $_POST['location_url']]);
+    }
+
+    private function create_biolink_business_hours() {
+        $_POST['link_id'] = (int) $_POST['link_id'];
+
+        $_POST['twenty_four_seven'] = (int) isset($_POST['twenty_four_seven']);
+        $_POST['temporarily_closed'] = (int) isset($_POST['temporarily_closed']);
+        $_POST['note'] = input_clean($_POST['note'],1000);
+        foreach(range(1, 7) as $day) {
+            $_POST['day_' . $day . '_translation'] = input_clean($_POST['day_' . $day  . '_translation'], 32);
+            $_POST['day_' . $day] = input_clean($_POST['day_' . $day], 256);
+        }
+        $_POST['twenty_four_seven_title'] = input_clean($_POST['twenty_four_seven_title'], 256);
+        $_POST['twenty_four_seven_description'] = input_clean($_POST['twenty_four_seven_description'], 256);
+        $_POST['temporarily_closed_title'] = input_clean($_POST['temporarily_closed_title'], 256);
+        $_POST['temporarily_closed_description'] = input_clean($_POST['temporarily_closed_description'], 256);
+
+        if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
+            die();
+        }
+
+        $type = 'business_hours';
+        $settings = json_encode([
+            'twenty_four_seven' => $_POST['twenty_four_seven'],
+            'temporarily_closed' => $_POST['temporarily_closed'],
+            'note' => $_POST['note'],
+            'day_1' => $_POST['day_1'],
+            'day_2' => $_POST['day_2'],
+            'day_3' => $_POST['day_3'],
+            'day_4' => $_POST['day_4'],
+            'day_5' => $_POST['day_5'],
+            'day_6' => $_POST['day_6'],
+            'day_7' => $_POST['day_7'],
+            'day_1_translation' => $_POST['day_1_translation'],
+            'day_2_translation' => $_POST['day_2_translation'],
+            'day_3_translation' => $_POST['day_3_translation'],
+            'day_4_translation' => $_POST['day_4_translation'],
+            'day_5_translation' => $_POST['day_5_translation'],
+            'day_6_translation' => $_POST['day_6_translation'],
+            'day_7_translation' => $_POST['day_7_translation'],
+
+            'twenty_four_seven_title' => $_POST['twenty_four_seven_title'],
+            'twenty_four_seven_description' => $_POST['twenty_four_seven_description'],
+            'temporarily_closed_title' => $_POST['temporarily_closed_title'],
+            'temporarily_closed_description' => $_POST['temporarily_closed_description'],
+
+            'title_color' => '#ffffff',
+            'description_color' => '#717d8f',
+            'icon_color' => '#00000000',
+            'background_color' => '#00000000',
+            'border_radius' => 'rounded',
+            'border_shadow_offset_x' => 0,
+            'border_shadow_offset_y' => 0,
+            'border_shadow_blur' => 20,
+            'border_shadow_spread' => 0,
+            'border_shadow_color' => '#00000000',
+            'border_width' => 0,
+            'border_style' => 'solid',
+            'border_color' => 'white',
+            'text_alignment' => 'center',
+
+            /* Display settings */
+            'display_continents' => [],
+            'display_countries' => [],
+            'display_cities' => [],
+            'display_devices' => [],
+            'display_languages' => [],
+            'display_operating_systems' => [],
+            'display_browsers' => [],
+        ]);
+
+        $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
+
+        /* Database query */
+        db()->insert('biolinks_blocks', [
+            'user_id' => $this->user->user_id,
+            'link_id' => $_POST['link_id'],
+            'type' => $type,
+            'location_url' => null,
+            'settings' => $settings,
+            'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
+            'datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
+
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
+    }
+
+    private function update_biolink_business_hours() {
+        $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
+
+        $_POST['twenty_four_seven'] = (int) isset($_POST['twenty_four_seven']);
+        $_POST['temporarily_closed'] = (int) isset($_POST['temporarily_closed']);
+        $_POST['note'] = input_clean($_POST['note'],1000);
+        foreach(range(1, 7) as $day) {
+            $_POST['day_' . $day . '_translation'] = input_clean($_POST['day_' . $day  . '_translation'], 32);
+            $_POST['day_' . $day] = input_clean($_POST['day_' . $day], 256);
+        }
+        $_POST['twenty_four_seven_title'] = input_clean($_POST['twenty_four_seven_title'], 256);
+        $_POST['twenty_four_seven_description'] = input_clean($_POST['twenty_four_seven_description'], 256);
+        $_POST['temporarily_closed_title'] = input_clean($_POST['temporarily_closed_title'], 256);
+        $_POST['temporarily_closed_description'] = input_clean($_POST['temporarily_closed_description'], 256);
+
+        $_POST['title_color'] = !verify_hex_color($_POST['title_color']) ? '#ffffff' : $_POST['title_color'];
+        $_POST['description_color'] = !verify_hex_color($_POST['description_color']) ? '#ffffff' : $_POST['description_color'];
+        $_POST['icon_color'] = !verify_hex_color($_POST['icon_color']) ? '#ffffff' : $_POST['icon_color'];
+
+        $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
+        $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
+        $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
+        $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
+        $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
+        $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#00000000' : $_POST['border_shadow_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+
+        /* Display settings */
+        $this->process_display_settings();
+
+        if(!$biolink_block = db()->where('biolink_block_id', $_POST['biolink_block_id'])->where('user_id', $this->user->user_id)->getOne('biolinks_blocks')) {
+            die();
+        }
+
+        $settings = json_encode([
+            'twenty_four_seven' => $_POST['twenty_four_seven'],
+            'temporarily_closed' => $_POST['temporarily_closed'],
+            'note' => $_POST['note'],
+            'day_1' => $_POST['day_1'],
+            'day_2' => $_POST['day_2'],
+            'day_3' => $_POST['day_3'],
+            'day_4' => $_POST['day_4'],
+            'day_5' => $_POST['day_5'],
+            'day_6' => $_POST['day_6'],
+            'day_7' => $_POST['day_7'],
+            'day_1_translation' => $_POST['day_1_translation'],
+            'day_2_translation' => $_POST['day_2_translation'],
+            'day_3_translation' => $_POST['day_3_translation'],
+            'day_4_translation' => $_POST['day_4_translation'],
+            'day_5_translation' => $_POST['day_5_translation'],
+            'day_6_translation' => $_POST['day_6_translation'],
+            'day_7_translation' => $_POST['day_7_translation'],
+
+            'twenty_four_seven_title' => $_POST['twenty_four_seven_title'],
+            'twenty_four_seven_description' => $_POST['twenty_four_seven_description'],
+            'temporarily_closed_title' => $_POST['temporarily_closed_title'],
+            'temporarily_closed_description' => $_POST['temporarily_closed_description'],
+
+            'title_color' => $_POST['title_color'],
+            'description_color' => $_POST['description_color'],
+            'icon_color' => $_POST['icon_color'],
+            'background_color' => $_POST['background_color'],
+            'border_radius' => $_POST['border_radius'],
+            'border_width' => $_POST['border_width'],
+            'border_style' => $_POST['border_style'],
+            'border_color' => $_POST['border_color'],
+            'border_shadow_offset_x' => $_POST['border_shadow_offset_x'],
+            'border_shadow_offset_y' => $_POST['border_shadow_offset_y'],
+            'border_shadow_blur' => $_POST['border_shadow_blur'],
+            'border_shadow_spread' => $_POST['border_shadow_spread'],
+            'border_shadow_color' => $_POST['border_shadow_color'],
+
+            /* Display settings */
+            'display_continents' => $_POST['display_continents'],
+            'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
+            'display_devices' => $_POST['display_devices'],
+            'display_languages' => $_POST['display_languages'],
+            'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
+        ]);
+
+        /* Database query */
+        db()->where('biolink_block_id', $_POST['biolink_block_id'])->update('biolinks_blocks', [
+            'settings' => $settings,
+            'start_date' => $_POST['start_date'],
+            'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
 
     private function create_biolink_markdown() {
         $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
-        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 2048);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#ffffff' : $_POST['text_color'];
+        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 10000);
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#ffffff' : $_POST['text_color'];
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
 
         if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
             die();
@@ -842,10 +1295,13 @@ class BiolinkBlockAjax extends Controller {
             'border_color' => 'white',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -858,19 +1314,19 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_markdown() {
         $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
-        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 2048);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#ffffff' : $_POST['text_color'];
+        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 10000);
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#ffffff' : $_POST['text_color'];
 
         /* Display settings */
         $this->process_display_settings();
@@ -895,10 +1351,13 @@ class BiolinkBlockAjax extends Controller {
             'border_shadow_color' => $_POST['border_shadow_color'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -906,10 +1365,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
@@ -929,6 +1389,7 @@ class BiolinkBlockAjax extends Controller {
         $type = 'avatar';
         $settings = json_encode([
             'image' => $db_image,
+            'image_alt' => null,
             'size' => $_POST['size'],
             'border_radius' => $_POST['border_radius'],
             'border_shadow_offset_x' => 0,
@@ -940,12 +1401,16 @@ class BiolinkBlockAjax extends Controller {
             'border_style' => 'solid',
             'border_color' => 'white',
             'object_fit' => 'contain',
+            'open_in_new_tab' => false,
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -957,13 +1422,13 @@ class BiolinkBlockAjax extends Controller {
             'type' => $type,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_avatar() {
@@ -972,13 +1437,16 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['object_fit'] = in_array($_POST['object_fit'], ['contain', 'cover', 'fill']) ? query_clean($_POST['object_fit']) : 'contain';
+        $_POST['image_alt'] = mb_substr(query_clean($_POST['image_alt']), 0, 100);
+        $_POST['location_url'] = get_url($_POST['location_url']);
+        $_POST['open_in_new_tab'] = (int) isset($_POST['open_in_new_tab']);
 
         /* Display settings */
         $this->process_display_settings();
@@ -988,6 +1456,8 @@ class BiolinkBlockAjax extends Controller {
         }
         $biolink_block->settings = json_decode($biolink_block->settings ?? '');
 
+        $this->check_location_url($_POST['location_url'], true);
+
         /* Image upload */
         $db_image = $this->handle_image_upload($biolink_block->settings->image, 'avatars/', settings()->links->image_size_limit);
 
@@ -995,6 +1465,7 @@ class BiolinkBlockAjax extends Controller {
 
         $settings = json_encode([
             'image' => $db_image,
+            'image_alt' => $_POST['image_alt'],
             'size' => $_POST['size'],
             'object_fit' => $_POST['object_fit'],
             'border_radius' => $_POST['border_radius'],
@@ -1006,31 +1477,182 @@ class BiolinkBlockAjax extends Controller {
             'border_shadow_blur' => $_POST['border_shadow_blur'],
             'border_shadow_spread' => $_POST['border_shadow_spread'],
             'border_shadow_color' => $_POST['border_shadow_color'],
+            'open_in_new_tab' => $_POST['open_in_new_tab'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
         db()->where('biolink_block_id', $_POST['biolink_block_id'])->update('biolinks_blocks', [
+            'location_url' => $_POST['location_url'],
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url]]);
     }
 
+    private function create_biolink_header() {
+        $_POST['link_id'] = (int) $_POST['link_id'];
+        $_POST['background_type'] = in_array($_POST['background_type'], ['image', 'video']) ? $_POST['background_type'] : 'image';
+        $_POST['video_url'] = get_url($_POST['video_url'] ?? '');
+
+        if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
+            die();
+        }
+
+        /* Image upload */
+        $background = $this->handle_file_upload(null, 'background', 'background_remove', ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'], 'backgrounds/', settings()->links->avatar_size_limit);
+        $avatar = $this->handle_file_upload(null, 'avatar', 'avatar_remove', ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'], 'avatars/', settings()->links->avatar_size_limit);
+
+        $type = 'header';
+        $settings = json_encode([
+            'background_type' => $_POST['background_type'],
+            'video_url' => $_POST['video_url'],
+            'avatar' => $avatar,
+            'background' => $background,
+            'avatar_alt' => null,
+            'background_alt' => null,
+            'avatar_size' => 100,
+            'border_radius' => 'round',
+            'border_shadow_offset_x' => 0,
+            'border_shadow_offset_y' => 0,
+            'border_shadow_blur' => 20,
+            'border_shadow_spread' => 0,
+            'border_shadow_color' => '#00000010',
+            'border_width' => 0,
+            'border_style' => 'solid',
+            'border_color' => 'white',
+            'object_fit' => 'contain',
+            'open_in_new_tab' => false,
+
+            /* Display settings */
+            'display_continents' => [],
+            'display_countries' => [],
+            'display_cities' => [],
+            'display_devices' => [],
+            'display_languages' => [],
+            'display_operating_systems' => [],
+            'display_browsers' => [],
+        ]);
+
+        $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
+
+        /* Database query */
+        db()->insert('biolinks_blocks', [
+            'user_id' => $this->user->user_id,
+            'link_id' => $_POST['link_id'],
+            'type' => $type,
+            'settings' => $settings,
+            'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
+            'datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
+
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
+    }
+
+    private function update_biolink_header() {
+        $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
+        $_POST['avatar_size'] = in_array($_POST['avatar_size'], ['75', '100', '125']) ? (int) $_POST['avatar_size'] : 100;
+        $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
+        $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
+        $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
+        $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
+        $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
+        $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['object_fit'] = in_array($_POST['object_fit'], ['contain', 'cover', 'fill']) ? query_clean($_POST['object_fit']) : 'contain';
+        $_POST['background_alt'] = input_clean($_POST['background_alt'] ?? '', 100);
+        $_POST['avatar_alt'] = input_clean($_POST['avatar_alt'] ?? '', 100);
+        $_POST['location_url'] = get_url($_POST['location_url']);
+        $_POST['open_in_new_tab'] = (int) isset($_POST['open_in_new_tab']);
+        $_POST['background_type'] = in_array($_POST['background_type'], ['image', 'video']) ? $_POST['background_type'] : 'image';
+        $_POST['video_url'] = get_url($_POST['video_url'] ?? '');
+
+        /* Display settings */
+        $this->process_display_settings();
+
+        if(!$biolink_block = db()->where('biolink_block_id', $_POST['biolink_block_id'])->where('user_id', $this->user->user_id)->getOne('biolinks_blocks')) {
+            die();
+        }
+        $biolink_block->settings = json_decode($biolink_block->settings ?? '');
+
+        $this->check_location_url($_POST['location_url'], true);
+
+        /* Image upload */
+        $background = $this->handle_file_upload($biolink_block->settings->background, 'background', 'background_remove', ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'], 'backgrounds/', settings()->links->avatar_size_limit);
+        $avatar = $this->handle_file_upload($biolink_block->settings->avatar, 'avatar', 'avatar_remove', ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'], 'avatars/', settings()->links->avatar_size_limit);
+
+        $avatar_url = $avatar ? \Altum\Uploads::get_full_url('avatars') . $avatar : null;
+        $background_url = $background ? \Altum\Uploads::get_full_url('backgrounds') . $background : null;
+
+        $settings = json_encode([
+            'background_type' => $_POST['background_type'],
+            'video_url' => $_POST['video_url'],
+            'avatar' => $avatar,
+            'background' => $background,
+            'avatar_alt' => $_POST['avatar_alt'],
+            'background_alt' => $_POST['background_alt'],
+            'avatar_size' => $_POST['avatar_size'],
+            'object_fit' => $_POST['object_fit'],
+            'border_radius' => $_POST['border_radius'],
+            'border_width' => $_POST['border_width'],
+            'border_style' => $_POST['border_style'],
+            'border_color' => $_POST['border_color'],
+            'border_shadow_offset_x' => $_POST['border_shadow_offset_x'],
+            'border_shadow_offset_y' => $_POST['border_shadow_offset_y'],
+            'border_shadow_blur' => $_POST['border_shadow_blur'],
+            'border_shadow_spread' => $_POST['border_shadow_spread'],
+            'border_shadow_color' => $_POST['border_shadow_color'],
+            'open_in_new_tab' => $_POST['open_in_new_tab'],
+
+            /* Display settings */
+            'display_continents' => $_POST['display_continents'],
+            'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
+            'display_devices' => $_POST['display_devices'],
+            'display_languages' => $_POST['display_languages'],
+            'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
+        ]);
+
+        /* Database query */
+        db()->where('biolink_block_id', $_POST['biolink_block_id'])->update('biolinks_blocks', [
+            'location_url' => $_POST['location_url'],
+            'settings' => $settings,
+            'start_date' => $_POST['start_date'],
+            'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
+
+        Response::json(l('global.success_message.update2'), 'success', ['images' => ['avatar' => $avatar_url, 'background' => $background_url]]);
+    }
+
     private function create_biolink_socials() {
         $_POST['link_id'] = (int) $_POST['link_id'];
-        $_POST['color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['color']) ? '#ffffff' : $_POST['color'];
-        $_POST['size'] = in_array($_POST['size'], ['s', 'm', 'l', 'xl']) ? $_POST['size'] : 'l';
+        $_POST['color'] = !verify_hex_color($_POST['color']) ? '#ffffff' : $_POST['color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#FFFFFF00' : $_POST['background_color'];
+        $_POST['size'] = in_array($_POST['size'], ['s', 'm', 'l', 'xl']) ? $_POST['size'] : 'm';
 
         /* Make sure the socials sent are proper */
         $biolink_socials = require APP_PATH . 'includes/biolink_socials.php';
@@ -1050,14 +1672,19 @@ class BiolinkBlockAjax extends Controller {
         $type = 'socials';
         $settings = json_encode([
             'color' => $_POST['color'],
+            'background_color' => $_POST['background_color'],
             'socials' => $_POST['socials'],
             'size' => $_POST['size'],
+            'border_radius' => 'rounded',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -1070,19 +1697,21 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_socials() {
         $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
-        $_POST['color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['color']) ? '#ffffff' : $_POST['color'];
-        $_POST['size'] = in_array($_POST['size'], ['s', 'm', 'l', 'xl']) ? $_POST['size'] : 'l';
+        $_POST['color'] = !verify_hex_color($_POST['color']) ? '#ffffff' : $_POST['color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#FFFFFF00' : $_POST['background_color'];
+        $_POST['size'] = in_array($_POST['size'], ['s', 'm', 'l', 'xl']) ? $_POST['size'] : 'm';
+        $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
 
         /* Display settings */
         $this->process_display_settings();
@@ -1105,14 +1734,19 @@ class BiolinkBlockAjax extends Controller {
 
         $settings = json_encode([
             'color' => $_POST['color'],
+            'background_color' => $_POST['background_color'],
             'socials' => $_POST['socials'],
             'size' => $_POST['size'],
+            'border_radius' => $_POST['border_radius'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -1120,10 +1754,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
@@ -1156,24 +1791,24 @@ class BiolinkBlockAjax extends Controller {
             'animation_runs' => 'repeat-1',
             'icon' => '',
 
-            'email_placeholder' => l('create_biolink_email_collector_modal.email_placeholder_default'),
-            'name_placeholder' => l('create_biolink_email_collector_modal.name_placeholder_default'),
-            'button_text' => l('create_biolink_email_collector_modal.button_text_default'),
-            'success_text' => l('create_biolink_email_collector_modal.success_text_default'),
+            'email_placeholder' => l('biolink_email_collector.email_placeholder_default'),
+            'name_placeholder' => l('biolink_email_collector.name_placeholder_default'),
+            'button_text' => l('biolink_email_collector.button_text_default'),
+            'success_text' => l('biolink_email_collector.success_text_default'),
             'thank_you_url' => '',
             'show_agreement' => false,
             'agreement_url' => '',
             'agreement_text' => '',
-            'mailchimp_api' => '',
-            'mailchimp_api_list' => '',
-            'email_notification' => '',
-            'webhook_url' => '',
+            'notifications' => [],
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -1185,13 +1820,13 @@ class BiolinkBlockAjax extends Controller {
             'type' => $type,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_email_collector() {
@@ -1200,30 +1835,40 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
         $_POST['icon'] = query_clean($_POST['icon']);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
         $_POST['email_placeholder'] = mb_substr(query_clean($_POST['email_placeholder']), 0, 64);
         $_POST['name_placeholder'] = mb_substr(query_clean($_POST['name_placeholder']), 0, 64);
-        $_POST['button_text'] = mb_substr(query_clean($_POST['button_text']), 0, 64);
+        $_POST['button_text'] = input_clean($_POST['button_text'], 64);
         $_POST['success_text'] = mb_substr(query_clean($_POST['success_text']), 0, 256);
         $_POST['show_agreement'] = (int) isset($_POST['show_agreement']);
         $_POST['agreement_url'] = get_url($_POST['agreement_url']);
         $_POST['agreement_text'] = mb_substr(query_clean($_POST['agreement_text']), 0, 256);
-        $_POST['mailchimp_api'] = mb_substr(query_clean($_POST['mailchimp_api']), 0, 64);
-        $_POST['mailchimp_api_list'] = mb_substr(query_clean($_POST['mailchimp_api_list']), 0, 64);
-        $_POST['email_notification'] = mb_substr(query_clean($_POST['email_notification']), 0, 320);
-        $_POST['webhook_url'] = get_url($_POST['webhook_url']);
         $_POST['thank_you_url'] = get_url($_POST['thank_you_url']);
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
+
+        /* Get available notification handlers */
+        $notification_handlers = (new \Altum\Models\NotificationHandlers())->get_notification_handlers_by_user_id($this->user->user_id);
+
+        /* Notification handlers */
+        $_POST['notifications'] = array_map(
+            function($notification_handler_id) {
+                return (int) $notification_handler_id;
+            },
+            array_filter($_POST['notifications'] ?? [], function($notification_handler_id) use($notification_handlers) {
+                return array_key_exists($notification_handler_id, $notification_handlers);
+            })
+        );
 
         /* Display settings */
         $this->process_display_settings();
@@ -1235,27 +1880,6 @@ class BiolinkBlockAjax extends Controller {
 
         /* Image upload */
         $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
-
-        /* Check for the removal of the already uploaded file */
-        if(isset($_POST['image_remove'])) {
-            /* Offload deleting */
-            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-                $s3->deleteObject([
-                    'Bucket' => settings()->offload->storage_name,
-                    'Key' => 'uploads/block_thumbnail_images/' . $biolink_block->settings->image,
-                ]);
-            }
-
-            /* Local deleting */
-            else {
-                /* Delete current file */
-                if(!empty($biolink_block->settings->image) && file_exists(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image)) {
-                    unlink(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image);
-                }
-            }
-            $db_image = null;
-        }
 
         $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
 
@@ -1285,26 +1909,30 @@ class BiolinkBlockAjax extends Controller {
             'show_agreement' => $_POST['show_agreement'],
             'agreement_url' => $_POST['agreement_url'],
             'agreement_text' => $_POST['agreement_text'],
-            'mailchimp_api' => $_POST['mailchimp_api'],
-            'mailchimp_api_list' => $_POST['mailchimp_api_list'],
-            'email_notification' => $_POST['email_notification'],
-            'webhook_url' => $_POST['webhook_url'],
+            'columns' => $_POST['columns'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
+
+            /* Notifications */
+            'notifications' => $_POST['notifications'],
         ]);
 
         db()->where('biolink_block_id', $_POST['biolink_block_id'])->update('biolinks_blocks', [
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url]]);
     }
@@ -1339,10 +1967,13 @@ class BiolinkBlockAjax extends Controller {
             'animation_runs' => 'repeat-1',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -1355,13 +1986,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => $_POST['location_url'],
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_rss_feed() {
@@ -1372,17 +2003,18 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
 
         /* Display settings */
         $this->process_display_settings();
@@ -1410,12 +2042,16 @@ class BiolinkBlockAjax extends Controller {
             'border_shadow_color' => $_POST['border_shadow_color'],
             'animation' => $_POST['animation'],
             'animation_runs' => $_POST['animation_runs'],
+            'columns' => $_POST['columns'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -1424,11 +2060,93 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
-        \Altum\Cache::$adapter->deleteItem('biolink_block?block_id=' . $biolink_block->biolink_block_id . '&type=rss_feed');
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_block?block_id=' . $biolink_block->biolink_block_id . '&type=rss_feed');
+
+        Response::json(l('global.success_message.update2'), 'success');
+    }
+
+    private function create_biolink_iframe() {
+        $_POST['link_id'] = (int) $_POST['link_id'];
+        $_POST['location_url'] = get_url($_POST['location_url']);
+
+        if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
+            die();
+        }
+
+        $this->check_location_url($_POST['location_url']);
+
+        $type = 'iframe';
+        $settings = json_encode([
+            /* Display settings */
+            'display_continents' => [],
+            'display_countries' => [],
+            'display_cities' => [],
+            'display_devices' => [],
+            'display_languages' => [],
+            'display_operating_systems' => [],
+            'display_browsers' => [],
+        ]);
+
+        $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
+
+        /* Database query */
+        db()->insert('biolinks_blocks', [
+            'user_id' => $this->user->user_id,
+            'link_id' => $_POST['link_id'],
+            'type' => $type,
+            'location_url' => $_POST['location_url'],
+            'settings' => $settings,
+            'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
+            'datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
+
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
+    }
+
+    private function update_biolink_iframe() {
+        $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
+        $_POST['location_url'] = get_url($_POST['location_url']);
+
+        /* Display settings */
+        $this->process_display_settings();
+
+        if(!$biolink_block = db()->where('biolink_block_id', $_POST['biolink_block_id'])->where('user_id', $this->user->user_id)->getOne('biolinks_blocks')) {
+            die();
+        }
+
+        $this->check_location_url($_POST['location_url']);
+
+        $settings = json_encode([
+            /* Display settings */
+            'display_continents' => $_POST['display_continents'],
+            'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
+            'display_devices' => $_POST['display_devices'],
+            'display_languages' => $_POST['display_languages'],
+            'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
+        ]);
+
+        /* Database query */
+        db()->where('biolink_block_id', $_POST['biolink_block_id'])->update('biolinks_blocks', [
+            'location_url' => $_POST['location_url'],
+            'settings' => $settings,
+            'start_date' => $_POST['start_date'],
+            'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_block?block_id=' . $biolink_block->biolink_block_id . '&type=iframe');
 
         Response::json(l('global.success_message.update2'), 'success');
     }
@@ -1446,10 +2164,13 @@ class BiolinkBlockAjax extends Controller {
             'html' => $_POST['html'],
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -1462,13 +2183,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_custom_html() {
@@ -1486,10 +2207,13 @@ class BiolinkBlockAjax extends Controller {
             'html' => $_POST['html'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -1497,10 +2221,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
@@ -1538,10 +2263,13 @@ class BiolinkBlockAjax extends Controller {
             'vcard_phone_numbers' => [],
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ];
         $settings = json_encode($settings);
 
@@ -1555,13 +2283,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_vcard() {
@@ -1572,18 +2300,19 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
         $_POST['icon'] = query_clean($_POST['icon']);
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
 
         $settings['vcard_first_name'] = $_POST['vcard_first_name'] = mb_substr(query_clean($_POST['vcard_first_name']), 0, $this->biolink_blocks['vcard']['fields']['first_name']['max_length']);
         $settings['vcard_last_name'] = $_POST['vcard_last_name'] = mb_substr(query_clean($_POST['vcard_last_name']), 0, $this->biolink_blocks['vcard']['fields']['last_name']['max_length']);
@@ -1606,7 +2335,6 @@ class BiolinkBlockAjax extends Controller {
         }
         $vcard_phone_numbers = [];
         foreach($_POST['vcard_phone_number_label'] as $key => $value) {
-            if(empty(trim($value))) continue;
             if($key >= 20) continue;
 
             $vcard_phone_numbers[] = [
@@ -1643,27 +2371,6 @@ class BiolinkBlockAjax extends Controller {
 
         /* Image upload */
         $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
-
-        /* Check for the removal of the already uploaded file */
-        if(isset($_POST['image_remove'])) {
-            /* Offload deleting */
-            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-                $s3->deleteObject([
-                    'Bucket' => settings()->offload->storage_name,
-                    'Key' => 'uploads/block_thumbnail_images/' . $biolink_block->settings->image,
-                ]);
-            }
-
-            /* Local deleting */
-            else {
-                /* Delete current file */
-                if(!empty($biolink_block->settings->image) && file_exists(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image)) {
-                    unlink(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image);
-                }
-            }
-            $db_image = null;
-        }
 
         $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
 
@@ -1711,12 +2418,16 @@ class BiolinkBlockAjax extends Controller {
             'animation' => $_POST['animation'],
             'animation_runs' => $_POST['animation_runs'],
             'icon' => $_POST['icon'],
+            'columns' => $_POST['columns'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
         $settings = json_encode($settings);
 
@@ -1725,10 +2436,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success',
             [
@@ -1743,7 +2455,6 @@ class BiolinkBlockAjax extends Controller {
     private function create_biolink_image() {
         $_POST['link_id'] = (int) $_POST['link_id'];
         $_POST['location_url'] = get_url($_POST['location_url']);
-        $_POST['image_alt'] = mb_substr(query_clean($_POST['image_alt']), 0, 100);
 
         if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
             die();
@@ -1757,14 +2468,17 @@ class BiolinkBlockAjax extends Controller {
         $type = 'image';
         $settings = json_encode([
             'image' => $db_image,
-            'image_alt' => $_POST['image_alt'],
+            'image_alt' => null,
             'open_in_new_tab' => false,
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -1777,13 +2491,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => $_POST['location_url'],
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_image() {
@@ -1813,10 +2527,13 @@ class BiolinkBlockAjax extends Controller {
             'open_in_new_tab' => $_POST['open_in_new_tab'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -1825,10 +2542,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url]]);
     }
@@ -1837,7 +2555,6 @@ class BiolinkBlockAjax extends Controller {
         $_POST['link_id'] = (int) $_POST['link_id'];
         $_POST['name'] = mb_substr(query_clean($_POST['name']), 0, 128);
         $_POST['location_url'] = get_url($_POST['location_url']);
-        $_POST['image_alt'] = mb_substr(query_clean($_POST['image_alt']), 0, 100);
         $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [2, 3]) ? (int) $_POST['columns'] : 2;
 
         if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
@@ -1852,15 +2569,18 @@ class BiolinkBlockAjax extends Controller {
         $settings = json_encode([
             'name' => $_POST['name'],
             'image' => $db_image,
-            'image_alt' => $_POST['image_alt'],
+            'image_alt' => null,
             'open_in_new_tab' => false,
             'columns' => $_POST['columns'],
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -1873,13 +2593,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => $_POST['location_url'],
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_image_grid() {
@@ -1913,10 +2633,13 @@ class BiolinkBlockAjax extends Controller {
             'columns' => $_POST['columns'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -1925,10 +2648,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url]]);
     }
@@ -1950,10 +2674,13 @@ class BiolinkBlockAjax extends Controller {
             'icon' => 'fas fa-infinity',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -1966,20 +2693,20 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_divider() {
         $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
         $_POST['margin_top'] = $_POST['margin_top'] > 7 || $_POST['margin_top'] < 0 ? 3 : (int) $_POST['margin_top'];
         $_POST['margin_bottom'] = $_POST['margin_bottom'] > 7 || $_POST['margin_bottom'] < 0 ? 3 : (int) $_POST['margin_bottom'];
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
         $_POST['icon'] = query_clean($_POST['icon']);
 
         /* Display settings */
@@ -1996,10 +2723,13 @@ class BiolinkBlockAjax extends Controller {
             'icon' => $_POST['icon'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -2007,17 +2737,18 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
 
     private function create_biolink_list() {
         $_POST['link_id'] = (int) $_POST['link_id'];
-        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 2048);
+        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 10000);
 
         if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
             die();
@@ -2026,7 +2757,7 @@ class BiolinkBlockAjax extends Controller {
         $type = 'list';
         $settings = json_encode([
             'text' => $_POST['text'],
-            'list' => 'fas fa-check-circle',
+            'icon' => 'fas fa-check-circle',
             'text_color' => 'black',
             'text_alignment' => 'center',
             'background_color' => '#FFFFFF',
@@ -2043,10 +2774,13 @@ class BiolinkBlockAjax extends Controller {
             'margin_items_x' => '1',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -2059,31 +2793,31 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_list() {
         $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
-        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 2048);
+        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 10000);
         $_POST['icon'] = query_clean($_POST['icon']);
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
         $_POST['margin_items_y'] = $_POST['margin_items_y'] > 5 || $_POST['margin_items_y'] < 0 ? 2 : (int) $_POST['margin_items_y'];
         $_POST['margin_items_x'] = $_POST['margin_items_x'] > 3 || $_POST['margin_items_x'] < 0 ? 1 : (int) $_POST['margin_items_x'];
 
@@ -2113,10 +2847,13 @@ class BiolinkBlockAjax extends Controller {
             'margin_items_x' => $_POST['margin_items_x'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -2124,17 +2861,18 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
 
     private function create_biolink_alert() {
         $_POST['link_id'] = (int) $_POST['link_id'];
-        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 2048);
+        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 10000);
 
         if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
             die();
@@ -2156,10 +2894,13 @@ class BiolinkBlockAjax extends Controller {
             'alert_pause_after_closed' => 60,
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -2172,31 +2913,31 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_alert() {
         $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
-        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 2048);
+        $_POST['text'] = mb_substr(input_clean($_POST['text']), 0, 10000);
         $_POST['icon'] = query_clean($_POST['icon']);
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
         $_POST['location_url'] = get_url($_POST['location_url']);
         $_POST['open_in_new_tab'] = (int) isset($_POST['open_in_new_tab']);
         $_POST['display_close_button'] = (int) isset($_POST['display_close_button']);
@@ -2231,10 +2972,13 @@ class BiolinkBlockAjax extends Controller {
             'alert_pause_after_closed' => $_POST['alert_pause_after_closed'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -2243,10 +2987,11 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => $_POST['location_url'],
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
@@ -2258,9 +3003,25 @@ class BiolinkBlockAjax extends Controller {
             die();
         }
 
+        if(!isset($_POST['item_title'])) {
+            $_POST['item_title'] = [];
+            $_POST['item_content'] = [];
+        }
+
+        $items = [];
+        foreach($_POST['item_title'] as $key => $value) {
+            if(empty(trim($value))) continue;
+            if($key >= 100) continue;
+
+            $items[] = [
+                'title' => input_clean($value, 128),
+                'content' => input_clean($_POST['item_content'][$key], 1000),
+            ];
+        }
+
         $type = 'faq';
         $settings = json_encode([
-            'items' => [],
+            'items' => $items,
             'text_color' => 'black',
             'text_alignment' => 'center',
             'background_color' => 'white',
@@ -2275,10 +3036,13 @@ class BiolinkBlockAjax extends Controller {
             'border_radius' => 'rounded',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -2291,13 +3055,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_faq() {
@@ -2305,15 +3069,15 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
 
         if(!isset($_POST['item_title'])) {
             $_POST['item_title'] = [];
@@ -2326,8 +3090,8 @@ class BiolinkBlockAjax extends Controller {
             if($key >= 100) continue;
 
             $items[] = [
-                'title' => query_clean($value),
-                'content' => input_clean($_POST['item_content'][$key]),
+                'title' => input_clean($value, 128),
+                'content' => input_clean($_POST['item_content'][$key], 1000),
             ];
         }
 
@@ -2354,10 +3118,13 @@ class BiolinkBlockAjax extends Controller {
             'border_shadow_color' => $_POST['border_shadow_color'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -2365,10 +3132,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
@@ -2380,9 +3148,26 @@ class BiolinkBlockAjax extends Controller {
             die();
         }
 
+        if(!isset($_POST['item_title'])) {
+            $_POST['item_title'] = [];
+            $_POST['item_content'] = [];
+        }
+
+        $items = [];
+        foreach($_POST['item_title'] as $key => $value) {
+            if(empty(trim($value))) continue;
+            if($key >= 100) continue;
+
+            $items[] = [
+                'title' => input_clean($value, 128),
+                'date' => input_clean($_POST['item_date'][$key], 128),
+                'description' => input_clean($_POST['item_description'][$key], 1000),
+            ];
+        }
+
         $type = 'timeline';
         $settings = json_encode([
-            'items' => [],
+            'items' => $items,
             'title_color' => '#ffffff',
             'date_color' => '#ffffff',
             'description_color' => '#ffffff',
@@ -2400,10 +3185,13 @@ class BiolinkBlockAjax extends Controller {
             'border_radius' => 'rounded',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -2416,13 +3204,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_timeline() {
@@ -2430,18 +3218,18 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
-        $_POST['title_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['title_color']) ? '#000000' : $_POST['title_color'];
-        $_POST['date_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['date_color']) ? '#000000' : $_POST['date_color'];
-        $_POST['line_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['line_color']) ? '#000000' : $_POST['line_color'];
-        $_POST['description_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['description_color']) ? '#000000' : $_POST['description_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['title_color'] = !verify_hex_color($_POST['title_color']) ? '#000000' : $_POST['title_color'];
+        $_POST['date_color'] = !verify_hex_color($_POST['date_color']) ? '#000000' : $_POST['date_color'];
+        $_POST['line_color'] = !verify_hex_color($_POST['line_color']) ? '#000000' : $_POST['line_color'];
+        $_POST['description_color'] = !verify_hex_color($_POST['description_color']) ? '#000000' : $_POST['description_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
 
         if(!isset($_POST['item_title'])) {
             $_POST['item_title'] = [];
@@ -2454,9 +3242,9 @@ class BiolinkBlockAjax extends Controller {
             if($key >= 100) continue;
 
             $items[] = [
-                'title' => query_clean($value),
-                'date' => input_clean($_POST['item_date'][$key]),
-                'description' => input_clean($_POST['item_description'][$key]),
+                'title' => input_clean($value, 128),
+                'date' => input_clean($_POST['item_date'][$key], 128),
+                'description' => input_clean($_POST['item_description'][$key], 1000),
             ];
         }
 
@@ -2486,10 +3274,13 @@ class BiolinkBlockAjax extends Controller {
             'border_shadow_color' => $_POST['border_shadow_color'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -2497,10 +3288,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
@@ -2547,10 +3339,13 @@ class BiolinkBlockAjax extends Controller {
             'border_radius' => 'rounded',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -2563,13 +3358,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_review() {
@@ -2582,19 +3377,19 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
-        $_POST['title_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['title_color']) ? '#000000' : $_POST['title_color'];
-        $_POST['description_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['description_color']) ? '#000000' : $_POST['description_color'];
-        $_POST['author_name_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['author_name_color']) ? '#000000' : $_POST['author_name_color'];
-        $_POST['author_description_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['author_description_color']) ? '#000000' : $_POST['author_description_color'];
-        $_POST['stars_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['stars_color']) ? '#000000' : $_POST['stars_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['title_color'] = !verify_hex_color($_POST['title_color']) ? '#000000' : $_POST['title_color'];
+        $_POST['description_color'] = !verify_hex_color($_POST['description_color']) ? '#000000' : $_POST['description_color'];
+        $_POST['author_name_color'] = !verify_hex_color($_POST['author_name_color']) ? '#000000' : $_POST['author_name_color'];
+        $_POST['author_description_color'] = !verify_hex_color($_POST['author_description_color']) ? '#000000' : $_POST['author_description_color'];
+        $_POST['stars_color'] = !verify_hex_color($_POST['stars_color']) ? '#000000' : $_POST['stars_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
 
         /* Display settings */
         $this->process_display_settings();
@@ -2634,10 +3429,13 @@ class BiolinkBlockAjax extends Controller {
             'border_shadow_color' => $_POST['border_shadow_color'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -2645,10 +3443,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url]]);
     }
@@ -2660,9 +3459,31 @@ class BiolinkBlockAjax extends Controller {
             die();
         }
 
+        if(!isset($_POST['item_image_alt'])) {
+            $_POST['item_image_alt'] = [];
+            $_POST['item_location_url'] = [];
+        }
+
+        $items = [];
+        $count = 1;
+        foreach($_POST['item_image_alt'] as $key => $value) {
+            if($count++ >= 25) continue;
+
+            $_POST['item_location_url'][$key] = get_url($_POST['item_location_url'][$key]);
+            $this->check_location_url($_POST['item_location_url'][$key], true);
+
+            $image = $this->handle_file_upload(null, 'item_image_' . $key, 'image_remove', ['jpg', 'jpeg', 'png', 'svg', 'ico', 'gif'], 'block_images/', settings()->links->image_size_limit);
+
+            $items[md5($image)] = [
+                'image_alt' => input_clean($value, 100),
+                'location_url' => $_POST['item_location_url'][$key],
+                'image' => $image,
+            ];
+        }
+
         $type = 'image_slider';
         $settings = json_encode([
-            'items' => [],
+            'items' => $items,
             'width_height' => '20',
             'gap' => '2',
             'autoplay_interval' => 5,
@@ -2673,10 +3494,13 @@ class BiolinkBlockAjax extends Controller {
             'open_in_new_tab' => false,
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -2689,13 +3513,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_image_slider() {
@@ -2709,11 +3533,6 @@ class BiolinkBlockAjax extends Controller {
         $_POST['display_pagination'] = (int) isset($_POST['display_pagination']);
         $_POST['open_in_new_tab'] = (int) isset($_POST['open_in_new_tab']);
 
-        if(!isset($_POST['item_image_alt'])) {
-            $_POST['item_image_alt'] = [];
-            $_POST['item_location_url'] = [];
-        }
-
         /* Display settings */
         $this->process_display_settings();
 
@@ -2721,6 +3540,11 @@ class BiolinkBlockAjax extends Controller {
             die();
         }
         $biolink_block->settings = json_decode($biolink_block->settings ?? '');
+
+        if(!isset($_POST['item_image_alt'])) {
+            $_POST['item_image_alt'] = [];
+            $_POST['item_location_url'] = [];
+        }
 
         $items = [];
         $count = 1;
@@ -2733,7 +3557,7 @@ class BiolinkBlockAjax extends Controller {
             $image = $this->handle_file_upload($biolink_block->settings->items->{$key}->image ?? null, 'item_image_' . $key, 'image_remove', ['jpg', 'jpeg', 'png', 'svg', 'ico', 'gif'], 'block_images/', settings()->links->image_size_limit);
 
             $items[md5($image)] = [
-                'image_alt' => input_clean($value),
+                'image_alt' => input_clean($value, 100),
                 'location_url' => $_POST['item_location_url'][$key],
                 'image' => $image,
             ];
@@ -2758,10 +3582,13 @@ class BiolinkBlockAjax extends Controller {
             'open_in_new_tab' => $_POST['open_in_new_tab'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -2769,10 +3596,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
@@ -2790,10 +3618,13 @@ class BiolinkBlockAjax extends Controller {
             'server_id' => $_POST['server_id'],
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -2806,13 +3637,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_discord() {
@@ -2830,10 +3661,13 @@ class BiolinkBlockAjax extends Controller {
             'server_id' => $_POST['server_id'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -2841,10 +3675,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
@@ -2864,10 +3699,13 @@ class BiolinkBlockAjax extends Controller {
             'theme' => $_POST['theme'],
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -2880,13 +3718,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_countdown() {
@@ -2906,10 +3744,13 @@ class BiolinkBlockAjax extends Controller {
             'theme' => $_POST['theme'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -2917,10 +3758,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
@@ -2928,14 +3770,13 @@ class BiolinkBlockAjax extends Controller {
     private function create_biolink_file($type) {
         $_POST['link_id'] = (int) $_POST['link_id'];
         $_POST['name'] = mb_substr(query_clean($_POST['name']), 0, 128);
-        $_POST['poster_url'] = get_url($_POST['poster_url'] ?? null);
 
         if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
             die();
         }
 
         /* File upload */
-        $size_limit = in_array($type, ['file', 'pdf_document']) ? settings()->links->file_size_limit : settings()->links->{$type . '_size_limit'};
+        $size_limit = in_array($type, ['file', 'pdf_document', 'powerpoint_presentation', 'excel_spreadsheet']) ? settings()->links->file_size_limit : settings()->links->{$type . '_size_limit'};
         $db_file = $this->handle_file_upload(null, 'file', 'file_remove', $this->biolink_blocks[$type]['whitelisted_file_extensions'], 'files/', $size_limit);
 
         $settings = [
@@ -2943,17 +3784,31 @@ class BiolinkBlockAjax extends Controller {
             'name' => $_POST['name'],
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ];
 
         if($type == 'video') {
-            $settings['poster_url'] = $_POST['poster_url'];
+            $settings['poster_url'] = get_url($_POST['poster_url'] ?? null);
+            $settings['video_autoplay'] = false; //(int) isset($_POST['video_autoplay']);
+            $settings['video_controls'] = true; //(int) isset($_POST['video_controls']);
+            $settings['video_loop'] = false; //(int) isset($_POST['video_loop']);
+            $settings['video_muted'] = true; //(int) isset($_POST['video_muted']);
         }
 
-        if(in_array($type, ['file', 'pdf_document'])) {
+        if($type == 'audio') {
+            $settings['audio_autoplay'] = false; //(int) isset($_POST['audio_autoplay']);
+            $settings['audio_controls'] = true; //(int) isset($_POST['audio_controls']);
+            $settings['audio_loop'] = false; //(int) isset($_POST['audio_loop']);
+            $settings['audio_muted'] = true; //(int) isset($_POST['audio_muted']);
+        }
+
+        if(in_array($type, ['file', 'pdf_document', 'powerpoint_presentation', 'excel_spreadsheet'])) {
             $settings = array_merge($settings, [
                 'text_color' => 'black',
                 'text_alignment' => 'center',
@@ -2986,35 +3841,35 @@ class BiolinkBlockAjax extends Controller {
             'type' => $type,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_file($type) {
         $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
         $_POST['name'] = mb_substr(query_clean($_POST['name']), 0, 128);
-        $_POST['poster_url'] = get_url($_POST['poster_url'] ?? null);
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
         $_POST['icon'] = query_clean($_POST['icon']);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
         $_POST['open_in_new_tab'] = (int) isset($_POST['open_in_new_tab']);
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
 
         /* Display settings */
         $this->process_display_settings();
@@ -3025,43 +3880,27 @@ class BiolinkBlockAjax extends Controller {
         $biolink_block->settings = json_decode($biolink_block->settings ?? '');
 
         /* File upload */
-        $size_limit = in_array($type, ['file', 'pdf_document']) ? settings()->links->file_size_limit : settings()->links->{$type . '_size_limit'};
+        $size_limit = in_array($type, ['file', 'pdf_document', 'powerpoint_presentation', 'excel_spreadsheet']) ? settings()->links->file_size_limit : settings()->links->{$type . '_size_limit'};
         $db_file = $this->handle_file_upload($biolink_block->settings->file, 'file', 'file_remove', $this->biolink_blocks[$type]['whitelisted_file_extensions'], 'files/', $size_limit);
 
         $settings = [
             'file' => $db_file,
             'name' => $_POST['name'],
+            'columns' => $_POST['columns'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ];
 
-        if(in_array($type, ['file', 'pdf_document'])) {
+        if(in_array($type, ['file', 'pdf_document', 'powerpoint_presentation', 'excel_spreadsheet'])) {
             /* Image upload */
             $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
-
-            /* Check for the removal of the already uploaded file */
-            if(isset($_POST['image_remove'])) {
-                /* Offload deleting */
-                if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                    $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-                    $s3->deleteObject([
-                        'Bucket' => settings()->offload->storage_name,
-                        'Key' => 'uploads/block_thumbnail_images/' . $biolink_block->settings->image,
-                    ]);
-                }
-
-                /* Local deleting */
-                else {
-                    /* Delete current file */
-                    if(!empty($biolink_block->settings->image) && file_exists(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image)) {
-                        unlink(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image);
-                    }
-                }
-            }
 
             $settings = array_merge($settings, [
                 'text_color' => $_POST['text_color'],
@@ -3085,7 +3924,18 @@ class BiolinkBlockAjax extends Controller {
         }
 
         if($type == 'video') {
-            $settings['poster_url'] = $_POST['poster_url'];
+            $settings['poster_url'] = get_url($_POST['poster_url'] ?? null);
+            $settings['video_autoplay'] = (int) isset($_POST['video_autoplay']);
+            $settings['video_controls'] = (int) isset($_POST['video_controls']);
+            $settings['video_loop'] = (int) isset($_POST['video_loop']);
+            $settings['video_muted'] = (int) isset($_POST['video_muted']);
+        }
+
+        if($type == 'audio') {
+            $settings['audio_autoplay'] = (int) isset($_POST['audio_autoplay']);
+            $settings['audio_controls'] = (int) isset($_POST['audio_controls']);
+            $settings['audio_loop'] = (int) isset($_POST['audio_loop']);
+            $settings['audio_muted'] = (int) isset($_POST['audio_muted']);
         }
 
         $settings = json_encode($settings);
@@ -3095,12 +3945,14 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
-        Response::json(l('global.success_message.update2'), 'success');
+        Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url ?? null]]);
+
     }
 
     private function create_biolink_cta() {
@@ -3135,10 +3987,13 @@ class BiolinkBlockAjax extends Controller {
             'image' => '',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -3151,13 +4006,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_cta() {
@@ -3167,18 +4022,19 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
         $_POST['icon'] = query_clean($_POST['icon']);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
 
         /* Display settings */
         $this->process_display_settings();
@@ -3190,27 +4046,6 @@ class BiolinkBlockAjax extends Controller {
 
         /* Image upload */
         $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
-
-        /* Check for the removal of the already uploaded file */
-        if(isset($_POST['image_remove'])) {
-            /* Offload deleting */
-            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-                $s3->deleteObject([
-                    'Bucket' => settings()->offload->storage_name,
-                    'Key' => 'uploads/block_thumbnail_images/' . $biolink_block->settings->image,
-                ]);
-            }
-
-            /* Local deleting */
-            else {
-                /* Delete current file */
-                if(!empty($biolink_block->settings->image) && file_exists(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image)) {
-                    unlink(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image);
-                }
-            }
-            $db_image = null;
-        }
 
         $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
 
@@ -3234,12 +4069,16 @@ class BiolinkBlockAjax extends Controller {
             'animation_runs' => $_POST['animation_runs'],
             'icon' => $_POST['icon'],
             'image' => $db_image,
+            'columns' => $_POST['columns'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -3247,10 +4086,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url]]);
     }
@@ -3293,10 +4133,13 @@ class BiolinkBlockAjax extends Controller {
             'text_alignment' => 'left',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -3309,13 +4152,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => $_POST['location_url'],
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_external_item() {
@@ -3328,18 +4171,18 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
-        $_POST['name_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['name_color']) ? '#000000' : $_POST['name_color'];
-        $_POST['description_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['description_color']) ? '#000000' : $_POST['description_color'];
-        $_POST['price_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['price_color']) ? '#000000' : $_POST['price_color'];
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['name_color'] = !verify_hex_color($_POST['name_color']) ? '#000000' : $_POST['name_color'];
+        $_POST['description_color'] = !verify_hex_color($_POST['description_color']) ? '#000000' : $_POST['description_color'];
+        $_POST['price_color'] = !verify_hex_color($_POST['price_color']) ? '#000000' : $_POST['price_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
 
         /* Display settings */
@@ -3365,27 +4208,6 @@ class BiolinkBlockAjax extends Controller {
 
         /* Image upload */
         $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
-
-        /* Check for the removal of the already uploaded file */
-        if(isset($_POST['image_remove'])) {
-            /* Offload deleting */
-            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-                $s3->deleteObject([
-                    'Bucket' => settings()->offload->storage_name,
-                    'Key' => 'uploads/block_thumbnail_images/' . $biolink_block->settings->image,
-                ]);
-            }
-
-            /* Local deleting */
-            else {
-                /* Delete current file */
-                if(!empty($biolink_block->settings->image) && file_exists(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image)) {
-                    unlink(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image);
-                }
-            }
-            $db_image = null;
-        }
 
         $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
 
@@ -3413,10 +4235,13 @@ class BiolinkBlockAjax extends Controller {
             'text_alignment' => $_POST['text_alignment'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -3425,10 +4250,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url], 'location_url' => $_POST['location_url']]);
     }
@@ -3465,10 +4291,13 @@ class BiolinkBlockAjax extends Controller {
             'image' => '',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -3481,13 +4310,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => $_POST['location_url'],
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_share() {
@@ -3497,18 +4326,19 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
         $_POST['icon'] = query_clean($_POST['icon']);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
 
         /* Display settings */
         $this->process_display_settings();
@@ -3534,27 +4364,6 @@ class BiolinkBlockAjax extends Controller {
         /* Image upload */
         $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
 
-        /* Check for the removal of the already uploaded file */
-        if(isset($_POST['image_remove'])) {
-            /* Offload deleting */
-            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-                $s3->deleteObject([
-                    'Bucket' => settings()->offload->storage_name,
-                    'Key' => 'uploads/block_thumbnail_images/' . $biolink_block->settings->image,
-                ]);
-            }
-
-            /* Local deleting */
-            else {
-                /* Delete current file */
-                if(!empty($biolink_block->settings->image) && file_exists(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image)) {
-                    unlink(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image);
-                }
-            }
-            $db_image = null;
-        }
-
         $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
 
         $settings = json_encode([
@@ -3575,12 +4384,16 @@ class BiolinkBlockAjax extends Controller {
             'animation_runs' => $_POST['animation_runs'],
             'icon' => $_POST['icon'],
             'image' => $db_image,
+            'columns' => $_POST['columns'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -3589,10 +4402,169 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
+
+        Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url], 'location_url' => $_POST['location_url']]);
+    }
+
+    private function create_biolink_coupon() {
+        $_POST['link_id'] = (int) $_POST['link_id'];
+        $_POST['name'] = input_clean($_POST['name'], 128);
+        $_POST['coupon'] = input_clean($_POST['coupon'], 32);
+
+        if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
+            die();
+        }
+
+        $type = 'coupon';
+        $settings = json_encode([
+            'name' => $_POST['name'],
+            'coupon' => $_POST['coupon'],
+            'description' => '',
+            'button_text' => '',
+            'text_color' => 'black',
+            'text_alignment' => 'center',
+            'background_color' => 'white',
+            'border_shadow_offset_x' => 0,
+            'border_shadow_offset_y' => 0,
+            'border_shadow_blur' => 20,
+            'border_shadow_spread' => 0,
+            'border_shadow_color' => '#00000010',
+            'border_width' => 0,
+            'border_style' => 'solid',
+            'border_color' => 'white',
+            'border_radius' => 'rounded',
+            'animation' => false,
+            'animation_runs' => 'repeat-1',
+            'icon' => '',
+            'image' => '',
+
+            /* Display settings */
+            'display_continents' => [],
+            'display_countries' => [],
+            'display_cities' => [],
+            'display_devices' => [],
+            'display_languages' => [],
+            'display_operating_systems' => [],
+            'display_browsers' => [],
+        ]);
+
+        $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
+
+        /* Database query */
+        db()->insert('biolinks_blocks', [
+            'user_id' => $this->user->user_id,
+            'link_id' => $_POST['link_id'],
+            'type' => $type,
+            'location_url' => null,
+            'settings' => $settings,
+            'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
+            'datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
+
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
+    }
+
+    private function update_biolink_coupon() {
+        $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
+        $_POST['location_url'] = get_url($_POST['location_url']);
+        $_POST['name'] = input_clean($_POST['name'], 128);
+        $_POST['description'] = input_clean($_POST['description'], 256);
+        $_POST['coupon'] = input_clean($_POST['coupon'], 32);
+        $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
+        $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
+        $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
+        $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
+        $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
+        $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
+        $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
+        $_POST['icon'] = query_clean($_POST['icon']);
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
+
+        /* Display settings */
+        $this->process_display_settings();
+
+        if(!$biolink_block = db()->where('biolink_block_id', $_POST['biolink_block_id'])->where('user_id', $this->user->user_id)->getOne('biolinks_blocks')) {
+            die();
+        }
+        $biolink_block->settings = json_decode($biolink_block->settings ?? '');
+
+        /* Check for any errors */
+        $required_fields = ['name'];
+
+        /* Check for any errors */
+        foreach($required_fields as $field) {
+            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                Response::json(l('global.error_message.empty_fields'), 'error');
+                break 1;
+            }
+        }
+
+        $this->check_location_url($_POST['location_url'], true);
+
+        /* Image upload */
+        $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
+
+        $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
+
+        $settings = json_encode([
+            'name' => $_POST['name'],
+            'description' => $_POST['description'],
+            'coupon' => $_POST['coupon'],
+            'button_text' => $_POST['button_text'],
+            'text_color' => $_POST['text_color'],
+            'text_alignment' => $_POST['text_alignment'],
+            'background_color' => $_POST['background_color'],
+            'border_radius' => $_POST['border_radius'],
+            'border_width' => $_POST['border_width'],
+            'border_style' => $_POST['border_style'],
+            'border_color' => $_POST['border_color'],
+            'border_shadow_offset_x' => $_POST['border_shadow_offset_x'],
+            'border_shadow_offset_y' => $_POST['border_shadow_offset_y'],
+            'border_shadow_blur' => $_POST['border_shadow_blur'],
+            'border_shadow_spread' => $_POST['border_shadow_spread'],
+            'border_shadow_color' => $_POST['border_shadow_color'],
+            'animation' => $_POST['animation'],
+            'animation_runs' => $_POST['animation_runs'],
+            'icon' => $_POST['icon'],
+            'image' => $db_image,
+            'columns' => $_POST['columns'],
+
+            /* Display settings */
+            'display_continents' => $_POST['display_continents'],
+            'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
+            'display_devices' => $_POST['display_devices'],
+            'display_languages' => $_POST['display_languages'],
+            'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
+        ]);
+
+        /* Database query */
+        db()->where('biolink_block_id', $_POST['biolink_block_id'])->update('biolinks_blocks', [
+            'location_url' => $_POST['location_url'],
+            'settings' => $settings,
+            'start_date' => $_POST['start_date'],
+            'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url], 'location_url' => $_POST['location_url']]);
     }
@@ -3626,10 +4598,13 @@ class BiolinkBlockAjax extends Controller {
             'animation_runs' => 'repeat-1',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -3641,13 +4616,13 @@ class BiolinkBlockAjax extends Controller {
             'type' => $type,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_youtube_feed() {
@@ -3658,17 +4633,18 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
 
         /* Display settings */
         $this->process_display_settings();
@@ -3695,12 +4671,16 @@ class BiolinkBlockAjax extends Controller {
             'border_shadow_color' => $_POST['border_shadow_color'],
             'animation' => $_POST['animation'],
             'animation_runs' => $_POST['animation_runs'],
+            'columns' => $_POST['columns'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -3708,11 +4688,12 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
-        \Altum\Cache::$adapter->deleteItem('biolink_block?block_id=' . $biolink_block->biolink_block_id . '&type=youtube_feed');
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_block?block_id=' . $biolink_block->biolink_block_id . '&type=youtube_feed');
 
         Response::json(l('global.success_message.update2'), 'success');
     }
@@ -3721,7 +4702,7 @@ class BiolinkBlockAjax extends Controller {
         $_POST['link_id'] = (int) $_POST['link_id'];
         $_POST['type'] = in_array($_POST['type'], ['buy_now', 'add_to_cart', 'donation']) ? $_POST['type'] : 'buy_now';
         $_POST['name'] = mb_substr(query_clean($_POST['name']), 0, 128);
-        $_POST['email'] = mb_substr(query_clean($_POST['email']), 0, 320);
+        $_POST['email'] = input_clean_email($_POST['email'] ?? '');
         $_POST['title'] = mb_substr(query_clean($_POST['title']), 0, 320);
         $_POST['currency'] = mb_substr(query_clean($_POST['currency']), 0, 8);
         $_POST['price'] = (float) $_POST['price'];
@@ -3759,10 +4740,13 @@ class BiolinkBlockAjax extends Controller {
             'image' => '',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -3774,20 +4758,20 @@ class BiolinkBlockAjax extends Controller {
             'type' => $type,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_paypal() {
         $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
         $_POST['type'] = in_array($_POST['type'], ['buy_now', 'add_to_cart', 'donation']) ? $_POST['type'] : 'buy_now';
         $_POST['name'] = mb_substr(query_clean($_POST['name']), 0, 128);
-        $_POST['email'] = mb_substr(query_clean($_POST['email']), 0, 320);
+        $_POST['email'] = input_clean_email($_POST['email'] ?? '');
         $_POST['title'] = mb_substr(query_clean($_POST['title']), 0, 320);
         $_POST['currency'] = mb_substr(query_clean($_POST['currency']), 0, 8);
         $_POST['price'] = (float) $_POST['price'];
@@ -3797,18 +4781,19 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
         $_POST['icon'] = query_clean($_POST['icon']);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
 
         /* Display settings */
         $this->process_display_settings();
@@ -3831,27 +4816,6 @@ class BiolinkBlockAjax extends Controller {
 
         /* Image upload */
         $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
-
-        /* Check for the removal of the already uploaded file */
-        if(isset($_POST['image_remove'])) {
-            /* Offload deleting */
-            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-                $s3->deleteObject([
-                    'Bucket' => settings()->offload->storage_name,
-                    'Key' => 'uploads/block_thumbnail_images/' . $biolink_block->settings->image,
-                ]);
-            }
-
-            /* Local deleting */
-            else {
-                /* Delete current file */
-                if(!empty($biolink_block->settings->image) && file_exists(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image)) {
-                    unlink(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image);
-                }
-            }
-            $db_image = null;
-        }
 
         $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
 
@@ -3881,12 +4845,16 @@ class BiolinkBlockAjax extends Controller {
             'animation_runs' => $_POST['animation_runs'],
             'icon' => $_POST['icon'],
             'image' => $db_image,
+            'columns' => $_POST['columns'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -3894,10 +4862,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url]]);
     }
@@ -3929,22 +4898,24 @@ class BiolinkBlockAjax extends Controller {
             'animation' => false,
             'animation_runs' => 'repeat-1',
             'icon' => '',
-            'phone_placeholder' => l('create_biolink_phone_collector_modal.phone_placeholder_default'),
-            'name_placeholder' => l('create_biolink_phone_collector_modal.name_placeholder_default'),
-            'button_text' => l('create_biolink_phone_collector_modal.button_text_default'),
-            'success_text' => l('create_biolink_phone_collector_modal.success_text_default'),
+            'phone_placeholder' => l('biolink_phone_collector.phone_placeholder_default'),
+            'name_placeholder' => l('biolink_phone_collector.name_placeholder_default'),
+            'button_text' => l('biolink_phone_collector.button_text_default'),
+            'success_text' => l('biolink_phone_collector.success_text_default'),
             'thank_you_url' => '',
             'show_agreement' => false,
             'agreement_url' => '',
             'agreement_text' => '',
-            'email_notification' => '',
-            'webhook_url' => '',
+            'notifications' => [],
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -3956,13 +4927,13 @@ class BiolinkBlockAjax extends Controller {
             'type' => $type,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_phone_collector() {
@@ -3971,28 +4942,40 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
         $_POST['icon'] = query_clean($_POST['icon']);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
         $_POST['phone_placeholder'] = mb_substr(query_clean($_POST['phone_placeholder']), 0, 64);
         $_POST['name_placeholder'] = mb_substr(query_clean($_POST['name_placeholder']), 0, 64);
-        $_POST['button_text'] = mb_substr(query_clean($_POST['button_text']), 0, 64);
+        $_POST['button_text'] = input_clean($_POST['button_text'], 64);
         $_POST['success_text'] = mb_substr(query_clean($_POST['success_text']), 0, 256);
         $_POST['show_agreement'] = (int) isset($_POST['show_agreement']);
         $_POST['agreement_url'] = get_url($_POST['agreement_url']);
         $_POST['agreement_text'] = mb_substr(query_clean($_POST['agreement_text']), 0, 256);
-        $_POST['email_notification'] = mb_substr(query_clean($_POST['email_notification']), 0, 320);
-        $_POST['webhook_url'] = get_url($_POST['webhook_url']);
         $_POST['thank_you_url'] = get_url($_POST['thank_you_url']);
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
+
+        /* Get available notification handlers */
+        $notification_handlers = (new \Altum\Models\NotificationHandlers())->get_notification_handlers_by_user_id($this->user->user_id);
+
+        /* Notification handlers */
+        $_POST['notifications'] = array_map(
+            function($notification_handler_id) {
+                return (int) $notification_handler_id;
+            },
+            array_filter($_POST['notifications'] ?? [], function($notification_handler_id) use($notification_handlers) {
+                return array_key_exists($notification_handler_id, $notification_handlers);
+            })
+        );
 
         /* Display settings */
         $this->process_display_settings();
@@ -4004,27 +4987,6 @@ class BiolinkBlockAjax extends Controller {
 
         /* Image upload */
         $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
-
-        /* Check for the removal of the already uploaded file */
-        if(isset($_POST['image_remove'])) {
-            /* Offload deleting */
-            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-                $s3->deleteObject([
-                    'Bucket' => settings()->offload->storage_name,
-                    'Key' => 'uploads/block_thumbnail_images/' . $biolink_block->settings->image,
-                ]);
-            }
-
-            /* Local deleting */
-            else {
-                /* Delete current file */
-                if(!empty($biolink_block->settings->image) && file_exists(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image)) {
-                    unlink(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image);
-                }
-            }
-            $db_image = null;
-        }
 
         $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
 
@@ -4054,24 +5016,441 @@ class BiolinkBlockAjax extends Controller {
             'show_agreement' => $_POST['show_agreement'],
             'agreement_url' => $_POST['agreement_url'],
             'agreement_text' => $_POST['agreement_text'],
-            'email_notification' => $_POST['email_notification'],
-            'webhook_url' => $_POST['webhook_url'],
+            'notifications' => $_POST['notifications'],
+            'columns' => $_POST['columns'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         db()->where('biolink_block_id', $_POST['biolink_block_id'])->update('biolinks_blocks', [
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
+
+        Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url]]);
+    }
+
+    private function create_biolink_contact_collector() {
+        $_POST['link_id'] = (int) $_POST['link_id'];
+        $_POST['name'] = mb_substr(query_clean($_POST['name']), 0, 128);
+
+        if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
+            die();
+        }
+
+        $type = 'contact_collector';
+        $settings = json_encode([
+            'name' => $_POST['name'],
+            'image' => '',
+            'text_color' => 'black',
+            'text_alignment' => 'center',
+            'background_color' => 'white',
+            'border_shadow_offset_x' => 0,
+            'border_shadow_offset_y' => 0,
+            'border_shadow_blur' => 20,
+            'border_shadow_spread' => 0,
+            'border_shadow_color' => '#00000010',
+            'border_width' => 0,
+            'border_style' => 'solid',
+            'border_color' => 'white',
+            'border_radius' => 'rounded',
+            'animation' => false,
+            'animation_runs' => 'repeat-1',
+            'icon' => '',
+            'phone_placeholder' => l('biolink_contact_collector.phone_placeholder_default'),
+            'name_placeholder' => l('biolink_contact_collector.name_placeholder_default'),
+            'message_placeholder' => l('biolink_contact_collector.message_placeholder_default'),
+            'email_placeholder' => l('biolink_contact_collector.email_placeholder_default'),
+            'button_text' => l('biolink_contact_collector.button_text_default'),
+            'success_text' => l('biolink_contact_collector.success_text_default'),
+            'thank_you_url' => '',
+            'show_agreement' => false,
+            'agreement_url' => '',
+            'agreement_text' => '',
+            'notifications' => [],
+
+            /* Display settings */
+            'display_continents' => [],
+            'display_countries' => [],
+            'display_cities' => [],
+            'display_devices' => [],
+            'display_languages' => [],
+            'display_operating_systems' => [],
+            'display_browsers' => [],
+        ]);
+
+        $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
+
+        /* Database query */
+        db()->insert('biolinks_blocks', [
+            'user_id' => $this->user->user_id,
+            'link_id' => $_POST['link_id'],
+            'type' => $type,
+            'settings' => $settings,
+            'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
+            'datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
+
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
+    }
+
+    private function update_biolink_contact_collector() {
+        $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
+        $_POST['name'] = mb_substr(query_clean($_POST['name']), 0, 128);
+        $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
+        $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
+        $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
+        $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
+        $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
+        $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
+        $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
+        $_POST['icon'] = query_clean($_POST['icon']);
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['phone_placeholder'] = mb_substr(query_clean($_POST['phone_placeholder']), 0, 64);
+        $_POST['name_placeholder'] = mb_substr(query_clean($_POST['name_placeholder']), 0, 64);
+        $_POST['email_placeholder'] = mb_substr(query_clean($_POST['email_placeholder']), 0, 64);
+        $_POST['message_placeholder'] = mb_substr(query_clean($_POST['message_placeholder']), 0, 512);
+        $_POST['button_text'] = input_clean($_POST['button_text'], 64);
+        $_POST['success_text'] = mb_substr(query_clean($_POST['success_text']), 0, 256);
+        $_POST['show_agreement'] = (int) isset($_POST['show_agreement']);
+        $_POST['agreement_url'] = get_url($_POST['agreement_url']);
+        $_POST['agreement_text'] = mb_substr(query_clean($_POST['agreement_text']), 0, 256);
+        $_POST['thank_you_url'] = get_url($_POST['thank_you_url']);
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
+
+        /* Get available notification handlers */
+        $notification_handlers = (new \Altum\Models\NotificationHandlers())->get_notification_handlers_by_user_id($this->user->user_id);
+
+        /* Notification handlers */
+        $_POST['notifications'] = array_map(
+            function($notification_handler_id) {
+                return (int) $notification_handler_id;
+            },
+            array_filter($_POST['notifications'] ?? [], function($notification_handler_id) use($notification_handlers) {
+                return array_key_exists($notification_handler_id, $notification_handlers);
+            })
+        );
+
+        /* Display settings */
+        $this->process_display_settings();
+
+        if(!$biolink_block = db()->where('biolink_block_id', $_POST['biolink_block_id'])->where('user_id', $this->user->user_id)->getOne('biolinks_blocks')) {
+            die();
+        }
+        $biolink_block->settings = json_decode($biolink_block->settings ?? '');
+
+        /* Image upload */
+        $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
+
+        $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
+
+        $settings = json_encode([
+            'name' => $_POST['name'],
+            'image' => $db_image,
+            'text_color' => $_POST['text_color'],
+            'text_alignment' => $_POST['text_alignment'],
+            'background_color' => $_POST['background_color'],
+            'border_radius' => $_POST['border_radius'],
+            'border_width' => $_POST['border_width'],
+            'border_style' => $_POST['border_style'],
+            'border_color' => $_POST['border_color'],
+            'border_shadow_offset_x' => $_POST['border_shadow_offset_x'],
+            'border_shadow_offset_y' => $_POST['border_shadow_offset_y'],
+            'border_shadow_blur' => $_POST['border_shadow_blur'],
+            'border_shadow_spread' => $_POST['border_shadow_spread'],
+            'border_shadow_color' => $_POST['border_shadow_color'],
+            'animation' => $_POST['animation'],
+            'animation_runs' => $_POST['animation_runs'],
+            'icon' => $_POST['icon'],
+            'phone_placeholder' => $_POST['phone_placeholder'],
+            'name_placeholder' => $_POST['name_placeholder'],
+            'email_placeholder' => $_POST['email_placeholder'],
+            'message_placeholder' => $_POST['message_placeholder'],
+            'button_text' => $_POST['button_text'],
+            'success_text' => $_POST['success_text'],
+            'thank_you_url' => $_POST['thank_you_url'],
+            'show_agreement' => $_POST['show_agreement'],
+            'agreement_url' => $_POST['agreement_url'],
+            'agreement_text' => $_POST['agreement_text'],
+            'notifications' => $_POST['notifications'],
+            'columns' => $_POST['columns'],
+
+            /* Display settings */
+            'display_continents' => $_POST['display_continents'],
+            'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
+            'display_devices' => $_POST['display_devices'],
+            'display_languages' => $_POST['display_languages'],
+            'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
+        ]);
+
+        db()->where('biolink_block_id', $_POST['biolink_block_id'])->update('biolinks_blocks', [
+            'settings' => $settings,
+            'start_date' => $_POST['start_date'],
+            'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
+
+        Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url]]);
+    }
+
+    private function create_biolink_appointment_calendar() {
+        $_POST['link_id'] = (int) $_POST['link_id'];
+        $_POST['name'] = mb_substr(query_clean($_POST['name']), 0, 128);
+
+        if(!$link = db()->where('link_id', $_POST['link_id'])->where('user_id', $this->user->user_id)->getOne('links')) {
+            die();
+        }
+
+        $type = 'appointment_calendar';
+        $settings = json_encode([
+            'name' => $_POST['name'],
+            'image' => '',
+            'text_color' => 'black',
+            'text_alignment' => 'center',
+            'background_color' => 'white',
+            'border_shadow_offset_x' => 0,
+            'border_shadow_offset_y' => 0,
+            'border_shadow_blur' => 20,
+            'border_shadow_spread' => 0,
+            'border_shadow_color' => '#00000010',
+            'border_width' => 0,
+            'border_style' => 'solid',
+            'border_color' => 'white',
+            'border_radius' => 'rounded',
+            'animation' => false,
+            'animation_runs' => 'repeat-1',
+            'icon' => '',
+            'phone_placeholder' => l('biolink_appointment_calendar.phone_placeholder_default'),
+            'name_placeholder' => l('biolink_appointment_calendar.name_placeholder_default'),
+            'message_placeholder' => l('biolink_appointment_calendar.message_placeholder_default'),
+            'email_placeholder' => l('biolink_appointment_calendar.email_placeholder_default'),
+            'button_text' => l('biolink_appointment_calendar.button_text_default'),
+            'success_text' => l('biolink_appointment_calendar.success_text_default'),
+            'thank_you_url' => '',
+            'show_agreement' => false,
+            'agreement_url' => '',
+            'agreement_text' => '',
+            'notifications' => [],
+
+            /* Display settings */
+            'display_continents' => [],
+            'display_countries' => [],
+            'display_cities' => [],
+            'display_devices' => [],
+            'display_languages' => [],
+            'display_operating_systems' => [],
+            'display_browsers' => [],
+        ]);
+
+        $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
+
+        /* Database query */
+        db()->insert('biolinks_blocks', [
+            'user_id' => $this->user->user_id,
+            'link_id' => $_POST['link_id'],
+            'type' => $type,
+            'settings' => $settings,
+            'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
+            'datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
+
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
+    }
+
+    private function update_biolink_appointment_calendar() {
+        $_POST['biolink_block_id'] = (int) $_POST['biolink_block_id'];
+        $_POST['name'] = mb_substr(query_clean($_POST['name']), 0, 128);
+        $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
+        $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
+        $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
+        $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
+        $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
+        $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
+        $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
+        $_POST['icon'] = query_clean($_POST['icon']);
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+
+        $_POST['timezone'] = in_array($_POST['timezone'], \DateTimeZone::listIdentifiers()) ? input_clean($_POST['timezone']) : Date::$default_timezone;
+        $_POST['phone_placeholder'] = mb_substr(query_clean($_POST['phone_placeholder']), 0, 64);
+        $_POST['name_placeholder'] = mb_substr(query_clean($_POST['name_placeholder']), 0, 64);
+        $_POST['email_placeholder'] = mb_substr(query_clean($_POST['email_placeholder']), 0, 64);
+        $_POST['message_placeholder'] = mb_substr(query_clean($_POST['message_placeholder']), 0, 512);
+        $_POST['button_text'] = input_clean($_POST['button_text'], 64);
+        $_POST['success_text'] = mb_substr(query_clean($_POST['success_text']), 0, 256);
+        $_POST['show_agreement'] = (int) isset($_POST['show_agreement']);
+        $_POST['agreement_url'] = get_url($_POST['agreement_url']);
+        $_POST['agreement_text'] = mb_substr(query_clean($_POST['agreement_text']), 0, 256);
+        $_POST['thank_you_url'] = get_url($_POST['thank_you_url']);
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
+
+        if (!isset($_POST['duration_value'])) {
+            $_POST['duration_value'] = [];
+            $_POST['duration_type'] = [];
+        }
+
+        $durations = [];
+        $max_limits = ['minutes' => 720, 'hours' => 12];
+
+        foreach ($_POST['duration_value'] as $key => $value) {
+            if ($key >= 10) {
+                continue;
+            }
+
+            $trimmed_value = (int) trim($value);
+
+            if($trimmed_value <= 0) continue;
+
+            $type = $_POST['duration_type'][$key] ?? '';
+
+            /* apply unit-based cap */
+            if (!in_array($type, ['minutes', 'hours', 'days']) || (int) $trimmed_value > $max_limits[$type]) {
+                continue;
+            }
+
+            $durations[] = [
+                'value' => (int) $trimmed_value,
+                'type' => $type,
+            ];
+        }
+
+        $_POST['minimum_notice_period_value'] = (int) $_POST['minimum_notice_period_value'];
+        $_POST['minimum_notice_period_type'] = isset($_POST['minimum_notice_period_type']) && in_array($_POST['minimum_notice_period_type'], ['minutes', 'hours', 'days']) ? $_POST['minimum_notice_period_type'] : 'minutes';;
+
+        /* process available time slots per weekday */
+        $available_times = [];
+        $weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+        foreach($weekdays as $weekday) {
+            $weekday_slots = $_POST['available_times'][$weekday] ?? [];
+
+            /* clean + validate each time */
+            $available_times[$weekday] = array_values(array_filter(array_map(function($time_slot) {
+                /* match HH:MM format */
+                return preg_match('/^(2[0-3]|[01]?[0-9]):([0-5][0-9])$/', $time_slot) ? $time_slot : null;
+            }, $weekday_slots)));
+        }
+
+        /* allowed days ahead scheduling */
+        $_POST['allowed_scheduling_days_ahead'] = max(1, min($_POST['allowed_scheduling_days_ahead'], 180));
+
+        /* Get available notification handlers */
+        $notification_handlers = (new \Altum\Models\NotificationHandlers())->get_notification_handlers_by_user_id($this->user->user_id);
+
+        /* Notification handlers */
+        $_POST['notifications'] = array_map(
+            function($notification_handler_id) {
+                return (int) $notification_handler_id;
+            },
+            array_filter($_POST['notifications'] ?? [], function($notification_handler_id) use($notification_handlers) {
+                return array_key_exists($notification_handler_id, $notification_handlers);
+            })
+        );
+
+        /* Display settings */
+        $this->process_display_settings();
+
+        if(!$biolink_block = db()->where('biolink_block_id', $_POST['biolink_block_id'])->where('user_id', $this->user->user_id)->getOne('biolinks_blocks')) {
+            die();
+        }
+        $biolink_block->settings = json_decode($biolink_block->settings ?? '');
+
+        /* Image upload */
+        $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
+
+        $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
+
+        $settings = json_encode([
+            'name' => $_POST['name'],
+            'image' => $db_image,
+            'text_color' => $_POST['text_color'],
+            'text_alignment' => $_POST['text_alignment'],
+            'background_color' => $_POST['background_color'],
+            'border_radius' => $_POST['border_radius'],
+            'border_width' => $_POST['border_width'],
+            'border_style' => $_POST['border_style'],
+            'border_color' => $_POST['border_color'],
+            'border_shadow_offset_x' => $_POST['border_shadow_offset_x'],
+            'border_shadow_offset_y' => $_POST['border_shadow_offset_y'],
+            'border_shadow_blur' => $_POST['border_shadow_blur'],
+            'border_shadow_spread' => $_POST['border_shadow_spread'],
+            'border_shadow_color' => $_POST['border_shadow_color'],
+            'animation' => $_POST['animation'],
+            'animation_runs' => $_POST['animation_runs'],
+            'icon' => $_POST['icon'],
+
+            'allowed_scheduling_days_ahead' => $_POST['allowed_scheduling_days_ahead'],
+            'available_times' => $available_times,
+            'minimum_notice_period_value' => $_POST['minimum_notice_period_value'],
+            'minimum_notice_period_type' => $_POST['minimum_notice_period_type'],
+            'durations' => $durations,
+            'timezone' => $_POST['timezone'],
+            'phone_placeholder' => $_POST['phone_placeholder'],
+            'name_placeholder' => $_POST['name_placeholder'],
+            'email_placeholder' => $_POST['email_placeholder'],
+            'message_placeholder' => $_POST['message_placeholder'],
+            'button_text' => $_POST['button_text'],
+            'success_text' => $_POST['success_text'],
+            'thank_you_url' => $_POST['thank_you_url'],
+            'show_agreement' => $_POST['show_agreement'],
+            'agreement_url' => $_POST['agreement_url'],
+            'agreement_text' => $_POST['agreement_text'],
+            'notifications' => $_POST['notifications'],
+            'columns' => $_POST['columns'],
+
+            /* Display settings */
+            'display_continents' => $_POST['display_continents'],
+            'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
+            'display_devices' => $_POST['display_devices'],
+            'display_languages' => $_POST['display_languages'],
+            'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
+        ]);
+
+        db()->where('biolink_block_id', $_POST['biolink_block_id'])->update('biolinks_blocks', [
+            'settings' => $settings,
+            'start_date' => $_POST['start_date'],
+            'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
+        ]);
+
+        /* Clear the cache */
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url]]);
     }
@@ -4108,7 +5487,7 @@ class BiolinkBlockAjax extends Controller {
             'description' => null,
             'prefilled_amount' => 5,
             'minimum_amount' => 1,
-            'currency' => null,
+            'currency' => 'USD',
             'allow_custom_amount' => true,
             'allow_message' => true,
             'thank_you_title' => null,
@@ -4119,10 +5498,13 @@ class BiolinkBlockAjax extends Controller {
             'webhook_url' => null,
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ];
         $settings = json_encode($settings);
 
@@ -4136,13 +5518,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_donation() {
@@ -4151,18 +5533,18 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
         $_POST['icon'] = query_clean($_POST['icon']);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
 
         $_POST['title'] = mb_substr(query_clean($_POST['title']), 0, $this->biolink_blocks['donation']['fields']['title']['max_length']);
         $_POST['description'] = mb_substr(query_clean($_POST['description']), 0, $this->biolink_blocks['donation']['fields']['description']['max_length']);
@@ -4174,8 +5556,7 @@ class BiolinkBlockAjax extends Controller {
         $_POST['thank_you_title'] = mb_substr(query_clean($_POST['thank_you_title']), 0, $this->biolink_blocks['donation']['fields']['thank_you_title']['max_length']);
         $_POST['thank_you_description'] = mb_substr(query_clean($_POST['thank_you_description']), 0, $this->biolink_blocks['donation']['fields']['thank_you_description']['max_length']);
         $_POST['thank_you_url'] = mb_substr(query_clean($_POST['thank_you_url']), 0, $this->biolink_blocks['donation']['fields']['thank_you_url']['max_length']);
-        $_POST['email_notification'] = mb_substr(query_clean($_POST['email_notification']), 0, $this->biolink_blocks['donation']['fields']['email_notification']['max_length']);
-        $_POST['webhook_url'] = mb_substr(query_clean($_POST['webhook_url']), 0, $this->biolink_blocks['donation']['fields']['webhook_url']['max_length']);
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
 
         $payment_processors = (new \Altum\Models\PaymentProcessor())->get_payment_processors_by_user_id($this->user->user_id);
         $_POST['payment_processors_ids'] = array_map(
@@ -4184,6 +5565,19 @@ class BiolinkBlockAjax extends Controller {
             },
             array_filter($_POST['payment_processors_ids'] ?? [], function($payment_processor_id) use($payment_processors) {
                 return array_key_exists($payment_processor_id, $payment_processors);
+            })
+        );
+
+        /* Get available notification handlers */
+        $notification_handlers = (new \Altum\Models\NotificationHandlers())->get_notification_handlers_by_user_id($this->user->user_id);
+
+        /* Notification handlers */
+        $_POST['notifications'] = array_map(
+            function($notification_handler_id) {
+                return (int) $notification_handler_id;
+            },
+            array_filter($_POST['notifications'] ?? [], function($notification_handler_id) use($notification_handlers) {
+                return array_key_exists($notification_handler_id, $notification_handlers);
             })
         );
 
@@ -4197,27 +5591,6 @@ class BiolinkBlockAjax extends Controller {
 
         /* Image upload */
         $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
-
-        /* Check for the removal of the already uploaded file */
-        if(isset($_POST['image_remove'])) {
-            /* Offload deleting */
-            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-                $s3->deleteObject([
-                    'Bucket' => settings()->offload->storage_name,
-                    'Key' => 'uploads/block_thumbnail_images/' . $biolink_block->settings->image,
-                ]);
-            }
-
-            /* Local deleting */
-            else {
-                /* Delete current file */
-                if(!empty($biolink_block->settings->image) && file_exists(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image)) {
-                    unlink(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image);
-                }
-            }
-            $db_image = null;
-        }
 
         $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
 
@@ -4239,6 +5612,7 @@ class BiolinkBlockAjax extends Controller {
             'animation' => $_POST['animation'],
             'animation_runs' => $_POST['animation_runs'],
             'icon' => $_POST['icon'],
+            'columns' => $_POST['columns'],
 
             'title' => $_POST['title'],
             'description' => $_POST['description'],
@@ -4251,24 +5625,27 @@ class BiolinkBlockAjax extends Controller {
             'thank_you_description' => $_POST['thank_you_description'],
             'thank_you_url' => $_POST['thank_you_url'],
             'payment_processors_ids' => $_POST['payment_processors_ids'],
-            'email_notification' => $_POST['email_notification'],
-            'webhook_url' => $_POST['webhook_url'],
+            'notifications' => $_POST['notifications'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         db()->where('biolink_block_id', $_POST['biolink_block_id'])->update('biolinks_blocks', [
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url]]);
     }
@@ -4306,7 +5683,7 @@ class BiolinkBlockAjax extends Controller {
             'description' => null,
             'price' => 5,
             'minimum_price' => 1,
-            'currency' => null,
+            'currency' => 'USD',
             'allow_custom_price' => true,
             'thank_you_title' => null,
             'thank_you_description' => null,
@@ -4316,10 +5693,13 @@ class BiolinkBlockAjax extends Controller {
             'webhook_url' => null,
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ];
         $settings = json_encode($settings);
 
@@ -4333,13 +5713,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_product() {
@@ -4348,18 +5728,19 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
         $_POST['icon'] = query_clean($_POST['icon']);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
 
         $_POST['title'] = mb_substr(query_clean($_POST['title']), 0, $this->biolink_blocks['product']['fields']['title']['max_length']);
         $_POST['description'] = mb_substr(query_clean($_POST['description']), 0, $this->biolink_blocks['product']['fields']['description']['max_length']);
@@ -4370,8 +5751,6 @@ class BiolinkBlockAjax extends Controller {
         $_POST['thank_you_title'] = mb_substr(query_clean($_POST['thank_you_title']), 0, $this->biolink_blocks['product']['fields']['thank_you_title']['max_length']);
         $_POST['thank_you_description'] = mb_substr(query_clean($_POST['thank_you_description']), 0, $this->biolink_blocks['product']['fields']['thank_you_description']['max_length']);
         $_POST['thank_you_url'] = mb_substr(query_clean($_POST['thank_you_url']), 0, $this->biolink_blocks['donation']['fields']['thank_you_url']['max_length']);
-        $_POST['email_notification'] = mb_substr(query_clean($_POST['email_notification']), 0, $this->biolink_blocks['product']['fields']['email_notification']['max_length']);
-        $_POST['webhook_url'] = mb_substr(query_clean($_POST['webhook_url']), 0, $this->biolink_blocks['product']['fields']['webhook_url']['max_length']);
 
         $payment_processors = (new \Altum\Models\PaymentProcessor())->get_payment_processors_by_user_id($this->user->user_id);
         $_POST['payment_processors_ids'] = array_map(
@@ -4380,6 +5759,19 @@ class BiolinkBlockAjax extends Controller {
             },
             array_filter($_POST['payment_processors_ids'] ?? [], function($payment_processor_id) use($payment_processors) {
                 return array_key_exists($payment_processor_id, $payment_processors);
+            })
+        );
+
+        /* Get available notification handlers */
+        $notification_handlers = (new \Altum\Models\NotificationHandlers())->get_notification_handlers_by_user_id($this->user->user_id);
+
+        /* Notification handlers */
+        $_POST['notifications'] = array_map(
+            function($notification_handler_id) {
+                return (int) $notification_handler_id;
+            },
+            array_filter($_POST['notifications'] ?? [], function($notification_handler_id) use($notification_handlers) {
+                return array_key_exists($notification_handler_id, $notification_handlers);
             })
         );
 
@@ -4396,27 +5788,6 @@ class BiolinkBlockAjax extends Controller {
 
         /* Image upload */
         $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
-
-        /* Check for the removal of the already uploaded file */
-        if(isset($_POST['image_remove'])) {
-            /* Offload deleting */
-            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-                $s3->deleteObject([
-                    'Bucket' => settings()->offload->storage_name,
-                    'Key' => 'uploads/block_thumbnail_images/' . $biolink_block->settings->image,
-                ]);
-            }
-
-            /* Local deleting */
-            else {
-                /* Delete current file */
-                if(!empty($biolink_block->settings->image) && file_exists(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image)) {
-                    unlink(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image);
-                }
-            }
-            $db_image = null;
-        }
 
         $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
 
@@ -4438,6 +5809,7 @@ class BiolinkBlockAjax extends Controller {
             'animation' => $_POST['animation'],
             'animation_runs' => $_POST['animation_runs'],
             'icon' => $_POST['icon'],
+            'columns' => $_POST['columns'],
 
             'file' => $db_file,
             'title' => $_POST['title'],
@@ -4450,24 +5822,27 @@ class BiolinkBlockAjax extends Controller {
             'thank_you_description' => $_POST['thank_you_description'],
             'thank_you_url' => $_POST['thank_you_url'],
             'payment_processors_ids' => $_POST['payment_processors_ids'],
-            'email_notification' => $_POST['email_notification'],
-            'webhook_url' => $_POST['webhook_url'],
+            'notifications' => $_POST['notifications'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         db()->where('biolink_block_id', $_POST['biolink_block_id'])->update('biolinks_blocks', [
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url]]);
     }
@@ -4503,7 +5878,7 @@ class BiolinkBlockAjax extends Controller {
             'title' => null,
             'description' => null,
             'price' => null,
-            'currency' => null,
+            'currency' => 'USD',
             'thank_you_title' => null,
             'thank_you_description' => null,
             'thank_you_url' => null,
@@ -4512,10 +5887,13 @@ class BiolinkBlockAjax extends Controller {
             'webhook_url' => null,
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ];
         $settings = json_encode($settings);
 
@@ -4529,13 +5907,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => null,
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_service() {
@@ -4544,18 +5922,19 @@ class BiolinkBlockAjax extends Controller {
         $_POST['border_radius'] = in_array($_POST['border_radius'], ['straight', 'round', 'rounded']) ? query_clean($_POST['border_radius']) : 'rounded';
         $_POST['border_width'] = in_array($_POST['border_width'], [0, 1, 2, 3, 4, 5]) ? (int) $_POST['border_width'] : 0;
         $_POST['border_style'] = in_array($_POST['border_style'], ['solid', 'dashed', 'double', 'inset', 'outset']) ? query_clean($_POST['border_style']) : 'solid';
-        $_POST['border_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_color']) ? '#000000' : $_POST['border_color'];
+        $_POST['border_color'] = !verify_hex_color($_POST['border_color']) ? '#000000' : $_POST['border_color'];
         $_POST['border_shadow_offset_x'] = in_array($_POST['border_shadow_offset_x'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_x'] : 0;
         $_POST['border_shadow_offset_y'] = in_array($_POST['border_shadow_offset_y'], range(-20, 20)) ? (int) $_POST['border_shadow_offset_y'] : 0;
         $_POST['border_shadow_blur'] = in_array($_POST['border_shadow_blur'], range(0, 20)) ? (int) $_POST['border_shadow_blur'] : 0;
         $_POST['border_shadow_spread'] = in_array($_POST['border_shadow_spread'], range(0, 10)) ? (int) $_POST['border_shadow_spread'] : 0;
-        $_POST['border_shadow_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
+        $_POST['border_shadow_color'] = !verify_hex_color($_POST['border_shadow_color']) ? '#000000' : $_POST['border_shadow_color'];
         $_POST['animation'] = in_array($_POST['animation'], require APP_PATH . 'includes/biolink_animations.php') || $_POST['animation'] == 'false' ? query_clean($_POST['animation']) : false;
         $_POST['animation_runs'] = isset($_POST['animation_runs']) && in_array($_POST['animation_runs'], ['repeat-1', 'repeat-2', 'repeat-3', 'infinite']) ? query_clean($_POST['animation_runs']) : false;
         $_POST['icon'] = query_clean($_POST['icon']);
-        $_POST['text_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['text_color']) ? '#000000' : $_POST['text_color'];
+        $_POST['text_color'] = !verify_hex_color($_POST['text_color']) ? '#000000' : $_POST['text_color'];
         $_POST['text_alignment'] = in_array($_POST['text_alignment'], ['center', 'left', 'right', 'justify']) ? query_clean($_POST['text_alignment']) : 'center';
-        $_POST['background_color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['background_color'] = !verify_hex_color($_POST['background_color']) ? '#ffffff' : $_POST['background_color'];
+        $_POST['columns'] = isset($_POST['columns']) && in_array($_POST['columns'], [1, 2]) ? (int) $_POST['columns'] : 1;
 
         $_POST['title'] = mb_substr(query_clean($_POST['title']), 0, $this->biolink_blocks['service']['fields']['title']['max_length']);
         $_POST['description'] = mb_substr(query_clean($_POST['description']), 0, $this->biolink_blocks['service']['fields']['description']['max_length']);
@@ -4564,8 +5943,6 @@ class BiolinkBlockAjax extends Controller {
         $_POST['thank_you_title'] = mb_substr(query_clean($_POST['thank_you_title']), 0, $this->biolink_blocks['service']['fields']['thank_you_title']['max_length']);
         $_POST['thank_you_description'] = mb_substr(query_clean($_POST['thank_you_description']), 0, $this->biolink_blocks['service']['fields']['thank_you_description']['max_length']);
         $_POST['thank_you_url'] = mb_substr(query_clean($_POST['thank_you_url']), 0, $this->biolink_blocks['donation']['fields']['thank_you_url']['max_length']);
-        $_POST['email_notification'] = mb_substr(query_clean($_POST['email_notification']), 0, $this->biolink_blocks['service']['fields']['email_notification']['max_length']);
-        $_POST['webhook_url'] = mb_substr(query_clean($_POST['webhook_url']), 0, $this->biolink_blocks['service']['fields']['webhook_url']['max_length']);
 
         $payment_processors = (new \Altum\Models\PaymentProcessor())->get_payment_processors_by_user_id($this->user->user_id);
         $_POST['payment_processors_ids'] = array_map(
@@ -4574,6 +5951,19 @@ class BiolinkBlockAjax extends Controller {
             },
             array_filter($_POST['payment_processors_ids'] ?? [], function($payment_processor_id) use($payment_processors) {
                 return array_key_exists($payment_processor_id, $payment_processors);
+            })
+        );
+
+        /* Get available notification handlers */
+        $notification_handlers = (new \Altum\Models\NotificationHandlers())->get_notification_handlers_by_user_id($this->user->user_id);
+
+        /* Notification handlers */
+        $_POST['notifications'] = array_map(
+            function($notification_handler_id) {
+                return (int) $notification_handler_id;
+            },
+            array_filter($_POST['notifications'] ?? [], function($notification_handler_id) use($notification_handlers) {
+                return array_key_exists($notification_handler_id, $notification_handlers);
             })
         );
 
@@ -4587,27 +5977,6 @@ class BiolinkBlockAjax extends Controller {
 
         /* Image upload */
         $db_image = $this->handle_image_upload($biolink_block->settings->image, 'block_thumbnail_images/', settings()->links->thumbnail_image_size_limit);
-
-        /* Check for the removal of the already uploaded file */
-        if(isset($_POST['image_remove'])) {
-            /* Offload deleting */
-            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
-                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
-                $s3->deleteObject([
-                    'Bucket' => settings()->offload->storage_name,
-                    'Key' => 'uploads/block_thumbnail_images/' . $biolink_block->settings->image,
-                ]);
-            }
-
-            /* Local deleting */
-            else {
-                /* Delete current file */
-                if(!empty($biolink_block->settings->image) && file_exists(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image)) {
-                    unlink(UPLOADS_PATH . 'block_thumbnail_images/' . $biolink_block->settings->image);
-                }
-            }
-            $db_image = null;
-        }
 
         $image_url = $db_image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $db_image : null;
 
@@ -4629,6 +5998,7 @@ class BiolinkBlockAjax extends Controller {
             'animation' => $_POST['animation'],
             'animation_runs' => $_POST['animation_runs'],
             'icon' => $_POST['icon'],
+            'columns' => $_POST['columns'],
 
             'title' => $_POST['title'],
             'description' => $_POST['description'],
@@ -4638,24 +6008,27 @@ class BiolinkBlockAjax extends Controller {
             'thank_you_description' => $_POST['thank_you_description'],
             'thank_you_url' => $_POST['thank_you_url'],
             'payment_processors_ids' => $_POST['payment_processors_ids'],
-            'email_notification' => $_POST['email_notification'],
-            'webhook_url' => $_POST['webhook_url'],
+            'notifications' => $_POST['notifications'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         db()->where('biolink_block_id', $_POST['biolink_block_id'])->update('biolinks_blocks', [
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success', ['images' => ['image' => $image_url]]);
     }
@@ -4674,15 +6047,19 @@ class BiolinkBlockAjax extends Controller {
         $type = 'map';
         $settings = json_encode([
             'address' => $_POST['address'],
+            'markers' => $_POST['markers'],
             'open_in_new_tab' => false,
             'zoom' => 15,
             'type' => 'roadmap',
 
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ]);
 
         $settings = $this->process_biolink_theme_id_settings($link, $settings, $type);
@@ -4692,15 +6069,16 @@ class BiolinkBlockAjax extends Controller {
             'user_id' => $this->user->user_id,
             'link_id' => $_POST['link_id'],
             'type' => $type,
+            'location_url' => $_POST['location_url'],
             'settings' => $settings,
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_map() {
@@ -4708,6 +6086,7 @@ class BiolinkBlockAjax extends Controller {
         $_POST['address'] = mb_substr(query_clean($_POST['address']), 0, 64);
         $_POST['open_in_new_tab'] = (int) isset($_POST['open_in_new_tab']);
         $_POST['location_url'] = get_url($_POST['location_url']);
+        $_POST['markers'] = input_clean($_POST['markers'], 1024);
         $_POST['zoom'] = in_array($_POST['zoom'], range(1, 20)) ? (int) $_POST['zoom'] : 15;
         $_POST['type'] = in_array($_POST['type'], ['roadmap', 'satellite', 'hybrid', 'terrain']) ? $_POST['type'] : 'roadmap';
 
@@ -4734,15 +6113,19 @@ class BiolinkBlockAjax extends Controller {
 
         $settings = json_encode([
             'address' => $_POST['address'],
+            'markers' => $_POST['markers'],
             'open_in_new_tab' => $_POST['open_in_new_tab'],
             'zoom' => $_POST['zoom'],
             'type' => $_POST['type'],
 
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ]);
 
         /* Database query */
@@ -4751,10 +6134,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => $settings,
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
@@ -4766,10 +6150,13 @@ class BiolinkBlockAjax extends Controller {
 
         $settings = [
             /* Display settings */
+            'display_continents' => [],
             'display_countries' => [],
+            'display_cities' => [],
             'display_devices' => [],
             'display_languages' => [],
             'display_operating_systems' => [],
+            'display_browsers' => [],
         ];
 
         if($_POST['theme']) {
@@ -4810,6 +6197,21 @@ class BiolinkBlockAjax extends Controller {
 
                 $settings['content'] = $response->body->html;
                 break;
+
+            case 'youtube':
+
+                $settings['video_autoplay'] = false;
+                $settings['video_controls'] = true;
+                $settings['video_loop'] = false;
+                $settings['video_muted'] = false;
+
+                break;
+
+            case 'mixcloud':
+
+                $settings['type'] = 'classic';
+
+                break;
         }
 
 
@@ -4823,13 +6225,13 @@ class BiolinkBlockAjax extends Controller {
             'location_url' => $_POST['location_url'],
             'settings' => json_encode($settings),
             'order' => settings()->links->biolinks_new_blocks_position == 'top' ? -$this->total_biolink_blocks : $this->total_biolink_blocks,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $_POST['link_id']);
+        cache()->deleteItem('biolink_blocks?link_id=' . $_POST['link_id']);
 
-        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=links')]);
+        Response::json('', 'success', ['url' => url('link/' . $_POST['link_id'] . '?tab=blocks')]);
     }
 
     private function update_biolink_embeddable($type) {
@@ -4842,10 +6244,13 @@ class BiolinkBlockAjax extends Controller {
 
         $settings = [
             /* Display settings */
+            'display_continents' => $_POST['display_continents'],
             'display_countries' => $_POST['display_countries'],
+            'display_cities' => $_POST['display_cities'],
             'display_devices' => $_POST['display_devices'],
             'display_languages' => $_POST['display_languages'],
             'display_operating_systems' => $_POST['display_operating_systems'],
+            'display_browsers' => $_POST['display_browsers'],
         ];
 
         if($_POST['theme']) {
@@ -4886,6 +6291,21 @@ class BiolinkBlockAjax extends Controller {
 
                 $setting['content'] = $response->body->html;
                 break;
+
+            case 'youtube':
+
+                $settings['video_autoplay'] = (int) isset($_POST['video_autoplay']);
+                $settings['video_controls'] = (int) isset($_POST['video_controls']);
+                $settings['video_loop'] = (int) isset($_POST['video_loop']);
+                $settings['video_muted'] = (int) isset($_POST['video_muted']);
+
+                break;
+
+            case 'mixcloud':
+
+                $settings['type'] = isset($_POST['type']) && in_array($_POST['type'], ['picture', 'classic', 'mini']) ? query_clean($_POST['type']) : 'classic';
+
+                break;
         }
 
         /* Database query */
@@ -4894,10 +6314,11 @@ class BiolinkBlockAjax extends Controller {
             'settings' => json_encode($settings),
             'start_date' => $_POST['start_date'],
             'end_date' => $_POST['end_date'],
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('link?link_id=' . $biolink_block->link_id);
+        cache()->deleteItem('biolink_blocks?link_id=' . $biolink_block->link_id);
 
         Response::json(l('global.success_message.update2'), 'success');
     }
@@ -4917,7 +6338,7 @@ class BiolinkBlockAjax extends Controller {
 
         (new \Altum\Models\BiolinkBlock())->delete($biolink_block->biolink_block_id);
 
-        Response::json(l('global.success_message.delete2'), 'success', ['url' => url('link/' . $biolink_block->link_id . '?tab=links')]);
+        Response::json(l('global.success_message.delete2'), 'success', ['url' => url('link/' . $biolink_block->link_id . '?tab=blocks')]);
     }
 
     public function handle_file_upload($already_existing_file, $file_name, $file_name_remove, $allowed_extensions, $upload_folder, $size_limit) {
@@ -4926,8 +6347,7 @@ class BiolinkBlockAjax extends Controller {
         $db_file = $already_existing_file;
 
         if($file) {
-            $file_extension = explode('.', $_FILES[$file_name]['name']);
-            $file_extension = mb_strtolower(end($file_extension));
+            $file_extension = mb_strtolower(pathinfo($_FILES[$file_name]['name'], PATHINFO_EXTENSION));
             $file_temp = $_FILES[$file_name]['tmp_name'];
 
             if($_FILES[$file_name]['error'] == UPLOAD_ERR_INI_SIZE) {
@@ -4954,8 +6374,8 @@ class BiolinkBlockAjax extends Controller {
             $file_new_name = md5(time() . rand()) . '.' . $file_extension;
 
             /* Try to compress the image */
-            if(\Altum\Plugin::is_active('image-optimizer')) {
-                \Altum\Plugin\ImageOptimizer::optimize($file_temp, $file_new_name);
+            if(\Altum\Plugin::is_active('image-optimizer') && settings()->image_optimizer->is_enabled) {
+                \Altum\Plugin\ImageOptimizer::optimize($file_temp, $file_new_name, $_FILES[$file_name]['name'], $upload_folder);
             }
 
             /* Sanitize SVG uploads */
@@ -5006,11 +6426,32 @@ class BiolinkBlockAjax extends Controller {
             $db_file = $file_new_name;
         }
 
+        /* Check for the removal of the already uploaded file */
+        if(isset($_POST['image_remove'])) {
+            /* Offload deleting */
+            if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
+                $s3 = new \Aws\S3\S3Client(get_aws_s3_config());
+                $s3->deleteObject([
+                    'Bucket' => settings()->offload->storage_name,
+                    'Key' => UPLOADS_URL_PATH . $upload_folder . $already_existing_file,
+                ]);
+            }
+
+            /* Local deleting */
+            else {
+                /* Delete current file */
+                if(!empty($db_file) && file_exists(UPLOADS_PATH . $upload_folder . $db_file)) {
+                    unlink(UPLOADS_PATH . $upload_folder . $db_file);
+                }
+            }
+            $db_file = null;
+        }
+
         return $db_file;
     }
 
     private function handle_image_upload($uploaded_image, $upload_folder, $size_limit) {
-        return $this->handle_file_upload($uploaded_image, 'image', 'image_remove', ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp'], $upload_folder, $size_limit);
+        return $this->handle_file_upload($uploaded_image, 'image', 'image_remove', ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'], $upload_folder, $size_limit);
     }
 
     /* Function to bundle together all the checks of an url */
@@ -5037,7 +6478,7 @@ class BiolinkBlockAjax extends Controller {
         /* Make sure the domain is not blacklisted */
         $domain = get_domain_from_url($url);
 
-        if($domain && in_array($domain, explode(',', settings()->links->blacklisted_domains))) {
+        if($domain && in_array($domain, settings()->links->blacklisted_domains)) {
             Response::json(l('link.error_message.blacklisted_domain'), 'error');
         }
 
@@ -5050,7 +6491,7 @@ class BiolinkBlockAjax extends Controller {
     }
 
     private function process_display_settings() {
-        $_POST['schedule'] = (int) (bool) ($_POST['schedule'] ?? false);
+        $_POST['schedule'] = (int) isset($_POST['schedule']);
         if($_POST['schedule'] && !empty($_POST['start_date']) && !empty($_POST['end_date']) && Date::validate($_POST['start_date'], 'Y-m-d H:i:s') && Date::validate($_POST['end_date'], 'Y-m-d H:i:s')) {
             $_POST['start_date'] = (new \DateTime($_POST['start_date'], new \DateTimeZone($this->user->timezone)))->setTimezone(new \DateTimeZone(\Altum\Date::$default_timezone))->format('Y-m-d H:i:s');
             $_POST['end_date'] = (new \DateTime($_POST['end_date'], new \DateTimeZone($this->user->timezone)))->setTimezone(new \DateTimeZone(\Altum\Date::$default_timezone))->format('Y-m-d H:i:s');
@@ -5058,9 +6499,26 @@ class BiolinkBlockAjax extends Controller {
             $_POST['start_date'] = $_POST['end_date'] = null;
         }
 
+        $_POST['display_continents'] = array_filter($_POST['display_continents'] ?? [], function($country) {
+            return array_key_exists($country, get_continents_array());
+        });
+
         $_POST['display_countries'] = array_filter($_POST['display_countries'] ?? [], function($country) {
             return array_key_exists($country, get_countries_array());
         });
+
+        $_POST['display_cities'] = explode(',', $_POST['display_cities']);
+        if(count($_POST['display_cities'])) {
+            $_POST['display_cities'] = array_map(function($city) {
+                return query_clean($city);
+            }, $_POST['display_cities']);
+
+            $_POST['display_cities'] = array_filter($_POST['display_cities'], function($city) {
+                return $city !== '';
+            });
+
+            $_POST['display_cities'] = array_unique($_POST['display_cities']);
+        }
 
         $_POST['display_devices'] = array_filter($_POST['display_devices'] ?? [], function($device_type) {
             return in_array($device_type, ['desktop', 'tablet', 'mobile']);
@@ -5073,11 +6531,40 @@ class BiolinkBlockAjax extends Controller {
         $_POST['display_operating_systems'] = array_filter($_POST['display_operating_systems'] ?? [], function($os_name) {
             return in_array($os_name, ['iOS', 'Android', 'Windows', 'OS X', 'Linux', 'Ubuntu', 'Chrome OS']);
         });
+
+        $_POST['display_browsers'] = array_filter($_POST['display_browsers'] ?? [], function($browser_name) {
+            return in_array($browser_name, ['Chrome', 'Firefox', 'Safari', 'Edge', 'Opera', 'Samsung Internet']);
+        });
     }
 
     private function process_biolink_theme_id_settings($link, $settings, $type) {
         /* Make sure the block is themable */
-        $themable_blocks = ['pdf_document', 'review', 'big_link', 'link', 'email_collector', 'paypal', 'phone_collector', 'rss_feed', 'vcard', 'cta', 'youtube_feed', 'share', 'file', 'product', 'donation', 'service', 'paragraph', 'markdown', ''];
+        $themable_blocks = [
+            'pdf_document',
+            'socials',
+            'powerpoint_presentation',
+            'excel_spreadsheet',
+            'review',
+            'big_link',
+            'link',
+            'email_collector',
+            'paypal',
+            'phone_collector',
+            'contact_collector',
+            'appointment_calendar',
+            'rss_feed',
+            'vcard',
+            'cta',
+            'youtube_feed',
+            'share',
+            'coupon',
+            'file',
+            'product',
+            'donation',
+            'service',
+            'paragraph',
+            'markdown'
+        ];
 
         if(!in_array($type, $themable_blocks)) {
             return $settings;
@@ -5096,9 +6583,27 @@ class BiolinkBlockAjax extends Controller {
         if(!$biolink_theme) {
             return $settings;
         }
-        /* Save settings for biolink page */
+
         $settings = json_decode($settings);
-        $new_settings = json_encode(array_merge((array) $settings, (array) $biolink_theme->settings->biolink_block));
+
+        /* Save new themed settings */
+        switch($type) {
+            case 'socials':
+                $new_settings = json_encode(array_merge((array) $settings, (array) $biolink_theme->settings->biolink_block_socials ?? []));
+                break;
+
+            case 'heading':
+                $new_settings = json_encode(array_merge((array) $settings, (array) $biolink_theme->settings->biolink_block_heading ?? []));
+                break;
+
+            case 'paragraph':
+                $new_settings = json_encode(array_merge((array) $settings, (array) $biolink_theme->settings->biolink_block_paragraph ?? []));
+                break;
+
+            default:
+                $new_settings = json_encode(array_merge((array) $settings, (array) $biolink_theme->settings->biolink_block ?? []));
+                break;
+        }
 
         return $new_settings;
     }

@@ -33,7 +33,7 @@
                     <div class="row btn-group-toggle" data-toggle="buttons">
                         <?php foreach(require APP_PATH . 'includes/pixels.php' as $pixel_key => $pixel): ?>
                         <div class="col-12 col-lg-4">
-                            <label class="btn btn-light btn-block <?= $data->values['type'] == $pixel_key ? 'active"' : null?>">
+                            <label class="btn btn-light btn-block text-truncate <?= $data->values['type'] == $pixel_key ? 'active"' : null?>">
                                 <input type="radio" name="type" value="<?= $pixel_key ?>" class="custom-control-input" <?= $data->values['type'] == $pixel_key ? 'checked="checked"' : null?> required="required" />
                                 <i class="<?= $pixel['icon'] ?> fa-fw fa-sm mr-1" style="color: <?= $pixel['color'] ?>"></i> <?= $pixel['name'] ?>
                             </label>
@@ -43,9 +43,9 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="pixel"><i class="fas fa-fw fa-code fa-sm text-muted mr-1"></i> <?= l('pixels.input.pixel') ?></label>
+                    <label for="pixel"><i class="fas fa-fw fa-code fa-sm text-muted mr-1"></i> <?= l('pixels.pixel') ?></label>
                     <input type="text" id="pixel" name="pixel" class="form-control" value="<?= $data->values['pixel'] ?>" required="required" />
-                    <small class="text-muted form-text"><?= l('pixels.input.pixel_help') ?></small>
+                    <small class="text-muted form-text"><?= l('pixels.pixel_help') ?></small>
                 </div>
 
                 <button type="submit" name="submit" class="btn btn-block btn-primary"><?= l('global.create') ?></button>

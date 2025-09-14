@@ -1,25 +1,25 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div class="container">
+<div class="container <?= settings()->content->blog_columns == 1 ? 'col-lg-8' : null ?>">
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li><a href="<?= url('blog') ?>"><?= l('blog.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <?php if($data->blog_posts_category): ?>
-                <li><a href="<?= url('blog/category/' . $data->blog_posts_category->url) ?>"><?= $data->blog_posts_category->title ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <?php endif ?>
-            <li class="active" aria-current="page"><?= $data->blog_post->title ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li><a href="<?= url('blog') ?>"><?= l('blog.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <?php if($data->blog_posts_category): ?>
+                    <li><a href="<?= url('blog/category/' . $data->blog_posts_category->url) ?>"><?= $data->blog_posts_category->title ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <?php endif ?>
+                <li class="active" aria-current="page"><?= $data->blog_post->title ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
     <div class="row">
-        <div class="col-12 col-lg-8 mb-5 mb-lg-0">
+        <div class="<?= settings()->content->blog_columns == 1 ? 'col-12 mb-5' : 'col-12 col-lg-8 mb-lg-0' ?>">
             <div class="card">
                 <div class="card-body">
                     <?php if($data->blog_post->image): ?>
-                        <img src="<?= \Altum\Uploads::get_full_url('blog') . $data->blog_post->image ?>" class="blog-post-image img-fluid w-100 rounded mb-3" />
+                        <img src="<?= \Altum\Uploads::get_full_url('blog') . $data->blog_post->image ?>" class="blog-post-image img-fluid w-100 rounded mb-3" alt="<?= $data->blog_post->image_description ?>" />
                     <?php endif ?>
 
                     <h1 class="h4 mb-1"><?= $data->blog_post->title ?></h1>
@@ -44,17 +44,25 @@
                         <?php endif ?>
                     </p>
 
-                    <p><?= $data->blog_post->description ?></p>
+                    <div class="blog-post-content">
+                        <p><?= $data->blog_post->description ?></p>
 
-                    <?= $data->blog_post->content ?>
+                        <div class="<?= $data->blog_post->editor == 'wysiwyg' ? 'ql-content' : null ?>">
+                            <?= $data->blog_post->content ?>
+                        </div>
+                    </div>
+
+                    <?= include_view(THEME_PATH . 'views/blog/ratings.php', [
+                        'blog_post' => $data->blog_post,
+                    ]); ?>
                 </div>
             </div>
 
             <?php if(settings()->content->blog_share_is_enabled): ?>
                 <div class="card mt-4">
                     <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between flex-wrap">
-                            <?= include_view(THEME_PATH . 'views/partials/share_buttons.php', ['url' => url(\Altum\Router::$original_request), 'class' => 'btn btn-gray-100 mb-2 mb-md-0 mr-md-3']) ?>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                            <?= include_view(THEME_PATH . 'views/partials/share_buttons.php', ['url' => url(\Altum\Router::$original_request), 'class' => 'btn btn-gray-100', 'copy_to_clipboard' => true]) ?>
                         </div>
                     </div>
                 </div>
@@ -62,7 +70,7 @@
         </div>
 
         <?php if(settings()->content->blog_popular_widget_is_enabled || settings()->content->blog_categories_widget_is_enabled || settings()->content->blog_search_widget_is_enabled): ?>
-            <div class="col-12 col-lg-4">
+            <div class="<?= settings()->content->blog_columns == 1 ? 'col-12' : 'col-12 col-lg-4' ?>">
                 <?php if(settings()->content->blog_search_widget_is_enabled): ?>
                     <div class="card mb-4">
                         <div class="card-body">
@@ -105,22 +113,25 @@
                             <ul class="list-style-none m-0">
                                 <?php $i = 800; ?>
                                 <?php foreach($data->blog_posts_popular as $blog_post): ?>
-                                    <li class="mb-2 d-flex align-items-center">
-                                        <div class="mr-2 rounded <?= 'bg-gray-' . $i ?>" style="min-width: 1.5rem; min-height: 1.5rem;">
+                                    <li class="mb-3 d-flex align-items-center">
+                                        <div class="mr-3 rounded <?= 'bg-gray-' . $i ?>" style="min-width: 1.75rem; min-height: 1.75rem;border-radius: 50% !important;">
                                             &nbsp;
                                         </div>
 
                                         <?php $i = $i - 100; ?>
 
                                         <div>
-                                            <a href="<?= SITE_URL . ($blog_post->language ? \Altum\Language::$active_languages[$blog_post->language] . '/' : null) . 'blog/' . $blog_post->url ?>"><?= $blog_post->title ?></a>
+                                            <a href="<?= SITE_URL . ($blog_post->language ? \Altum\Language::$active_languages[$blog_post->language] . '/' : null) . 'blog/' . $blog_post->url ?>" class="font-size-small"><?= $blog_post->title ?></a>
                                             <div class="small">
                                                 <?php if($blog_post->blog_posts_category_id && isset($data->blog_posts_categories[$blog_post->blog_posts_category_id])): ?>
                                                     <a href="<?= SITE_URL . ($data->blog_posts_categories[$blog_post->blog_posts_category_id]->language ? \Altum\Language::$active_languages[$data->blog_posts_categories[$blog_post->blog_posts_category_id]->language] . '/' : null) . 'blog/category/' . $data->blog_posts_categories[$blog_post->blog_posts_category_id]->url ?>" class="text-muted"><?= $data->blog_posts_categories[$blog_post->blog_posts_category_id]->title ?></a>
+                                                    <?php if(settings()->content->blog_views_is_enabled): ?>
+                                                        <span class="text-muted"> • </span>
+                                                    <?php endif ?>
                                                 <?php endif ?>
 
                                                 <?php if(settings()->content->blog_views_is_enabled): ?>
-                                                    <span class="text-muted"> • <?= sprintf(l('blog.total_views'), nr($blog_post->total_views)) ?></span>
+                                                    <span class="text-muted"><?= sprintf(l('blog.total_views'), nr($blog_post->total_views)) ?></span>
                                                 <?php endif ?>
                                             </div>
                                         </div>
@@ -134,3 +145,81 @@
         <?php endif ?>
     </div>
 </div>
+
+<?php ob_start() ?>
+<script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "<?= l('index.title') ?>",
+                    "item": "<?= url() ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "<?= l('blog.title') ?>",
+                    "item": "<?= url('blog') ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 3,
+                    "name": "<?= $data->blog_post->title ?>",
+                    "item": "<?= SITE_URL . ($data->blog_post->language ? \Altum\Language::$active_languages[$data->blog_post->language] . '/' : null) . 'blog/' . $data->blog_post->url ?>"
+                }
+            ]
+        }
+</script>
+
+<script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "<?= $data->blog_post->title ?>",
+        "description": "<?= $data->blog_post->description ?>",
+        "url": "<?= SITE_URL . ($data->blog_post->language ? \Altum\Language::$active_languages[$data->blog_post->language] . '/' : null) . 'blog/' . $data->blog_post->url ?>",
+    <?php if($data->blog_post->image): ?>
+        "image": "<?= \Altum\Uploads::get_full_url('blog') . $data->blog_post->image ?>",
+        <?php endif ?>
+    "author": {
+        "@type": "Person",
+        "name": "<?= settings()->main->title ?>",
+            "url": "<?= SITE_URL ?>"
+        },
+
+    <?php if(settings()->content->blog_ratings_is_enabled && $data->blog_post->total_ratings > 0): ?>
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "<?= $data->blog_post->average_rating ?>",
+            "reviewCount": "<?= $data->blog_post->total_ratings ?>",
+            "itemReviewed" : {
+                "@type": "Book",
+                "name": "<?= $data->blog_post->title ?>"
+            }
+        },
+        <?php endif ?>
+
+    "publisher": {
+        "@type": "Organization",
+        "name": "<?= settings()->main->title ?>"
+    <?php if(settings()->main->{'logo_' . \Altum\ThemeStyle::get()} != ''): ?>
+            ,"logo": {
+                "@type": "ImageObject",
+                "url": "<?= settings()->main->{'logo_' . \Altum\ThemeStyle::get() . '_full_url'} ?>"
+            }
+            <?php endif ?>
+    },
+    "datePublished": "<?= (new \DateTime($data->blog_post->datetime))->format('Y-m-d\TH:i:sP') ?>",
+        "dateModified": "<?= (new \DateTime($data->blog_post->last_datetime))->format('Y-m-d\TH:i:sP') ?>",
+        "keywords": "<?= $data->blog_post->keywords ?>",
+        "wordCount": "<?= str_word_count($data->blog_post->content ?? '') ?>",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "<?= SITE_URL . ($data->blog_post->language ? \Altum\Language::$active_languages[$data->blog_post->language] . '/' : null) ?>"
+        }
+    }
+</script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

@@ -26,6 +26,12 @@
     </div>
 
     <div class="form-group custom-control custom-switch">
+        <input id="new_code_redeemed" name="new_code_redeemed" type="checkbox" class="custom-control-input" <?= settings()->email_notifications->new_code_redeemed ? 'checked="checked"' : null?>>
+        <label class="custom-control-label" for="new_code_redeemed"><?= l('admin_settings.email_notifications.new_code_redeemed') ?></label>
+        <small class="form-text text-muted"><?= l('admin_settings.email_notifications.new_code_redeemed_help') ?></small>
+    </div>
+
+    <div class="form-group custom-control custom-switch">
         <input id="new_domain" name="new_domain" type="checkbox" class="custom-control-input" <?= settings()->email_notifications->new_domain ? 'checked="checked"' : null?>>
         <label class="custom-control-label" for="new_domain"><?= l('admin_settings.email_notifications.new_domain') ?></label>
         <small class="form-text text-muted"><?= l('admin_settings.email_notifications.new_domain_help') ?></small>

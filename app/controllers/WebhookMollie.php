@@ -1,15 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Models\Payments;
+
+defined('ALTUMCODE') || die();
 
 class WebhookMollie extends Controller {
 
@@ -34,7 +43,25 @@ class WebhookMollie extends Controller {
             $payment_subscription_id = null;
 
             /* If its a first payment, start the subscription */
-            if($payment->sequenceType == 'first') {
+            if ($payment->sequenceType == 'first') {
+
+                /* Determine correct interval from frequency */
+                $interval = match ($payment->metadata->payment_frequency) {
+                    'monthly' => '1 month',
+                    'quarterly' => '3 months',
+                    'biannual' => '6 months',
+                    'annual' => '1 year',
+                    default => '1 month', /* fallback default */
+                };
+
+                /* Calculate start date based on interval */
+                $start_date = match ($interval) {
+                    '1 month' => (new \DateTime())->modify('+1 month')->format('Y-m-d'),
+                    '3 months' => (new \DateTime())->modify('+3 months')->format('Y-m-d'),
+                    '6 months' => (new \DateTime())->modify('+6 months')->format('Y-m-d'),
+                    '1 year' => (new \DateTime())->modify('+1 year')->format('Y-m-d'),
+                };
+
                 /* Generate the subscription */
                 try {
                     $subscription = $mollie->subscriptions->createForId($payment->customerId, [
@@ -43,9 +70,10 @@ class WebhookMollie extends Controller {
                             'value' => $payment->amount->value,
                         ],
                         'description' => $payment->description,
-                        'interval' => $payment->description == 'monthly' ? '30 days' : '365 days',
-                        'webhookUrl'  => SITE_URL . 'webhook-mollie',
-                        'startDate' => $payment->description == 'monthly' ? (new \DateTime())->modify('+1 month')->format('Y-m-d') : (new \DateTime())->modify('+1 year')->format('Y-m-d')
+                        'interval' => $interval,
+                        'startDate' => $start_date,
+                        'webhookUrl' => SITE_URL . 'webhook-mollie',
+                        'metadata' => $payment->metadata,
                     ]);
                 } catch (\Exception $exception) {
                     echo $exception->getCode() . ':' . $exception->getMessage();

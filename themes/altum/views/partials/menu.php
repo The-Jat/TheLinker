@@ -1,20 +1,20 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<nav id="navbar" class="navbar navbar-main navbar-expand-lg navbar-light mb-6 index-highly-rounded border border-gray-100 mt-4">
+<nav id="navbar" class="navbar navbar-main navbar-expand-lg navbar-light mb-6 index-highly-rounded border border-gray-100">
     <div class="container">
         <a
-                class="navbar-brand"
+                class="navbar-brand d-flex"
                 href="<?= url() ?>"
                 data-logo
-                data-light-value="<?= settings()->main->logo_light != '' ? \Altum\Uploads::get_full_url('logo_light') . settings()->main->logo_light : settings()->main->title ?>"
+                data-light-value="<?= settings()->main->logo_light != '' ? settings()->main->logo_light_full_url : settings()->main->title ?>"
                 data-light-class="<?= settings()->main->logo_light != '' ? 'img-fluid navbar-logo' : '' ?>"
                 data-light-tag="<?= settings()->main->logo_light != '' ? 'img' : 'span' ?>"
-                data-dark-value="<?= settings()->main->logo_dark != '' ? \Altum\Uploads::get_full_url('logo_dark') . settings()->main->logo_dark : settings()->main->title ?>"
+                data-dark-value="<?= settings()->main->logo_dark != '' ? settings()->main->logo_dark_full_url : settings()->main->title ?>"
                 data-dark-class="<?= settings()->main->logo_dark != '' ? 'img-fluid navbar-logo' : '' ?>"
                 data-dark-tag="<?= settings()->main->logo_dark != '' ? 'img' : 'span' ?>"
         >
             <?php if(settings()->main->{'logo_' . \Altum\ThemeStyle::get()} != ''): ?>
-                <img src="<?= \Altum\Uploads::get_full_url('logo_' . \Altum\ThemeStyle::get()) . settings()->main->{'logo_' . \Altum\ThemeStyle::get()} ?>" class="img-fluid navbar-logo" alt="<?= l('global.accessibility.logo_alt') ?>" />
+                <img src="<?= settings()->main->{'logo_' . \Altum\ThemeStyle::get() . '_full_url'} ?>" class="img-fluid navbar-logo" alt="<?= l('global.accessibility.logo_alt') ?>" />
             <?php else: ?>
                 <?= settings()->main->title ?>
             <?php endif ?>
@@ -28,18 +28,26 @@
             <ul class="navbar-nav">
 
                 <?php foreach($data->pages as $data): ?>
-                    <li class="nav-item"><a class="nav-link" href="<?= $data->url ?>" target="<?= $data->target ?>"><?= $data->title ?></a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?= $data->url ?>" target="<?= $data->target ?>">
+                            <?php if($data->icon): ?>
+                                <i class="<?= $data->icon ?> fa-fw fa-sm mr-1"></i>
+                            <?php endif ?>
+
+                            <?= $data->title ?>
+                        </a>
+                    </li>
                 <?php endforeach ?>
 
-                <?php if(settings()->tools->is_enabled && (settings()->tools->access == 'everyone' || (settings()->tools->access == 'users' && \Altum\Authentication::check()))): ?>
+                <?php if(settings()->tools->is_enabled && (settings()->tools->access == 'everyone' || (settings()->tools->access == 'users' && is_logged_in()))): ?>
                     <li class="nav-item"><a class="nav-link" href="<?= url('tools') ?>"><?= l('tools.menu') ?></a></li>
                 <?php endif ?>
 
-                <?php if(settings()->links->biolinks_is_enabled && settings()->links->directory_is_enabled && (settings()->links->directory_access == 'everyone' || (settings()->links->directory_access == 'users' && \Altum\Authentication::check()))): ?>
+                <?php if(settings()->links->biolinks_is_enabled && settings()->links->directory_is_enabled && (settings()->links->directory_access == 'everyone' || (settings()->links->directory_access == 'users' && is_logged_in()))): ?>
                     <li class="nav-item"><a class="nav-link" href="<?= url('directory') ?>"><?= l('directory.menu') ?></a></li>
                 <?php endif ?>
 
-                <?php if(\Altum\Authentication::check()): ?>
+                <?php if(is_logged_in()): ?>
 
                     <li class="nav-item"><a class="nav-link" href="<?= url('dashboard') ?>"><?= l('dashboard.menu') ?></a></li>
 
@@ -62,20 +70,30 @@
                     <?php endif ?>
 
                     <li class="dropdown">
-                        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" aria-haspopup="true" aria-expanded="false">
-                            <img src="<?= get_gravatar($this->user->email, 80, 'identicon') ?>" class="navbar-avatar mr-1" loading="lazy" />
-                            <?= $this->user->name ?> <span class="caret"></span>
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" data-toggle="dropdown" href="#" aria-haspopup="true" aria-expanded="false">
+                            <img src="<?= get_user_avatar($this->user->avatar, $this->user->email) ?>" class="navbar-avatar mr-2" loading="lazy" />
+                            <?= $this->user->name ?>
+                            <span class="ml-2 caret"></span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right">
                             <div class="d-flex flex-column flex-lg-row">
                                 <div class="pr-lg-3">
-                                    <a href="#" class="dropdown-item font-weight-bold" onclick="return false;">
+                                    <div
+                                            class="px-3 py-2 font-weight-bold"
+                                            data-logo
+                                            data-light-value="<?= settings()->main->logo_light != '' ? settings()->main->logo_light_full_url : settings()->main->title ?>"
+                                            data-light-class="<?= settings()->main->logo_light != '' ? 'img-fluid navbar-logo-mini' : '' ?>"
+                                            data-light-tag="<?= settings()->main->logo_light != '' ? 'img' : 'span' ?>"
+                                            data-dark-value="<?= settings()->main->logo_dark != '' ? settings()->main->logo_dark_full_url : settings()->main->title ?>"
+                                            data-dark-class="<?= settings()->main->logo_dark != '' ? 'img-fluid navbar-logo-mini' : '' ?>"
+                                            data-dark-tag="<?= settings()->main->logo_dark != '' ? 'img' : 'span' ?>"
+                                    >
                                         <?php if(settings()->main->{'logo_' . \Altum\ThemeStyle::get()} != ''): ?>
-                                            <img src="<?= \Altum\Uploads::get_full_url('logo_' . \Altum\ThemeStyle::get()) . settings()->main->{'logo_' . \Altum\ThemeStyle::get()} ?>" class="img-fluid navbar-logo-mini mr-2" alt="<?= l('global.accessibility.logo_alt') ?>" />
+                                            <img src="<?= settings()->main->{'logo_' . \Altum\ThemeStyle::get() . '_full_url'} ?>" class="img-fluid navbar-logo-mini" alt="<?= l('global.accessibility.logo_alt') ?>" data-toggle="tooltip" title="<?= settings()->main->title ?>" />
+                                        <?php else: ?>
+                                            <?= settings()->main->title ?>
                                         <?php endif ?>
-
-                                        <?= settings()->main->title ?>
-                                    </a>
+                                    </div>
 
                                     <div class="dropdown-divider"></div>
 
@@ -100,10 +118,10 @@
                                     <?php endif ?>
 
                                     <?php if(settings()->links->static_is_enabled): ?>
-                                        <a href="<?= url('links?type=static') ?>" class="dropdown-item"><i class="fas fa-fw fa-sm fa-code mr-2"></i> <?= l('links.menu.static') ?></a>
+                                        <a href="<?= url('links?type=static') ?>" class="dropdown-item"><i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= l('links.menu.static') ?></a>
                                     <?php endif ?>
 
-                                    <?php if(settings()->links->qr_codes_is_enabled): ?>
+                                    <?php if(settings()->codes->qr_codes_is_enabled): ?>
                                         <a href="<?= url('qr-codes') ?>" class="dropdown-item"><i class="fas fa-fw fa-sm fa-qrcode mr-2"></i> <?= l('qr_codes.menu') ?></a>
                                     <?php endif ?>
 
@@ -139,7 +157,14 @@
                                 <div>
                                     <?php if(!\Altum\Teams::is_delegated()): ?>
                                         <?php if(\Altum\Authentication::is_admin()): ?>
-                                            <a class="dropdown-item" href="<?= url('admin') ?>"><i class="fas fa-fw fa-sm fa-fingerprint mr-2"></i> <?= l('global.menu.admin') ?></a>
+                                            <a class="dropdown-item" href="<?= url('admin') ?>"><i class="fas fa-fw fa-sm fa-fingerprint text-primary mr-2"></i> <?= l('global.menu.admin') ?></a>
+                                            <div class="dropdown-divider"></div>
+                                        <?php else: ?>
+                                            <div class="px-3 py-2 font-weight-bold  d-flex align-items-center">
+                                                <img src="<?= get_user_avatar($this->user->avatar, $this->user->email) ?>" class="navbar-logo-mini rounded mr-2" loading="lazy" />
+                                                <div class="text-truncate d-inline-block"><?= $this->user->email ?></div>
+                                            </div>
+
                                             <div class="dropdown-divider"></div>
                                         <?php endif ?>
 

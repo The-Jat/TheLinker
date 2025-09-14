@@ -1,14 +1,14 @@
 <?php defined('ALTUMCODE') || die() ?>
 
 <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-    <ol class="custom-breadcrumbs small">
-        <li>
-            <a href="<?= url('admin/users') ?>"><?= l('admin_users.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
-        </li>
-        <li class="active" aria-current="page"><?= l('admin_user_update.breadcrumb') ?></li>
-    </ol>
-</nav>
+    <nav aria-label="breadcrumb">
+        <ol class="custom-breadcrumbs small">
+            <li>
+                <a href="<?= url('admin/users') ?>"><?= l('admin_users.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
+            </li>
+            <li class="active" aria-current="page"><?= l('admin_user_update.breadcrumb') ?></li>
+        </ol>
+    </nav>
 <?php endif ?>
 
 <div class="d-flex justify-content-between mb-4">
@@ -28,7 +28,7 @@
             <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
 
             <div class="form-group">
-                <label for="user_id"><i class="fas fa-fw fa-sm fa-fingerprint text-muted mr-1"></i> <?= l('admin_users.main.user_id') ?></label>
+                <label for="user_id"><i class="fas fa-fw fa-sm fa-fingerprint text-muted mr-1"></i> <?= l('admin_users.user_id') ?></label>
                 <input type="text" id="user_id" name="user_id" class="form-control <?= \Altum\Alerts::has_field_errors('user_id') ? 'is-invalid' : null ?>" value="<?= $data->user->user_id ?>" disabled="disabled" />
                 <?= \Altum\Alerts::output_field_error('name') ?>
             </div>
@@ -46,37 +46,35 @@
             </div>
 
             <div class="form-group">
-                <label for="status"><i class="fas fa-fw fa-sm fa-toggle-on text-muted mr-1"></i> <?= l('global.status') ?></label>
+                <label for="status"><i class="fas fa-fw fa-sm fa-circle-dot text-muted mr-1"></i> <?= l('global.status') ?></label>
                 <select id="status" name="status" class="custom-select">
-                    <option value="2" <?= $data->user->status == 2 ? 'selected="selected"' : null ?>><?= l('admin_users.main.status_disabled') ?></option>
-                    <option value="1" <?= $data->user->status == 1 ? 'selected="selected"' : null ?>><?= l('admin_users.main.status_active') ?></option>
-                    <option value="0" <?= $data->user->status == 0 ? 'selected="selected"' : null ?>><?= l('admin_users.main.status_unconfirmed') ?></option>
+                    <option value="2" <?= $data->user->status == 2 ? 'selected="selected"' : null ?>><?= l('admin_users.status_disabled') ?></option>
+                    <option value="1" <?= $data->user->status == 1 ? 'selected="selected"' : null ?>><?= l('admin_users.status_active') ?></option>
+                    <option value="0" <?= $data->user->status == 0 ? 'selected="selected"' : null ?>><?= l('admin_users.status_unconfirmed') ?></option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="type"><i class="fas fa-fw fa-sm fa-user text-muted mr-1"></i> <?= l('admin_users.main.type') ?></label>
+                <label for="type"><i class="fas fa-fw fa-sm fa-user text-muted mr-1"></i> <?= l('admin_users.type') ?></label>
                 <select id="type" name="type" class="custom-select">
-                    <option value="1" <?= $data->user->type == 1 ? 'selected="selected"' : null ?>><?= l('admin_users.main.type_admin') ?></option>
-                    <option value="0" <?= $data->user->type == 0 ? 'selected="selected"' : null ?>><?= l('admin_users.main.type_user') ?></option>
+                    <option value="1" <?= $data->user->type == 1 ? 'selected="selected"' : null ?>><?= l('admin_users.type_admin') ?></option>
+                    <option value="0" <?= $data->user->type == 0 ? 'selected="selected"' : null ?>><?= l('admin_users.type_user') ?></option>
                 </select>
-                <small class="form-text text-muted"><?= l('admin_users.main.type_help') ?></small>
+                <small class="form-text text-muted"><?= l('admin_users.type_help') ?></small>
             </div>
 
             <?php if(\Altum\Plugin::is_active('affiliate')): ?>
                 <div class="form-group">
-                    <label for="referred_by"><i class="fas fa-fw fa-sm fa-user-plus text-muted mr-1"></i> <?= l('admin_users.main.referred_by') ?></label>
+                    <label for="referred_by"><i class="fas fa-fw fa-sm fa-user-plus text-muted mr-1"></i> <?= l('admin_users.referred_by') ?></label>
                     <input id="referred_by" type="number" name="referred_by" class="form-control <?= \Altum\Alerts::has_field_errors('referred_by') ? 'is-invalid' : null ?>" value="<?= $data->user->referred_by ?>" />
                     <?= \Altum\Alerts::output_field_error('referred_by') ?>
                 </div>
             <?php endif ?>
 
-            <div class="mt-5"></div>
-
-            <h2 class="h4"><?= l('admin_user_update.plan.header') ?></h2>
+            <h2 class="h4 mt-5 mb-4"><?= l('admin_user_update.plan.header') ?></h2>
 
             <div class="form-group">
-                <label for="plan_id"><i class="fas fa-fw fa-sm fa-box-open text-muted mr-1"></i> <?= l('admin_users.main.plan_id') ?></label>
+                <label for="plan_id"><i class="fas fa-fw fa-sm fa-box-open text-muted mr-1"></i> <?= l('admin_users.plan_id') ?></label>
                 <select id="plan_id" name="plan_id" class="custom-select">
                     <option value="free" <?= $data->user->plan_id == 'free' ? 'selected="selected"' : null ?>><?= settings()->plan_free->name ?></option>
                     <option value="custom" <?= $data->user->plan_id == 'custom' ? 'selected="selected"' : null ?>><?= settings()->plan_custom->name ?></option>
@@ -89,11 +87,11 @@
 
             <div class="form-group custom-control custom-switch">
                 <input id="plan_trial_done" name="plan_trial_done" type="checkbox" class="custom-control-input" <?= $data->user->plan_trial_done ? 'checked="checked"' : null?>>
-                <label class="custom-control-label" for="plan_trial_done"><i class="fas fa-fw fa-sm fa-calendar-minus text-muted mr-1"></i> <?= l('admin_users.main.plan_trial_done') ?></label>
+                <label class="custom-control-label" for="plan_trial_done"><i class="fas fa-fw fa-sm fa-calendar-minus text-muted mr-1"></i> <?= l('admin_users.plan_trial_done') ?></label>
             </div>
 
             <div id="plan_expiration_date_container" class="form-group">
-                <label for="plan_expiration_date"><i class="fas fa-fw fa-sm fa-hourglass-end text-muted mr-1"></i> <?= l('admin_users.main.plan_expiration_date') ?></label>
+                <label for="plan_expiration_date"><i class="fas fa-fw fa-sm fa-hourglass-end text-muted mr-1"></i> <?= l('admin_users.plan_expiration_date') ?></label>
                 <input id="plan_expiration_date" type="text" name="plan_expiration_date" class="form-control" autocomplete="off" value="<?= $data->user->plan_expiration_date ?>">
                 <div class="invalid-feedback">
                     <?= l('admin_user_update.plan.plan_expiration_date_invalid') ?>
@@ -101,6 +99,9 @@
             </div>
 
             <div id="plan_settings" style="display: none">
+
+                <h2 class="h4 mt-5 mb-4"><?= l('admin_user_update.plan.settings') ?></h2>
+
                 <div class="row">
                     <div class="col-lg-6">
                         <div class="form-group">
@@ -142,6 +143,11 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="qr_codes_bulk_limit"><?= l('admin_plans.plan.qr_codes_bulk_limit') ?></label>
+                    <input type="number" id="qr_codes_bulk_limit" name="qr_codes_bulk_limit" min="-1" class="form-control" value="<?= $data->user->plan_settings->qr_codes_bulk_limit ?>" />
+                </div>
+
+                <div class="form-group">
                     <label for="biolinks_limit"><?= l('admin_plans.plan.biolinks_limit') ?></label>
                     <input type="number" id="biolinks_limit" name="biolinks_limit" min="-1" class="form-control" value="<?= $data->user->plan_settings->biolinks_limit ?>" />
                     <small class="form-text text-muted"><?= l('admin_plans.plan.biolinks_limit_help') ?></small>
@@ -157,6 +163,11 @@
                     <label for="links_limit"><?= l('admin_plans.plan.links_limit') ?></label>
                     <input type="number" id="links_limit" name="links_limit" min="-1" class="form-control" value="<?= $data->user->plan_settings->links_limit ?>" />
                     <small class="form-text text-muted"><?= l('admin_plans.plan.links_limit_help') ?></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="links_bulk_limit"><?= l('admin_plans.plan.links_bulk_limit') ?></label>
+                    <input type="number" id="links_bulk_limit" name="links_bulk_limit" min="-1" class="form-control" value="<?= $data->user->plan_settings->links_bulk_limit ?>" />
                 </div>
 
                 <div class="form-group">
@@ -216,7 +227,7 @@
                         <label for="documents_model"><?= l('admin_plans.plan.documents_model') ?></label>
                         <select id="documents_model" name="documents_model" class="custom-select">
                             <?php foreach(require \Altum\Plugin::get('aix')->path . 'includes/ai_text_models.php' as $key => $value): ?>
-                                <option value="<?= $key ?>" <?= $data->user->plan_settings->documents_model == $key ? 'selected="selected"' : null ?>><?= $value['name'] . ' - ' . $key . ' (' . l('global.plan_settings.documents_model.' . str_replace('-', '_', $key)) . ')' ?></option>
+                                <option value="<?= $key ?>" <?= $data->user->plan_settings->documents_model == $key ? 'selected="selected"' : null ?>><?= $value['name'] . ' - ' . $key ?></option>
                             <?php endforeach ?>
                         </select>
                         <small class="form-text text-muted"><?= l('admin_plans.plan.documents_model_help') ?></small>
@@ -271,7 +282,7 @@
                         <label for="chats_model"><?= l('admin_plans.plan.chats_model') ?></label>
                         <select id="chats_model" name="chats_model" class="custom-select">
                             <?php foreach(require \Altum\Plugin::get('aix')->path . 'includes/ai_chat_models.php' as $key => $value): ?>
-                                <option value="<?= $key ?>" <?= $data->user->plan_settings->chats_model == $key ? 'selected="selected"' : null ?>><?= $value['name'] . ' - ' . $key . ' (' . l('global.plan_settings.documents_model.' . str_replace('-', '_', $key)) . ')' ?></option>
+                                <option value="<?= $key ?>" <?= $data->user->plan_settings->chats_model == $key ? 'selected="selected"' : null ?>><?= $value['name'] . ' - ' . $key ?></option>
                             <?php endforeach ?>
                         </select>
                         <small class="form-text text-muted"><?= l('admin_plans.plan.chats_model_help') ?></small>
@@ -355,6 +366,34 @@
                     <small class="form-text text-muted"><?= l('admin_plans.plan.track_links_retention_help') ?></small>
                 </div>
 
+                <div class="form-group custom-control custom-switch">
+                    <input id="email_reports_is_enabled" name="email_reports_is_enabled" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->email_reports_is_enabled ? 'checked="checked"' : null ?>>
+                    <label class="custom-control-label" for="email_reports_is_enabled"><?= l('admin_plans.plan.email_reports_is_enabled') ?></label>
+                    <div><small class="form-text text-muted"><?= l('admin_plans.plan.email_reports_is_enabled_help') ?></small></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="biolinks_templates"><?= l('admin_plans.plan.biolinks_templates') ?></label>
+                    <select id="biolinks_templates" name="biolinks_templates[]" class="custom-select" multiple="multiple">
+                        <?php foreach($data->biolinks_templates as $biolink_template): ?>
+                            <option value="<?= $biolink_template->biolink_template_id ?>" <?= in_array($biolink_template->biolink_template_id, $data->user->plan_settings->biolinks_templates ?? [])  ? 'selected="selected"' : null ?>>
+                                <?= $biolink_template->name ?>
+                            </option>
+                        <?php endforeach ?>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="biolinks_themes"><?= l('admin_plans.plan.biolinks_themes') ?></label>
+                    <select id="biolinks_themes" name="biolinks_themes[]" class="custom-select" multiple="multiple">
+                        <?php foreach($data->biolinks_themes as $biolink_theme): ?>
+                            <option value="<?= $biolink_theme->biolink_theme_id ?>" <?= in_array($biolink_theme->biolink_theme_id, $data->user->plan_settings->biolinks_themes ?? [])  ? 'selected="selected"' : null ?>>
+                                <?= $biolink_theme->name ?>
+                            </option>
+                        <?php endforeach ?>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <label for="additional_domains"><?= l('admin_plans.plan.additional_domains') ?></label>
                     <select id="additional_domains" name="additional_domains[]" class="custom-select" multiple="multiple">
@@ -367,11 +406,11 @@
                 </div>
 
                 <?php foreach(require APP_PATH . 'includes/links_types.php' as $key => $value): ?>
-                <div class="form-group custom-control custom-switch">
-                    <input id="<?= 'force_splash_page_on_' . $key ?>" name="<?= 'force_splash_page_on_' . $key ?>" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->{'force_splash_page_on_' . $key} ? 'checked="checked"' : null ?>>
-                    <label class="custom-control-label" for="<?= 'force_splash_page_on_' . $key ?>"><?= l('admin_plans.plan.' . 'force_splash_page_on_' . $key) ?></label>
-                    <div><small class="form-text text-muted"><?= l('admin_plans.plan.' . 'force_splash_page_on_' . $key . '_help') ?></small></div>
-                </div>
+                    <div class="form-group custom-control custom-switch">
+                        <input id="<?= 'force_splash_page_on_' . $key ?>" name="<?= 'force_splash_page_on_' . $key ?>" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->{'force_splash_page_on_' . $key} ? 'checked="checked"' : null ?>>
+                        <label class="custom-control-label" for="<?= 'force_splash_page_on_' . $key ?>"><?= l('admin_plans.plan.' . 'force_splash_page_on_' . $key) ?></label>
+                        <div><small class="form-text text-muted"><?= l('admin_plans.plan.' . 'force_splash_page_on_' . $key . '_help') ?></small></div>
+                    </div>
                 <?php endforeach ?>
 
                 <div class="form-group custom-control custom-switch">
@@ -411,12 +450,6 @@
                 </div>
 
                 <div class="form-group custom-control custom-switch">
-                    <input id="custom_backgrounds" name="custom_backgrounds" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->custom_backgrounds ? 'checked="checked"' : null ?>>
-                    <label class="custom-control-label" for="custom_backgrounds"><?= l('admin_plans.plan.custom_backgrounds') ?></label>
-                    <div><small class="form-text text-muted"><?= l('admin_plans.plan.custom_backgrounds_help') ?></small></div>
-                </div>
-
-                <div class="form-group custom-control custom-switch">
                     <input id="temporary_url_is_enabled" name="temporary_url_is_enabled" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->temporary_url_is_enabled ? 'checked="checked"' : null ?>>
                     <label class="custom-control-label" for="temporary_url_is_enabled"><?= l('admin_plans.plan.temporary_url_is_enabled') ?></label>
                     <div><small class="form-text text-muted"><?= l('admin_plans.plan.temporary_url_is_enabled_help') ?></small></div>
@@ -432,6 +465,12 @@
                     <input id="app_linking_is_enabled" name="app_linking_is_enabled" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->app_linking_is_enabled ? 'checked="checked"' : null ?>>
                     <label class="custom-control-label" for="app_linking_is_enabled"><?= l('admin_plans.plan.app_linking_is_enabled') ?></label>
                     <div><small class="form-text text-muted"><?= l('admin_plans.plan.app_linking_is_enabled_help') ?></small></div>
+                </div>
+
+                <div class="form-group custom-control custom-switch">
+                    <input id="targeting_is_enabled" name="targeting_is_enabled" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->targeting_is_enabled ? 'checked="checked"' : null ?>>
+                    <label class="custom-control-label" for="targeting_is_enabled"><?= l('admin_plans.plan.targeting_is_enabled') ?></label>
+                    <div><small class="form-text text-muted"><?= l('admin_plans.plan.targeting_is_enabled_help') ?></small></div>
                 </div>
 
                 <div class="form-group custom-control custom-switch">
@@ -476,10 +515,12 @@
                     <div><small class="form-text text-muted"><?= l('admin_plans.plan.dofollow_is_enabled_help') ?></small></div>
                 </div>
 
-                <div class="form-group custom-control custom-switch">
-                    <input id="api_is_enabled" name="api_is_enabled" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->api_is_enabled ? 'checked="checked"' : null ?>>
-                    <label class="custom-control-label" for="api_is_enabled"><?= l('admin_plans.plan.api_is_enabled') ?></label>
-                    <div><small class="form-text text-muted"><?= l('admin_plans.plan.api_is_enabled_help') ?></small></div>
+                <div <?= !\Altum\Plugin::is_active('pwa') ? 'data-toggle="tooltip" title="' . sprintf(l('admin_plugins.no_access'), \Altum\Plugin::get('pwa')->name ?? 'pwa') . '"' : null ?>>
+                    <div class="form-group custom-control custom-switch">
+                        <input id="custom_pwa_is_enabled" name="custom_pwa_is_enabled" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->custom_pwa_is_enabled ? 'checked="checked"' : null ?> <?= !\Altum\Plugin::is_active('pwa') ? 'disabled="disabled"' : null ?>>
+                        <label class="custom-control-label" for="custom_pwa_is_enabled"><?= l('admin_plans.plan.custom_pwa_is_enabled') ?></label>
+                        <div><small class="form-text text-muted"><?= l('admin_plans.plan.custom_pwa_is_enabled_help') ?></small></div>
+                    </div>
                 </div>
 
                 <div class="form-group custom-control custom-switch">
@@ -494,18 +535,77 @@
                     <div><small class="form-text text-muted"><?= l('admin_plans.plan.custom_js_is_enabled_help') ?></small></div>
                 </div>
 
-                <h3 class="h5 my-4"><?= l('admin_plans.plan.enabled_biolink_blocks') ?></h3>
+                <div class="form-group custom-control custom-switch">
+                    <input id="api_is_enabled" name="api_is_enabled" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->api_is_enabled ? 'checked="checked"' : null ?>>
+                    <label class="custom-control-label" for="api_is_enabled"><?= l('admin_plans.plan.api_is_enabled') ?></label>
+                    <div><small class="form-text text-muted"><?= l('admin_plans.plan.api_is_enabled_help') ?></small></div>
+                </div>
+
+                <div class="form-group custom-control custom-switch">
+                    <input id="white_labeling_is_enabled" name="white_labeling_is_enabled" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->white_labeling_is_enabled ? 'checked="checked"' : null ?>>
+                    <label class="custom-control-label" for="white_labeling_is_enabled"><?= l('admin_plans.plan.white_labeling_is_enabled') ?></label>
+                    <div><small class="form-text text-muted"><?= l('admin_plans.plan.white_labeling_is_enabled_help') ?></small></div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
+                    <h3 class="h5"><?= l('admin_plans.plan.export') ?></h3>
+
+                    <div>
+                        <button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="<?= l('global.select_all') ?>" data-tooltip-hide-on-click onclick="document.querySelectorAll(`[name='export[]']`).forEach(element => element.checked ? null : element.checked = true)"><i class="fas fa-fw fa-check-square"></i></button>
+                        <button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="<?= l('global.deselect_all') ?>" data-tooltip-hide-on-click onclick="document.querySelectorAll(`[name='export[]']`).forEach(element => element.checked ? element.checked = false : null)"><i class="fas fa-fw fa-minus-square"></i></button>
+                    </div>
+                </div>
+
+                <div class="form-group custom-control custom-checkbox">
+                    <input id="export_csv" name="export[]" value="csv" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->export->csv ? 'checked="checked"' : null ?>>
+                    <label class="custom-control-label" for="export_csv"><?= sprintf(l('global.export_to'), 'CSV') ?></label>
+                </div>
+
+                <div class="form-group custom-control custom-checkbox">
+                    <input id="export_json" name="export[]" value="json" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->export->json ? 'checked="checked"' : null ?>>
+                    <label class="custom-control-label" for="export_json"><?= sprintf(l('global.export_to'), 'JSON') ?></label>
+                </div>
+
+                <div class="form-group custom-control custom-checkbox">
+                    <input id="export_pdf" name="export[]" value="pdf" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->export->pdf ? 'checked="checked"' : null ?>>
+                    <label class="custom-control-label" for="export_pdf"><?= sprintf(l('global.export_to'), 'PDF') ?></label>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
+                    <h3 class="h5"><?= l('admin_plans.plan.enabled_biolink_blocks') ?></h3>
+
+                    <div>
+                        <button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="<?= l('global.select_all') ?>" data-tooltip-hide-on-click onclick="document.querySelectorAll(`[name='enabled_biolink_blocks[]']`).forEach(element => element.checked ? null : element.checked = true)"><i class="fas fa-fw fa-check-square"></i></button>
+                        <button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="<?= l('global.deselect_all') ?>" data-tooltip-hide-on-click onclick="document.querySelectorAll(`[name='enabled_biolink_blocks[]']`).forEach(element => element.checked ? element.checked = false : null)"><i class="fas fa-fw fa-minus-square"></i></button>
+                    </div>
+                </div>
 
                 <div class="row">
                     <?php foreach(require APP_PATH . 'includes/biolink_blocks.php' as $key => $value): ?>
                         <div class="col-6 mb-3">
-                            <div class="custom-control custom-switch">
+                            <div class="custom-control custom-checkbox">
                                 <input id="enabled_biolink_blocks_<?= $key ?>" name="enabled_biolink_blocks[]" value="<?= $key ?>" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->enabled_biolink_blocks->{$key} ? 'checked="checked"' : null ?>>
                                 <label class="custom-control-label" for="enabled_biolink_blocks_<?= $key ?>"><?= l('link.biolink.blocks.' . mb_strtolower($key)) ?></label>
                             </div>
                         </div>
                     <?php endforeach ?>
                 </div>
+
+                <h2 class="h5 mt-5 mb-4"><?= l('admin_plans.plan.notification_handlers_limit') ?></h2>
+
+                <div class="form-group">
+                    <label for="active_notification_handlers_per_resource_limit"><?= l('admin_plans.plan.active_notification_handlers_per_resource_limit') ?></label>
+                    <input type="number" id="active_notification_handlers_per_resource_limit" name="active_notification_handlers_per_resource_limit" min="-1" class="form-control" value="<?= $data->user->plan_settings->active_notification_handlers_per_resource_limit ?>" />
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.unlimited') ?></small>
+                </div>
+
+                <?php foreach(array_keys(require APP_PATH . 'includes/notification_handlers.php') as $notification_handler): ?>
+                    <div class="form-group">
+                        <label for="<?= 'notification_handlers_' . $notification_handler . '_limit' ?>"><?= l('notification_handlers.type_' . $notification_handler) ?></label>
+                        <input type="number" id="<?= 'notification_handlers_' . $notification_handler . '_limit' ?>" name="<?= 'notification_handlers_' . $notification_handler . '_limit' ?>" min="-1" class="form-control" value="<?= $data->user->plan_settings->{'notification_handlers_' . $notification_handler . '_limit'} ?>" />
+                        <small class="form-text text-muted"><?= l('admin_plans.plan.unlimited') ?></small>
+                    </div>
+                <?php endforeach ?>
             </div>
 
             <div class="mt-5"></div>
@@ -513,13 +613,13 @@
             <h2 class="h4"><?= l('admin_user_update.change_password.header') ?></h2>
             <p class="text-muted"><?= l('admin_user_update.change_password.subheader') ?></p>
 
-            <div class="form-group">
+            <div class="form-group" data-password-toggle-view data-password-toggle-view-show="<?= l('global.show') ?>" data-password-toggle-view-hide="<?= l('global.hide') ?>">
                 <label for="new_password"><i class="fas fa-fw fa-sm fa-key text-muted mr-1"></i> <?= l('admin_user_update.change_password.new_password') ?></label>
                 <input id="new_password" type="password" name="new_password" class="form-control <?= \Altum\Alerts::has_field_errors('new_password') ? 'is-invalid' : null ?>" />
                 <?= \Altum\Alerts::output_field_error('new_password') ?>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" data-password-toggle-view data-password-toggle-view-show="<?= l('global.show') ?>" data-password-toggle-view-hide="<?= l('global.hide') ?>">
                 <label for="repeat_password"><i class="fas fa-fw fa-sm fa-key text-muted mr-1"></i> <?= l('admin_user_update.change_password.repeat_password') ?></label>
                 <input id="repeat_password" type="password" name="repeat_password" class="form-control <?= \Altum\Alerts::has_field_errors('new_password') ? 'is-invalid' : null ?>" />
                 <?= \Altum\Alerts::output_field_error('new_password') ?>
@@ -531,18 +631,18 @@
 </div>
 
 <?php ob_start() ?>
-<link href="<?= ASSETS_FULL_URL . 'css/libraries/daterangepicker.min.css' ?>" rel="stylesheet" media="screen,print">
+<link href="<?= ASSETS_FULL_URL . 'css/libraries/daterangepicker.min.css?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
 <?php \Altum\Event::add_content(ob_get_clean(), 'head') ?>
 
 <?php ob_start() ?>
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment.min.js' ?>"></script>
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/daterangepicker.min.js' ?>"></script>
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment-timezone-with-data-10-year-range.min.js' ?>"></script>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment.min.js?v=' . PRODUCT_CODE ?>"></script>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/daterangepicker.min.js?v=' . PRODUCT_CODE ?>"></script>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment-timezone-with-data-10-year-range.min.js?v=' . PRODUCT_CODE ?>"></script>
 
 <script>
     'use strict';
-
-    moment.tz.setDefault(<?= json_encode($this->user->timezone) ?>);
+    
+moment.tz.setDefault(<?= json_encode($this->user->timezone) ?>);
 
     let check_plan_id = () => {
         let selected_plan_id = document.querySelector('[name="plan_id"]').value;
@@ -585,7 +685,7 @@
     /* Daterangepicker */
     $('[name="plan_expiration_date"]').daterangepicker({
         startDate: <?= json_encode($data->user->plan_expiration_date) ?>,
-        minDate: new Date(),
+        minDate: "<?= (new \DateTime('', new \DateTimeZone(\Altum\Date::$default_timezone)))->setTimezone(new \DateTimeZone($this->user->timezone))->format('Y-m-d H:i:s'); ?>",
         alwaysShowCalendars: true,
         singleCalendar: true,
         singleDatePicker: true,

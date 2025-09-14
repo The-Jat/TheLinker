@@ -2,8 +2,8 @@
 
 <div class="container">
     <div class="row mb-4">
-        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0">
-            <h1 class="h4 m-0"><i class="fas fa-fw fa-xs fa-sitemap mr-1"></i> <?= l('directory.header') ?></h1>
+        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0 text-truncate">
+            <h1 class="h4 m-0 text-truncate"><i class="fas fa-fw fa-xs fa-sitemap mr-1"></i> <?= l('directory.header') ?></h1>
 
             <div class="ml-2">
                 <span data-toggle="tooltip" title="<?= l('directory.subheader') ?>">
@@ -12,27 +12,30 @@
             </div>
         </div>
 
-        <div class="col-12 col-lg-auto d-flex">
+        <div class="col-12 col-lg-auto d-flex flex-wrap gap-3 d-print-none">
             <div>
                 <div class="dropdown">
-                    <button type="button" class="btn btn-light dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>">
+                    <button type="button" class="btn btn-light dropdown-toggle-simple <?= count($data->links) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-download"></i>
                     </button>
 
                     <div class="dropdown-menu dropdown-menu-right d-print-none">
-                        <a href="<?= url('directory?' . $data->filters->get_get() . '&export=csv')  ?>" target="_blank" class="dropdown-item">
-                            <i class="fas fa-fw fa-sm fa-file-csv mr-1"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
+                        <a href="<?= url('directory?' . $data->filters->get_get() . '&export=csv')  ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->csv ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->csv ? null : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-csv mr-2"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
                         </a>
-                        <a href="<?= url('directory?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item">
-                            <i class="fas fa-fw fa-sm fa-file-code mr-1"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
+                        <a href="<?= url('directory?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
+                        </a>
+                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                         </a>
                     </div>
                 </div>
             </div>
 
-            <div class="ml-3">
+            <div>
                 <div class="dropdown">
-                    <button type="button" class="btn <?= count($data->filters->get) ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.filters.header') ?>">
+                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= count($data->links) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-filter"></i>
                     </button>
 
@@ -40,8 +43,8 @@
                         <div class="dropdown-header d-flex justify-content-between">
                             <span class="h6 m-0"><?= l('global.filters.header') ?></span>
 
-                            <?php if(count($data->filters->get)): ?>
-                                <a href="<?= url('directory') ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
+                            <?php if($data->filters->has_applied_filters): ?>
+                                <a href="<?= url(\Altum\Router::$original_request) ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
                             <?php endif ?>
                         </div>
 
@@ -99,8 +102,8 @@
     <div>
         <div class="row">
             <?php foreach($data->links as $row): ?>
-                <div class="col-lg-6">
-                    <div class="custom-row mb-4">
+                <div class="col-lg-6 p-3">
+                    <div class="custom-row">
                         <div class="row h-100">
                             <div class="col-xl-2 d-flex align-items-center justify-content-center">
                                 <a href="<?= $row->full_url ?>" target="_blank">
@@ -139,3 +142,25 @@
     </div>
 </div>
 
+<?php ob_start() ?>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "<?= l('index.title') ?>",
+                    "item": "<?= url() ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "<?= l('directory.title') ?>",
+                    "item": "<?= url('directory') ?>"
+                }
+            ]
+        }
+    </script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

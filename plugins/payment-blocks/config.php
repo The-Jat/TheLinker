@@ -5,7 +5,7 @@ return (object) [
     'plugin_id' => 'payment-blocks',
     'name' => 'Payment Blocks',
     'description' => 'The Payment Blocks plugin is meant to give you payment blocks for biolink pages with Stripe and Paypal integrations.',
-    'version' => '1.0.0',
+    'version' => '2.1.0',
     'url' => 'https://altumco.de/66biolinks-payment-blocks',
     'author' => 'AltumCode',
     'author_url' => 'https://altumcode.com/',

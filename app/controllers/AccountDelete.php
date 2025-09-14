@@ -1,16 +1,25 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 use Altum\Models\User;
+
+defined('ALTUMCODE') || die();
 
 class AccountDelete extends Controller {
 
@@ -44,6 +53,14 @@ class AccountDelete extends Controller {
                         [
                             '{{NAME}}' => $this->user->name,
                             '{{EMAIL}}' => $this->user->email,
+                            '{{SOURCE}}' => $this->user->source,
+                            '{{IP}}' => $this->user->ip,
+                            '{{COUNTRY_NAME}}' => $this->user->country ? get_country_from_country_code($this->user->country) : l('global.unknown'),
+                            '{{CITY_NAME}}' => $this->user->city_name ?? l('global.unknown'),
+                            '{{DEVICE_TYPE}}' => l('global.device.' . $this->user->device_type),
+                            '{{OS_NAME}}' => $this->user->os_name,
+                            '{{BROWSER_NAME}}' => $this->user->browser_name,
+                            '{{ACCOUNT_AGE}}' => \Altum\Date::get_elapsed_time($this->user->datetime),
                         ],
                         l('global.emails.admin_delete_user_notification.body')
                     );
@@ -58,7 +75,7 @@ class AccountDelete extends Controller {
                         'icon' => 'fas fa-user-slash',
                         'title' => l('global.notifications.delete_user.title'),
                         'description' => sprintf(l('global.notifications.delete_user.description'), $this->user->name, $this->user->email),
-                        'datetime' => \Altum\Date::$date,
+                        'datetime' => get_date(),
                     ]);
                 }
 
@@ -92,7 +109,7 @@ class AccountDelete extends Controller {
         $menu = new \Altum\View('partials/account_header_menu', (array) $this);
         $this->add_view_content('account_header_menu', $menu->run());
 
-        /* Prepare the View */
+        /* Prepare the view */
         $view = new \Altum\View('account-delete/index', (array) $this);
 
         $this->add_view_content('content', $view->run([]));

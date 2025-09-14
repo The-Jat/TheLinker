@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 #
@@ -19,6 +26,8 @@
 # with this source code.
 #
 #
+
+defined('ALTUMCODE') || die();
 
 class Parsedown
 {
@@ -176,7 +185,7 @@ class Parsedown
         $Elements = array();
         $CurrentBlock = null;
 
-        foreach ($lines as $line)
+        foreach($lines as $line)
         {
             if(chop($line) === '')
             {
@@ -241,7 +250,7 @@ class Parsedown
 
             if(isset($this->BlockTypes[$marker]))
             {
-                foreach ($this->BlockTypes[$marker] as $blockType)
+                foreach($this->BlockTypes[$marker] as $blockType)
                 {
                     $blockTypes []= $blockType;
                 }
@@ -250,7 +259,7 @@ class Parsedown
             #
             # ~
 
-            foreach ($blockTypes as $blockType)
+            foreach($blockTypes as $blockType)
             {
                 $Block = $this->{"block$blockType"}($Line, $CurrentBlock);
 
@@ -737,7 +746,7 @@ class Parsedown
     {
         if(isset($Block['loose']))
         {
-            foreach ($Block['element']['elements'] as &$li)
+            foreach($Block['element']['elements'] as &$li)
             {
                 if(end($li['handler']['argument']) !== '')
                 {
@@ -931,7 +940,7 @@ class Parsedown
 
         $dividerCells = explode('|', $divider);
 
-        foreach ($dividerCells as $dividerCell)
+        foreach($dividerCells as $dividerCell)
         {
             $dividerCell = trim($dividerCell);
 
@@ -971,7 +980,7 @@ class Parsedown
             return;
         }
 
-        foreach ($headerCells as $index => $headerCell)
+        foreach($headerCells as $index => $headerCell)
         {
             $headerCell = trim($headerCell);
 
@@ -1044,7 +1053,7 @@ class Parsedown
 
             $cells = array_slice($matches[0], 0, count($Block['alignments']));
 
-            foreach ($cells as $index => $cell)
+            foreach($cells as $index => $cell)
             {
                 $cell = trim($cell);
 
@@ -1161,7 +1170,7 @@ class Parsedown
 
             $Excerpt = array('text' => $excerpt, 'context' => $text);
 
-            foreach ($this->InlineTypes[$marker] as $inlineType)
+            foreach($this->InlineTypes[$marker] as $inlineType)
             {
                 # check to see if the current inline type is nestable in the current context
 
@@ -1228,7 +1237,7 @@ class Parsedown
         $InlineText = $this->inlineText($text);
         $Elements[] = $InlineText['element'];
 
-        foreach ($Elements as &$Element)
+        foreach($Elements as &$Element)
         {
             if( ! isset($Element['autobreak']))
             {
@@ -1675,7 +1684,7 @@ class Parsedown
 
     protected function elementsApplyRecursive($closure, array $Elements)
     {
-        foreach ($Elements as &$Element)
+        foreach($Elements as &$Element)
         {
             $Element = $this->elementApplyRecursive($closure, $Element);
         }
@@ -1685,7 +1694,7 @@ class Parsedown
 
     protected function elementsApplyRecursiveDepthFirst($closure, array $Elements)
     {
-        foreach ($Elements as &$Element)
+        foreach($Elements as &$Element)
         {
             $Element = $this->elementApplyRecursiveDepthFirst($closure, $Element);
         }
@@ -1713,7 +1722,7 @@ class Parsedown
 
             if(isset($Element['attributes']))
             {
-                foreach ($Element['attributes'] as $name => $value)
+                foreach($Element['attributes'] as $name => $value)
                 {
                     if($value === null)
                     {
@@ -1783,7 +1792,7 @@ class Parsedown
 
         $autoBreak = true;
 
-        foreach ($Elements as $Element)
+        foreach($Elements as $Element)
         {
             if(empty($Element))
             {
@@ -1841,7 +1850,7 @@ class Parsedown
 
             $newElements[] = array('text' => $before);
 
-            foreach ($Elements as $Element)
+            foreach($Elements as $Element)
             {
                 $newElements[] = $Element;
             }
@@ -1886,7 +1895,7 @@ class Parsedown
 
         if( ! empty($Element['attributes']))
         {
-            foreach ($Element['attributes'] as $att => $val)
+            foreach($Element['attributes'] as $att => $val)
             {
                 # filter out badly parsed attribute
                 if( ! preg_match($goodAttribute, $att))
@@ -1906,7 +1915,7 @@ class Parsedown
 
     protected function filterUnsafeUrlInAttribute(array $Element, $attribute)
     {
-        foreach ($this->safeLinksWhitelist as $scheme)
+        foreach($this->safeLinksWhitelist as $scheme)
         {
             if(self::striAtStart($Element['attributes'][$attribute], $scheme))
             {

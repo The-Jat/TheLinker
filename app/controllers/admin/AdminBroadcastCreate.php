@@ -1,15 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+
+defined('ALTUMCODE') || die();
 
 class AdminBroadcastCreate extends Controller {
 
@@ -18,22 +27,17 @@ class AdminBroadcastCreate extends Controller {
         $plans = (new \Altum\Models\Plan())->get_plans();
 
         if(!empty($_POST)) {
-            /* Filter some the variables */
+            /* Filter some of the variables */
             $_POST['name'] = input_clean($_POST['name'], 64);
             $_POST['subject'] = input_clean($_POST['subject'], 128);
             $_POST['segment'] = in_array($_POST['segment'], ['all', 'subscribers', 'custom', 'filter']) ? input_clean($_POST['segment']) : 'subscribers';
             $_POST['is_system_email'] = (int) isset($_POST['is_system_email']);
 
+            /* Users ids */
             $_POST['users_ids'] = trim($_POST['users_ids'] ?? '');
-            if($_POST['users_ids']) {
-                $_POST['users_ids'] = explode(',', $_POST['users_ids'] ?? '');
-                if(count($_POST['users_ids'])) {
-                    $_POST['users_ids'] = array_map(function ($user_id) {
-                        return (int) $user_id;
-                    }, $_POST['users_ids']);
-                    $_POST['users_ids'] = array_unique($_POST['users_ids']);
-                }
-            }
+            $_POST['users_ids'] = array_filter(array_map('intval', explode(',', $_POST['users_ids'])));
+            $_POST['users_ids'] = array_values(array_unique($_POST['users_ids']));
+            $_POST['users_ids'] = $_POST['users_ids'] ?: [0];
 
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
@@ -71,16 +75,22 @@ class AdminBroadcastCreate extends Controller {
 
                 /* Preview email */
                 if(isset($_POST['preview'])) {
+                    $vars = [
+                        '{{USER:NAME}}' => $this->user->name,
+                        '{{USER:EMAIL}}' => $this->user->email,
+                        '{{USER:CONTINENT_NAME}}' => get_continent_from_continent_code($this->user->continent_code),
+                        '{{USER:COUNTRY_NAME}}' => get_country_from_country_code($this->user->country),
+                        '{{USER:CITY_NAME}}' => $this->user->city_name,
+                        '{{USER:DEVICE_TYPE}}' => l('global.device.' . $this->user->device_type),
+                        '{{USER:OS_NAME}}' => $this->user->os_name,
+                        '{{USER:BROWSER_NAME}}' => $this->user->browser_name,
+                        '{{USER:BROWSER_LANGUAGE}}' => get_language_from_locale($this->user->browser_language),
+                    ];
+
                     $email_template = get_email_template(
-                        [
-                            '{{NAME}}' => $this->user->name,
-                            '{{EMAIL}}' => $this->user->email,
-                        ],
-                        $_POST['subject'],
-                        [
-                            '{{NAME}}' => $this->user->name,
-                            '{{EMAIL}}' => $this->user->email,
-                        ],
+                        $vars,
+                        htmlspecialchars_decode($_POST['subject']),
+                        $vars,
                         convert_editorjs_json_to_html($_POST['content'])
                     );
 
@@ -89,6 +99,7 @@ class AdminBroadcastCreate extends Controller {
                     /* Set a nice success message */
                     Alerts::add_success(sprintf(l('admin_broadcast_create.success_message.preview'), '<strong>' . $_POST['preview_email'] . '</strong>'));
                 }
+
 
                 if(isset($_POST['save']) || isset($_POST['send'])) {
                     $settings = [
@@ -138,6 +149,22 @@ class AdminBroadcastCreate extends Controller {
                                 $settings['filters_status'] = $_POST['filters_status'];
                             }
 
+                            /* Cities */
+                            if(!empty($_POST['filters_cities'])) {
+                                $_POST['filters_cities'] = explode(',', $_POST['filters_cities']);
+                        $_POST['filters_cities'] = array_filter(array_unique($_POST['filters_cities']));
+
+                                if(count($_POST['filters_cities'])) {
+                                    $_POST['filters_cities'] = array_map(function($city) {
+                                        return query_clean($city);
+                                    }, $_POST['filters_cities']);
+
+                                    $has_filters = true;
+                                    $query->where('city_name', $_POST['filters_cities'], 'IN');
+                                    $settings['filters_cities'] = $_POST['filters_cities'];
+                                }
+                            }
+
                             /* Countries */
                             if(isset($_POST['filters_countries'])) {
                                 $has_filters = true;
@@ -159,15 +186,63 @@ class AdminBroadcastCreate extends Controller {
                                 $settings['filters_source'] = $_POST['filters_source'];
                             }
 
+                            /* Device type */
+                            if(isset($_POST['filters_device_type'])) {
+                                $has_filters = true;
+                                $query->where('device_type', $_POST['filters_device_type'], 'IN');
+                                $settings['filters_device_type'] = $_POST['filters_device_type'];
+                            }
+
+                            /* Languages */
+                            if(isset($_POST['filters_languages'])) {
+                                $has_filters = true;
+                                $query->where('language', $_POST['filters_languages'], 'IN');
+                                $settings['filters_languages'] = $_POST['filters_languages'];
+                            }
+
+                            /* Browser languages */
+                            if(isset($_POST['filters_browser_languages'])) {
+                                $_POST['filters_browser_languages'] = array_filter($_POST['filters_browser_languages'], function($locale) {
+                                    return array_key_exists($locale, get_locale_languages_array());
+                                });
+
+                                $has_filters = true;
+                                $query->where('browser_language', $_POST['filters_browser_languages'], 'IN');
+                                $settings['filters_browser_languages'] = $_POST['filters_browser_languages'];
+                            }
+
+                            /* Filters operating systems */
+                            if(isset($_POST['filters_operating_systems'])) {
+                                $_POST['filters_operating_systems'] = array_filter($_POST['filters_operating_systems'], function($os_name) {
+                                    return in_array($os_name, ['iOS', 'Android', 'Windows', 'OS X', 'Linux', 'Ubuntu', 'Chrome OS']);
+                                });
+
+                                $has_filters = true;
+                                $query->where('os_name', $_POST['filters_operating_systems'], 'IN');
+                                $settings['filters_operating_systems'] = $_POST['filters_operating_systems'];
+                            }
+
+                            /* Filters browsers */
+                            if(isset($_POST['filters_browsers'])) {
+                                $_POST['filters_browsers'] = array_filter($_POST['filters_browsers'], function($browser_name) {
+                                    return in_array($browser_name, ['Chrome', 'Firefox', 'Safari', 'Edge', 'Opera', 'Samsung Internet']);
+                                });
+
+                                $has_filters = true;
+                                $query->where('browser_name', $_POST['filters_browsers'], 'IN');
+                                $settings['filters_browsers'] = $_POST['filters_browsers'];
+                            }
+
                             $users = $has_filters ? $query->get('users', null, ['user_id']) : [];
 
                             break;
                     }
 
-                    $users_ids = [];
-                    foreach($users as $user) {
-                        $users_ids[] = $user->user_id;
-                    }
+                    /* Get all users ids */
+                    $users_ids = array_column($users, 'user_id');
+
+                    /* Free memory */
+                    unset($users);
 
                     /* Database query */
                     $broadcast_id = db()->insert('broadcasts', [
@@ -180,7 +255,7 @@ class AdminBroadcastCreate extends Controller {
                         'sent_users_ids' => '[]',
                         'total_emails' => count($users_ids),
                         'status' => isset($_POST['save']) ? 'draft' : 'processing',
-                        'datetime' => \Altum\Date::$date,
+                        'datetime' => get_date(),
                     ]);
 
                     if(isset($_POST['save'])) {
@@ -198,11 +273,11 @@ class AdminBroadcastCreate extends Controller {
         }
 
         $values = [
-            'name' => $_POST['name'] ?? null,
+            'name' => $_POST['name'] ?? $_GET['name'] ?? generate_prefilled_dynamic_names(l('admin_broadcasts.broadcast')),
             'subject' => $_POST['subject'] ?? null,
             'is_system_email' => $_POST['is_system_email'] ?? false,
             'segment' => $_POST['segment'] ?? 'all',
-            'users_ids' => $_POST['users_ids'] ?? null,
+            'users_ids' => implode(',', $_POST['users_ids'] ?? []),
             'content' => $_POST['content'] ?? json_encode([
                     'blocks' => [
                         [
@@ -218,8 +293,14 @@ class AdminBroadcastCreate extends Controller {
             'filters_plans' => $_POST['filters_plans'] ?? [],
             'filters_status' => $_POST['filters_status'] ?? [],
             'filters_source' => $_POST['filters_source'] ?? [],
+            'filters_device_type' => $_POST['filters_device_type'] ?? [],
             'filters_continents' => $_POST['filters_continents'] ?? [],
             'filters_countries' => $_POST['filters_countries'] ?? [],
+            'filters_cities' => isset($_POST['filters_cities']) && implode(',', is_array($_POST['filters_cities']) ? $_POST['filters_cities'] : []),
+            'filters_languages' => $_POST['filters_languages'] ?? [],
+            'filters_browser_languages' => $_POST['filters_browser_languages'] ?? [],
+            'filters_operating_systems' => $_POST['filters_operating_systems'] ?? [],
+            'filters_browsers' => $_POST['filters_browsers'] ?? [],
         ];
 
         /* Main View */

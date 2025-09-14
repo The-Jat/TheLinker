@@ -6,6 +6,36 @@
         <input id="title" type="text" name="title" class="form-control" value="<?= settings()->main->title ?>" required="required" />
     </div>
 
+    <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), get_max_upload()) ?>">
+        <label for="logo_light"><i class="fas fa-fw fa-sm fa-sun text-muted mr-1"></i> <?= l('admin_settings.main.logo_light') ?></label>
+        <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'logo_light', 'file_key' => 'logo_light', 'already_existing_image' => settings()->main->logo_light]) ?>
+        <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('logo_light')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
+    </div>
+
+    <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), get_max_upload()) ?>">
+        <label for="logo_dark"><i class="fas fa-fw fa-sm fa-moon text-muted mr-1"></i> <?= l('admin_settings.main.logo_dark') ?></label>
+        <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'logo_dark', 'file_key' => 'logo_dark', 'already_existing_image' => settings()->main->logo_dark]) ?>
+        <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('logo_dark')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
+    </div>
+
+    <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), get_max_upload()) ?>">
+        <label for="logo_email"><i class="fas fa-fw fa-sm fa-envelope text-muted mr-1"></i> <?= l('admin_settings.main.logo_email') ?></label>
+        <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'logo_email', 'file_key' => 'logo_email', 'already_existing_image' => settings()->main->logo_email]) ?>
+        <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('logo_email')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
+    </div>
+
+    <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), get_max_upload()) ?>">
+        <label for="favicon"><i class="fas fa-fw fa-sm fa-icons text-muted mr-1"></i> <?= l('admin_settings.main.favicon') ?></label>
+        <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'favicon', 'file_key' => 'favicon', 'already_existing_image' => settings()->main->favicon, 'input_data' => 'data-crop data-aspect-ratio="1"']) ?>
+        <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('favicon')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
+    </div>
+
+    <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), get_max_upload()) ?>">
+        <label for="opengraph"><i class="fas fa-fw fa-sm fa-image text-muted mr-1"></i> <?= l('admin_settings.main.opengraph') ?></label>
+        <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'opengraph', 'file_key' => 'opengraph', 'already_existing_image' => settings()->main->opengraph, 'input_data' => 'data-crop data-aspect-ratio="1.91"']) ?>
+        <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('opengraph')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
+    </div>
+
     <div class="form-group">
         <label for="default_timezone"><i class="fas fa-fw fa-sm fa-atlas text-muted mr-1"></i> <?= l('admin_settings.main.default_timezone') ?></label>
         <select id="default_timezone" name="default_timezone" class="custom-select">
@@ -21,203 +51,14 @@
         </select>
     </div>
 
-    <div class="form-group custom-control custom-switch">
-        <input id="theme_style_change_is_enabled" name="theme_style_change_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->theme_style_change_is_enabled ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="theme_style_change_is_enabled"><i class="fas fa-fw fa-sm fa-object-ungroup text-muted mr-1"></i> <?= l('admin_settings.main.theme_style_change_is_enabled') ?></label>
-        <small class="form-text text-muted"><?= l('admin_settings.main.theme_style_change_is_enabled_help') ?></small>
-    </div>
-
     <div class="form-group">
-        <div class="d-flex flex-column flex-xl-row justify-content-between">
+        <div class="d-flex flex-wrap flex-row justify-content-between">
             <label for="default_language"><i class="fas fa-fw fa-sm fa-language text-muted mr-1"></i> <?= l('admin_settings.main.default_language') ?></label>
             <a href="<?= url('admin/languages') ?>" target="_blank" class="small mb-2"><i class="fas fa-fw fa-sm fa-plus mr-1"></i> <?= l('global.create') ?></a>
         </div>
         <select id="default_language" name="default_language" class="custom-select">
             <?php foreach(\Altum\Language::$active_languages as $language_name => $language_code) echo '<option value="' . $language_name . '" ' . (settings()->main->default_language == $language_name ? 'selected="selected"' : null) . '>' . $language_name . ' - ' . $language_code . '</option>' ?>
         </select>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="auto_language_detection_is_enabled" name="auto_language_detection_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->auto_language_detection_is_enabled ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="auto_language_detection_is_enabled"><i class="fas fa-fw fa-sm fa-language text-muted mr-1"></i> <?= l('admin_settings.main.auto_language_detection_is_enabled') ?></label>
-        <small class="form-text text-muted"><?= l('admin_settings.main.auto_language_detection_is_enabled_help') ?></small>
-    </div>
-
-    <div class="form-group">
-        <label for="openai_api_key"><i class="fas fa-fw fa-sm fa-robot text-muted mr-1"></i> <?= l('admin_settings.main.openai_api_key') ?></label>
-        <input id="openai_api_key" type="text" name="openai_api_key" class="form-control" value="<?= settings()->main->openai_api_key ?>" />
-        <small class="form-text text-muted"><?= l('admin_settings.main.openai_api_key_help') ?></small>
-    </div>
-
-    <div class="form-group">
-        <label for="openai_model"><i class="fas fa-fw fa-sm fa-robot text-muted mr-1"></i> <?= l('admin_settings.main.openai_model') ?></label>
-        <select id="openai_model" name="openai_model" class="custom-select">
-            <?php foreach(['gpt-3.5-turbo', 'gpt-4', 'gpt-4-1106-preview', 'gpt-3.5-turbo-1106'] as $model): ?>
-                <option value="<?= $model ?>" <?= settings()->main->openai_model == $model ? 'selected="selected"' : null ?>><?= $model ?></option>
-            <?php endforeach ?>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label for="logo_light"><i class="fas fa-fw fa-sm fa-sun text-muted mr-1"></i> <?= l('admin_settings.main.logo_light') ?></label>
-        <?php if(!empty(settings()->main->logo_light)): ?>
-            <div class="m-1">
-                <img src="<?= \Altum\Uploads::get_full_url('logo_light') . settings()->main->logo_light ?>" class="img-fluid" style="max-height: 2.5rem;height: 2.5rem;" />
-            </div>
-            <div class="custom-control custom-checkbox my-2">
-                <input id="logo_light_remove" name="logo_light_remove" type="checkbox" class="custom-control-input" onchange="this.checked ? document.querySelector('#logo_light').classList.add('d-none') : document.querySelector('#logo_light').classList.remove('d-none')">
-                <label class="custom-control-label" for="logo_light_remove">
-                    <span class="text-muted"><?= l('global.delete_file') ?></span>
-                </label>
-            </div>
-        <?php endif ?>
-        <input id="logo_light" type="file" name="logo_light" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('logo_light') ?>" class="form-control-file altum-file-input" />
-        <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('logo_light')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
-    </div>
-
-    <div class="form-group">
-        <label for="logo_dark"><i class="fas fa-fw fa-sm fa-moon text-muted mr-1"></i> <?= l('admin_settings.main.logo_dark') ?></label>
-        <?php if(!empty(settings()->main->logo_dark)): ?>
-            <div class="m-1">
-                <img src="<?= \Altum\Uploads::get_full_url('logo_dark') . settings()->main->logo_dark ?>" class="img-fluid" style="max-height: 2.5rem;height: 2.5rem;" />
-            </div>
-            <div class="custom-control custom-checkbox my-2">
-                <input id="logo_dark_remove" name="logo_dark_remove" type="checkbox" class="custom-control-input" onchange="this.checked ? document.querySelector('#logo_dark').classList.add('d-none') : document.querySelector('#logo_dark').classList.remove('d-none')">
-                <label class="custom-control-label" for="logo_dark_remove">
-                    <span class="text-muted"><?= l('global.delete_file') ?></span>
-                </label>
-            </div>
-        <?php endif ?>
-        <input id="logo_dark" type="file" name="logo_dark" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('logo_dark') ?>" class="form-control-file altum-file-input" />
-        <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('logo_dark')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
-    </div>
-
-    <div class="form-group">
-        <label for="logo_email"><i class="fas fa-fw fa-sm fa-envelope text-muted mr-1"></i> <?= l('admin_settings.main.logo_email') ?></label>
-        <?php if(!empty(settings()->main->logo_email)): ?>
-            <div class="m-1">
-                <img src="<?= \Altum\Uploads::get_full_url('logo_email') . settings()->main->logo_email ?>" class="img-fluid" style="max-height: 2.5rem;height: 2.5rem;" />
-            </div>
-            <div class="custom-control custom-checkbox my-2">
-                <input id="logo_email_remove" name="logo_email_remove" type="checkbox" class="custom-control-input" onchange="this.checked ? document.querySelector('#logo_email').classList.add('d-none') : document.querySelector('#logo_email').classList.remove('d-none')">
-                <label class="custom-control-label" for="logo_email_remove">
-                    <span class="text-muted"><?= l('global.delete_file') ?></span>
-                </label>
-            </div>
-        <?php endif ?>
-        <input id="logo_email" type="file" name="logo_email" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('logo_email') ?>" class="form-control-file altum-file-input" />
-        <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('logo_email')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
-    </div>
-
-    <div class="form-group">
-        <label for="favicon"><i class="fas fa-fw fa-sm fa-icons text-muted mr-1"></i> <?= l('admin_settings.main.favicon') ?></label>
-        <?php if(!empty(settings()->main->favicon)): ?>
-            <div class="m-1">
-                <img src="<?= \Altum\Uploads::get_full_url('favicon') . settings()->main->favicon ?>" class="img-fluid" style="max-height: 32px;height: 32px;" />
-            </div>
-            <div class="custom-control custom-checkbox my-2">
-                <input id="favicon_remove" name="favicon_remove" type="checkbox" class="custom-control-input" onchange="this.checked ? document.querySelector('#favicon').classList.add('d-none') : document.querySelector('#favicon').classList.remove('d-none')">
-                <label class="custom-control-label" for="favicon_remove">
-                    <span class="text-muted"><?= l('global.delete_file') ?></span>
-                </label>
-            </div>
-        <?php endif ?>
-        <input id="favicon" type="file" name="favicon" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('favicon') ?>" class="form-control-file altum-file-input" />
-        <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('favicon')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
-    </div>
-
-    <div class="form-group">
-        <label for="opengraph"><i class="fas fa-fw fa-sm fa-image text-muted mr-1"></i> <?= l('admin_settings.main.opengraph') ?></label>
-        <?php if(!empty(settings()->main->opengraph)): ?>
-            <div class="m-1">
-                <img src="<?= \Altum\Uploads::get_full_url('opengraph') . settings()->main->opengraph ?>" class="img-fluid" style="max-height: 5rem;height: 5rem;" />
-            </div>
-            <div class="custom-control custom-checkbox my-2">
-                <input id="opengraph_remove" name="opengraph_remove" type="checkbox" class="custom-control-input" onchange="this.checked ? document.querySelector('#opengraph').classList.add('d-none') : document.querySelector('#opengraph').classList.remove('d-none')">
-                <label class="custom-control-label" for="opengraph_remove">
-                    <span class="text-muted"><?= l('global.delete_file') ?></span>
-                </label>
-            </div>
-        <?php endif ?>
-        <input id="opengraph" type="file" name="opengraph" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('opengraph') ?>" class="form-control-file altum-file-input" />
-        <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('opengraph')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="se_indexing" name="se_indexing" type="checkbox" class="custom-control-input" <?= settings()->main->se_indexing ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="se_indexing"><i class="fab fa-fw fa-sm fa-searchengin text-muted mr-1"></i> <?= l('admin_settings.main.se_indexing') ?></label>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="display_index_plans" name="display_index_plans" type="checkbox" class="custom-control-input" <?= settings()->main->display_index_plans ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="display_index_plans"><i class="fas fa-fw fa-sm fa-box-open text-muted mr-1"></i> <?= l('admin_settings.main.display_index_plans') ?></label>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="display_index_testimonials" name="display_index_testimonials" type="checkbox" class="custom-control-input" <?= settings()->main->display_index_testimonials ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="display_index_testimonials"><i class="fas fa-fw fa-sm fa-users text-muted mr-1"></i> <?= l('admin_settings.main.display_index_testimonials') ?></label>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="display_index_faq" name="display_index_faq" type="checkbox" class="custom-control-input" <?= settings()->main->display_index_faq ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="display_index_faq"><i class="fas fa-fw fa-sm fa-circle-question text-muted mr-1"></i> <?= l('admin_settings.main.display_index_faq') ?></label>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="display_index_latest_blog_posts" name="display_index_latest_blog_posts" type="checkbox" class="custom-control-input" <?= settings()->main->display_index_latest_blog_posts ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="display_index_latest_blog_posts"><i class="fas fa-fw fa-sm fa-rss text-muted mr-1"></i> <?= l('admin_settings.main.display_index_latest_blog_posts') ?></label>
-    </div>
-
-    <div class="form-group">
-        <label for="index_url"><i class="fas fa-fw fa-sm fa-plane-arrival text-muted mr-1"></i> <?= l('admin_settings.main.index_url') ?></label>
-        <input id="index_url" type="url" name="index_url" class="form-control" value="<?= settings()->main->index_url ?>" />
-        <small class="form-text text-muted"><?= l('admin_settings.main.index_url_help') ?></small>
-    </div>
-
-    <div class="form-group">
-        <label for="not_found_url"><i class="fas fa-fw fa-sm fa-compass text-muted mr-1"></i> <?= l('admin_settings.main.not_found_url') ?></label>
-        <input id="not_found_url" type="url" name="not_found_url" class="form-control" value="<?= settings()->main->not_found_url ?>" />
-        <small class="form-text text-muted"><?= l('admin_settings.main.not_found_url_help') ?></small>
-    </div>
-
-    <div class="form-group">
-        <label for="terms_and_conditions_url"><i class="fas fa-fw fa-sm fa-file-word text-muted mr-1"></i> <?= l('admin_settings.main.terms_and_conditions_url') ?></label>
-        <input id="terms_and_conditions_url" type="text" name="terms_and_conditions_url" class="form-control" value="<?= settings()->main->terms_and_conditions_url ?>" />
-        <small class="form-text text-muted"><?= l('admin_settings.main.terms_and_conditions_url_help') ?></small>
-    </div>
-
-    <div class="form-group">
-        <label for="privacy_policy_url"><i class="fas fa-fw fa-sm fa-file-word text-muted mr-1"></i> <?= l('admin_settings.main.privacy_policy_url') ?></label>
-        <input id="privacy_policy_url" type="text" name="privacy_policy_url" class="form-control" value="<?= settings()->main->privacy_policy_url ?>" />
-        <small class="form-text text-muted"><?= l('admin_settings.main.privacy_policy_url_help') ?></small>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="force_https_is_enabled" name="force_https_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->force_https_is_enabled ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="force_https_is_enabled"><i class="fas fa-fw fa-sm fa-lock text-muted mr-1"></i> <?= l('admin_settings.main.force_https_is_enabled') ?></label>
-        <small class="form-text text-muted"><?= sprintf(l('admin_settings.main.force_https_is_enabled_help'), SITE_URL) ?></small>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="api_is_enabled" name="api_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->api_is_enabled ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="api_is_enabled"><i class="fas fa-fw fa-sm fa-code text-muted mr-1"></i> <?= l('admin_settings.main.api_is_enabled') ?></label>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="broadcasts_statistics_is_enabled" name="broadcasts_statistics_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->broadcasts_statistics_is_enabled ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="broadcasts_statistics_is_enabled"><i class="fas fa-fw fa-sm fa-star text-muted mr-1"></i> <?= l('admin_settings.main.broadcasts_statistics_is_enabled') ?></label>
-        <small class="form-text text-muted"><?= l('admin_settings.main.broadcasts_statistics_is_enabled_help') ?></small>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="breadcrumbs_is_enabled" name="breadcrumbs_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->breadcrumbs_is_enabled ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="breadcrumbs_is_enabled"><i class="fas fa-fw fa-sm fa-shoe-prints text-muted mr-1"></i> <?= l('admin_settings.main.breadcrumbs_is_enabled') ?></label>
-        <small class="form-text text-muted"><?= l('admin_settings.main.breadcrumbs_is_enabled_help') ?></small>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="display_pagination_when_no_pages" name="display_pagination_when_no_pages" type="checkbox" class="custom-control-input" <?= settings()->main->display_pagination_when_no_pages ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="display_pagination_when_no_pages"><i class="fas fa-fw fa-sm fa-circle text-muted mr-1"></i> <?= l('admin_settings.main.display_pagination_when_no_pages') ?></label>
     </div>
 
     <div class="form-group">
@@ -237,6 +78,227 @@
         </select>
     </div>
 
+    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#app_settings_container" aria-expanded="false" aria-controls="app_settings_container">
+        <i class="fas fa-fw fa-sliders-h fa-sm mr-1"></i> <?= l('admin_settings.main.app_settings') ?>
+    </button>
+
+    <div class="collapse" id="app_settings_container">
+        <div class="form-group custom-control custom-switch">
+            <input id="admin_spotlight_is_enabled" name="admin_spotlight_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->admin_spotlight_is_enabled ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="admin_spotlight_is_enabled"><i class="fas fa-fw fa-sm fa-search text-muted mr-1"></i> <?= l('admin_settings.main.admin_spotlight_is_enabled') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.main.admin_spotlight_is_enabled_help') ?></small>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="user_spotlight_is_enabled" name="user_spotlight_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->user_spotlight_is_enabled ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="user_spotlight_is_enabled"><i class="fas fa-fw fa-sm fa-search text-muted mr-1"></i> <?= l('admin_settings.main.user_spotlight_is_enabled') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.main.user_spotlight_is_enabled_help') ?></small>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="white_labeling_is_enabled" name="white_labeling_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->white_labeling_is_enabled ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="white_labeling_is_enabled"><i class="fas fa-fw fa-sm fa-cube text-muted mr-1"></i> <?= l('admin_settings.main.white_labeling_is_enabled') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.main.white_labeling_is_enabled_help') ?></small>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="theme_style_change_is_enabled" name="theme_style_change_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->theme_style_change_is_enabled ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="theme_style_change_is_enabled"><i class="fas fa-fw fa-sm fa-object-ungroup text-muted mr-1"></i> <?= l('admin_settings.main.theme_style_change_is_enabled') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.main.theme_style_change_is_enabled_help') ?></small>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="auto_language_detection_is_enabled" name="auto_language_detection_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->auto_language_detection_is_enabled ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="auto_language_detection_is_enabled"><i class="fas fa-fw fa-sm fa-language text-muted mr-1"></i> <?= l('admin_settings.main.auto_language_detection_is_enabled') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.main.auto_language_detection_is_enabled_help') ?></small>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="api_is_enabled" name="api_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->api_is_enabled ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="api_is_enabled"><i class="fas fa-fw fa-sm fa-code text-muted mr-1"></i> <?= l('admin_settings.main.api_is_enabled') ?></label>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="broadcasts_statistics_is_enabled" name="broadcasts_statistics_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->broadcasts_statistics_is_enabled ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="broadcasts_statistics_is_enabled"><i class="fas fa-fw fa-sm fa-star text-muted mr-1"></i> <?= l('admin_settings.main.broadcasts_statistics_is_enabled') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.main.broadcasts_statistics_is_enabled_help') ?></small>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="breadcrumbs_is_enabled" name="breadcrumbs_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->breadcrumbs_is_enabled ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="breadcrumbs_is_enabled"><i class="fas fa-fw fa-sm fa-shoe-prints text-muted mr-1"></i> <?= l('admin_settings.main.breadcrumbs_is_enabled') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.main.breadcrumbs_is_enabled_help') ?></small>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="display_pagination_when_no_pages" name="display_pagination_when_no_pages" type="checkbox" class="custom-control-input" <?= settings()->main->display_pagination_when_no_pages ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="display_pagination_when_no_pages"><i class="fas fa-fw fa-sm fa-circle text-muted mr-1"></i> <?= l('admin_settings.main.display_pagination_when_no_pages') ?></label>
+            <small class="form-text text-muted"><?= sprintf(l('admin_settings.main.display_pagination_when_no_pages_help'), SITE_URL) ?></small>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="se_indexing" name="se_indexing" type="checkbox" class="custom-control-input" <?= settings()->main->se_indexing ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="se_indexing"><i class="fab fa-fw fa-sm fa-searchengin text-muted mr-1"></i> <?= l('admin_settings.main.se_indexing') ?></label>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="ai_scraping_is_allowed" name="ai_scraping_is_allowed" type="checkbox" class="custom-control-input" <?= settings()->main->ai_scraping_is_allowed ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="ai_scraping_is_allowed"><i class="fas fa-fw fa-sm fa-spider text-muted mr-1"></i> <?= l('admin_settings.main.ai_scraping_is_allowed') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.main.ai_scraping_is_allowed_help') ?></small>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="force_https_is_enabled" name="force_https_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->force_https_is_enabled ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="force_https_is_enabled"><i class="fas fa-fw fa-sm fa-lock text-muted mr-1"></i> <?= l('admin_settings.main.force_https_is_enabled') ?></label>
+            <small class="form-text text-muted"><?= sprintf(l('admin_settings.main.force_https_is_enabled_help'), SITE_URL) ?></small>
+        </div>
+
+        <div class="form-group">
+            <label for="iframe_embedding"><i class="fas fa-fw fa-sm fa-window-maximize text-muted mr-1"></i> <?= l('admin_settings.main.iframe_embedding') ?></label>
+            <input id="iframe_embedding" type="text" name="iframe_embedding" class="form-control" value="<?= settings()->main->iframe_embedding ?? 'all' ?>" placeholder="<?= l('global.url_placeholder') ?>" />
+            <small class="form-text text-muted"><?= l('admin_settings.main.iframe_embedding_help') ?></small>
+        </div>
+
+        <div class="form-group">
+            <label for="title_separator"><i class="fas fa-fw fa-sm fa-quote-left text-muted mr-1"></i> <?= l('admin_settings.main.title_separator') ?></label>
+            <input id="title_separator" type="text" name="title_separator" class="form-control" value="<?= settings()->main->title_separator ?? '-' ?>" required="required" />
+        </div>
+    </div>
+
+    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#index_settings_container" aria-expanded="false" aria-controls="index_settings_container">
+        <i class="fas fa-fw fa-plane-arrival fa-sm mr-1"></i> <?= l('admin_settings.main.index_settings') ?>
+    </button>
+
+    <div class="collapse" id="index_settings_container">
+        <div class="form-group custom-control custom-switch">
+            <input id="display_index_plans" name="display_index_plans" type="checkbox" class="custom-control-input" <?= settings()->main->display_index_plans ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="display_index_plans"><i class="fas fa-fw fa-sm fa-box-open text-muted mr-1"></i> <?= l('admin_settings.main.display_index_plans') ?></label>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="display_index_testimonials" name="display_index_testimonials" type="checkbox" class="custom-control-input" <?= settings()->main->display_index_testimonials ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="display_index_testimonials"><i class="fas fa-fw fa-sm fa-users text-muted mr-1"></i> <?= l('admin_settings.main.display_index_testimonials') ?></label>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="display_index_faq" name="display_index_faq" type="checkbox" class="custom-control-input" <?= settings()->main->display_index_faq ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="display_index_faq"><i class="fas fa-fw fa-sm fa-circle-question text-muted mr-1"></i> <?= l('admin_settings.main.display_index_faq') ?></label>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="display_index_latest_blog_posts" name="display_index_latest_blog_posts" type="checkbox" class="custom-control-input" <?= settings()->main->display_index_latest_blog_posts ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="display_index_latest_blog_posts"><i class="fas fa-fw fa-sm fa-rss text-muted mr-1"></i> <?= l('admin_settings.main.display_index_latest_blog_posts') ?></label>
+        </div>
+
+        <div class="form-group">
+            <label for="index_url"><i class="fas fa-fw fa-sm fa-plane-arrival text-muted mr-1"></i> <?= l('admin_settings.main.index_url') ?></label>
+            <input id="index_url" type="url" name="index_url" class="form-control" value="<?= settings()->main->index_url ?>" placeholder="<?= l('global.url_placeholder') ?>" />
+            <small class="form-text text-muted"><?= l('admin_settings.main.index_url_help') ?></small>
+        </div>
+    </div>
+
+    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#maintenance_settings_container" aria-expanded="false" aria-controls="maintenance_settings_container">
+        <i class="fas fa-fw fa-paint-roller fa-sm mr-1"></i> <?= l('admin_settings.main.maintenance_settings') ?>
+    </button>
+
+    <div class="collapse" id="maintenance_settings_container">
+        <div class="form-group custom-control custom-switch">
+            <input id="maintenance_is_enabled" name="maintenance_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->maintenance_is_enabled ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="maintenance_is_enabled"><?= l('admin_settings.main.maintenance_is_enabled') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.main.maintenance_is_enabled_help') ?></small>
+        </div>
+
+        <div class="form-group">
+            <label for="maintenance_title"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('admin_settings.main.maintenance_title') ?></label>
+            <input id="maintenance_title" type="text" name="maintenance_title" class="form-control" value="<?= settings()->main->maintenance_title ?>" />
+        </div>
+
+        <div class="form-group">
+            <label for="maintenance_description"><i class="fas fa-fw fa-sm fa-pen text-muted mr-1"></i> <?= l('admin_settings.main.maintenance_description') ?></label>
+            <textarea id="maintenance_description" name="maintenance_description" class="form-control"><?= settings()->main->maintenance_description ?></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="maintenance_button_text"><i class="fas fa-fw fa-sm fa-play-circle text-muted mr-1"></i> <?= l('admin_settings.main.maintenance_button_text') ?></label>
+            <input id="maintenance_button_text" type="text" name="maintenance_button_text" class="form-control" value="<?= settings()->main->maintenance_button_text ?>" />
+        </div>
+
+        <div class="form-group">
+            <label for="maintenance_button_url"><i class="fas fa-fw fa-sm fa-link text-muted mr-1"></i> <?= l('admin_settings.main.maintenance_button_url') ?></label>
+            <input id="maintenance_button_url" type="url" name="maintenance_button_url" class="form-control" value="<?= settings()->main->maintenance_button_url ?>" placeholder="<?= l('global.url_placeholder') ?>" />
+        </div>
+    </div>
+
+    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#other_settings_container" aria-expanded="false" aria-controls="other_settings_container">
+        <i class="fas fa-fw fa-tasks fa-sm mr-1"></i> <?= l('admin_settings.main.other_settings') ?>
+    </button>
+
+    <div class="collapse" id="other_settings_container">
+        <div class="form-group">
+            <label for="not_found_url"><i class="fas fa-fw fa-sm fa-compass text-muted mr-1"></i> <?= l('admin_settings.main.not_found_url') ?></label>
+            <input id="not_found_url" type="url" name="not_found_url" class="form-control" value="<?= settings()->main->not_found_url ?>" placeholder="<?= l('global.url_placeholder') ?>" />
+            <small class="form-text text-muted"><?= l('admin_settings.main.not_found_url_help') ?></small>
+        </div>
+
+        <div class="form-group">
+            <label for="terms_and_conditions_url"><i class="fas fa-fw fa-sm fa-file-word text-muted mr-1"></i> <?= l('admin_settings.main.terms_and_conditions_url') ?></label>
+            <input id="terms_and_conditions_url" type="text" name="terms_and_conditions_url" class="form-control" value="<?= settings()->main->terms_and_conditions_url ?>" placeholder="<?= l('global.url_placeholder') ?>" />
+            <small class="form-text text-muted"><?= l('admin_settings.main.terms_and_conditions_url_help') ?></small>
+        </div>
+
+        <div class="form-group">
+            <label for="privacy_policy_url"><i class="fas fa-fw fa-sm fa-file-word text-muted mr-1"></i> <?= l('admin_settings.main.privacy_policy_url') ?></label>
+            <input id="privacy_policy_url" type="text" name="privacy_policy_url" class="form-control" value="<?= settings()->main->privacy_policy_url ?>" placeholder="<?= l('global.url_placeholder') ?>" />
+            <small class="form-text text-muted"><?= l('admin_settings.main.privacy_policy_url_help') ?></small>
+        </div>
+
+        <div class="form-group">
+            <label for="chart_cache"><i class="fas fa-fw fa-sm fa-chart-bar text-muted mr-1"></i> <?= l('admin_settings.main.chart_cache') ?></label>
+            <div class="input-group">
+                <input id="chart_cache" type="number" min="0" max="24" name="chart_cache" class="form-control" value="<?= settings()->main->chart_cache ?? 12 ?>" />
+                <div class="input-group-append">
+                    <span class="input-group-text"><?= l('global.date.hours') ?></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="chart_days"><i class="fas fa-fw fa-sm fa-stopwatch text-muted mr-1"></i> <?= l('admin_settings.main.chart_days') ?></label>
+            <div class="input-group">
+                <input id="chart_days" type="number" min="7" max="90" name="chart_days" class="form-control" value="<?= settings()->main->chart_days ?? 30 ?>" />
+                <div class="input-group-append">
+                    <span class="input-group-text"><?= l('global.date.days') ?></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="avatar_size_limit"><?= l('admin_settings.main.avatar_size_limit') ?></label>
+            <div class="input-group">
+                <input id="avatar_size_limit" type="number" min="0" max="<?= get_max_upload() ?>" step="any" name="avatar_size_limit" class="form-control" value="<?= settings()->main->avatar_size_limit ?>" />
+                <div class="input-group-append">
+                    <span class="input-group-text"><?= l('global.mb') ?></span>
+                </div>
+            </div>
+            <small class="form-text text-muted"><?= l('global.accessibility.admin_file_size_limit_help') ?></small>
+        </div>
+
+        <div class="form-group">
+            <label for="openai_api_key"><i class="fas fa-fw fa-sm fa-robot text-muted mr-1"></i> <?= l('admin_settings.main.openai_api_key') ?></label>
+            <input id="openai_api_key" type="text" name="openai_api_key" class="form-control" value="<?= settings()->main->openai_api_key ?>" />
+            <small class="form-text text-muted"><?= l('admin_settings.main.openai_api_key_help') ?></small>
+        </div>
+
+        <div class="form-group">
+            <label for="openai_model"><i class="fas fa-fw fa-sm fa-robot text-muted mr-1"></i> <?= l('admin_settings.main.openai_model') ?></label>
+            <select id="openai_model" name="openai_model" class="custom-select">
+                <?php foreach(['gpt-5-main','gpt-5-main-mini','gpt-5-nano','gpt-4o','gpt-4','gpt-4.1','gpt-4.1-mini','gpt-3.5-turbo'] as $model): ?>
+                    <option value="<?= $model ?>" <?= settings()->main->openai_model == $model ? 'selected="selected"' : null ?>><?= $model ?></option>
+                <?php endforeach ?>
+            </select>
+        </div>
+    </div>
+
     <div class="form-group">
         <label for="sitemap_url"><i class="fas fa-fw fa-sm fa-sitemap text-muted mr-1"></i> <?= l('admin_settings.main.sitemap_url') ?></label>
         <input id="sitemap_url" type="text" name="sitemap_url" class="form-control" value="<?= SITE_URL . 'sitemap' ?>" onclick="this.select();" readonly="readonly" />
@@ -244,3 +306,36 @@
 </div>
 
 <button type="submit" name="submit" class="btn btn-lg btn-block btn-primary mt-4"><?= l('global.update') ?></button>
+
+<?php include_view(THEME_PATH . 'views/partials/js_cropper.php') ?>
+
+<script>
+    document.querySelectorAll('form input, form select, form textarea').forEach(field => {
+        field.addEventListener('invalid', () => {
+            const invalid_field = field;
+
+            /* find the nearest collapsed parent */
+            const collapse_container = invalid_field.closest('.collapse');
+
+            if (!collapse_container) {
+                return;
+            }
+
+            /* if collapse already open, scroll immediately */
+            if ($(collapse_container).hasClass('show')) {
+                invalid_field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => invalid_field.focus(), 100);
+                return;
+            }
+
+            /* wait for the collapse animation to finish */
+            $(collapse_container).one('shown.bs.collapse', () => {
+                invalid_field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => invalid_field.focus(), 100);
+            });
+
+            /* trigger the open animation */
+            $(collapse_container).collapse('show');
+        });
+    });
+</script>

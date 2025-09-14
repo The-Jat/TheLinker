@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,10 +19,16 @@ namespace Altum\Controllers;
 use Altum\Response;
 use Altum\Traits\Apiable;
 
+defined('ALTUMCODE') || die();
+
 class ApiSignatures extends Controller {
     use Apiable;
 
     public function index() {
+
+        if(!\Altum\Plugin::is_active('email-signatures') || !settings()->signatures->is_enabled) {
+            redirect('not-found');
+        }
 
         $this->verify_request();
 
@@ -73,6 +86,7 @@ class ApiSignatures extends Controller {
             /* Prepare the data */
             $row = [
                 'id' => (int) $row->signature_id,
+                'user_id' => (int) $row->user_id,
                 'project_id' => (int) $row->project_id,
                 'name' => $row->name,
                 'template' => $row->template,
@@ -119,6 +133,7 @@ class ApiSignatures extends Controller {
         /* Prepare the data */
         $data = [
             'id' => (int) $signature->signature_id,
+            'user_id' => (int) $signature->user_id,
             'project_id' => (int) $signature->project_id,
             'name' => $signature->name,
             'template' => $signature->template,

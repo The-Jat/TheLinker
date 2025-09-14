@@ -2,30 +2,43 @@
 
 <section class="admin-sidebar">
     <div class="admin-sidebar-title">
-        <a
-                href="<?= url() ?>"
+        <div
                 class="h3 m-0 text-decoration-none text-truncate"
                 data-logo
-                data-light-value="<?= settings()->main->logo_light != '' ? \Altum\Uploads::get_full_url('logo_light') . settings()->main->logo_light : settings()->main->title ?>"
+                data-light-value="<?= settings()->main->logo_light != '' ? settings()->main->logo_light_full_url : settings()->main->title ?>"
                 data-light-class="<?= settings()->main->logo_light != '' ? 'img-fluid admin-navbar-logo' : 'admin-navbar-brand text-truncate' ?>"
                 data-light-tag="<?= settings()->main->logo_light != '' ? 'img' : 'div' ?>"
-                data-dark-value="<?= settings()->main->logo_dark != '' ? \Altum\Uploads::get_full_url('logo_dark') . settings()->main->logo_dark : settings()->main->title ?>"
+                data-dark-value="<?= settings()->main->logo_dark != '' ? settings()->main->logo_dark_full_url : settings()->main->title ?>"
                 data-dark-class="<?= settings()->main->logo_dark != '' ? 'img-fluid admin-navbar-logo' : 'admin-navbar-brand text-truncate' ?>"
                 data-dark-tag="<?= settings()->main->logo_dark != '' ? 'img' : 'div' ?>"
+
+                id="sidebar_title"
+                tabindex="0"
+                data-toggle="tooltip"
+                data-placement="right"
+                data-html="true"
+                data-trigger="hover"
+                data-delay='{ "hide": 5500 }'
+                title="
+            <div class='d-flex text-left flex-column'>
+                <div class='mb-2'><a href='<?= url() ?>' class='text-gray-50 text-decoration-none'>🌐 &nbsp; <?= l('index.menu') ?></a></div>
+                <div><a href='<?= url('dashboard') ?>' class='text-gray-50 text-decoration-none'>🖥️ &nbsp; <?= l('dashboard.menu') ?></a></div>
+            </div>
+            "
         >
             <?php if(settings()->main->{'logo_' . \Altum\ThemeStyle::get()} != ''): ?>
-                <img src="<?= \Altum\Uploads::get_full_url('logo_' . \Altum\ThemeStyle::get()) . settings()->main->{'logo_' . \Altum\ThemeStyle::get()} ?>" class="img-fluid admin-navbar-logo" alt="<?= l('global.accessibility.logo_alt') ?>" />
+                <img src="<?= settings()->main->{'logo_' . \Altum\ThemeStyle::get() . '_full_url'} ?>" class="img-fluid admin-navbar-logo" alt="<?= l('global.accessibility.logo_alt') ?>" />
             <?php else: ?>
                 <div class="admin-navbar-brand text-truncate"><?= settings()->main->title ?></div>
             <?php endif ?>
-        </a>
+        </div>
     </div>
 
     <div class="admin-sidebar-links-wrapper">
         <ul class="admin-sidebar-links">
             <li class="<?= \Altum\Router::$controller == 'AdminIndex' ? 'active' : null ?>">
                 <a class="nav-link text-truncate" href="<?= url('admin/') ?>">
-                    <i class="fas fa-fw fa-sm fa-tv mr-2"></i> <?= l('admin_index.menu') ?>
+                    <i class="fas fa-fw fa-sm fa-fingerprint mr-2"></i> <?= l('admin_index.menu') ?>
                 </a>
             </li>
 
@@ -173,13 +186,14 @@
                         <i class="fas fa-fw fa-sm fa-user-shield mr-2"></i> <?= l('admin_teams.menu') ?>
                     </a>
                 </li>
+
+                <li class="<?= \Altum\Router::$controller == 'AdminTeamMembers' ? 'active' : null ?>">
+                    <a class="nav-link text-truncate" href="<?= url('admin/team-members') ?>">
+                        <i class="fas fa-fw fa-sm fa-user-tag mr-2"></i> <?= l('admin_team_members.menu') ?>
+                    </a>
+                </li>
             <?php endif ?>
 
-            <li class="<?= in_array(\Altum\Router::$controller, ['AdminUsersLogs']) ? 'active' : null ?>">
-                <a class="nav-link text-truncate" href="<?= url('admin/users-logs') ?>">
-                    <i class="fas fa-fw fa-sm fa-scroll mr-2"></i> <?= l('admin_users_logs.menu') ?>
-                </a>
-            </li>
 
             <li class="<?= in_array(\Altum\Router::$controller, ['AdminDomains', 'AdminDomainCreate', 'AdminDomainUpdate']) ? 'active' : null ?>">
                 <a class="nav-link text-truncate" href="<?= url('admin/domains') ?>">
@@ -187,9 +201,21 @@
                 </a>
             </li>
 
+            <li class="<?= in_array(\Altum\Router::$controller, ['AdminNotificationHandlers']) ? 'active' : null ?>">
+                <a class="nav-link text-truncate" href="<?= url('admin/notification-handlers') ?>">
+                    <i class="fas fa-fw fa-sm fa-bell mr-2"></i> <?= l('admin_notification_handlers.menu') ?>
+                </a>
+            </li>
+
             <li class="<?= in_array(\Altum\Router::$controller, ['AdminLinks']) ? 'active' : null ?>">
                 <a class="nav-link text-truncate" href="<?= url('admin/links') ?>">
                     <i class="fas fa-fw fa-sm fa-link mr-2"></i> <?= l('admin_links.menu') ?>
+                </a>
+            </li>
+
+            <li class="<?= in_array(\Altum\Router::$controller, ['AdminBiolinksBlocks']) ? 'active' : null ?>">
+                <a class="nav-link text-truncate" href="<?= url('admin/biolinks-blocks') ?>">
+                    <i class="fas fa-fw fa-sm fa-table-cells-large mr-2"></i> <?= l('admin_biolinks_blocks.menu') ?>
                 </a>
             </li>
 
@@ -233,6 +259,26 @@
                 <li class="<?= in_array(\Altum\Router::$controller, ['AdminSignatures']) ? 'active' : null ?>">
                     <a class="nav-link text-truncate" href="<?= url('admin/signatures') ?>">
                         <i class="fas fa-fw fa-sm fa-file-signature mr-2"></i> <?= l('admin_signatures.menu') ?>
+                    </a>
+                </li>
+            <?php endif ?>
+
+            <li class="<?= in_array(\Altum\Router::$controller, ['AdminData']) ? 'active' : null ?>">
+                <a class="nav-link text-truncate" href="<?= url('admin/data') ?>">
+                    <i class="fas fa-fw fa-sm fa-database mr-2"></i> <?= l('admin_data.menu') ?>
+                </a>
+            </li>
+
+            <?php if(\Altum\Plugin::is_active('payment-blocks')): ?>
+                <li class="<?= in_array(\Altum\Router::$controller, ['AdminPaymentProcessors']) ? 'active' : null ?>">
+                    <a class="nav-link text-truncate" href="<?= url('admin/payment-processors') ?>">
+                        <i class="fas fa-fw fa-sm fa-credit-card mr-2"></i> <?= l('admin_payment_processors.menu') ?>
+                    </a>
+                </li>
+
+                <li class="<?= in_array(\Altum\Router::$controller, ['AdminGuestsPayments']) ? 'active' : null ?>">
+                    <a class="nav-link text-truncate" href="<?= url('admin/guests-payments') ?>">
+                        <i class="fas fa-fw fa-sm fa-coins mr-2"></i> <?= l('admin_guests_payments.menu') ?>
                     </a>
                 </li>
             <?php endif ?>
@@ -290,20 +336,40 @@
                     </a>
                 </li>
             <?php endif ?>
+
+            <div class="divider-wrapper">
+                <div class="divider"></div>
+            </div>
+
+            <li class="<?= in_array(\Altum\Router::$controller, ['AdminUsersLogs']) ? 'active' : null ?>">
+                <a class="nav-link text-truncate" href="<?= url('admin/users-logs') ?>">
+                    <i class="fas fa-fw fa-sm fa-scroll mr-2"></i> <?= l('admin_users_logs.menu') ?>
+                </a>
+            </li>
+
+            <?php if(\Altum\Plugin::is_active('image-optimizer')): ?>
+                <li class="<?= in_array(\Altum\Router::$controller, ['AdminImageOptimizer']) ? 'active' : null ?>">
+                    <a class="nav-link text-truncate" href="<?= url('admin/image-optimizer') ?>">
+                        <i class="fas fa-fw fa-sm fa-image mr-2"></i> <?= l('admin_image_optimizer.menu') ?>
+                    </a>
+                </li>
+            <?php endif ?>
+
+            <?php if(\Altum\Plugin::is_active('dynamic-og-images')): ?>
+                <li class="<?= in_array(\Altum\Router::$controller, ['AdminDynamicOgImages']) ? 'active' : null ?>">
+                    <a class="nav-link text-truncate" href="<?= url('admin/dynamic-og-images') ?>">
+                        <i class="fas fa-fw fa-sm fa-x-ray mr-2"></i> <?= l('admin_dynamic_og_images.menu') ?>
+                    </a>
+                </li>
+            <?php endif ?>
         </ul>
 
         <hr />
 
         <ul class="admin-sidebar-links">
-            <li>
-                <a class="nav-link text-truncate" href="<?= url('dashboard') ?>">
-                    <i class="fas fa-fw fa-sm fa-home mr-2"></i> <?= l('dashboard.menu') ?>
-                </a>
-            </li>
-
             <li class="dropdown">
                 <a class="nav-link text-truncate dropdown-toggle dropdown-toggle-simple" data-toggle="dropdown" href="#" aria-haspopup="true" aria-expanded="false">
-                    <img src="<?= get_gravatar($this->user->email) ?>" class="admin-avatar mr-2" loading="lazy" />
+                    <img src="<?= get_user_avatar($this->user->avatar, $this->user->email) ?>" class="admin-avatar mr-2" loading="lazy" />
                     <?= $this->user->name?>
                 </a>
                 <div class="dropdown-menu dropdown-menu-right">
@@ -348,6 +414,8 @@
 
 <?php ob_start() ?>
 <script>
-    document.querySelector('ul[class="admin-sidebar-links"] li.active').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    'use strict';
+    
+    document.querySelector('ul[class="admin-sidebar-links"] li.active') && document.querySelector('ul[class="admin-sidebar-links"] li.active').scrollIntoView({ behavior: 'smooth', block: 'center' });
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

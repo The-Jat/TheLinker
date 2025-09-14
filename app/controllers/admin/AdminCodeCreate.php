@@ -1,25 +1,36 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class AdminCodeCreate extends Controller {
 
     public function index() {
+
+        set_time_limit(0);
 
         /* Requested plan details */
         $plans = (new \Altum\Models\Plan())->get_plans();
 
         if(!empty($_POST)) {
-            /* Filter some the variables */
+            /* Filter some of the variables */
             $_POST['name'] = input_clean($_POST['name'], 64);
             $_POST['type'] = in_array($_POST['type'], ['discount', 'redeemable']) ? input_clean($_POST['type']) : 'discount';
             $_POST['days'] = $_POST['type'] == 'redeemable' ? (int) $_POST['days'] : null;
@@ -38,30 +49,32 @@ class AdminCodeCreate extends Controller {
 
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
+                $datetime = get_date();
+                $plans_ids = json_encode($_POST['plans_ids']);
+
                 /* Bulk generator */
                 if($_POST['is_bulk']) {
-                    $codes = [];
+                    $start_time = microtime(true);
 
-                    while(count($codes) < $_POST['amount']) {
+                    $codes_batch = [];
+
+                    for($i = 0; $i < $_POST['amount']; $i++) {
                         $code = $_POST['prefix'] . mb_strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
-                        $codes[$code] = null;
-                    }
 
-                    $codes = array_keys($codes);
-
-                    foreach($codes as $code) {
-                        /* Database query */
-                        db()->insert('codes', [
+                        $codes_batch[] = [
                             'name' => $code,
                             'type' => $_POST['type'],
                             'days' => $_POST['days'],
                             'code' => $code,
                             'discount' => $_POST['discount'],
                             'quantity' => $_POST['quantity'],
-                            'plans_ids' => json_encode($_POST['plans_ids']),
-                            'datetime' => \Altum\Date::$date,
-                        ]);
+                            'plans_ids' => $plans_ids,
+                            'datetime' => $datetime,
+                        ];
                     }
+
+                    /* Insert data */
+                    db()->insertInChunks('codes', $codes_batch);
                 }
 
                 /* Normal database insertion */
@@ -74,8 +87,8 @@ class AdminCodeCreate extends Controller {
                         'code' => $_POST['code'],
                         'discount' => $_POST['discount'],
                         'quantity' => $_POST['quantity'],
-                        'plans_ids' => json_encode($_POST['plans_ids']),
-                        'datetime' => \Altum\Date::$date,
+                        'plans_ids' => $plans_ids,
+                        'datetime' => $datetime,
                     ]);
                 }
 
@@ -88,6 +101,7 @@ class AdminCodeCreate extends Controller {
 
         $values = [
             'type' => $_POST['type'] ?? 'discount',
+            'plans_ids' => $_POST['plans_ids'] ?? array_keys($plans),
         ];
 
         /* Main View */

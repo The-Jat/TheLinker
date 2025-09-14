@@ -1,48 +1,60 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
-namespace Altum\controllers;
+namespace Altum\Controllers;
 
 use Altum\Alerts;
+
+defined('ALTUMCODE') || die();
 
 class SplashPages extends Controller {
 
     public function index() {
 
-        \Altum\Authentication::guard();
-
         if(!settings()->links->splash_page_is_enabled) {
-            redirect();
+            redirect('not-found');
         }
 
+        \Altum\Authentication::guard();
+
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['is_enabled'], ['name'], ['last_datetime', 'name', 'datetime']));
-        $filters->set_default_order_by('splash_page_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
+        $filters = (new \Altum\Filters([], ['name'], ['splash_page_id', 'last_datetime', 'name', 'datetime']));
+        $filters->set_default_order_by($this->user->preferences->splash_pages_default_order_by, $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
         /* Prepare the paginator */
         $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `splash_pages` WHERE `user_id` = {$this->user->user_id} {$filters->get_sql_where()}")->fetch_object()->total ?? 0;
-        $paginator = (new \Altum\Paginator($total_rows, $filters->get_results_per_page(), $_GET['page'] ?? 1, url('splash_pages?' . $filters->get_get() . '&page=%d')));
+        $paginator = (new \Altum\Paginator($total_rows, $filters->get_results_per_page(), $_GET['page'] ?? 1, url('splash-pages?' . $filters->get_get() . '&page=%d')));
 
         /* Get the splash_pages list for the user */
         $splash_pages = [];
         $splash_pages_result = database()->query("SELECT * FROM `splash_pages` WHERE `user_id` = {$this->user->user_id} {$filters->get_sql_where()} {$filters->get_sql_order_by()} {$paginator->get_sql_limit()}");
-        while($row = $splash_pages_result->fetch_object()) $splash_pages[] = $row;
+        while($row = $splash_pages_result->fetch_object()) {
+            $row->settings = json_decode($row->settings ?? '');
+            $splash_pages[] = $row;
+        }
 
         /* Export handler */
-        process_export_csv($splash_pages, 'include', ['splash_page_id', 'user_id', 'name', 'color', 'last_datetime', 'datetime'], sprintf(l('splash_pages.title')));
-        process_export_json($splash_pages, 'include', ['splash_page_id', 'user_id', 'name', 'color', 'last_datetime', 'datetime'], sprintf(l('splash_pages.title')));
+        process_export_csv_new($splash_pages, ['splash_page_id', 'user_id', 'name', 'settings', 'last_datetime', 'datetime'], ['settings'], sprintf(l('splash_pages.title')));
+        process_export_json($splash_pages, ['splash_page_id', 'user_id', 'name', 'settings', 'last_datetime', 'datetime'], sprintf(l('splash_pages.title')));
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/pagination', (array) $this))->run(['paginator' => $paginator]);
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'splash_pages' => $splash_pages,
             'total_splash_pages' => $total_rows,
@@ -56,13 +68,74 @@ class SplashPages extends Controller {
 
     }
 
-    public function delete() {
+    public function bulk() {
+
+        if(!settings()->links->splash_page_is_enabled) {
+            redirect('not-found');
+        }
 
         \Altum\Authentication::guard();
 
-        if(!settings()->links->splash_page_is_enabled) {
-            redirect();
+        /* Check for any errors */
+        if(empty($_POST)) {
+            redirect('splash-pages');
         }
+
+        if(empty($_POST['selected'])) {
+            redirect('splash-pages');
+        }
+
+        if(!isset($_POST['type'])) {
+            redirect('splash-pages');
+        }
+
+        //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+        if(!\Altum\Csrf::check()) {
+            Alerts::add_error(l('global.error_message.invalid_csrf_token'));
+        }
+
+        if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+
+            set_time_limit(0);
+
+            session_write_close();
+
+            switch($_POST['type']) {
+                case 'delete':
+
+                    /* Team checks */
+                    if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.splash_pages')) {
+                        Alerts::add_info(l('global.info_message.team_no_access'));
+                        redirect('splash-pages');
+                    }
+
+                    foreach($_POST['selected'] as $splash_page_id) {
+                        if($splash_page = db()->where('splash_page_id', $splash_page_id)->where('user_id', $this->user->user_id)->getOne('splash_pages', ['splash_page_id'])) {
+                            (new \Altum\Models\SplashPages())->delete($splash_page->splash_page_id);
+                        }
+                    }
+
+                    break;
+            }
+
+            session_start();
+
+            /* Set a nice success message */
+            Alerts::add_success(l('bulk_delete_modal.success_message'));
+
+        }
+
+        redirect('splash-pages');
+    }
+
+    public function delete() {
+
+        if(!settings()->links->splash_page_is_enabled) {
+            redirect('not-found');
+        }
+
+        \Altum\Authentication::guard();
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.splash_pages')) {
@@ -87,7 +160,6 @@ class SplashPages extends Controller {
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
-
 
             (new \Altum\Models\SplashPages())->delete($splash_page->splash_page_id);
 

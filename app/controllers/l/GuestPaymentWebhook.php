@@ -1,13 +1,22 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
+
+defined('ALTUMCODE') || die();
 
 class GuestPaymentWebhook extends Controller {
 
@@ -17,19 +26,22 @@ class GuestPaymentWebhook extends Controller {
             http_response_code(400); die('payment-blocks plugin is disabled.');
         }
 
-        $_GET['processor'] = in_array(($_GET['processor'] ?? null), ['paypal', 'stripe', 'crypto_com', 'razorpay', 'paystack', 'mollie']) ? input_clean($_GET['processor']) : null;
-        $_GET['payment_processor_id'] = (int) $_GET['payment_processor_id'];
+        $_GET['processor'] = isset($_GET['processor']) && in_array($_GET['processor'], ['paypal', 'stripe', 'crypto_com', 'razorpay', 'paystack', 'mollie']) ? input_clean($_GET['processor']) : null;
+        $_GET['payment_processor_id'] = isset($_GET['payment_processor_id']) ? (int) $_GET['payment_processor_id'] : null;
 
-        if(!$_GET['processor']) {
-            http_response_code(400); die('$_GET processor value is invalid.');
-        }
-
-        if(!$_GET['payment_processor_id']) {
-            http_response_code(400); die('$_GET payment_processor_id value is invalid.');
-        }
+//        if(!$_GET['processor']) {
+//            http_response_code(400); die('$_GET processor value is invalid.');
+//        }
+//
+//        if(!$_GET['payment_processor_id']) {
+//            http_response_code(400); die('$_GET payment_processor_id value is invalid.');
+//        }
 
         /* Get the payment processor */
-        $payment_processor = (new \Altum\Models\PaymentProcessor())->get_payment_processor_by_payment_processor_id($_GET['payment_processor_id']);
+        $payment_processor = null;
+        if($_GET['payment_processor_id']) {
+            $payment_processor = (new \Altum\Models\PaymentProcessor())->get_payment_processor_by_payment_processor_id($_GET['payment_processor_id']);
+        }
 
         switch($_GET['processor']) {
             case 'paypal':
@@ -258,6 +270,21 @@ class GuestPaymentWebhook extends Controller {
                 $guest_payment_id = $payment->metadata->guest_payment_id;
 
                 break;
+
+            default:
+
+                $guest_payment_id = isset($_POST['guest_payment_id']) ? $_POST['guest_payment_id'] : null;
+
+                if(!$guest_payment_id) {
+                    die('guest_payment_id not existing.');
+                }
+
+                $payment_id = null;
+                $payer_name = null;
+                $payment_total_amount = 0;
+                $payment_currency = null;
+
+                break;
         }
 
         /* Make sure the transaction exists and it is not already enabled */
@@ -269,6 +296,8 @@ class GuestPaymentWebhook extends Controller {
         if($guest_payment->status == 1) {
             http_response_code(400); die('guest_payment_id already processed.');
         }
+
+        if(!isset($payer_email)) $payer_email = $guest_payment->email;
 
         /* Make sure the account still exists */
         $user = db()->where('user_id', $guest_payment->user_id)->getOne('users');
@@ -286,6 +315,11 @@ class GuestPaymentWebhook extends Controller {
 
         $biolink_block->settings = json_decode($biolink_block->settings ?? '');
 
+        /* Free product */
+        if(!$payment_processor && $biolink_block->type == 'product' && $biolink_block->settings->price != 0) {
+            die('payment_processor not existing and product is not free');
+        }
+
         /* Get link */
         $link = db()->where('link_id', $biolink_block->link_id)->getOne('links');
 
@@ -296,87 +330,67 @@ class GuestPaymentWebhook extends Controller {
         /* Update the guest payment */
         db()->where('guest_payment_id', $guest_payment_id)->update('guests_payments', [
             'payment_id' => $payment_id,
-            'email' => $guest_payment->email ? $guest_payment->email : $payer_email,
+            'email' => $payer_email,
             'name' => $payer_name,
             'total_amount' => $payment_total_amount,
             'currency' => $payment_currency,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
             'status' => 1
         ]);
 
         /* Send notifications based on the type of block */
+        $email_template = null;
+        $payment_total_amount = l('guests_payments.free', $user->language);
+        $payer_name = $payer_name ?: l('global.none', $user->language);
+        $payment_currency = $payment_currency ?: l('global.none', $user->language);
+        $payment_processor_type = $payment_processor->processor ?: l('global.none', $user->language);
+
         switch($biolink_block->type) {
             case 'donation':
-                /* Send email notifications if needed to the owner */
-                if($biolink_block->settings->email_notification) {
-                    $email_template = get_email_template(
-                        [
-                            '{{DONATION_TITLE}}' => $biolink_block->settings->title,
-                            '{{TOTAL_AMOUNT}}' => $payment_total_amount,
-                            '{{CURRENCY}}' => $payment_currency,
-                        ],
-                        l('global.emails.user_guest_payment_donation.subject', $user->language),
-                        [
-                            '{{DONATION_TITLE}}' => $biolink_block->settings->title,
-                            '{{EMAIL}}' => $payer_email,
-                            '{{NAME}}' => $payer_name,
-                            '{{TOTAL_AMOUNT}}' => $payment_total_amount,
-                            '{{CURRENCY}}' => $payment_currency,
-                            '{{PROCESSOR}}' => l('pay.custom_plan.' . $payment_processor->processor, $user->language),
-                            '{{MESSAGE}}' => $guest_payment->data->message ?? null,
-                            '{{GUESTS_PAYMENTS_LINK}}' => url('guests-payments'),
-                        ],
-                        l('global.emails.user_guest_payment_donation.body', $user->language)
-                    );
+                $email_template = get_email_template(
+                    [
+                        '{{DONATION_TITLE}}' => $biolink_block->settings->title,
+                        '{{TOTAL_AMOUNT}}' => $payment_total_amount,
+                        '{{CURRENCY}}' => $payment_currency,
+                    ],
+                    l('global.emails.user_guest_payment_donation.subject', $user->language),
+                    [
+                        '{{DONATION_TITLE}}' => $biolink_block->settings->title,
+                        '{{EMAIL}}' => $payer_email,
+                        '{{NAME}}' => $payer_name,
+                        '{{TOTAL_AMOUNT}}' => $payment_total_amount,
+                        '{{CURRENCY}}' => $payment_currency,
+                        '{{PROCESSOR}}' => $payment_processor ? l('pay.custom_plan.' . $payment_processor->processor, $user->language) : l('global.none', $user->language),
+                        '{{MESSAGE}}' => $guest_payment->data->message ?? null,
+                        '{{GUESTS_PAYMENTS_LINK}}' => url('guests-payments'),
+                    ],
+                    l('global.emails.user_guest_payment_donation.body', $user->language)
+                );
 
-                    send_mail($biolink_block->settings->email_notification, $email_template->subject, $email_template->body, ['anti_phishing_code' => $user->anti_phishing_code, 'language' => $user->language]);
-                }
-
-                /* Send webhook notifications if needed to the owner */
-                if($biolink_block->settings->webhook_url) {
-                    try {
-                        \Unirest\Request::post($biolink_block->settings->webhook_url, [], [
-                            'biolink_block_id' => $biolink_block->biolink_block_id,
-                            'processor' => $payment_processor->processor,
-                            'total_amount' => $payment_total_amount,
-                            'currency' => $payment_currency,
-                            'email' => $payer_email,
-                            'name' => $payer_name,
-                            'message' => $guest_payment->data->message ?? null,
-                        ]);
-                    } catch (\Exception $exception) {
-                        // :)
-                    }
-                }
                 break;
 
             case 'product':
-                /* Send email notifications if needed to the owner */
-                if($biolink_block->settings->email_notification) {
-                    $email_template = get_email_template(
-                        [
-                            '{{PRODUCT_TITLE}}' => $biolink_block->settings->title,
-                            '{{TOTAL_AMOUNT}}' => $payment_total_amount,
-                            '{{CURRENCY}}' => $payment_currency,
-                        ],
-                        l('global.emails.user_guest_payment_product.subject', $user->language),
-                        [
-                            '{{PRODUCT_TITLE}}' => $biolink_block->settings->title,
-                            '{{EMAIL}}' => $guest_payment->email,
-                            '{{NAME}}' => $payer_name,
-                            '{{TOTAL_AMOUNT}}' => $payment_total_amount,
-                            '{{CURRENCY}}' => $payment_currency,
-                            '{{PROCESSOR}}' => l('pay.custom_plan.' . $payment_processor->processor, $user->language),
-                            '{{GUESTS_PAYMENTS_LINK}}' => url('guests-payments'),
-                        ],
-                        l('global.emails.user_guest_payment_product.body', $user->language)
-                    );
-
-                    send_mail($biolink_block->settings->email_notification, $email_template->subject, $email_template->body, ['anti_phishing_code' => $user->anti_phishing_code, 'language' => $user->language]);
-                }
+                $email_template = get_email_template(
+                    [
+                        '{{PRODUCT_TITLE}}' => $biolink_block->settings->title,
+                        '{{TOTAL_AMOUNT}}' => $payment_total_amount,
+                        '{{CURRENCY}}' => $payment_currency,
+                    ],
+                    l('global.emails.user_guest_payment_product.subject', $user->language),
+                    [
+                        '{{PRODUCT_TITLE}}' => $biolink_block->settings->title,
+                        '{{EMAIL}}' => $guest_payment->email,
+                        '{{NAME}}' => $payer_name,
+                        '{{TOTAL_AMOUNT}}' => $payment_total_amount,
+                        '{{CURRENCY}}' => $payment_currency,
+                        '{{PROCESSOR}}' => $payment_processor ? l('pay.custom_plan.' . $payment_processor->processor, $user->language) : l('global.none', $user->language),
+                        '{{GUESTS_PAYMENTS_LINK}}' => url('guests-payments'),
+                    ],
+                    l('global.emails.user_guest_payment_product.body', $user->language)
+                );
 
                 /* Send email notifications to the customer */
-                $email_template = get_email_template(
+                $customer_email_template = get_email_template(
                     [
                         '{{PRODUCT_TITLE}}' => $biolink_block->settings->title,
                     ],
@@ -388,53 +402,33 @@ class GuestPaymentWebhook extends Controller {
                     l('global.emails.guest_guest_payment_product.body', $user->language)
                 );
 
-                send_mail($guest_payment->email, $email_template->subject, $email_template->body);
+                send_mail($guest_payment->email, $customer_email_template->subject, $customer_email_template->body);
 
-                /* Send webhook notifications if needed to the owner */
-                if($biolink_block->settings->webhook_url) {
-                    try {
-                        \Unirest\Request::post($biolink_block->settings->webhook_url, [], [
-                            'biolink_block_id' => $biolink_block->biolink_block_id,
-                            'processor' => $payment_processor->processor,
-                            'total_amount' => $payment_total_amount,
-                            'currency' => $payment_currency,
-                            'email' => $guest_payment->email,
-                            'name' => $payer_name,
-                        ]);
-                    } catch (\Exception $exception) {
-                        // :)
-                    }
-                }
                 break;
 
             case 'service':
-                /* Send email notifications if needed to the owner */
-                if($biolink_block->settings->email_notification) {
-                    $email_template = get_email_template(
-                        [
-                            '{{SERVICE_TITLE}}' => $biolink_block->settings->title,
-                            '{{TOTAL_AMOUNT}}' => $payment_total_amount,
-                            '{{CURRENCY}}' => $payment_currency,
-                        ],
-                        l('global.emails.user_guest_payment_service.subject', $user->language),
-                        [
-                            '{{SERVICE_TITLE}}' => $biolink_block->settings->title,
-                            '{{EMAIL}}' => $guest_payment->email,
-                            '{{NAME}}' => $payer_name,
-                            '{{TOTAL_AMOUNT}}' => $payment_total_amount,
-                            '{{CURRENCY}}' => $payment_currency,
-                            '{{PROCESSOR}}' => l('pay.custom_plan.' . $payment_processor->processor, $user->language),
-                            '{{MESSAGE}}' => $guest_payment->data->message ?? null,
-                            '{{GUESTS_PAYMENTS_LINK}}' => url('guests-payments'),
-                        ],
-                        l('global.emails.user_guest_payment_service.body', $user->language)
-                    );
-
-                    send_mail($biolink_block->settings->email_notification, $email_template->subject, $email_template->body, ['anti_phishing_code' => $user->anti_phishing_code, 'language' => $user->language]);
-                }
+                $email_template = get_email_template(
+                    [
+                        '{{SERVICE_TITLE}}' => $biolink_block->settings->title,
+                        '{{TOTAL_AMOUNT}}' => $payment_total_amount,
+                        '{{CURRENCY}}' => $payment_currency,
+                    ],
+                    l('global.emails.user_guest_payment_service.subject', $user->language),
+                    [
+                        '{{SERVICE_TITLE}}' => $biolink_block->settings->title,
+                        '{{EMAIL}}' => $guest_payment->email,
+                        '{{NAME}}' => $payer_name,
+                        '{{TOTAL_AMOUNT}}' => $payment_total_amount,
+                        '{{CURRENCY}}' => $payment_currency,
+                        '{{PROCESSOR}}' => $payment_processor ? l('pay.custom_plan.' . $payment_processor->processor, $user->language) : l('global.none', $user->language),
+                        '{{MESSAGE}}' => $guest_payment->data->message ?? null,
+                        '{{GUESTS_PAYMENTS_LINK}}' => url('guests-payments'),
+                    ],
+                    l('global.emails.user_guest_payment_service.body', $user->language)
+                );
 
                 /* Send email notifications to the customer */
-                $email_template = get_email_template(
+                $customer_email_template = get_email_template(
                     [
                         '{{SERVICE_TITLE}}' => $biolink_block->settings->title,
                     ],
@@ -445,26 +439,100 @@ class GuestPaymentWebhook extends Controller {
                     l('global.emails.guest_guest_payment_service.body', $user->language)
                 );
 
-                send_mail($guest_payment->email, $email_template->subject, $email_template->body);
+                send_mail($guest_payment->email, $customer_email_template->subject, $customer_email_template->body);
 
-                /* Send webhook notifications if needed to the owner */
-                if($biolink_block->settings->webhook_url) {
-                    try {
-                        \Unirest\Request::post($biolink_block->settings->webhook_url, [], [
-                            'biolink_block_id' => $biolink_block->biolink_block_id,
-                            'processor' => $payment_processor->processor,
-                            'total_amount' => $payment_total_amount,
-                            'currency' => $payment_currency,
-                            'email' => $guest_payment->email,
-                            'name' => $payer_name,
-                            'message' => $guest_payment->data->message ?? null,
-                        ]);
-                    } catch (\Exception $exception) {
-                        // :)
-                    }
-                }
                 break;
 
+        }
+
+        /* Processing the notification handlers */
+        if(count($biolink_block->settings->notifications ?? [])) {
+            /* Fetch user-level notification handlers */
+            $notification_handlers = (new \Altum\Models\NotificationHandlers())->get_notification_handlers_by_user_id($user->user_id);
+
+            /* Core data sent to the NotificationHandlers processor */
+            $notification_data = [
+                'link_id'            => $link->link_id,
+                'biolink_block_id'   => $biolink_block->biolink_block_id,
+                'processor'          => $payment_processor_type,
+                'total_amount'       => $payment_total_amount,
+                'currency'           => $payment_currency,
+                'email'              => $payer_email,
+                'name'               => $payer_name,
+                'message'            => $guest_payment->data->message ?? null,
+                'url'                => url('guests-payments?guest_payment_id=' . $guest_payment->guest_payment_id),
+            ];
+
+            /* Human-readable key/value dump used in most notifications */
+            $dynamic_message_data = \Altum\NotificationHandlers::build_dynamic_message_data($notification_data);
+
+            /* Generic notification text */
+            $notification_message = sprintf(
+                l('guests_payments.simple_notification', $user->language),
+                $biolink_block->settings->title,
+                $payment_total_amount,
+                $payment_currency,
+                $dynamic_message_data,
+                $notification_data['url']
+            );
+
+            /* Context shared by all handlers */
+            $context = [
+                /* User */
+                'user'                => $user,
+
+                /* Email */
+                'email_template'      => $email_template,
+
+                /* Generic text */
+                'message'             => $notification_message,
+
+                /* Push */
+                'push_title'          => sprintf(
+                    l('guests_payments.push_notification.title', $user->language),
+                    $biolink_block->settings->title,
+                    $payment_total_amount,
+                    $payment_currency
+                ),
+                'push_description'    => sprintf(
+                    l('guests_payments.push_notification.description', $user->language),
+                    $link->url
+                ),
+
+                /* Whatsapp */
+                'whatsapp_template'   => 'guest_payment',
+                'whatsapp_parameters' => [
+                    $biolink_block->settings->title,
+                    $payment_total_amount,
+                    $payment_currency,
+                    $notification_data['url'],
+                ],
+
+                /* Twilio call */
+                'twilio_call_url'     => SITE_URL .
+                    'twiml/guests_payments.simple_notification?param1=' . urlencode($biolink_block->settings->title) .
+                    '&param2=' . urlencode($payment_total_amount) .
+                    '&param3=' . urlencode($payment_currency) .
+                    '&param4=' .
+                    '&param5=' . urlencode($notification_data['url']),
+
+                /* Internal notification */
+                'internal_icon'       => 'fas fa-credit-card',
+
+                /* Discord colour */
+                'discord_color'       => '2664261',
+
+                /* Slack emoji */
+                'slack_emoji'         => ':large_green_circle:',
+            ];
+
+            /* Fire all enabled, allowed handlers in one go */
+            \Altum\NotificationHandlers::process(
+                $notification_handlers,
+                $biolink_block->settings->notifications,
+                $notification_data,
+                $context
+            );
         }
 
         echo 'successful';

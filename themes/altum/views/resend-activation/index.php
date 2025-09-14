@@ -26,3 +26,26 @@
 <div class="mt-5 text-center">
     <a href="<?= url('login' . $data->redirect_append) ?>" class="text-muted"><?= l('resend_activation.return') ?></a>
 </div>
+
+<?php ob_start() ?>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "<?= l('index.title') ?>",
+                    "item": "<?= url() ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "<?= l('resend_activation.title') ?>",
+                    "item": "<?= url('resend-activation') ?>"
+                }
+            ]
+        }
+    </script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

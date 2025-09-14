@@ -2,13 +2,13 @@
 
 <div class="container">
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li class="active" aria-current="page"><?= l('affiliate.breadcrumb') ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li class="active" aria-current="page"><?= l('affiliate.breadcrumb') ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
     <div class="d-flex align-items-center">
         <h1 class="h4 m-0"><?= l('affiliate.header') ?></h1>
@@ -27,7 +27,7 @@
                     <div class="card border-0 h-100">
                         <div class="card-body d-flex flex-column">
                             <div class="d-flex justify-content-between">
-                                <span class="h5"><?= l('affiliate.commission_percentage.header') ?></span>
+                                <span class="h5"><?= sprintf(l('affiliate.commission_percentage.header'), '<span class="text-primary">' . ($data->minimum_commission == $data->maximum_commission ? $data->minimum_commission : $data->minimum_commission . '% - ' . $data->maximum_commission) . '%</span>') ?></span>
 
                                 <div class="ml-3">
                                     <i class="fas fa-fw fa-lg fa-money-check-dollar text-primary"></i>
@@ -59,7 +59,7 @@
         <div class="col-12 col-lg">
             <div class="card border-0 h-100">
                 <div class="card-body d-flex align-items-center justify-content-center">
-                    <img src="<?= ASSETS_FULL_URL . 'images/affiliate.svg' ?>" class="img-fluid col-9" />
+                    <?= sprintf(file_get_contents(ROOT_PATH . ASSETS_URL_PATH . 'images/affiliate.svg'), 'var(--primary)', 'img-fluid col-9') ?>
                 </div>
             </div>
         </div>
@@ -68,78 +68,88 @@
     <div class="mt-5">
         <h2 class="h4 mb-4"><?= l('affiliate.how.header') ?></h2>
 
-        <div class="row justify-content-between">
-            <div class="col-12 col-lg-6 mb-4">
-                <div class="card border-0 h-100 icon-zoom-animation">
-                    <div class="card-body d-flex">
+        <div class="index-timeline">
+            <div class="row justify-content-between">
+                <div class="col-12 col-lg-12 mb-4" data-aos="fade-up">
+                    <div class="timeline-item d-flex justify-content-center">
                         <div>
-                            <div class="card border-0 bg-primary-100 text-primary mr-3">
+                            <div class="card border-0 bg-primary-100 text-primary mr-4">
                                 <div class="p-3 d-flex align-items-center justify-content-between">
                                     <i class="fas fa-fw fa-user-plus fa-lg"></i>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex flex-column">
-                            <span class="h5">1. <?= l('affiliate.how.one') ?></span>
-                            <small class="text-muted"><?= l('affiliate.how.one_help') ?></small>
+                        <div class="card border-0 h-100 icon-zoom-animation w-100">
+                            <div class="card-body">
+                                <div class="d-flex flex-column">
+                                    <span class="h6">1. <?= l('affiliate.how.one') ?></span>
+                                    <small class="text-muted"><?= l('affiliate.how.one_help') ?></small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-12 col-lg-6 mb-4">
-                <div class="card border-0 h-100 icon-zoom-animation">
-                    <div class="card-body d-flex">
+                <div class="col-12 col-lg-12 mb-4" data-aos="fade-up">
+                    <div class="timeline-item d-flex justify-content-center">
                         <div>
-                            <div class="card border-0 bg-primary-100 text-primary mr-3">
+                            <div class="card border-0 bg-primary-100 text-primary mr-4">
                                 <div class="p-3 d-flex align-items-center justify-content-between">
                                     <i class="fas fa-fw fa-link fa-lg"></i>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex flex-column">
-                            <span class="h5">2. <?= l('affiliate.how.two') ?></span>
-                            <small class="text-muted"><?= l('affiliate.how.two_help') ?></small>
+                        <div class="card border-0 h-100 icon-zoom-animation w-100">
+                            <div class="card-body">
+                                <div class="d-flex flex-column">
+                                    <span class="h6">2. <?= l('affiliate.how.two') ?></span>
+                                    <small class="text-muted"><?= l('affiliate.how.two_help') ?></small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-12 col-lg-6 mb-4">
-                <div class="card border-0 h-100 icon-zoom-animation">
-                    <div class="card-body d-flex">
+                <div class="col-12 col-lg-12 mb-4" data-aos="fade-up">
+                    <div class="index-timeline-item d-flex justify-content-center">
                         <div>
-                            <div class="card border-0 bg-primary-100 text-primary mr-3">
+                            <div class="card border-0 bg-primary-100 text-primary mr-4">
                                 <div class="p-3 d-flex align-items-center justify-content-between">
                                     <i class="fas fa-fw fa-wallet fa-lg"></i>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex flex-column">
-                            <span class="h5">3. <?= l('affiliate.how.three') ?></span>
-                            <small class="text-muted"><?= l('affiliate.how.three_help') ?></small>
+                        <div class="card border-0 h-100 icon-zoom-animation w-100">
+                            <div class="card-body">
+                                <div class="d-flex flex-column">
+                                    <span class="h6">3. <?= l('affiliate.how.three') ?></span>
+                                    <small class="text-muted"><?= l('affiliate.how.three_help') ?></small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-12 col-lg-6 mb-4">
-                <div class="card border-0 h-100 icon-zoom-animation">
-                    <div class="card-body d-flex">
+                <div class="col-12 col-lg-12" data-aos="fade-up">
+                    <div class="timeline-item d-flex justify-content-center">
                         <div>
-                            <div class="card border-0 bg-primary-100 text-primary mr-3">
+                            <div class="card border-0 bg-primary-100 text-primary mr-4">
                                 <div class="p-3 d-flex align-items-center justify-content-between">
                                     <i class="fas fa-fw fa-money-bill fa-lg"></i>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex flex-column">
-                            <span class="h5">4. <?= l('affiliate.how.four') ?></span>
-                            <small class="text-muted"><?= l('affiliate.how.four_help') ?></small>
+                        <div class="card border-0 h-100 icon-zoom-animation w-100">
+                            <div class="card-body">
+                                <div class="d-flex flex-column">
+                                    <span class="h6">4. <?= l('affiliate.how.four') ?></span>
+                                    <small class="text-muted"><?= l('affiliate.how.four_help') ?></small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -161,7 +171,7 @@
 
                         <div class="col-12 col-lg-5 mt-4 mt-lg-0">
                             <div class="text-center text-lg-right">
-                                <?php if(\Altum\Authentication::check()): ?>
+                                <?php if(is_logged_in()): ?>
                                     <a href="<?= url('referrals') ?>" class="btn btn-outline-primary index-button">
                                         <?= l('referrals.menu') ?> <i class="fas fa-fw fa-arrow-right"></i>
                                     </a>
@@ -178,3 +188,47 @@
         </div>
     <?php endif ?>
 </div>
+
+<?php ob_start() ?>
+<script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "<?= l('index.title') ?>",
+                    "item": "<?= url() ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "<?= l('affiliate.title') ?>",
+                    "item": "<?= url('affiliate') ?>"
+                }
+            ]
+        }
+</script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+
+<?php ob_start() ?>
+<link href="<?= ASSETS_FULL_URL . 'css/index-custom.css?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
+<?php \Altum\Event::add_content(ob_get_clean(), 'head') ?>
+
+<?php ob_start() ?>
+<link rel="stylesheet" href="<?= ASSETS_FULL_URL . 'css/libraries/aos.min.css?v=' . PRODUCT_CODE ?>">
+<?php \Altum\Event::add_content(ob_get_clean(), 'head') ?>
+
+<?php ob_start() ?>
+    <script src="<?= ASSETS_FULL_URL . 'js/libraries/aos.min.js?v=' . PRODUCT_CODE ?>"></script>
+
+    <script>
+    'use strict';
+    
+        AOS.init({
+            duration: 600
+        });
+    </script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+

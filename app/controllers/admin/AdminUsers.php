@@ -1,24 +1,34 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+use Altum\Logger;
 use Altum\Models\Plan;
 use Altum\Models\User;
+
+defined('ALTUMCODE') || die();
 
 class AdminUsers extends Controller {
 
     public function index() {
 
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['status', 'source', 'plan_id', 'device_type', 'country', 'continent_code', 'type', 'referred_by', 'is_newsletter_subscribed'], ['name', 'email', 'city_name', 'os_name', 'browser_name', 'browser_language'], ['email', 'datetime', 'last_activity', 'name', 'total_logins', 'plan_expiration_date']));
+        $filters = (new \Altum\Filters(['status', 'source', 'plan_id', 'device_type', 'country', 'continent_code', 'type', 'referred_by', 'is_newsletter_subscribed', 'language'], ['name', 'email', 'city_name', 'os_name', 'browser_name', 'browser_language'], ['user_id', 'email', 'datetime', 'last_activity', 'name', 'total_logins', 'plan_expiration_date']));
         $filters->set_default_order_by('user_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
@@ -45,8 +55,8 @@ class AdminUsers extends Controller {
         }
 
         /* Export handler */
-        process_export_json($users, 'include', ['user_id', 'email', 'name', 'billing', 'plan_id', 'plan_settings', 'plan_expiration_date', 'plan_trial_done', 'status', 'source', 'language', 'timezone', 'continent_code', 'country', 'city_name', 'datetime', 'last_activity', 'total_logins']);
-        process_export_csv($users, 'include', ['user_id', 'email', 'name', 'plan_id', 'plan_expiration_date', 'plan_trial_done', 'status', 'source', 'language', 'timezone', 'continent_code', 'country', 'city_name', 'datetime', 'last_activity', 'total_logins']);
+        process_export_json($users, ['user_id', 'email', 'name', 'billing', 'plan_id', 'plan_settings', 'plan_expiration_date', 'plan_trial_done', 'status', 'source', 'language', 'timezone', 'continent_code', 'country', 'city_name', 'datetime', 'next_cleanup_datetime', 'last_activity', 'total_logins']);
+        process_export_csv($users, ['user_id', 'email', 'name', 'plan_id', 'plan_expiration_date', 'plan_trial_done', 'status', 'source', 'language', 'timezone', 'continent_code', 'country', 'city_name', 'datetime', 'next_cleanup_datetime', 'last_activity', 'total_logins']);
 
         /* Requested plan details */
         $plans = (new \Altum\Models\Plan())->get_plans();
@@ -91,6 +101,11 @@ class AdminUsers extends Controller {
             redirect('admin/users');
         }
 
+        if($user->status != 1) {
+            Alerts::add_error(l('admin_user_login_modal.error_message.disabled'));
+            redirect('admin/users');
+        }
+
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
             /* Logout of the admin */
@@ -125,7 +140,7 @@ class AdminUsers extends Controller {
             redirect('admin/users');
         }
 
-        if(!isset($_POST['type']) || (isset($_POST['type']) && !in_array($_POST['type'], ['delete']))) {
+        if(!isset($_POST['type'])) {
             redirect('admin/users');
         }
 
@@ -136,6 +151,10 @@ class AdminUsers extends Controller {
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+
+            set_time_limit(0);
+
+            session_write_close();
 
             switch($_POST['type']) {
                 case 'delete':
@@ -148,11 +167,57 @@ class AdminUsers extends Controller {
 
                         (new User())->delete((int) $user_id);
                     }
+
+                    session_start();
+
+                    /* Set a nice success message */
+                    Alerts::add_success(l('bulk_delete_modal.success_message'));
+
+                    break;
+
+                case 'resend_activation':
+
+                    $total = 0;
+
+                    foreach($_POST['selected'] as $user_id) {
+                        $user = db()->where('user_id', $user_id)->getOne('users', ['user_id', 'status', 'name', 'email', 'language']);
+
+                        if($user && !$user->status) {
+                            /* Generate new email code */
+                            $email_code = md5($user->email . microtime());
+
+                            /* Update the current activation email */
+                            db()->where('user_id', $user->user_id)->update('users', ['email_activation_code' => $email_code]);
+
+                            /* Prepare the email */
+                            $email_template = get_email_template(
+                                [
+                                    '{{NAME}}' => $user->name,
+                                ],
+                                l('global.emails.user_activation.subject', $user->language),
+                                [
+                                    '{{ACTIVATION_LINK}}' => url('activate-user?email=' . md5($user->email) . '&email_activation_code=' . $email_code . '&type=user_activation'),
+                                    '{{NAME}}' => $user->name,
+                                ],
+                                l('global.emails.user_activation.body', $user->language)
+                            );
+
+                            /* Send the email */
+                            send_mail($user->email, $email_template->subject, $email_template->body);
+
+                            Logger::users($user->user_id, 'resend_activation.request_sent');
+
+                            $total++;
+                        }
+                    }
+
+                    session_start();
+
+                    /* Set a nice success message */
+                    Alerts::add_success(sprintf(l('admin_users_bulk_resend_activation_modal.success_message'), nr($total)));
+
                     break;
             }
-
-            /* Set a nice success message */
-            Alerts::add_success(l('admin_bulk_delete_modal.success_message'));
 
         }
 

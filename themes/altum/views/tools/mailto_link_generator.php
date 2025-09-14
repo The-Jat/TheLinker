@@ -13,8 +13,8 @@
 <?php endif ?>
 
     <div class="row mb-4">
-        <div class="col-12 col-xl d-flex align-items-center mb-3 mb-xl-0">
-            <h1 class="h4 m-0"><?= l('tools.mailto_link_generator.name') ?></h1>
+        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0 text-truncate">
+            <h1 class="h4 m-0 text-truncate"><?= l('tools.mailto_link_generator.name') ?></h1>
 
             <div class="ml-2">
                 <span data-toggle="tooltip" title="<?= l('tools.mailto_link_generator.description') ?>">
@@ -22,17 +22,19 @@
                 </span>
             </div>
         </div>
+
+        <?= $this->views['ratings'] ?>
     </div>
 
     <div class="card">
         <div class="card-body">
 
-            <form action="" method="post" role="form" enctype="multipart/form-data">
+            <form id="tool_form" action="" method="post" role="form" enctype="multipart/form-data">
                 <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
 
                 <div class="form-group">
                     <label for="to"><?= l('tools.mailto_link_generator.to') ?></label>
-                    <input type="email" id="to" name="to" class="form-control <?= \Altum\Alerts::has_field_errors('to') ? 'is-invalid' : null ?>" />
+                    <input type="email" id="to" name="to" class="form-control <?= \Altum\Alerts::has_field_errors('to') ? 'is-invalid' : null ?>" placeholder="<?= l('global.email_placeholder') ?>" />
                     <?= \Altum\Alerts::output_field_error('to') ?>
                 </div>
 
@@ -102,6 +104,8 @@
     <?= $this->views['extra_content'] ?>
 
     <?= $this->views['similar_tools'] ?>
+
+    <?= $this->views['popular_tools'] ?>
 </div>
 
 <?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>
@@ -109,8 +113,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    let generate = () => {
+    
+let generate = () => {
         let to = document.querySelector('#to').value;
         let cc = document.querySelector('#cc').value;
         let bcc = document.querySelector('#bcc').value;

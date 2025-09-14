@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,13 +19,15 @@ namespace Altum\Controllers;
 use Altum\Alerts;
 use Altum\Response;
 
+defined('ALTUMCODE') || die();
+
 class DocumentCreate extends Controller {
 
     public function index() {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->documents_is_enabled) {
-            redirect('dashboard');
+            redirect('not-found');
         }
 
         /* Team checks */
@@ -61,7 +70,7 @@ class DocumentCreate extends Controller {
         }
 
         $values = [
-            'name' => $_GET['name'] ?? $_POST['name'] ?? sprintf(l('document_create.name_x'), \Altum\Date::get()),
+            'name' => $_POST['name'] ?? $_GET['name'] ?? sprintf(l('document_create.name_x'), \Altum\Date::get()),
             'language' => $_GET['language'] ?? $_POST['language'] ?? reset(settings()->aix->documents_available_languages),
             'variants' => $_GET['variants'] ?? $_POST['variants'] ?? 1,
             'max_words_per_variant' => $_GET['max_words_per_variant'] ?? $_POST['max_words_per_variant'] ?? null,
@@ -78,7 +87,7 @@ class DocumentCreate extends Controller {
             }
         }
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'values' => $values,
             'available_words' => $available_words,
@@ -105,7 +114,7 @@ class DocumentCreate extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->documents_is_enabled) {
-            redirect('dashboard');
+            redirect('not-found');
         }
 
         /* Team checks */
@@ -177,7 +186,7 @@ class DocumentCreate extends Controller {
 
         /* Check for timeouts */
         if(settings()->aix->input_moderation_is_enabled) {
-            $cache_instance = \Altum\Cache::$adapter->getItem('user?flagged=' . $this->user->user_id);
+            $cache_instance = cache()->getItem('user?flagged=' . $this->user->user_id);
             if(!is_null($cache_instance->get())) {
                 Response::json(l('documents.error_message.timed_out'), 'error');
             }
@@ -195,13 +204,9 @@ class DocumentCreate extends Controller {
         $input = json_encode($inputs);
 
         /* Calculate tokens used by prompt */
-        $tokenizer = new \Gioni06\Gpt3Tokenizer\Gpt3Tokenizer(new \Gioni06\Gpt3Tokenizer\Gpt3TokenizerConfig());
-        $tokens_used_by_prompt = $tokenizer->count($prompt);
-
-        /* GPT 3.5, GPT 4 uses more tokens than the tokenizer calculator, approximate a more high token count */
-        if(in_array($this->user->plan_settings->documents_model, ['gpt-3.5-turbo-1106', 'gpt-4', 'gpt-4-1106-preview'])) {
-            $tokens_used_by_prompt *= ceil(1.1);
-        }
+        $token_calculator_model = $this->user->plan_settings->documents_model;
+        $token_calculator_model = 'gpt-4o';
+        $tokens_used_by_prompt = ceil(\Rajentrivedi\TokenizerX\TokenizerX::count($prompt, $token_calculator_model) * 1.3);
 
         /* Make sure the prompt tokens do not take more than 50% of the available tokens, to leave room for a proper response */
         if($tokens_used_by_prompt > floor($max_tokens_for_current_model / 2)){
@@ -211,7 +216,7 @@ class DocumentCreate extends Controller {
         /* Decide max tokens based on input and max words per variant */
         $max_tokens = $max_tokens_for_current_model;
         if($_POST['max_words_per_variant']) {
-            $max_tokens = (int) floor(($_POST['max_words_per_variant'] * 1.333));
+            $max_tokens = (int) floor(($_POST['max_words_per_variant'] * 1.4));
             if($max_tokens > $max_tokens_for_current_model) {
                 $max_tokens = $max_tokens_for_current_model;
             }
@@ -233,6 +238,10 @@ class DocumentCreate extends Controller {
             case 'custom:': $temperature = number_format($_POST['creativity_level'], 1); break;
         }
 
+        if(in_array($this->user->plan_settings->documents_model, ['o1', 'o1-mini', 'o3-mini'])) {
+            $temperature = 1;
+        }
+
         /* Try to increase the database timeout as well */
         database()->query("set session wait_timeout=600;");
 
@@ -250,6 +259,7 @@ class DocumentCreate extends Controller {
                     ],
                     \Unirest\Request\Body::json([
                         'input' => $prompt,
+                        'model' => 'omni-moderation-latest',
                     ])
                 );
 
@@ -259,8 +269,8 @@ class DocumentCreate extends Controller {
 
                 if($response->body->results[0]->flagged ?? null) {
                     /* Time out the user for a few minutes */
-                    \Altum\Cache::$adapter->save(
-                        $cache_instance->set('true')->expiresAfter(3 * 60)->addTag('users')->addTag('user_id=' . $this->user->user_id)
+                    cache()->save(
+                        $cache_instance->set('true')->expiresAfter(3 * 60)->addTag('user_id=' . $this->user->user_id)
                     );
 
                     /* Return the error */
@@ -274,38 +284,23 @@ class DocumentCreate extends Controller {
 
 
         /* Prepare the main API request */
-        switch ($ai_text_models[$this->user->plan_settings->documents_model]['type']) {
-            case 'completions':
-                $api_endpoint_url = 'https://api.openai.com/v1/completions';
+        $api_endpoint_url = 'https://api.openai.com/v1/chat/completions';
 
-                $body = [
-                    'model' => $this->user->plan_settings->documents_model,
-                    'prompt' => $prompt,
-                    'max_tokens' => $max_tokens,
-                    'temperature' => $temperature,
-                    'n' => $_POST['variants'],
-                    'user' => 'user_id:' . $this->user->user_id,
-                ];
-                break;
+        $body = [
+            'model' => $this->user->plan_settings->documents_model,
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => $prompt
+                ]
+            ],
+            'temperature' => $temperature,
+            'n' => $_POST['variants'],
+            'user' => 'user_id:' . $this->user->user_id,
+        ];
 
-            case 'chat_completions':
-                $api_endpoint_url = 'https://api.openai.com/v1/chat/completions';
-
-                $body = [
-                    'model' => $this->user->plan_settings->documents_model,
-                    'messages' => [
-                        [
-                            'role' => 'user',
-                            'content' => $prompt
-                        ]
-                    ],
-                    'max_tokens' => $max_tokens,
-                    'temperature' => $temperature,
-                    'n' => $_POST['variants'],
-                    'user' => 'user_id:' . $this->user->user_id,
-                ];
-
-                break;
+        if($_POST['max_words_per_variant']) {
+            $body['max_completion_tokens'] = $max_tokens;
         }
 
         try {
@@ -335,41 +330,19 @@ class DocumentCreate extends Controller {
         /* Words */
         $words = floor($response->body->usage->completion_tokens * 0.75);
 
-        /* Get the data of the response based on the API call */
-        switch ($ai_text_models[$this->user->plan_settings->documents_model]['type']) {
-            case 'completions':
-                /* AI Content */
-                if(count($response->body->choices) > 1) {
-                    $content = '';
+        /* AI Content */
+        if(count($response->body->choices) > 1) {
+            $content = '';
 
-                    foreach($response->body->choices as $key => $choice) {
-                        $content .= sprintf(l('documents.variant_x'), ($key+1)) . "\r\n";
-                        $content .= "--------------------\r\n";
-                        $content .= trim($choice->text) . "\r\n\r\n\r\n";
-                        //$words += count(explode(' ', (trim($choice->text))));
-                    }
-                } else {
-                    $content = trim($response->body->choices[0]->text);
-                    //$words += count(explode(' ', ($content)));
-                }
-                break;
-
-            case 'chat_completions':
-                /* AI Content */
-                if(count($response->body->choices) > 1) {
-                    $content = '';
-
-                    foreach($response->body->choices as $key => $choice) {
-                        $content .= sprintf(l('documents.variant_x'), ($key+1)) . "\r\n";
-                        $content .= "--------------------\r\n";
-                        $content .= trim($choice->message->content) . "\r\n\r\n\r\n";
-                        //$words += count(explode(' ', (trim($choice->message->content))));
-                    }
-                } else {
-                    $content = trim($response->body->choices[0]->message->content);
-                    //$words += count(explode(' ', ($content)));
-                }
-                break;
+            foreach($response->body->choices as $key => $choice) {
+                $content .= sprintf(l('documents.variant_x'), ($key+1)) . "\r\n";
+                $content .= "--------------------\r\n";
+                $content .= trim($choice->message->content) . "\r\n\r\n\r\n";
+                //$words += count(explode(' ', (trim($choice->message->content))));
+            }
+        } else {
+            $content = trim($response->body->choices[0]->message->content);
+            //$words += count(explode(' ', ($content)));
         }
 
         $content = trim($content);
@@ -383,7 +356,7 @@ class DocumentCreate extends Controller {
             'creativity_level_custom' => $_POST['creativity_level_custom'],
         ]);
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         $document_id = db()->insert('documents', [
             'user_id' => $this->user->user_id,
             'project_id' => $_POST['project_id'],
@@ -397,15 +370,15 @@ class DocumentCreate extends Controller {
             'model' => $this->user->plan_settings->documents_model,
             'api_response_time' => $api_response_time,
             'settings' => $settings,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         db()->where('template_id', $_POST['type'])->update('templates', [
             'total_usage' => db()->inc()
         ]);
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         db()->where('user_id', $this->user->user_id)->update('users', [
             'aix_words_current_month' => db()->inc($words),
             'aix_documents_current_month' => db()->inc()

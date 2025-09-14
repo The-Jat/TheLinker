@@ -8,14 +8,14 @@
                 <div class="d-flex justify-content-between mb-3">
                     <h5 class="modal-title">
                         <i class="fas fa-fw fa-sm fa-trash-alt text-dark mr-2"></i>
-                        <?= l('biolink_block_delete_modal.header') ?>
+                        <?= l('biolink_block_delete.header') ?>
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" title="<?= l('global.close') ?>">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
 
-                <p class="text-muted"><?= l('biolink_block_delete_modal.subheader') ?></p>
+                <p class="text-muted"><?= l('biolink_block_delete.subheader') ?></p>
 
                 <form name="biolink_block_delete_modal" method="post" role="form">
                     <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" required="required" />
@@ -36,6 +36,8 @@
 
 <?php ob_start() ?>
 <script>
+    'use strict';
+    
     /* On modal show load new data */
     $('#biolink_block_delete_modal').on('show.bs.modal', event => {
         let biolink_block_id = $(event.relatedTarget).data('biolink-block-id');
@@ -81,7 +83,7 @@
 
                         /* Refresh iframe */
                         refresh_biolink_preview();
-                    }, 1500);
+                    }, 750);
                 }
             },
             error: () => {

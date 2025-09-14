@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,18 +19,20 @@ namespace Altum\Controllers;
 use Altum\Alerts;
 use Altum\Response;
 
+defined('ALTUMCODE') || die();
+
 class AdminPushNotifications extends Controller {
 
     public function index() {
 
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['status'], ['title', 'description'], ['title', 'datetime', 'last_datetime', 'total_push_notifications', 'sent_push_notifications']));
+        $filters = (new \Altum\Filters(['status'], ['title', 'description'], ['push_notification_id', 'title', 'datetime', 'last_datetime', 'total_push_notifications', 'sent_push_notifications']));
         $filters->set_default_order_by('push_notification_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
         /* Prepare the paginator */
         $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `push_notifications` WHERE 1 = 1 {$filters->get_sql_where()}")->fetch_object()->total ?? 0;
-        $paginator = (new \Altum\Paginator($total_rows, $filters->get_results_per_page(), $_GET['page'] ?? 1, url('admin/push_notifications?' . $filters->get_get() . '&page=%d')));
+        $paginator = (new \Altum\Paginator($total_rows, $filters->get_results_per_page(), $_GET['page'] ?? 1, url('admin/push-notifications?' . $filters->get_get() . '&page=%d')));
 
         /* Get the data */
         $push_notifications = [];
@@ -44,8 +53,8 @@ class AdminPushNotifications extends Controller {
         }
 
         /* Export handler */
-        process_export_json($push_notifications, 'include', ['push_notification_id', 'title', 'description', 'url', 'status', 'push_subscribers_ids', 'sent_push_subscribers_ids', 'sent_push_notifications', 'total_push_notifications', 'last_sent_datetime', 'datetime', 'last_datetime',]);
-        process_export_csv($push_notifications, 'include', ['push_notification_id', 'title', 'description', 'url', 'status', 'push_subscribers_ids', 'sent_push_subscribers_ids', 'sent_push_notifications', 'total_push_notifications', 'last_sent_datetime', 'datetime', 'last_datetime',]);
+        process_export_json($push_notifications, ['push_notification_id', 'title', 'description', 'url', 'status', 'push_subscribers_ids', 'sent_push_subscribers_ids', 'sent_push_notifications', 'total_push_notifications', 'last_sent_datetime', 'datetime', 'last_datetime',]);
+        process_export_csv($push_notifications, ['push_notification_id', 'title', 'description', 'url', 'status', 'push_subscribers_ids', 'sent_push_subscribers_ids', 'sent_push_notifications', 'total_push_notifications', 'last_sent_datetime', 'datetime', 'last_datetime',]);
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/admin_pagination', (array) $this))->run(['paginator' => $paginator]);
@@ -156,7 +165,7 @@ class AdminPushNotifications extends Controller {
 
             /* Insert to database */
             $push_notification_id = db()->insert('push_notifications', [
-                'title' => $push_notification->title . ' - ' . l('global.duplicated'),
+                'title' => string_truncate($push_notification->title . ' - ' . l('global.duplicated'), 64, null),
                 'description' => $push_notification->description,
                 'url' => $push_notification->url,
                 'segment' => $push_notification->segment,
@@ -164,7 +173,7 @@ class AdminPushNotifications extends Controller {
                 'push_subscribers_ids' => $push_notification->push_subscribers_ids,
                 'total_push_notifications' => $push_notification->total_push_notifications,
                 'status' => 'draft',
-                'datetime' => \Altum\Date::$date,
+                'datetime' => get_date(),
             ]);
 
             /* Set a nice success message */
@@ -189,7 +198,7 @@ class AdminPushNotifications extends Controller {
             redirect('admin/push-notifications');
         }
 
-        if(!isset($_POST['type']) || (isset($_POST['type']) && !in_array($_POST['type'], ['delete']))) {
+        if(!isset($_POST['type'])) {
             redirect('admin/push-notifications');
         }
 
@@ -201,6 +210,10 @@ class AdminPushNotifications extends Controller {
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
+            set_time_limit(0);
+
+            session_write_close();
+
             switch($_POST['type']) {
                 case 'delete':
 
@@ -210,8 +223,10 @@ class AdminPushNotifications extends Controller {
                     break;
             }
 
+            session_start();
+            
             /* Set a nice success message */
-            Alerts::add_success(l('admin_bulk_delete_modal.success_message'));
+            Alerts::add_success(l('bulk_delete_modal.success_message'));
 
         }
 

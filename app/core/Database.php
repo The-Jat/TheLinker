@@ -1,13 +1,22 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum;
+
+defined('ALTUMCODE') || die();
 
 class Database {
 
@@ -17,7 +26,7 @@ class Database {
     public static function initialize() {
         mysqli_report(MYSQLI_REPORT_OFF);
 
-        self::$database = new \mysqli(
+        self::$database = @new \mysqli(
             DATABASE_SERVER,
             DATABASE_USERNAME,
             DATABASE_PASSWORD,
@@ -26,7 +35,22 @@ class Database {
 
         /* Debugging */
         if(self::$database->connect_error) {
-            die('The connection to the database failed! Check the config.php file and make sure your database connection details are correct and your server is running.');
+            include THEME_PATH . 'views/partials/database_error.php';
+
+            echo '<div>';
+            //echo '<a href="https://altumcode.com/" target="_blank"><img src="https://altumcode.com/themes/altum/assets/images/altumcode.svg" class="altumcode-logo" alt="altumcode logo" loading="lazy" /></a>';
+            echo '<h1 class="text-white">Database connection issues</h1>';
+            /* Make sure script is actually installed */
+            if(empty(DATABASE_SERVER) && empty(DATABASE_USERNAME) && empty(DATABASE_PASSWORD) && empty(DATABASE_NAME) && !file_exists(ROOT_PATH . 'install/installed')) {
+                echo '<p>Empty database configuration file (config.php).</p>';
+                echo '<p>Did you run the installer (/install path) of ' . PRODUCT_NAME . '?</p>';
+            } else {
+                echo '<p>Our database is having some issues.</p>';
+                echo '<p>We are actively working on fixing the issue.</p>';
+            }
+            //echo '<p class="buttons"><smalsl><a href="' . PRODUCT_DOCUMENTATION_URL .'" target="_blank">📜 Read documentation</a> &nbsp;&bullet;&nbsp; <a href="https://altumcode.com/contact" target="_blank">📧 Contact support</a></smalsl></p>';
+            echo '</div>';
+            die();
         }
 
         /* Mysql profiling */
@@ -45,26 +69,6 @@ class Database {
     public static function initialize_helper() {
         self::$db = new \Altum\Helpers\MysqliDb(self::$database);
         self::$db->returnType = 'object';
-    }
-
-    public static function get($what, $from, Array $conditions = [], $order = false, $clean = true) {
-
-        $what = ($what == '*') ? '*' : '`' . implode('`, `', $what) . '`';
-        $from = '`' . $from . '`';
-        $where = [];
-
-        foreach($conditions as $key => $value) {
-            $value = ($clean) ? query_clean($value) : $value;
-            $where[] = '`' . $key . '` = \'' . $value . '\'';
-        }
-        $where = implode(' AND ', $where);
-
-        $order_by = ($order) ? 'ORDER BY ' . $order : null;
-
-        $result = self::$database->query("SELECT {$what} FROM {$from} WHERE {$where} {$order_by}");
-
-        return ($result->num_rows) ? $result->fetch_object() : false;
-
     }
 
     public static function close() {

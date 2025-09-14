@@ -1,26 +1,35 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class AdminTemplates extends Controller {
 
     public function index() {
 
         if(!\Altum\Plugin::is_active('aix')) {
-            redirect('dashboard');
+            redirect('not-found');
         }
 
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['template_category_id'], ['name'], ['name', 'total_usage']));
+        $filters = (new \Altum\Filters(['template_category_id'], ['name'], ['template_id', 'datetime', 'name', 'total_usage']));
         $filters->set_default_order_by('template_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
@@ -47,8 +56,8 @@ class AdminTemplates extends Controller {
         }
 
         /* Export handler */
-        process_export_json($templates, 'include', ['template_id', 'template_category_id', 'name', 'prompt', 'settings', 'icon', 'order', 'total_usage', 'is_enabled', 'datetime', 'last_datetime']);
-        process_export_csv($templates, 'include', ['template_id', 'template_category_id', 'name', 'prompt', 'icon', 'order', 'total_usage', 'is_enabled', 'datetime', 'last_datetime']);
+        process_export_json($templates, ['template_id', 'template_category_id', 'name', 'prompt', 'settings', 'icon', 'order', 'total_usage', 'is_enabled', 'datetime', 'last_datetime']);
+        process_export_csv($templates, ['template_id', 'template_category_id', 'name', 'prompt', 'icon', 'order', 'total_usage', 'is_enabled', 'datetime', 'last_datetime']);
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/admin_pagination', (array) $this))->run(['paginator' => $paginator]);
@@ -91,7 +100,7 @@ class AdminTemplates extends Controller {
             db()->where('template_id', $template_id)->delete('templates');
 
             /* Clear the cache */
-            \Altum\Cache::$adapter->deleteItem('templates');
+            cache()->deleteItem('templates');
 
             /* Set a nice success message */
             Alerts::add_success(sprintf(l('global.success_message.delete1'), '<strong>' . $template->name . '</strong>'));

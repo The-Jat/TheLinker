@@ -1,4 +1,4 @@
-<?php //defined('ALTUMCODE') || die() ?>
+<?php defined('ALTUMCODE') || die() ?>
 
 <!doctype html>
 <html lang="<?= \Altum\Language::$active_languages[$data->language] ?>" dir="<?= l('direction', $data->language) ?>">
@@ -7,9 +7,6 @@
     <meta charset="UTF-8">
     <title></title>
     <style>
-        /* -------------------------------------
-            GLOBAL RESETS
-        ------------------------------------- */
         img {
             border: none;
             -ms-interpolation-mode: bicubic;
@@ -37,14 +34,9 @@
         }
 
         table td {
-
             font-size: 16px;
             vertical-align: top;
         }
-
-        /* -------------------------------------
-            BODY & CONTAINER
-        ------------------------------------- */
 
         .body {
             background-color: #fff;
@@ -88,7 +80,7 @@
 
         .main {
             background: #f7f7f7;
-            border-radius: 10px;
+            border-radius: <?= settings()->smtp->main_container_border_radius ?? '10' ?>px;
             width: 100%;
         }
 
@@ -153,8 +145,17 @@
         }
 
         a {
-            color: #3498db;
+            color: <?= settings()->smtp->button_background_color ?? '#15c' ?>;
             text-decoration: underline;
+        }
+
+        a.cta {
+            color: <?= settings()->smtp->button_text_color ?? '#ffffff' ?>;
+            background-color: <?= settings()->smtp->button_background_color ?? '#1b1b1b' ?>;
+            padding: 10px 14px;
+            text-decoration: none;
+            border-radius: <?= settings()->smtp->button_border_radius ?? '10' ?>px;
+            font-weight: 600;
         }
 
         /* -------------------------------------
@@ -180,29 +181,20 @@
         }
 
         .btn a {
-            background-color: #ffffff;
+            color: <?= settings()->smtp->button_text_color ?? '#ffffff' ?>;
+            background-color: <?= settings()->smtp->button_background_color ?? '#1b1b1b' ?>;
+            border-radius: <?= settings()->smtp->button_border_radius ?? '10' ?>px;
             border: 0;
-            border-radius: 10px;
             box-sizing: border-box;
-            color: #3437db;
             cursor: pointer;
             display: inline-block;
             font-size: 16px;
             font-weight: bold;
             margin: 0;
-            padding: 12px 25px;
+            padding: 10px 16px;
             text-decoration: none;
-            text-transform: capitalize;
         }
 
-        .btn-primary a {
-            background-color: #000000;
-            color: #ffffff;
-        }
-
-        /* -------------------------------------
-            RESPONSIVE
-        ------------------------------------- */
         @media only screen and (max-width: 640px) {
             .wrapper {
                 padding: 20px !important;
@@ -225,9 +217,6 @@
             }
         }
 
-        /* -------------------------------------
-            OTHER STYLES THAT MIGHT BE USEFUL
-        ------------------------------------- */
         .note {
             font-size: 14px;
             color: #6f6f6f;
@@ -262,6 +251,10 @@
             border: 0;
             border-bottom: 1px solid transparent;
             margin: 10px 0;
+        }
+
+        .word-break-all {
+            word-break: break-all;
         }
     </style>
 </head>
@@ -326,7 +319,7 @@
                 <!-- START FOOTER -->
                 <div class="footer">
                     <p class="content-block powered-by mb0">
-                        <?= sprintf(l('global.emails.copyright', $data->language), date('Y'), '<a href="' . url() . '">' . settings()->main->title . '</a>') ?>
+                        <?= sprintf(l('global.emails.copyright', $data->language), date('Y'), '<a href="' . url() . '">' . settings()->main->title . '</a>' . ' • ' . rtrim(remove_url_protocol_from_url(SITE_URL), '/')) ?>
                     </p>
                 </div>
                 <!-- END FOOTER -->

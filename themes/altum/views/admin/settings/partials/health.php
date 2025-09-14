@@ -15,11 +15,11 @@
         <tr>
             <td>
                 PHP Version
-                <div class="small text-muted">8.0 - 8.3</div>
+                <div class="small text-muted">8.3 - 8.4</div>
             </td>
             <td><?= PHP_VERSION ?></td>
             <td class="text-right">
-                <?php if(version_compare(PHP_VERSION, '8.0.0', '>=') && version_compare(PHP_VERSION, '8.4', '<')): ?>
+                <?php if(version_compare(PHP_VERSION, '8.3.0', '>=') && version_compare(PHP_VERSION, '8.5', '<')): ?>
                     ✅
                 <?php else: ?>
                     ❌
@@ -104,12 +104,57 @@
 
         <tr>
             <td>
+                INTL
+                <div class="small text-muted">Extension</div>
+            </td>
+            <td><?= extension_loaded('intl') ? 'Enabled' : 'Not Enabled' ?></td>
+            <td class="text-right">
+                <?php if(extension_loaded('intl')): ?>
+                    ✅
+                <?php else: ?>
+                    ❌
+                <?php endif ?>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
                 set_time_limit()
                 <div class="small text-muted">Function</div>
             </td>
             <td><?= function_exists('set_time_limit') ? 'Enabled' : 'Not Enabled' ?></td>
             <td class="text-right">
                 <?php if(function_exists('set_time_limit')): ?>
+                    ✅
+                <?php else: ?>
+                    ❌
+                <?php endif ?>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                iconv()
+                <div class="small text-muted">Function</div>
+            </td>
+            <td><?= function_exists('iconv') ? 'Enabled' : 'Not Enabled' ?></td>
+            <td class="text-right">
+                <?php if(function_exists('iconv')): ?>
+                    ✅
+                <?php else: ?>
+                    ❌
+                <?php endif ?>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                get_headers()
+                <div class="small text-muted">Function</div>
+            </td>
+            <td><?= function_exists('get_headers') ? 'Enabled' : 'Not Enabled' ?></td>
+            <td class="text-right">
+                <?php if(function_exists('get_headers')): ?>
                     ✅
                 <?php else: ?>
                     ❌

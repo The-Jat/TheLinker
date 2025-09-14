@@ -2,14 +2,14 @@
 
 <div class="container">
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li><a href="<?= url('api-documentation') ?>"><?= l('api_documentation.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li class="active" aria-current="page"><?= l('api_documentation.links') ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li><a href="<?= url('api-documentation') ?>"><?= l('api_documentation.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li class="active" aria-current="page"><?= l('api_documentation.links') ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
     <h1 class="h4 mb-4"><?= l('api_documentation.links') ?></h1>
 
@@ -41,7 +41,7 @@
                             <div class="card-body">
                                 curl --request GET \<br />
                                 --url '<?= SITE_URL ?>api/links/' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \
                             </div>
                         </div>
                     </div>
@@ -59,16 +59,16 @@
                             <tr>
                                 <td>page</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td><?= l('api_documentation.filters.page') ?></td>
                             </tr>
                             <tr>
                                 <td>results_per_page</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td><?= sprintf(l('api_documentation.filters.results_per_page'), '<code>' . implode('</code> , <code>', [10, 25, 50, 100, 250, 500, 1000]) . '</code>', 25) ?></td>
                             </tr>
@@ -78,7 +78,7 @@
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
     "data": [
         {
@@ -96,7 +96,7 @@
             "order": 0,
             "start_date": null,
             "end_date": null,
-            "date": "2020-11-15 12:00:00"
+            "datetime": "<?= get_date() ?>",
         }
     ],
     "meta": {
@@ -106,18 +106,19 @@
         "total_pages": 1
     },
     "links": {
-        "first": "<?= SITE_URL ?>api/links?&page=1",
-        "last": "<?= SITE_URL ?>api/links?&page=1",
+        "first": "<?= SITE_URL ?>api/links?page=1",
+        "last": "<?= SITE_URL ?>api/links?page=1",
         "next": null,
         "prev": null,
-        "self": "<?= SITE_URL ?>api/links?&page=1"
+        "self": "<?= SITE_URL ?>api/links?page=1"
     }
 }
+</pre>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
 
         <div class="card">
             <div class="card-header bg-white p-3 position-relative">
@@ -146,14 +147,14 @@
                             <div class="card-body">
                                 curl --request GET \<br />
                                 --url '<?= SITE_URL ?>api/links/<span class="text-primary">{link_id}</span>' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
     "data": {
         "id": 1,
@@ -170,14 +171,15 @@
         "order": 0,
         "start_date": null,
         "end_date": null,
-        "date": "2020-11-15 12:00:00"
+        "datetime": "<?= get_date() ?>",
     }
 }
+</pre>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
 
         <div class="card">
             <div class="card-header bg-white p-3 position-relative">
@@ -213,144 +215,224 @@
                             <tr>
                                 <td>type</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td><?= '<code>' . implode('</code> , <code>',  ['link']) . '</code>' ?></td>
                             </tr>
                             <tr>
                                 <td>location_url</td>
                                 <td>
-                                    <span class="badge badge-danger"><?= l('api_documentation.required') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-danger"><i class="fas fa-fw fa-sm fa-asterisk mr-1"></i> <?= l('api_documentation.required') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
-                                <td><?= l('api_documentation.links.location_url') ?></td>
+                                <td><?= l('api_documentation.links.location_url') ?><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">is_bulk = 0</span>') ?></td>
+                            </tr>
+                            <tr>
+                                <td>location_urls</td>
+                                <td>
+                                    <span class="badge badge-danger"><i class="fas fa-fw fa-sm fa-asterisk mr-1"></i> <?= l('api_documentation.required') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td><?= l('api_documentation.links.location_url') ?><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">is_bulk = 1</span>') ?></td>
                             </tr>
                             <tr>
                                 <td>url</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
-                                <td><?= l('api_documentation.links.url') ?></td>
+                                <td><?= l('api_documentation.links.url') ?><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">is_bulk = 0</span>') ?></td>
+                            </tr>
+                            <tr>
+                                <td>is_bulk</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-toggle-on mr-1"></i> <?= l('api_documentation.boolean') ?></span>
+                                </td>
+                                <td></td>
                             </tr>
                             <tr>
                                 <td>domain_id</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>project_id</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>pixels_ids</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.array') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-list mr-1"></i> <?= l('api_documentation.array') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
+                                <td>email_reports</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-list mr-1"></i> <?= l('api_documentation.array') ?></span>
+                                </td>
+                                <td><?= l('api_documentation.notifications_handlers_ids') ?></td>
+                            </tr>
+                            <tr>
                                 <td>schedule</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.boolean') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-toggle-on mr-1"></i> <?= l('api_documentation.boolean') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>start_date</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
-                                <td>(schedule=true)</td>
+                                <td><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">schedule = true</span>') ?></td>
                             </tr>
                             <tr>
                                 <td>end_date</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
-                                <td>(schedule=true)</td>
+                                <td><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">schedule = true</span>') ?></td>
                             </tr>
                             <tr>
                                 <td>clicks_limit</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>expiration_url</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>sensitive_content</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.boolean') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-toggle-on mr-1"></i> <?= l('api_documentation.boolean') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>http_status_code</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td><?= sprintf(l('api_documentation.allowed_values'), '<code>' . implode('</code>, <code>', [301, 302, 307, 308])) ?></td>
                             </tr>
                             <tr>
                                 <td>app_linking_is_enabled</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.boolean') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-toggle-on mr-1"></i> <?= l('api_documentation.boolean') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>cloaking_is_enabled</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.boolean') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-toggle-on mr-1"></i> <?= l('api_documentation.boolean') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>cloaking_title</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>cloaking_meta_description</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>cloaking_custom_js</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>cloaking_favicon</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.file') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-file mr-1"></i> <?= l('api_documentation.file') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>cloaking_opengraph</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-file mr-1"></i> <?= l('api_documentation.file') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>password</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>forward_query_parameters_is_enabled</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-toggle-on mr-1"></i> <?= l('api_documentation.boolean') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>utm_source</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>utm_medium</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>utm_campaign</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
                                     <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td>-</td>
@@ -358,27 +440,27 @@
                             <tr>
                                 <td>targeting_type</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
-                                <td><?= '<code>' . implode('</code> , <code>',  ['country_code', 'device_type', 'browser_language', 'rotation', 'os_name']) . '</code>' ?></td>
+                                <td><?= '<code>' . implode('</code> , <code>',  ['continent_code', 'country_code', 'device_type', 'browser_language', 'rotation', 'os_name', 'browser_name']) . '</code>' ?></td>
                             </tr>
-                            <?php foreach(['country_code', 'device_type', 'browser_language', 'rotation', 'os_name'] as $targeting_type): ?>
+                            <?php foreach(['continent_code', 'country_code', 'city_name', 'device_type', 'browser_language', 'rotation', 'os_name', 'browser_name'] as $targeting_type): ?>
                                 <tr>
                                     <td><?= 'targeting_' . $targeting_type . '_key[index]' ?></td>
                                     <td>
-                                        <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                        <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                        <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                        <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                     </td>
-                                    <td>(targeting_type=<?= $targeting_type ?>)</td>
+                                    <td><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">targeting_type = ' . $targeting_type . '</span>') ?></td>
                                 </tr>
                                 <tr>
                                     <td><?= 'targeting_' . $targeting_type . '_value[index]' ?></td>
                                     <td>
-                                        <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                        <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                        <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                        <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                     </td>
-                                    <td>(targeting_type=<?= $targeting_type ?>)</td>
+                                    <td><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">targeting_type = ' . $targeting_type . '</span>') ?></td>
                                 </tr>
                             <?php endforeach ?>
                             </tbody>
@@ -391,7 +473,7 @@
                             <div class="card-body">
                                 curl --request POST \<br />
                                 --url '<?= SITE_URL ?>api/links' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \<br />
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \<br />
                                 --header 'Content-Type: multipart/form-data' \<br />
                                 --form 'url=<span class="text-primary">example</span>' \<br />
                                 --form 'location_url=<span class="text-primary"><?= SITE_URL ?></span>' \<br />
@@ -401,18 +483,19 @@
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
     "data": {
         "id": 1
     }
 }
+</pre>
                         </div>
                     </div>
 
                 </div>
             </div>
-        </div>
+
 
         <div class="card">
             <div class="card-header bg-white p-3 position-relative">
@@ -448,136 +531,200 @@
                             <tr>
                                 <td>location_url</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td><?= l('api_documentation.links.location_url') ?></td>
                             </tr>
                             <tr>
                                 <td>url</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td><?= l('api_documentation.links.url') ?></td>
                             </tr>
                             <tr>
                                 <td>domain_id</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>project_id</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>pixels_ids</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.array') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-list mr-1"></i> <?= l('api_documentation.array') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
+                                <td>email_reports</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-list mr-1"></i> <?= l('api_documentation.array') ?></span>
+                                </td>
+                                <td><?= l('api_documentation.notifications_handlers_ids') ?></td>
+                            </tr>
+                            <tr>
                                 <td>schedule</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.boolean') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-toggle-on mr-1"></i> <?= l('api_documentation.boolean') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>start_date</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
-                                <td>(schedule=true)</td>
+                                <td><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">schedule = true</span>') ?></td>
                             </tr>
                             <tr>
                                 <td>end_date</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
-                                <td>(schedule=true)</td>
+                                <td><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">schedule = true</span>') ?></td>
                             </tr>
                             <tr>
                                 <td>clicks_limit</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>expiration_url</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>sensitive_content</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.boolean') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-toggle-on mr-1"></i> <?= l('api_documentation.boolean') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>http_status_code</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td><?= sprintf(l('api_documentation.allowed_values'), '<code>' . implode('</code>, <code>', [301, 302, 307, 308])) ?></td>
                             </tr>
                             <tr>
                                 <td>app_linking_is_enabled</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.boolean') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-toggle-on mr-1"></i> <?= l('api_documentation.boolean') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>cloaking_is_enabled</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.boolean') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-toggle-on mr-1"></i> <?= l('api_documentation.boolean') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>cloaking_title</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>cloaking_meta_description</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>cloaking_custom_js</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>cloaking_favicon</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.file') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-file mr-1"></i> <?= l('api_documentation.file') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>cloaking_opengraph</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-file mr-1"></i> <?= l('api_documentation.file') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>password</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>forward_query_parameters_is_enabled</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-toggle-on mr-1"></i> <?= l('api_documentation.boolean') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>utm_source</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>utm_medium</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                </td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>utm_campaign</td>
+                                <td>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
                                     <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td>-</td>
@@ -585,27 +732,27 @@
                             <tr>
                                 <td>targeting_type</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
-                                <td><?= '<code>' . implode('</code> , <code>',  ['country_code', 'device_type', 'browser_language', 'rotation', 'os_name']) . '</code>' ?></td>
+                                <td><?= '<code>' . implode('</code> , <code>',  ['continent_code', 'country_code', 'device_type', 'browser_language', 'rotation', 'os_name', 'browser_name']) . '</code>' ?></td>
                             </tr>
-                            <?php foreach(['country_code', 'device_type', 'browser_language', 'rotation', 'os_name'] as $targeting_type): ?>
+                            <?php foreach(['continent_code', 'country_code', 'city_name', 'device_type', 'browser_language', 'rotation', 'os_name', 'browser_name'] as $targeting_type): ?>
                                 <tr>
                                     <td><?= 'targeting_' . $targeting_type . '_key[index]' ?></td>
                                     <td>
-                                        <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                        <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                        <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                        <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                     </td>
-                                    <td>(targeting_type=<?= $targeting_type ?>)</td>
+                                    <td><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">targeting_type = ' . $targeting_type . '</span>') ?></td>
                                 </tr>
                                 <tr>
                                     <td><?= 'targeting_' . $targeting_type . '_value[index]' ?></td>
                                     <td>
-                                        <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                        <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                        <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                        <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                     </td>
-                                    <td>(targeting_type=<?= $targeting_type ?>)</td>
+                                    <td><?= sprintf(l('api_documentation.available_when'), '<span class="badge badge-light">targeting_type = ' . $targeting_type . '</span>') ?></td>
                                 </tr>
                             <?php endforeach ?>
                             </tbody>
@@ -618,7 +765,7 @@
                             <div class="card-body">
                                 curl --request POST \<br />
                                 --url '<?= SITE_URL ?>api/links/<span class="text-primary">{link_id}</span>' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \<br />
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \<br />
                                 --header 'Content-Type: multipart/form-data' \<br />
                                 --form 'is_enabled=<span class="text-primary">0</span>' \<br />
                             </div>
@@ -627,18 +774,19 @@
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
-  "data": {
-    "id": 1
-  }
+    "data": {
+        "id": 1
+    }
 }
+</pre>
                         </div>
                     </div>
 
                 </div>
             </div>
-        </div>
+
 
         <div class="card">
             <div class="card-header bg-white p-3 position-relative">
@@ -667,14 +815,14 @@
                             <div class="card-body">
                                 curl --request DELETE \<br />
                                 --url '<?= SITE_URL ?>api/links/<span class="text-primary">{link_id}</span>' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \<br />
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \<br />
                             </div>
                         </div>
                     </div>
 
                 </div>
             </div>
-        </div>
+
     </div>
 </div>
 

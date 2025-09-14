@@ -1,16 +1,25 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 use Altum\Language;
+
+defined('ALTUMCODE') || die();
 
 class AdminLanguageCreate extends Controller {
 
@@ -24,10 +33,11 @@ class AdminLanguageCreate extends Controller {
 
         if(!empty($_POST)) {
             /* Clean some posted variables */
-            $_POST['language_name'] = input_clean($_POST['language_name']);
-            $_POST['language_code'] = mb_strtolower(input_clean($_POST['language_code']));
-            $_POST['language_flag'] = input_clean($_POST['language_flag']);
-            $_POST['status'] = isset($_POST['status']) && in_array($_POST['status'], ['active', 'disabled']) ? $_POST['status'] : 'active';
+            $_POST['language_name'] = input_clean(preg_replace('/\s{2,}/', ' ', trim($_POST['language_name']), 64));
+            $_POST['language_code'] = mb_strtolower(input_clean(preg_replace("/\s+/", '', $_POST['language_code'], 16)));
+            $_POST['language_flag'] = mb_substr(trim(input_clean($_POST['language_flag'])), 0, 4, 'UTF-8');
+
+            $_POST['status'] = (int) isset($_POST['status']);
             $_POST['order'] = (int) $_POST['order'];
 
             $language_content = function($language_strings) {
@@ -62,7 +72,7 @@ ALTUM;
                 Alerts::add_error(sprintf(l('global.error_message.directory_not_writable'), Language::$path . 'admin/'));
             }
 
-            if(in_array($_POST['language_name'], Language::$languages)) {
+            if(array_key_exists($_POST['language_name'], Language::$languages)) {
                 Alerts::add_error(sprintf(l('admin_languages.error_message.language_exists'), $_POST['language_name'], $_POST['language_code']));
             }
 
@@ -86,9 +96,17 @@ ALTUM;
                 $settings_languages = [];
                 foreach(Language::$languages as $lang) {
                     $settings_languages[$lang['name']] = [
-                        'status' => $lang['name'] == $_POST['language_name'] ? $_POST['status'] : (settings()->languages->{$lang['name']}->status ?? 'active'),
+                        'status' => $lang['name'] == $_POST['language_name'] ? $_POST['status'] : (settings()->languages->{$lang['name']}->status ?? true),
                         'order' => $lang['name'] == $_POST['language_name'] ? $_POST['order'] : (settings()->languages->{$lang['name']}->order ?? 1),
-                        'language_flag' => $lang['name'] == $_POST['language_name'] ? $_POST['language_flag'] : (settings()->languages->{$lang['name']}->language_flag ?? 1),
+                        'language_flag' => $lang['name'] == $_POST['language_name'] ? $_POST['language_flag'] : (settings()->languages->{$lang['name']}->language_flag ?? ''),
+                    ];
+                }
+
+                if(!isset($settings_languages[$_POST['language_name']])) {
+                    $settings_languages[$_POST['language_name']] = [
+                        'status' => $_POST['status'],
+                        'order' => $_POST['order'],
+                        'language_flag' => $_POST['language_flag'],
                     ];
                 }
 
@@ -96,13 +114,13 @@ ALTUM;
                 db()->where('`key`', 'languages')->update('settings', ['value' => json_encode($settings_languages)]);
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItem('settings');
+                cache()->deleteItem('settings');
 
                 /* Set a nice success message */
                 Alerts::add_success(sprintf(l('global.success_message.create1'), '<strong>' . $_POST['language_name'] . '</strong>'));
 
                 /* Redirect */
-                redirect('admin/language-update/' . $_POST['language_name']);
+                redirect('admin/language-update/' . replace_space_with_plus($_POST['language_name']));
             }
 
         }
@@ -111,7 +129,7 @@ ALTUM;
         $values['language_name'] = $_POST['language_name'] ?? null;
         $values['language_code'] = $_POST['language_code'] ?? null;
         $values['language_flag'] = $_POST['language_flag'] ?? null;
-        $values['status'] = $_POST['status'] ?? 'active';
+        $values['status'] = $_POST['status'] ?? true;
         $values['order'] = $_POST['order'] ?? 0;
 
         /* Main View */

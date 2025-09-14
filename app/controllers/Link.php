@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -14,6 +21,8 @@ use Altum\Models\BiolinksThemes;
 use Altum\Models\Domain;
 use Altum\Title;
 
+defined('ALTUMCODE') || die();
+
 class Link extends Controller {
     public $link;
 
@@ -22,7 +31,7 @@ class Link extends Controller {
         \Altum\Authentication::guard();
 
         $link_id = isset($this->params[0]) ? (int) $this->params[0] : null;
-        $method = isset($this->params[1]) && in_array($this->params[1], ['settings', 'statistics']) ? $this->params[1] : 'settings';
+        $method = isset($this->params[1]) && in_array($this->params[1], ['settings', 'statistics', 'download']) ? $this->params[1] : 'settings';
 
         /* Make sure the link exists and is accessible to the user */
         if(!$this->link = db()->where('link_id', $link_id)->where('user_id', $this->user->user_id)->getOne('links')) {
@@ -34,21 +43,28 @@ class Link extends Controller {
 
         $this->link->settings = json_decode($this->link->settings ?? '');
         $this->link->pixels_ids = json_decode($this->link->pixels_ids ?? '[]');
+        $this->link->email_reports = json_decode($this->link->email_reports ?? '[]');
 
         /* Get the current domain if needed */
-        $this->link->domain = $this->link->domain_id ? (new Domain())->get_domain($this->link->domain_id) : null;
+        $this->link->domain = $this->link->domain_id ? (new Domain())->get_domain_by_domain_id($this->link->domain_id) : null;
 
         /* Determine the actual full url */
-        $this->link->full_url = $this->link->domain ? $this->link->domain->url . $this->link->url : SITE_URL . $this->link->url;
+        $this->link->full_url = $this->link->domain ? $this->link->domain->url . ($this->link->domain->link_id == $this->link->link_id ? null : $this->link->url) : SITE_URL . $this->link->url;
 
         /* Static links need the / for proper asset pathing */
         if($this->link->type == 'static') {
             $this->link->full_url .= '/';
         }
 
+        /* Set a custom title */
+        Title::set(sprintf(l('link.title'), $this->link->url));
+
         /* Handle code for different parts of the page */
         switch($method) {
             case 'settings':
+
+                /* Get available notification handlers */
+                $notification_handlers = (new \Altum\Models\NotificationHandlers())->get_notification_handlers_by_user_id($this->user->user_id);
 
                 if($this->link->type == 'biolink') {
                     /* Get available themes */
@@ -59,6 +75,8 @@ class Link extends Controller {
 
                     /* Add the modals for creating the links inside the biolink */
                     foreach($biolink_blocks as $key => $value) {
+                        if(!settings()->links->available_biolink_blocks->{$key}) continue;
+
                         $data = [
                             'link' => $this->link,
                             'biolink_blocks' => $biolink_blocks,
@@ -69,10 +87,12 @@ class Link extends Controller {
                         \Altum\Event::add_content($view->run($data), 'modals');
                     }
 
-                    $data = [
-                        'biolink_blocks' => $biolink_blocks,
-                    ];
+                    $data = ['biolink_blocks' => $biolink_blocks,];
                     $view = new \Altum\View('link/settings/biolink_link_create_modal', (array) $this);
+                    \Altum\Event::add_content($view->run($data), 'modals');
+
+                    $data = ['biolinks_themes' => $biolinks_themes,];
+                    $view = new \Altum\View('link/settings/biolink_themes_modal', (array) $this);
                     \Altum\Event::add_content($view->run($data), 'modals');
                 }
 
@@ -106,6 +126,7 @@ class Link extends Controller {
                     'biolink_blocks'    => $biolink_blocks,
                     'biolinks_themes'   => $biolinks_themes ?? null,
                     'links_types'       => $links_types,
+                    'notification_handlers' => $notification_handlers ?? null,
                 ];
 
                 break;
@@ -161,7 +182,7 @@ class Link extends Controller {
                     }
                 }
 
-                $type = isset($_GET['type']) && in_array($_GET['type'], ['overview', 'entries', 'referrer_host', 'referrer_path', 'country', 'city_name', 'os', 'browser', 'device', 'language', 'utm_source', 'utm_medium', 'utm_campaign']) ? input_clean($_GET['type']) : 'overview';
+                $type = isset($_GET['type']) && in_array($_GET['type'], ['overview', 'entries', 'referrer_host', 'referrer_path', 'continent_code', 'country', 'city_name', 'os', 'browser', 'device', 'language', 'utm_source', 'utm_medium', 'utm_campaign', 'hour']) ? input_clean($_GET['type']) : 'overview';
 
                 $datetime = \Altum\Date::get_start_end_dates_new();
 
@@ -172,17 +193,23 @@ class Link extends Controller {
                         /* Get the required statistics */
                         $pageviews = [];
                         $pageviews_chart = [];
+                        $totals = [
+                            'pageviews' => 0,
+                            'visitors' => 0,
+                        ];
+
+                        $convert_tz_sql = get_convert_tz_sql('`datetime`', $this->user->timezone);
 
                         $pageviews_result = database()->query("
                             SELECT
                                 COUNT(`id`) AS `pageviews`,
                                 SUM(`is_unique`) AS `visitors`,
-                                DATE_FORMAT(`datetime`, '{$datetime['query_date_format']}') AS `formatted_date`
+                                DATE_FORMAT({$convert_tz_sql}, '{$datetime['query_date_format']}') AS `formatted_date`
                             FROM
                                  `track_links`
                             WHERE
                                 `link_id` = {$this->link->link_id}
-                                AND (`datetime` BETWEEN '{$datetime['query_start_date']}' AND '{$datetime['query_end_date']}')
+                                AND ({$convert_tz_sql} BETWEEN '{$datetime['query_start_date']}' AND '{$datetime['query_end_date']}')
                             GROUP BY
                                 `formatted_date`
                             ORDER BY
@@ -193,16 +220,20 @@ class Link extends Controller {
                         while($row = $pageviews_result->fetch_object()) {
                             $pageviews[] = $row;
 
-                            $row->formatted_date = $datetime['process']($row->formatted_date);
+                            $row->formatted_date = $datetime['process']($row->formatted_date, true);
 
                             $pageviews_chart[$row->formatted_date] = [
                                 'pageviews' => $row->pageviews,
                                 'visitors' => $row->visitors
                             ];
+
+                            $totals['pageviews'] += $row->pageviews;
+                            $totals['visitors'] += $row->visitors;
                         }
 
                         $pageviews_chart = get_chart_data($pageviews_chart);
 
+                        $limit = $this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page;
                         $result = database()->query("
                             SELECT
                                 *
@@ -213,6 +244,7 @@ class Link extends Controller {
                                 AND (`datetime` BETWEEN '{$datetime['query_start_date']}' AND '{$datetime['query_end_date']}')
                             ORDER BY
                                 `datetime` DESC
+                            LIMIT {$limit}
                         ");
 
                         break;
@@ -244,7 +276,7 @@ class Link extends Controller {
                         break;
 
                     case 'referrer_host':
-                    case 'country':
+                    case 'continent_code':
                     case 'os':
                     case 'browser':
                     case 'device':
@@ -253,6 +285,7 @@ class Link extends Controller {
                         $columns = [
                             'referrer_host' => 'referrer_host',
                             'referrer_path' => 'referrer_path',
+                            'continent_code' => 'continent_code',
                             'country' => 'country_code',
                             'city_name' => 'city_name',
                             'os' => 'os_name',
@@ -274,7 +307,7 @@ class Link extends Controller {
                                 `{$columns[$type]}`
                             ORDER BY
                                 `total` DESC
-                            LIMIT 250
+                            
                         ");
 
                         break;
@@ -297,7 +330,32 @@ class Link extends Controller {
                                 `referrer_path`
                             ORDER BY
                                 `total` DESC
-                            LIMIT 250
+                            
+                        ");
+
+                        break;
+
+                    case 'country':
+
+                        $continent_code = isset($_GET['continent_code']) ? input_clean($_GET['continent_code']) : null;
+
+                        $result = database()->query("
+                            SELECT
+                                `country_code`,
+                                " . ($continent_code ? "`continent_code`," : null) . "
+                                COUNT(*) AS `total`
+                            FROM
+                                 `track_links`
+                            WHERE
+                                `link_id` = {$this->link->link_id}
+                                " . ($continent_code ? "AND `continent_code` = '{$continent_code}'" : null) . "
+                                AND (`datetime` BETWEEN '{$datetime['query_start_date']}' AND '{$datetime['query_end_date']}')
+                            GROUP BY
+                                " . ($continent_code ? "`continent_code`," : null) . "
+                                `country_code`
+                            ORDER BY
+                                `total` DESC
+                            
                         ");
 
                         break;
@@ -309,6 +367,7 @@ class Link extends Controller {
                         $result = database()->query("
                             SELECT
                                 `city_name`,
+                                `country_code`,
                                 COUNT(*) AS `total`
                             FROM
                                  `track_links`
@@ -317,10 +376,11 @@ class Link extends Controller {
                                 " . ($country_code ? "AND `country_code` = '{$country_code}'" : null) . "
                                 AND (`datetime` BETWEEN '{$datetime['query_start_date']}' AND '{$datetime['query_end_date']}')
                             GROUP BY
+                                `country_code`,
                                 `city_name`
                             ORDER BY
                                 `total` DESC
-                            LIMIT 250
+                            
                         ");
 
                         break;
@@ -341,7 +401,7 @@ class Link extends Controller {
                                 `utm_source`
                             ORDER BY
                                 `total` DESC
-                            LIMIT 250
+                            
                         ");
 
                         break;
@@ -364,7 +424,7 @@ class Link extends Controller {
                                 `utm_medium`
                             ORDER BY
                                 `total` DESC
-                            LIMIT 250
+                            
                         ");
 
                         break;
@@ -389,7 +449,30 @@ class Link extends Controller {
                                 `utm_campaign`
                             ORDER BY
                                 `total` DESC
-                            LIMIT 250
+                            
+                        ");
+
+                        break;
+
+                    case 'hour':
+
+                        /* Get the timezone conversion SQL */
+                        $convert_tz_sql = get_convert_tz_sql('`datetime`', $this->user->timezone);
+
+                        /* Group by HOUR after timezone adjustment */
+                        $result = database()->query("
+                            SELECT 
+                                HOUR({$convert_tz_sql}) AS `hour`,
+                                COUNT(*) AS `total`
+                            FROM
+                                `track_links`
+                            WHERE
+                                `link_id` = {$this->link->link_id}
+                                AND ({$convert_tz_sql} BETWEEN '{$datetime['query_start_date']}' AND '{$datetime['query_end_date']}')
+                            GROUP BY
+                                `hour`
+                            ORDER BY
+                                `total` DESC
                         ");
 
                         break;
@@ -399,7 +482,9 @@ class Link extends Controller {
                     case 'overview':
 
                         $statistics_keys = [
+                            'continent_code',
                             'country_code',
+                            'city_name',
                             'referrer_host',
                             'device_type',
                             'os_name',
@@ -419,6 +504,14 @@ class Link extends Controller {
                         /* Start processing the rows from the database */
                         while($row = $result->fetch_object()) {
                             foreach($statistics_keys as $key) {
+
+                                /* Get country of city */
+//                                if($key == 'city_name' && $row->{$key}) {
+//                                    $test = $row->{$key} . '_country_code';
+//
+//                                    echo $test;
+//                                    $statistics[$key][$test] = $row->country_code;
+//                                }
 
                                 $statistics[$key][$row->{$key}] = isset($statistics[$key][$row->{$key}]) ? $statistics[$key][$row->{$key}] + 1 : 1;
 
@@ -442,6 +535,7 @@ class Link extends Controller {
                             'latest' => $latest,
                             'pageviews' => $pageviews,
                             'pageviews_chart' => $pageviews_chart,
+                            'totals' => $totals,
                             'url' => 'link/' . $this->link->link_id,
                         ];
 
@@ -476,6 +570,7 @@ class Link extends Controller {
                         break;
 
                     case 'referrer_host':
+                    case 'continent_code':
                     case 'country':
                     case 'city_name':
                     case 'os':
@@ -508,6 +603,7 @@ class Link extends Controller {
                             'url' => 'link/' . $this->link->link_id,
 
                             'referrer_host' => $referrer_host ?? null,
+                            'continent_code' => $continent_code ?? null,
                             'country_code' => $country_code ?? null,
                             'utm_source' => $utm_source ?? null,
                             'utm_medium' => $utm_medium ?? null,
@@ -516,11 +612,35 @@ class Link extends Controller {
                         $has_data = count($statistics);
 
                         break;
+
+                    case 'hour':
+
+                        $statistics = [];
+                        $statistics_total_sum = 0;
+
+                        while($row = $result->fetch_object()) {
+                            $statistics[] = $row;
+                            $statistics_total_sum += $row->total;
+                        }
+
+                        $data = [
+                            'rows' => $statistics,
+                            'total_sum' => $statistics_total_sum,
+                            'link' => $this->link,
+                            'method' => $method,
+                            'datetime' => $datetime,
+                            'type' => $type,
+                            'url' => 'link/' . $this->link->link_id,
+                        ];
+
+                        $has_data = count($statistics);
+
+                        break;
                 }
 
                 /* Export handler */
-                process_export_csv($statistics, 'basic');
-                process_export_json($statistics, 'basic');
+                process_export_csv($statistics);
+                process_export_json($statistics);
 
                 $view = new \Altum\View('link/statistics/statistics_' . $type, (array) $this);
                 $this->add_view_content('statistics', $view->run($data));
@@ -536,6 +656,20 @@ class Link extends Controller {
 
                 break;
 
+            case 'download':
+
+                /* Static links need the / for proper asset pathing */
+                if($this->link->type == 'static') {
+                    $this->link->full_url .= '/';
+
+                    $full_requested_file = \Altum\Uploads::get_path('static') . $this->link->settings->static_folder . '/';
+
+                    \Altum\Uploads::download_files_as_zip(['' => $full_requested_file], l('global.download'));
+
+                    die();
+                }
+
+                break;
         }
 
         /* Delete Modal */
@@ -550,7 +684,7 @@ class Link extends Controller {
         $view = new \Altum\View('link/' . $method, (array) $this);
         $this->add_view_content('method', $view->run($data));
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'link' => $this->link,
             'method' => $method,
@@ -559,9 +693,6 @@ class Link extends Controller {
 
         $view = new \Altum\View('link/index', (array) $this);
         $this->add_view_content('content', $view->run($data));
-
-        /* Set a custom title */
-        Title::set(sprintf(l('link.title'), $this->link->url));
 
     }
 

@@ -1,16 +1,25 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum;
 
+defined('ALTUMCODE') || die();
+
 class Alerts {
-    public static $types = ['success', 'error', 'info'];
+    public static $types = ['success', 'error', 'info', 'warning'];
 
     /* Field errors */
     public static function add_field_error($key, $message) {
@@ -66,9 +75,13 @@ class Alerts {
         $output = null;
 
         if(self::has_field_errors($key)) {
-            $output = '<div class="invalid-feedback">' . self::get_first_field_error($key) . '</div>';
+            $output = '<div class="invalid-feedback d-inline-block">' . self::get_first_field_error($key) . '</div>';
 
             unset($_SESSION['field_errors'][$key]);
+
+            if(empty($_SESSION['field_errors'])) {
+                unset($_SESSION['field_errors']);
+            }
         }
 
         return $output;
@@ -125,6 +138,14 @@ class Alerts {
     }
 
     /* Errors */
+    public static function add_warning($message, $key = 'warning') {
+        self::add('warning', $key, $message);
+    }
+
+    public static function has_warnings($key = null) {
+        return self::has('warning', $key);
+    }
+
     public static function add_error($message, $key = 'error') {
         self::add('error', $key, $message);
     }

@@ -13,9 +13,35 @@
                 <label class="custom-control-label" for="display_install_bar"><?= l('admin_settings.pwa.display_install_bar') ?></label>
             </div>
 
+            <div class="form-group custom-control custom-switch">
+                <input id="display_install_bar_for_guests" name="display_install_bar_for_guests" type="checkbox" class="custom-control-input" <?= \Altum\Plugin::is_active('pwa') && settings()->pwa->display_install_bar_for_guests ? 'checked="checked"' : null?>>
+                <label class="custom-control-label" for="display_install_bar_for_guests"><?= l('admin_settings.pwa.display_install_bar_for_guests') ?></label>
+            </div>
+
+            <div class="form-group">
+                <label for="display_install_bar_delay"><?= l('admin_settings.pwa.display_install_bar_delay') ?></label>
+                <div class="input-group">
+                    <input type="number" id="display_install_bar_delay" name="display_install_bar_delay" min="0" class="form-control" value="<?= settings()->pwa->display_install_bar_delay ?>" required="required" />
+                    <div class="input-group-append">
+                        <span class="input-group-text"><?= l('global.date.seconds') ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="display_install_bar_minimum_pageviews_count"><?= l('admin_settings.pwa.display_install_bar_minimum_pageviews_count') ?></label>
+                <div class="input-group">
+                    <input type="number" id="display_install_bar_minimum_pageviews_count" name="display_install_bar_minimum_pageviews_count" min="0" class="form-control" value="<?= settings()->pwa->display_install_bar_minimum_pageviews_count ?? 3 ?>" required="required" />
+                    <div class="input-group-append">
+                        <span class="input-group-text"><?= l('admin_settings.pwa.pageviews') ?></span>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label for="app_name"><?= l('admin_settings.pwa.app_name') ?></label>
-                <input id="app_name" type="text" name="app_name" class="form-control" value="<?= \Altum\Plugin::is_active('pwa') ? settings()->pwa->app_name : null ?>" />
+                <input id="app_name" type="text" name="app_name" class="form-control" value="<?= \Altum\Plugin::is_active('pwa') ? settings()->pwa->app_name : null ?>" maxlength="30" />
+                <small class="form-text text-muted"><?= l('admin_settings.pwa.app_name_help') ?></small>
             </div>
 
             <div class="form-group" data-character-counter="input">
@@ -24,11 +50,13 @@
                     <small class="text-muted" data-character-counter-wrapper></small>
                 </label>
                 <input id="short_app_name" type="text" name="short_app_name" class="form-control" value="<?= \Altum\Plugin::is_active('pwa') ? settings()->pwa->short_app_name : null ?>" maxlength="12" />
+                <small class="form-text text-muted"><?= l('admin_settings.pwa.short_app_name_help') ?></small>
             </div>
 
             <div class="form-group">
                 <label for="app_description"><?= l('admin_settings.pwa.app_description') ?></label>
                 <input id="app_description" type="text" name="app_description" class="form-control" value="<?= \Altum\Plugin::is_active('pwa') ? settings()->pwa->app_description : null ?>" />
+                <small class="form-text text-muted"><?= l('admin_settings.pwa.app_description_help') ?></small>
             </div>
 
             <div class="form-group">
@@ -38,42 +66,27 @@
             </div>
 
             <div class="form-group">
-                <label for="theme_color"><?= l('admin_settings.pwa.theme_color') ?></label>
-                <input id="theme_color" type="hidden" name="theme_color" class="form-control" value="<?= settings()->pwa->theme_color ?>" data-color-picker />
+                <label for="background_color"><?= l('admin_settings.pwa.background_color') ?></label>
+                <input id="background_color" type="hidden" name="background_color" class="form-control" value="<?= settings()->pwa->background_color ?? '#000000' ?>" data-color-picker />
+                <small class="form-text text-muted"><?= l('admin_settings.pwa.background_color_help') ?></small>
             </div>
 
             <div class="form-group">
+                <label for="theme_color"><?= l('admin_settings.pwa.theme_color') ?></label>
+                <input id="theme_color" type="hidden" name="theme_color" class="form-control" value="<?= settings()->pwa->theme_color ?? '#000000' ?>" data-color-picker />
+                <small class="form-text text-muted"><?= l('admin_settings.pwa.theme_color_help') ?></small>
+            </div>
+
+            <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), get_max_upload()) ?>">
                 <label for="app_icon"><?= l('admin_settings.pwa.app_icon') ?></label>
-                <?php if(!empty(settings()->pwa->app_icon)): ?>
-                    <div class="m-1">
-                        <img src="<?= \Altum\Uploads::get_full_url('app_icon') . settings()->pwa->app_icon ?>" class="img-fluid" style="max-height: 2.5rem;height: 2.5rem;" />
-                    </div>
-                    <div class="custom-control custom-checkbox my-2">
-                        <input id="app_icon_remove" name="app_icon_remove" type="checkbox" class="custom-control-input" onchange="this.checked ? document.querySelector('#app_icon').classList.add('d-none') : document.querySelector('#app_icon').classList.remove('d-none')">
-                        <label class="custom-control-label" for="app_icon_remove">
-                            <span class="text-muted"><?= l('global.delete_file') ?></span>
-                        </label>
-                    </div>
-                <?php endif ?>
-                <input id="app_icon" type="file" name="app_icon" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('app_icon') ?>" class="form-control-file altum-file-input" />
+                <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'app_icon', 'file_key' => 'app_icon', 'already_existing_image' => settings()->pwa->app_icon]) ?>
                 <small class="form-text text-muted"><?= l('admin_settings.pwa.app_icon_help') ?></small>
                 <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('app_icon')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), get_max_upload()) ?>">
                 <label for="app_icon_maskable"><?= l('admin_settings.pwa.app_icon_maskable') ?></label>
-                <?php if(!empty(settings()->pwa->app_icon_maskable)): ?>
-                    <div class="m-1">
-                        <img src="<?= \Altum\Uploads::get_full_url('app_icon') . settings()->pwa->app_icon_maskable ?>" class="img-fluid" style="max-height: 2.5rem;height: 2.5rem;" />
-                    </div>
-                    <div class="custom-control custom-checkbox my-2">
-                        <input id="app_icon_maskable_remove" name="app_icon_maskable_remove" type="checkbox" class="custom-control-input" onchange="this.checked ? document.querySelector('#app_icon_maskable').classList.add('d-none') : document.querySelector('#app_icon_maskable').classList.remove('d-none')">
-                        <label class="custom-control-label" for="app_icon_maskable_remove">
-                            <span class="text-muted"><?= l('global.delete_file') ?></span>
-                        </label>
-                    </div>
-                <?php endif ?>
-                <input id="app_icon_maskable" type="file" name="app_icon_maskable" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('app_icon') ?>" class="form-control-file altum-file-input" />
+                <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'app_icon', 'file_key' => 'app_icon_maskable', 'already_existing_image' => settings()->pwa->app_icon_maskable]) ?>
                 <small class="form-text text-muted"><?= l('admin_settings.pwa.app_icon_maskable_help') ?></small>
                 <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('app_icon')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
             </div>
@@ -87,20 +100,9 @@
                 <div class="alert alert-info"><?= l('admin_settings.pwa.mobile_screenshots_help2') ?></div>
 
                 <?php foreach([1, 2, 3, 4 ,5, 6] as $key): ?>
-                    <div class="form-group">
+                    <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), get_max_upload()) ?>">
                         <label for="<?= 'mobile_screenshot_' . $key ?>"><?= sprintf(l('admin_settings.pwa.screenshot_x'), $key) ?></label>
-                        <?php if(!empty(settings()->pwa->{'mobile_screenshot_' . $key})): ?>
-                            <div class="m-1">
-                                <img src="<?= \Altum\Uploads::get_full_url('app_screenshots') . settings()->pwa->{'mobile_screenshot_' . $key} ?>" class="img-fluid" style="max-height: 2.5rem;height: 2.5rem;" />
-                            </div>
-                            <div class="custom-control custom-checkbox my-2">
-                                <input id="<?= 'mobile_screenshot_' . $key . '_remove' ?>" name="<?= 'mobile_screenshot_' . $key . '_remove' ?>" type="checkbox" class="custom-control-input" onchange="this.checked ? document.querySelector('<?= '#mobile_screenshot_' . $key ?>').classList.add('d-none') : document.querySelector('<?= '#mobile_screenshot_' . $key ?>').classList.remove('d-none')">
-                                <label class="custom-control-label" for="<?= 'mobile_screenshot_' . $key . '_remove' ?>">
-                                    <span class="text-muted"><?= l('global.delete_file') ?></span>
-                                </label>
-                            </div>
-                        <?php endif ?>
-                        <input id="<?= 'mobile_screenshot_' . $key ?>" type="file" name="<?= 'mobile_screenshot_' . $key ?>" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('app_screenshots') ?>" class="form-control-file altum-file-input" />
+                        <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'app_screenshots', 'file_key' => 'mobile_screenshot_' . $key, 'already_existing_image' => settings()->pwa->{'mobile_screenshot_' . $key}]) ?>
                         <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('app_screenshots')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
                     </div>
                 <?php endforeach ?>
@@ -115,20 +117,9 @@
                 <div class="alert alert-info"><?= l('admin_settings.pwa.desktop_screenshots_help2') ?></div>
 
                 <?php foreach([1,2,3,4,5,6,7,8] as $key): ?>
-                    <div class="form-group">
+                    <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), get_max_upload()) ?>">
                         <label for="<?= 'desktop_screenshot_' . $key ?>"><?= sprintf(l('admin_settings.pwa.screenshot_x'), $key) ?></label>
-                        <?php if(!empty(settings()->pwa->{'desktop_screenshot_' . $key})): ?>
-                            <div class="m-1">
-                                <img src="<?= \Altum\Uploads::get_full_url('app_screenshots') . settings()->pwa->{'desktop_screenshot_' . $key} ?>" class="img-fluid" style="max-height: 2.5rem;height: 2.5rem;" />
-                            </div>
-                            <div class="custom-control custom-checkbox my-2">
-                                <input id="<?= 'desktop_screenshot_' . $key . '_remove' ?>" name="<?= 'desktop_screenshot_' . $key . '_remove' ?>" type="checkbox" class="custom-control-input" onchange="this.checked ? document.querySelector('<?= '#desktop_screenshot_' . $key ?>').classList.add('d-none') : document.querySelector('<?= '#desktop_screenshot_' . $key ?>').classList.remove('d-none')">
-                                <label class="custom-control-label" for="<?= 'desktop_screenshot_' . $key . '_remove' ?>">
-                                    <span class="text-muted"><?= l('global.delete_file') ?></span>
-                                </label>
-                            </div>
-                        <?php endif ?>
-                        <input id="<?= 'desktop_screenshot_' . $key ?>" type="file" name="<?= 'desktop_screenshot_' . $key ?>" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('app_screenshots') ?>" class="form-control-file altum-file-input" />
+                        <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'app_screenshots', 'file_key' => 'desktop_screenshot_' . $key, 'already_existing_image' => settings()->pwa->{'desktop_screenshot_' . $key}]) ?>
                         <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('app_screenshots')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
                     </div>
                 <?php endforeach ?>
@@ -155,20 +146,9 @@
                         <input id="<?= 'shortcut_url_' . $key ?>" type="url" name="<?= 'shortcut_url_' . $key ?>" class="form-control" value="<?= \Altum\Plugin::is_active('pwa') ? settings()->pwa->{'shortcut_url_' . $key} : null ?>" />
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), get_max_upload()) ?>">
                         <label for="<?= 'shortcut_icon_' . $key ?>"><?= sprintf(l('admin_settings.pwa.shortcut_icon_x'), $key) ?></label>
-                        <?php if(!empty(settings()->pwa->{'shortcut_icon_' . $key})): ?>
-                            <div class="m-1">
-                                <img src="<?= \Altum\Uploads::get_full_url('app_screenshots') . settings()->pwa->{'shortcut_icon_' . $key} ?>" class="img-fluid" style="max-height: 2.5rem;height: 2.5rem;" />
-                            </div>
-                            <div class="custom-control custom-checkbox my-2">
-                                <input id="<?= 'shortcut_icon_' . $key . '_remove' ?>" name="<?= 'shortcut_icon_' . $key . '_remove' ?>" type="checkbox" class="custom-control-input" onchange="this.checked ? document.querySelector('<?= '#shortcut_icon_' . $key ?>').classList.add('d-none') : document.querySelector('<?= '#shortcut_icon_' . $key ?>').classList.remove('d-none')">
-                                <label class="custom-control-label" for="<?= 'shortcut_icon_' . $key . '_remove' ?>">
-                                    <span class="text-muted"><?= l('global.delete_file') ?></span>
-                                </label>
-                            </div>
-                        <?php endif ?>
-                        <input id="<?= 'shortcut_icon_' . $key ?>" type="file" name="<?= 'shortcut_icon_' . $key ?>" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('app_screenshots') ?>" class="form-control-file altum-file-input" />
+                        <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'app_screenshots', 'file_key' => 'shortcut_icon_' . $key, 'already_existing_image' => settings()->pwa->{'shortcut_icon_' . $key}]) ?>
                         <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('app_screenshots')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
                     </div>
                 <?php endforeach ?>

@@ -5,7 +5,7 @@ return (object) [
     'plugin_id' => 'push-notifications',
     'name' => 'Push Notifications system',
     'description' => 'The plugin gives you the ability to send push subscribers notifications with ease.',
-    'version' => '1.0.0',
+    'version' => '2.0.0',
     'url' => 'https://altumco.de/push-notifications-plugin',
     'author' => 'AltumCode',
     'author_url' => 'https://altumcode.com/',

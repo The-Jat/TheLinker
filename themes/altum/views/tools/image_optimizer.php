@@ -4,17 +4,17 @@
     <?= \Altum\Alerts::output_alerts() ?>
 
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url('tools') ?>"><?= l('tools.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li class="active" aria-current="page"><?= l('tools.image_optimizer.name') ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url('tools') ?>"><?= l('tools.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li class="active" aria-current="page"><?= l('tools.image_optimizer.name') ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
     <div class="row mb-4">
-        <div class="col-12 col-xl d-flex align-items-center mb-3 mb-xl-0">
-            <h1 class="h4 m-0"><?= l('tools.image_optimizer.name') ?></h1>
+        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0 text-truncate">
+            <h1 class="h4 m-0 text-truncate"><?= l('tools.image_optimizer.name') ?></h1>
 
             <div class="ml-2">
                 <span data-toggle="tooltip" title="<?= l('tools.image_optimizer.description') ?>">
@@ -22,16 +22,18 @@
                 </span>
             </div>
         </div>
+
+        <?= $this->views['ratings'] ?>
     </div>
 
     <div class="card">
         <div class="card-body">
 
-            <form action="" method="post" role="form" enctype="multipart/form-data">
+            <form id="tool_form" action="" method="post" role="form" enctype="multipart/form-data">
                 <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
 
                 <div class="form-group">
-                    <label for="image"><i class="fas fa-fw fa-sm fa-image text-muted mr-1"></i> <?= l('tools.image') ?></label>
+                    <label for="image"><i class="fas fa-fw fa-sm fa-image text-muted mr-1"></i> <?= l('global.image') ?></label>
                     <input id="image" type="file" name="image" accept=".gif, .png, .jpg, .jpeg, .webp" class="form-control-file altum-file-input <?= \Altum\Alerts::has_field_errors('image') ? 'is-invalid' : null ?>" />
                     <?= \Altum\Alerts::output_field_error('image') ?>
                     <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), '.gif, .png, .jpg, .jpeg, .webp') . ' ' . sprintf(l('global.accessibility.file_size_limit'), '5') ?></small>
@@ -88,7 +90,7 @@
                             <label for="result"><?= l('tools.result') ?></label>
                             <div>
                                 <a
-                                        href="<?= url('tools/download?url=' . urlencode($data->result['original_file_url']) . '&name=' . urlencode($data->result['name']) . '&global_token=' . \Altum\Csrf::get('global_token')) ?>"
+                                        href="<?= url('tools/download?url=' . base64_encode($data->result['original_file_url']) . '&name=' . urlencode($data->result['name']) . '&global_token=' . \Altum\Csrf::get('global_token')) ?>"
                                         target="_blank"
                                         class="btn btn-link text-secondary"
                                         data-toggle="tooltip"
@@ -134,6 +136,8 @@
     <?= $this->views['extra_content'] ?>
 
     <?= $this->views['similar_tools'] ?>
+
+    <?= $this->views['popular_tools'] ?>
 </div>
 
 <?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>

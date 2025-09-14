@@ -1,15 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+
+defined('ALTUMCODE') || die();
 
 class AdminBlogPostUpdate extends Controller {
 
@@ -23,15 +32,17 @@ class AdminBlogPostUpdate extends Controller {
         }
 
         if(!empty($_POST)) {
-            /* Filter some the variables */
+            /* Filter some of the variables */
             $_POST['url'] = input_clean(get_slug($_POST['url']), 256);
             $_POST['title'] = input_clean($_POST['title'], 256);
             $_POST['description'] = input_clean($_POST['description'], 256);
+            $_POST['image_description'] = input_clean($_POST['image_description'], 256);
             $_POST['keywords'] = input_clean($_POST['keywords'], 256);
             $_POST['editor'] = in_array($_POST['editor'], ['wysiwyg', 'blocks', 'raw']) ? input_clean($_POST['editor']) : 'raw';
             $_POST['blog_posts_category_id'] = empty($_POST['blog_posts_category_id']) ? null : (int) $_POST['blog_posts_category_id'];
             $_POST['language'] = !empty($_POST['language']) ? input_clean($_POST['language']) : null;
             $_POST['is_published'] = (int) isset($_POST['is_published']);
+            $_POST['content'] = $_POST['editor'] == 'wysiwyg' ? quilljs_to_bootstrap($_POST['content']) : $_POST['content'];
 
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
@@ -64,18 +75,19 @@ class AdminBlogPostUpdate extends Controller {
                     'description' => $_POST['description'],
                     'keywords' => $_POST['keywords'],
                     'image' => $blog_post->image,
+                    'image_description' => $_POST['image_description'],
                     'editor' => $_POST['editor'],
                     'content' => $_POST['content'],
                     'language' => $_POST['language'],
                     'is_published' => $_POST['is_published'],
-                    'last_datetime' => \Altum\Date::$date,
+                    'last_datetime' => get_date(),
                 ]);
 
                 /* Set a nice success message */
                 Alerts::add_success(sprintf(l('global.success_message.update1'), '<strong>' . $_POST['title'] . '</strong>'));
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItemsByTag('blog_posts');
+                cache()->deleteItemsByTag('blog_posts');
 
                 redirect('admin/blog-post-update/' . $blog_post_id);
             }

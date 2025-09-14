@@ -6,7 +6,7 @@
 
             <div class="modal-header">
                 <button type="button" data-toggle="modal" data-target="#biolink_link_create_modal" data-dismiss="modal" class="btn btn-sm btn-link"><i class="fas fa-fw fa-chevron-circle-left text-muted"></i></button>
-                <h5 class="modal-title"><?= l('create_biolink_applemusic_modal.header') ?></h5>
+                <h5 class="modal-title"><?= l('biolink_applemusic.header') ?></h5>
                 <button type="button" class="close" data-dismiss="modal" title="<?= l('global.close') ?>">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -22,12 +22,14 @@
                     <div class="notification-container"></div>
 
                     <div class="form-group">
-                        <label for="applemusic_location_url"><i class="fas fa-fw fa-link fa-sm text-muted mr-1"></i> <?= l('create_biolink_applemusic_modal.location_url') ?></label>
-                        <input id="applemusic_location_url" type="text" class="form-control" name="location_url" required="required" maxlength="2048" placeholder="<?= l('create_biolink_applemusic_modal.location_url_placeholder') ?>" />
+                        <label for="applemusic_location_url"><i class="fas fa-fw fa-link fa-sm text-muted mr-1"></i> <?= l('biolink_applemusic.location_url') ?></label>
+                        <input id="applemusic_location_url" type="url" class="form-control" name="location_url" required="required" maxlength="2048" placeholder="<?= l('biolink_applemusic.location_url_placeholder') ?>" />
                     </div>
 
+                    <p class="small text-muted"><i class="fas fa-fw fa-sm fa-circle-info mr-1"></i> <?= l('link.create_info') ?></p>
+                    
                     <div class="text-center mt-4">
-                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('global.submit') ?></button>
+                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('link.biolink.create_block') ?></button>
                     </div>
                 </form>
             </div>

@@ -1,24 +1,31 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div class="d-flex flex-column flex-md-row justify-content-between mb-4">
-    <h1 class="h3 mb-3 mb-md-0"><i class="fas fa-fw fa-xs fa-icons text-primary-900 mr-2"></i> <?= l('admin_images.header') ?></h1>
+<?php if(!settings()->aix->images_is_enabled): ?>
+    <div class="alert alert-info">
+        <i class="fas fa-fw fa-info-circle mr-1"></i>
+        <?= sprintf(l('global.info_message.admin_feature_disabled'), url('admin/settings/aix')) ?>
+    </div>
+<?php endif ?>
 
-    <div class="d-flex position-relative">
-        <div class="">
+<div class="d-flex flex-column flex-md-row justify-content-between mb-4">
+    <h1 class="h3 mb-3 mb-md-0 text-truncate"><i class="fas fa-fw fa-xs fa-icons text-primary-900 mr-2"></i> <?= l('admin_images.header') ?></h1>
+
+    <div class="d-flex position-relative d-print-none">
+        <div>
             <div class="dropdown">
-                <button type="button" class="btn btn-gray-300 dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>">
+                <button type="button" class="btn btn-gray-300 dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                     <i class="fas fa-fw fa-sm fa-download"></i>
                 </button>
 
                 <div class="dropdown-menu dropdown-menu-right d-print-none">
-                    <a href="<?= url('admin/images?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item">
-                        <i class="fas fa-fw fa-sm fa-file-csv mr-1"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
+                    <a href="<?= url('admin/images?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->csv ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->csv ? null : get_plan_feature_disabled_info() ?>>
+                        <i class="fas fa-fw fa-sm fa-file-csv mr-2"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
                     </a>
-                    <a href="<?= url('admin/images?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item">
-                        <i class="fas fa-fw fa-sm fa-file-code mr-1"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
+                    <a href="<?= url('admin/images?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
+                        <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                     </a>
-                    <a href="#" onclick="window.print();return false;" class="dropdown-item">
-                        <i class="fas fa-fw fa-sm fa-file-pdf mr-1"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
+                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                        <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                     </a>
                 </div>
             </div>
@@ -26,7 +33,7 @@
 
         <div class="ml-3">
             <div class="dropdown">
-                <button type="button" class="btn <?= count($data->filters->get) ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.filters.header') ?>">
+                <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                     <i class="fas fa-fw fa-sm fa-filter"></i>
                 </button>
 
@@ -34,8 +41,8 @@
                     <div class="dropdown-header d-flex justify-content-between">
                         <span class="h6 m-0"><?= l('global.filters.header') ?></span>
 
-                        <?php if(count($data->filters->get)): ?>
-                            <a href="<?= url('admin/images') ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
+                        <?php if($data->filters->has_applied_filters): ?>
+                            <a href="<?= url(\Altum\Router::$original_request) ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
                         <?php endif ?>
                     </div>
 
@@ -117,6 +124,7 @@
                         <div class="form-group px-4">
                             <label for="filters_order_by" class="small"><?= l('global.filters.order_by') ?></label>
                             <select name="order_by" id="filters_order_by" class="custom-select custom-select-sm">
+                                <option value="image_id" <?= $data->filters->order_by == 'image_id' ? 'selected="selected"' : null ?>><?= l('global.id') ?></option>
                                 <option value="datetime" <?= $data->filters->order_by == 'datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_datetime') ?></option>
                                 <option value="last_datetime" <?= $data->filters->order_by == 'last_datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_last_datetime') ?></option>
                                 <option value="name" <?= $data->filters->order_by == 'name' ? 'selected="selected"' : null ?>><?= l('global.name') ?></option>
@@ -153,11 +161,12 @@
             <button id="bulk_enable" type="button" class="btn btn-gray-300" data-toggle="tooltip" title="<?= l('global.bulk_actions') ?>"><i class="fas fa-fw fa-sm fa-list"></i></button>
 
             <div id="bulk_group" class="btn-group d-none" role="group">
-                <div class="btn-group" role="group">
+                <div class="btn-group dropdown" role="group">
                     <button id="bulk_actions" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
                         <?= l('global.bulk_actions') ?> <span id="bulk_counter" class="d-none"></span>
                     </button>
                     <div class="dropdown-menu" aria-labelledby="bulk_actions">
+                        <a href="#" class="dropdown-item" data-toggle="modal" data-target="#bulk_download_modal"><i class="fas fa-fw fa-sm fa-download mr-2"></i> <?= l('global.download') ?></a>
                         <a href="#" class="dropdown-item" data-toggle="modal" data-target="#bulk_delete_modal"><i class="fas fa-fw fa-sm fa-trash-alt mr-2"></i> <?= l('global.delete') ?></a>
                     </div>
                 </div>
@@ -173,6 +182,8 @@
 <form id="table" action="<?= SITE_URL . 'admin/images/bulk' ?>" method="post" role="form">
     <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
     <input type="hidden" name="type" value="" data-bulk-type />
+    <input type="hidden" name="original_request" value="<?= base64_encode(\Altum\Router::$original_request) ?>" />
+    <input type="hidden" name="original_request_query" value="<?= base64_encode(\Altum\Router::$original_request_query) ?>" />
 
     <div class="table-responsive table-custom-container">
         <table class="table table-custom">
@@ -185,7 +196,7 @@
                     </div>
                 </th>
                 <th><?= l('global.user') ?></th>
-                <th><?= l('images.image') ?></th>
+                <th><?= l('global.image') ?></th>
                 <th><?= l('images.size') ?></th>
                 <th></th>
                 <th></th>
@@ -206,7 +217,7 @@
                     <td class="text-nowrap">
                         <div class="d-flex">
                             <a href="<?= url('admin/user-view/' . $row->user_id) ?>">
-                                <img src="<?= get_gravatar($row->user_email) ?>" class="user-avatar rounded-circle mr-3" alt="" />
+                                <img src="<?= get_user_avatar($row->user_avatar, $row->user_email) ?>" referrerpolicy="no-referrer" loading="lazy" class="user-avatar rounded-circle mr-3" alt="" />
                             </a>
 
                             <div class="d-flex flex-column">
@@ -214,7 +225,7 @@
                                     <a href="<?= url('admin/user-view/' . $row->user_id) ?>"><?= $row->user_name ?></a>
                                 </div>
 
-                                <span class="text-muted"><?= $row->user_email ?></span>
+                                <span class="text-muted small"><?= $row->user_email ?></span>
                             </div>
                         </div>
                     </td>
@@ -250,11 +261,11 @@
 
                     <td class="text-nowrap">
                         <div class="d-flex align-items-center">
-                        <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>') ?>">
+                        <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
                             <i class="fas fa-fw fa-clock text-muted"></i>
                         </span>
 
-                            <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.last_datetime_tooltip'), ($row->last_datetime ? '<br />' . \Altum\Date::get($row->last_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_datetime, 3) . '</small>' : '-')) ?>">
+                            <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.last_datetime_tooltip'), ($row->last_datetime ? '<br />' . \Altum\Date::get($row->last_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->last_datetime) . ')</small>' : '<br />' . l('global.na'))) ?>">
                             <i class="fas fa-fw fa-history text-muted"></i>
                         </span>
                         </div>
@@ -274,5 +285,6 @@
 
 <div class="mt-3"><?= $data->pagination ?></div>
 
-<?php require THEME_PATH . 'views/admin/partials/js_bulk.php' ?>
-<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/admin/partials/bulk_delete_modal.php'), 'modals'); ?>
+<?php require THEME_PATH . 'views/partials/js_bulk.php' ?>
+<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/bulk_delete_modal.php'), 'modals'); ?>
+<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/bulk_download_modal.php'), 'modals'); ?>

@@ -6,8 +6,8 @@
     <?= $this->views['account_header_menu'] ?>
 
     <div class="row mb-3">
-        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0">
-            <h1 class="h4 m-0"><?= l('account_payments.header') ?></h1>
+        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0 text-truncate">
+            <h1 class="h4 m-0 text-truncate"><?= l('account_payments.header') ?></h1>
 
             <div class="ml-2">
                 <span data-toggle="tooltip" title="<?= l('account_payments.subheader') ?>">
@@ -16,35 +16,39 @@
             </div>
         </div>
 
-        <?php if(count($data->payments) || count($data->filters->get)): ?>
-            <div class="col-12 col-xl-auto d-flex">
+        <div class="col-12 col-lg-auto d-flex flex-wrap gap-3 d-print-none">
                 <div>
                     <div class="dropdown">
-                        <button type="button" class="btn btn-light dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>">
+                        <button type="button" class="btn btn-light dropdown-toggle-simple <?= count($data->payments) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                             <i class="fas fa-fw fa-sm fa-download"></i>
                         </button>
 
                         <div class="dropdown-menu dropdown-menu-right d-print-none">
-                            <a href="<?= url('account-payments?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item">
-                                <i class="fas fa-fw fa-sm fa-file-csv mr-1"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
+                            <a href="<?= url('account-payments?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->csv ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->csv ? null : get_plan_feature_disabled_info() ?>>
+                                <i class="fas fa-fw fa-sm fa-file-csv mr-2"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
                             </a>
-                            <a href="<?= url('account-payments?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item">
-                                <i class="fas fa-fw fa-sm fa-file-code mr-1"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
-                            </a>
+                            <a href="<?= url('account-payments?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
+                                <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
+                    </a>
+                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                        <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
+                    </a>
                         </div>
                     </div>
                 </div>
 
-                <div class="ml-3">
+                <div>
                     <div class="dropdown">
-                        <button type="button" class="btn <?= count($data->filters->get) ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.filters.header') ?>"><i class="fas fa-fw fa-sm fa-filter"></i></button>
+                        <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= count($data->payments) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
+                        <i class="fas fa-fw fa-sm fa-filter"></i>
+                    </button>
 
                         <div class="dropdown-menu dropdown-menu-right filters-dropdown">
                             <div class="dropdown-header d-flex justify-content-between">
                                 <span class="h6 m-0"><?= l('global.filters.header') ?></span>
 
-                                <?php if(count($data->filters->get)): ?>
-                                    <a href="<?= url('account-payments') ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
+                                <?php if($data->filters->has_applied_filters): ?>
+                                    <a href="<?= url(\Altum\Router::$original_request) ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
                                 <?php endif ?>
                             </div>
 
@@ -52,7 +56,7 @@
 
                             <form action="" method="get" role="form">
                                 <div class="form-group px-4">
-                                    <label for="processor" class="small"><?= l('account_payments.filters.processor') ?></label>
+                                    <label for="processor" class="small"><?= l('account_payments.processor') ?></label>
                                     <select name="processor" id="processor" class="custom-select custom-select-sm">
                                         <option value=""><?= l('global.all') ?></option>
                                         <?php foreach($data->payment_processors as $key => $value): ?>
@@ -65,26 +69,27 @@
                                     <label for="type" class="small"><?= l('global.type') ?></label>
                                     <select name="type" id="type" class="custom-select custom-select-sm">
                                         <option value=""><?= l('global.all') ?></option>
-                                        <option value="one_time" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'one_time' ? 'selected="selected"' : null ?>><?= l('account_payments.filters.type_one_time') ?></option>
-                                        <option value="recurring" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'recurring' ? 'selected="selected"' : null ?>><?= l('account_payments.filters.type_recurring') ?></option>
+                                        <option value="one_time" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'one_time' ? 'selected="selected"' : null ?>><?= l('account_payments.type_one_time') ?></option>
+                                        <option value="recurring" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'recurring' ? 'selected="selected"' : null ?>><?= l('account_payments.type_recurring') ?></option>
                                     </select>
                                 </div>
 
                                 <div class="form-group px-4">
-                                    <label for="frequency" class="small"><?= l('account_payments.filters.frequency') ?></label>
+                                    <label for="frequency" class="small"><?= l('account_payments.frequency') ?></label>
                                     <select name="frequency" id="frequency" class="custom-select custom-select-sm">
                                         <option value=""><?= l('global.all') ?></option>
-                                        <option value="monthly" <?= isset($data->filters->filters['frequency']) && $data->filters->filters['frequency'] == 'monthly' ? 'selected="selected"' : null ?>><?= l('account_payments.filters.frequency_monthly') ?></option>
-                                        <option value="annual" <?= isset($data->filters->filters['frequency']) && $data->filters->filters['frequency'] == 'annual' ? 'selected="selected"' : null ?>><?= l('account_payments.filters.frequency_annual') ?></option>
-                                        <option value="lifetime" <?= isset($data->filters->filters['frequency']) && $data->filters->filters['frequency'] == 'lifetime' ? 'selected="selected"' : null ?>><?= l('account_payments.filters.frequency_lifetime') ?></option>
+                                        <?php foreach(['monthly', 'quarterly', 'biannual', 'annual', 'lifetime'] as $payment_frequency): ?>
+                                            <option value="monthly" <?= isset($data->filters->filters['frequency']) && $data->filters->filters['frequency'] == $payment_frequency ? 'selected="selected"' : null ?>><?= l('plan.custom_plan.' . $payment_frequency) ?></option>
+                                        <?php endforeach ?>
                                     </select>
                                 </div>
 
                                 <div class="form-group px-4">
                                     <label for="filters_order_by" class="small"><?= l('global.filters.order_by') ?></label>
                                     <select name="order_by" id="filters_order_by" class="custom-select custom-select-sm">
+                                        <option value="id" <?= $data->filters->order_by == 'id' ? 'selected="selected"' : null ?>><?= l('global.id') ?></option>
                                         <option value="datetime" <?= $data->filters->order_by == 'datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_datetime') ?></option>
-                                        <option value="total_amount" <?= $data->filters->order_by == 'total_amount' ? 'selected="selected"' : null ?>><?= l('account_payments.filters.order_by_total_amount') ?></option>
+                                        <option value="total_amount" <?= $data->filters->order_by == 'total_amount' ? 'selected="selected"' : null ?>><?= l('account_payments.order_by_total_amount') ?></option>
                                     </select>
                                 </div>
 
@@ -114,7 +119,6 @@
                     </div>
                 </div>
             </div>
-        <?php endif ?>
     </div>
 
     <?php if(count($data->payments)): ?>
@@ -122,9 +126,9 @@
             <table class="table table-custom">
                 <thead>
                 <tr>
-                    <th><?= l('account_payments.payments.plan_id') ?></th>
-                    <th><?= l('account_payments.payments.total_amount') ?></th>
-                    <th><?= l('account_payments.payments.payment_processor') ?></th>
+                    <th><?= l('account_payments.plan_id') ?></th>
+                    <th><?= l('account_payments.total_amount') ?></th>
+                    <th><?= l('account_payments.payment_processor') ?></th>
                     <th></th>
                     <th></th>
                 </tr>
@@ -136,7 +140,7 @@
                     <tr>
                         <td class="text-nowrap">
                             <div class="d-flex flex-column">
-                                <span><?= $row->plan_name ?></span>
+                                <span><?= $row->translations->{\Altum\Language::$name}->name ?? $row->plan_name ?></span>
                                 <span class="text-muted"><?= l('pay.custom_plan.' . $row->type . '_type') ?></span>
                             </div>
                         </td>
@@ -153,7 +157,7 @@
                         </td>
 
                         <td class="text-nowrap">
-                            <span class="" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>') ?>">
+                            <span class="" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
                                 <i class="fas fa-fw fa-calendar text-muted"></i>
                             </span>
                         </td>
@@ -163,13 +167,13 @@
                                 <?php if($row->status): ?>
                                     <?php if(settings()->payment->invoice_is_enabled): ?>
                                         <a href="<?= url('invoice/' . $row->id) ?>" class="btn btn-sm btn-primary" target="_blank">
-                                            <i class="fas fa-fw fa-sm fa-file-invoice"></i> <?= l('account_payments.payments.invoice') ?>
+                                            <i class="fas fa-fw fa-sm fa-file-invoice"></i> <?= l('account_payments.invoice') ?>
                                         </a>
                                     <?php else: ?>
-                                        <span class="badge badge-success"><?= l('account_payments.payments.status_approved') ?></span>
+                                        <span class="badge badge-success"><?= l('account_payments.status_approved') ?></span>
                                     <?php endif ?>
                                 <?php else: ?>
-                                    <span class="badge badge-warning"><?= l('account_payments.payments.status_pending') ?></span>
+                                    <span class="badge badge-warning"><?= l('account_payments.status_pending') ?></span>
                                 <?php endif ?>
                             </div>
                         </td>
@@ -182,14 +186,11 @@
 
         <div class="mt-3"><?= $data->pagination ?></div>
     <?php else: ?>
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex flex-column align-items-center justify-content-center py-3">
-                    <img src="<?= ASSETS_FULL_URL . 'images/no_rows.svg' ?>" class="col-10 col-md-7 col-lg-4 mb-3" alt="<?= l('account_payments.payments.no_data') ?>" />
-                    <h2 class="h4 text-muted"><?= l('account_payments.payments.no_data') ?></h2>
-                </div>
-            </div>
-        </div>
+        <?= include_view(THEME_PATH . 'views/partials/no_data.php', [
+            'filters_get' => $data->filters->get ?? [],
+            'name' => 'account_payments',
+            'has_secondary_text' => false,
+        ]); ?>
     <?php endif ?>
 
 </div>

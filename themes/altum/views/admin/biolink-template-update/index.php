@@ -33,35 +33,13 @@
 
             <div class="form-group">
                 <label for="link_id"><i class="fas fa-fw fa-sm fa-fingerprint text-muted mr-1"></i> <?= l('admin_biolinks_templates.main.link_id') ?></label>
-                <input id="link_id" type="number" name="link_id" value="<?= $data->biolink_template->link_id ?>" class="form-control <?= \Altum\Alerts::has_field_errors('link_id') ? 'is-invalid' : null ?>" />
+                <select id="link_id" name="link_id" class="custom-select">
+                    <?php foreach($data->biolinks as $biolink): ?>
+                        <option value="<?= $biolink->link_id ?>" <?= $data->biolink_template->link_id == $biolink->link_id ? 'selected="selected"' : null?>><?= $biolink->link_id . ' - ' . $biolink->full_url ?></option>
+                    <?php endforeach ?>
+                </select>
                 <?= \Altum\Alerts::output_field_error('link_id') ?>
                 <small class="form-text text-muted"><?= l('admin_biolinks_templates.main.link_id_help') ?></small>
-            </div>
-
-            <div class="form-group">
-                <label for="url"><i class="fas fa-fw fa-sm fa-link text-muted mr-1"></i> <?= l('admin_biolinks_templates.main.url') ?></label>
-                <input id="url" type="url" name="url" value="<?= $data->biolink_template->url ?>" class="form-control <?= \Altum\Alerts::has_field_errors('url') ? 'is-invalid' : null ?>" />
-                <?= \Altum\Alerts::output_field_error('url') ?>
-                <small class="form-text text-muted"><?= l('admin_biolinks_templates.main.url_help') ?></small>
-            </div>
-
-
-            <div class="form-group">
-                <label for="image"><i class="fas fa-fw fa-sm fa-image text-muted mr-1"></i> <?= l('admin_biolinks_templates.main.image') ?></label>
-                <?php if(!empty($data->biolink_template->image)): ?>
-                    <div class="m-1">
-                        <img src="<?= \Altum\Uploads::get_full_url('biolinks_templates') . $data->biolink_template->image ?>" class="img-fluid" style="max-height: 6rem;height: 6rem;" />
-                    </div>
-                    <div class="custom-control custom-checkbox my-2">
-                        <input id="image_remove" name="image_remove" type="checkbox" class="custom-control-input" onchange="this.checked ? document.querySelector('#image').classList.add('d-none') : document.querySelector('#image').classList.remove('d-none')">
-                        <label class="custom-control-label" for="image_remove">
-                            <span class="text-muted"><?= l('global.delete_file') ?></span>
-                        </label>
-                    </div>
-                <?php endif ?>
-                <input id="image" type="file" name="image" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('biolinks_templates') ?>" class="form-control-file altum-file-input <?= \Altum\Alerts::has_field_errors('image') ? 'is-invalid' : null ?>" />
-                <?= \Altum\Alerts::output_field_error('image') ?>
-                <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('biolinks_templates')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
             </div>
 
             <div class="form-group">
@@ -71,7 +49,7 @@
 
             <div class="form-group custom-control custom-switch">
                 <input id="is_enabled" name="is_enabled" type="checkbox" class="custom-control-input" <?= $data->biolink_template->is_enabled ? 'checked="checked"' : null?>>
-                <label class="custom-control-label" for="is_enabled"><i class="fas fa-fw fa-sm fa-dot-circle text-muted mr-1"></i> <?= l('global.status') ?></label>
+                <label class="custom-control-label" for="is_enabled"><?= l('global.status') ?></label>
             </div>
 
             <button type="submit" name="submit" class="btn btn-lg btn-block btn-primary mt-4"><?= l('global.update') ?></button>

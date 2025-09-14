@@ -1,24 +1,30 @@
 <?php defined('ALTUMCODE') || die() ?>
 
 <div class="d-flex flex-column flex-md-row justify-content-between mb-4">
-    <h1 class="h3 mb-3 mb-md-0"><i class="fas fa-fw fa-xs fa-link text-primary-900 mr-2"></i> <?= l('admin_links.header') ?></h1>
+    <h1 class="h3 mb-3 mb-md-0 text-truncate"><i class="fas fa-fw fa-xs fa-link text-primary-900 mr-2"></i> <?= l('admin_links.header') ?></h1>
 
-    <div class="d-flex position-relative">
-        <div class="">
+    <div class="d-flex position-relative d-print-none">
+        <div class="ml-3">
+            <a href="<?= url('admin/statistics/links') ?>" class="btn btn-gray-300" data-tooltip title="<?= l('global.statistics') ?>">
+                <i class="fas fa-fw fa-sm fa-chart-bar"></i>
+            </a>
+        </div>
+
+        <div class="ml-3">
             <div class="dropdown">
-                <button type="button" class="btn btn-gray-300 dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>">
+                <button type="button" class="btn btn-gray-300 dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                     <i class="fas fa-fw fa-sm fa-download"></i>
                 </button>
 
                 <div class="dropdown-menu dropdown-menu-right d-print-none">
-                    <a href="<?= url('admin/links?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item">
-                        <i class="fas fa-fw fa-sm fa-file-csv mr-1"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
+                    <a href="<?= url('admin/links?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->csv ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->csv ? null : get_plan_feature_disabled_info() ?>>
+                        <i class="fas fa-fw fa-sm fa-file-csv mr-2"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
                     </a>
-                    <a href="<?= url('admin/links?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item">
-                        <i class="fas fa-fw fa-sm fa-file-code mr-1"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
+                    <a href="<?= url('admin/links?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
+                        <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                     </a>
-                    <a href="#" onclick="window.print();return false;" class="dropdown-item">
-                        <i class="fas fa-fw fa-sm fa-file-pdf mr-1"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
+                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                        <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                     </a>
                 </div>
             </div>
@@ -26,7 +32,7 @@
 
         <div class="ml-3">
             <div class="dropdown">
-                <button type="button" class="btn <?= count($data->filters->get) ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.filters.header') ?>">
+                <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                     <i class="fas fa-fw fa-sm fa-filter"></i>
                 </button>
 
@@ -34,8 +40,8 @@
                     <div class="dropdown-header d-flex justify-content-between">
                         <span class="h6 m-0"><?= l('global.filters.header') ?></span>
 
-                        <?php if(count($data->filters->get)): ?>
-                            <a href="<?= url('admin/links') ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
+                        <?php if($data->filters->has_applied_filters): ?>
+                            <a href="<?= url(\Altum\Router::$original_request) ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
                         <?php endif ?>
                     </div>
 
@@ -68,12 +74,12 @@
                             <label for="filters_type" class="small"><?= l('global.type') ?></label>
                             <select name="type" id="filters_type" class="custom-select custom-select-sm">
                                 <option value=""><?= l('global.all') ?></option>
-                                <option value="biolink" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'biolink' ? 'selected="selected"' : null ?>><?= l('links.filters.type.biolink') ?></option>
-                                <option value="link" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'link' ? 'selected="selected"' : null ?>><?= l('links.filters.type.link') ?></option>
-                                <option value="file" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'file' ? 'selected="selected"' : null ?>><?= l('links.filters.type.file') ?></option>
-                                <option value="vcard" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'vcard' ? 'selected="selected"' : null ?>><?= l('links.filters.type.vcard') ?></option>
-                                <option value="event" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'event' ? 'selected="selected"' : null ?>><?= l('links.filters.type.event') ?></option>
-                                <option value="static" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'static' ? 'selected="selected"' : null ?>><?= l('links.filters.type.static') ?></option>
+                                <option value="biolink" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'biolink' ? 'selected="selected"' : null ?>><?= l('links.menu.biolink') ?></option>
+                                <option value="link" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'link' ? 'selected="selected"' : null ?>><?= l('links.menu.link') ?></option>
+                                <option value="file" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'file' ? 'selected="selected"' : null ?>><?= l('links.menu.file') ?></option>
+                                <option value="vcard" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'vcard' ? 'selected="selected"' : null ?>><?= l('links.menu.vcard') ?></option>
+                                <option value="event" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'event' ? 'selected="selected"' : null ?>><?= l('links.menu.event') ?></option>
+                                <option value="static" <?= isset($data->filters->filters['type']) && $data->filters->filters['type'] == 'static' ? 'selected="selected"' : null ?>><?= l('links.menu.static') ?></option>
                             </select>
                         </div>
 
@@ -89,6 +95,7 @@
                         <div class="form-group px-4">
                             <label for="filters_order_by" class="small"><?= l('global.filters.order_by') ?></label>
                             <select name="order_by" id="filters_order_by" class="custom-select custom-select-sm">
+                                <option value="link_id" <?= $data->filters->order_by == 'link_id' ? 'selected="selected"' : null ?>><?= l('global.id') ?></option>
                                 <option value="datetime" <?= $data->filters->order_by == 'datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_datetime') ?></option>
                                 <option value="last_datetime" <?= $data->filters->order_by == 'last_datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_last_datetime') ?></option>
                                 <option value="url" <?= $data->filters->order_by == 'url' ? 'selected="selected"' : null ?>><?= l('links.filters.url') ?></option>
@@ -127,7 +134,7 @@
             <button id="bulk_enable" type="button" class="btn btn-gray-300" data-toggle="tooltip" title="<?= l('global.bulk_actions') ?>"><i class="fas fa-fw fa-sm fa-list"></i></button>
 
             <div id="bulk_group" class="btn-group d-none" role="group">
-                <div class="btn-group" role="group">
+                <div class="btn-group dropdown" role="group">
                     <button id="bulk_actions" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
                         <?= l('global.bulk_actions') ?> <span id="bulk_counter" class="d-none"></span>
                     </button>
@@ -148,6 +155,8 @@
 <form id="table" action="<?= SITE_URL . 'admin/links/bulk' ?>" method="post" role="form">
     <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
     <input type="hidden" name="type" value="" data-bulk-type />
+    <input type="hidden" name="original_request" value="<?= base64_encode(\Altum\Router::$original_request) ?>" />
+    <input type="hidden" name="original_request_query" value="<?= base64_encode(\Altum\Router::$original_request_query) ?>" />
 
     <div class="table-responsive table-custom-container">
     <table class="table table-custom">
@@ -166,6 +175,7 @@
             <th><?= l('global.status') ?></th>
             <th></th>
             <th></th>
+            <th></th>
         </tr>
         </thead>
         <tbody>
@@ -181,7 +191,7 @@
                 <td class="text-nowrap">
                         <div class="d-flex">
                             <a href="<?= url('admin/user-view/' . $row->user_id) ?>">
-                                <img src="<?= get_gravatar($row->user_email) ?>" class="user-avatar rounded-circle mr-3" alt="" />
+                                <img src="<?= get_user_avatar($row->user_avatar, $row->user_email) ?>" referrerpolicy="no-referrer" loading="lazy" class="user-avatar rounded-circle mr-3" alt="" />
                             </a>
 
                             <div class="d-flex flex-column">
@@ -189,41 +199,47 @@
                                     <a href="<?= url('admin/user-view/' . $row->user_id) ?>"><?= $row->user_name ?></a>
                                 </div>
 
-                                <span class="text-muted"><?= $row->user_email ?></span>
+                                <span class="text-muted small"><?= $row->user_email ?></span>
                             </div>
                         </div>
                     </td>
                 <td class="text-nowrap">
-                    <span class="fa-stack fa-1x" data-toggle="tooltip" title="<?=  l('link.' . $row->type . '.name') ?>">
-                        <i class="fas fa-circle fa-stack-2x" style="color: <?= $data->links_types[$row->type]['color'] ?>"></i>
-                        <i class="<?= $data->links_types[$row->type]['icon'] ?> fa-stack-1x fa-inverse"></i>
-                    </span>
+                    <div class="link-type-icon justify-content-center mr-3 d-flex align-items-center rounded-pill" style="background-color: <?= $data->links_types[$row->type]['color'] ?>" data-toggle="tooltip" title="<?= l('link.' . $row->type . '.name') ?>">
+                        <i class="<?= $data->links_types[$row->type]['icon'] ?> text-white"></i>
+                    </div>
                 </td>
                 <td class="text-nowrap">
                     <div class="d-flex flex-column">
                         <div>
                             <?= $row->domain_id ? $row->scheme . $row->host . '/' . $row->url : '/' . $row->url ?>
+
                             <a href="<?= $row->domain_id ? $row->scheme . $row->host . '/' . $row->url : url($row->url) ?>" target="_blank" rel="noreferrer">
-                                <i class="fas fa-fw fa-xs fa-external-link-alt ml-1"></i>
+                                <i class="fas fa-fw fa-xs fa-external-link-alt text-muted ml-1"></i>
                             </a>
 
                             <?php if($row->type == 'biolink' && $row->is_verified): ?>
                                 <span data-toggle="tooltip" title="<?= l('link.biolink.verified') ?>"><i class="fas fa-fw fa-xs fa-check-circle link-verified" style="color: #0086ff"></i></span>
                             <?php endif ?>
                         </div>
+
                         <?php if($row->type == 'link'): ?>
-                        <div class="text-muted">
-                            <?= string_truncate($row->location_url, 48) ?>
+                        <div class="small text-muted">
+                            <img referrerpolicy="no-referrer" src="<?= get_favicon_url_from_domain(parse_url($row->location_url, PHP_URL_HOST)) ?>" class="img-fluid icon-favicon-small mr-1" loading="lazy" />
+
+                            <span title="<?= remove_url_protocol_from_url($row->location_url) ?>"><?= string_truncate(remove_url_protocol_from_url($row->location_url), 32) ?></span>
+
                             <a href="<?= $row->location_url ?>" target="_blank" rel="noreferrer">
-                                <i class="fas fa-fw fa-xs fa-external-link-alt ml-1"></i>
+                                <i class="fas fa-fw fa-xs fa-external-link-alt text-muted ml-1"></i>
                             </a>
                         </div>
                         <?php endif ?>
                     </div>
                 </td>
+
                 <td class="text-muted">
                     <span class="badge badge-light"><i class="fas fa-fw fa-sm fa-chart-bar mr-1"></i> <?= nr($row->clicks) ?></span>
                 </td>
+
                 <td class="text-nowrap">
                     <?php if($row->is_enabled == 0): ?>
                         <span class="badge badge-warning"><i class="fas fa-fw fa-sm fa-eye-slash mr-1"></i> <?= l('global.disabled') ?></span>
@@ -231,19 +247,27 @@
                         <span class="badge badge-success"><i class="fas fa-fw fa-sm fa-check mr-1"></i> <?= l('global.active') ?></span>
                     <?php endif ?>
                 </td>
+
+                <td class="text-nowrap text-muted">
+                    <a href="<?= url('admin/biolinks-blocks?link_id=' . $row->link_id) ?>" class="mr-2" data-toggle="tooltip" title="<?= l('admin_biolinks_blocks.title') ?>">
+                        <i class="fas fa-fw fa-table-cells-large text-muted"></i>
+                    </a>
+                </td>
+
                 <td class="text-nowrap">
                     <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= l('admin_links.link_id') . '<br />' . $row->link_id ?>">
                         <i class="fas fa-fw fa-fingerprint text-muted"></i>
                     </span>
 
-                    <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>') ?>">
+                    <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
                         <i class="fas fa-fw fa-calendar text-muted"></i>
                     </span>
 
-                    <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.last_datetime_tooltip'), ($row->last_datetime ? '<br />' . \Altum\Date::get($row->last_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_datetime, 3) . '</small>' : '-')) ?>">
+                    <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.last_datetime_tooltip'), ($row->last_datetime ? '<br />' . \Altum\Date::get($row->last_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->last_datetime) . ')</small>' : '<br />' . l('global.na'))) ?>">
                         <i class="fas fa-fw fa-history text-muted"></i>
                     </span>
                 </td>
+
                 <td>
                     <div class="d-flex justify-content-end">
                         <?= include_view(THEME_PATH . 'views/admin/links/admin_link_dropdown_button.php', ['id' => $row->link_id, 'is_verified' => $row->is_verified, 'type' => $row->type, 'resource_name' => $row->url]) ?>
@@ -258,6 +282,6 @@
 
 <div class="mt-3"><?= $data->pagination ?></div>
 
-<?php require THEME_PATH . 'views/admin/partials/js_bulk.php' ?>
-<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/admin/partials/bulk_delete_modal.php'), 'modals'); ?>
+<?php require THEME_PATH . 'views/partials/js_bulk.php' ?>
+<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/bulk_delete_modal.php'), 'modals'); ?>
 

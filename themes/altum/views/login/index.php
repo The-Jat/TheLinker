@@ -24,13 +24,13 @@
         <input id="rememberme" type="hidden" name="rememberme" value="<?= $data->values['rememberme'] ? '1' : null ?>">
 
         <div class="form-group">
-            <label for="twofa_token"><?= l('login.form.twofa_token') ?></label>
-            <input id="twofa_token" type="text" name="twofa_token" class="form-control <?= \Altum\Alerts::has_field_errors('twofa_token') ? 'is-invalid' : null ?>" required="required" autocomplete="off" autofocus="autofocus" />
+            <label for="twofa_token"><?= l('login.twofa_token') ?></label>
+            <input id="twofa_token" type="text" name="twofa_token" class="form-control <?= \Altum\Alerts::has_field_errors('twofa_token') ? 'is-invalid' : null ?>" required="required" autocomplete="off" autofocus="autofocus" placeholder="123 456" maxlength="6" />
             <?= \Altum\Alerts::output_field_error('twofa_token') ?>
         </div>
 
         <div class="form-group mt-3">
-            <button type="submit" name="submit" class="btn btn-primary btn-block my-1"><?= l('login.form.verify') ?></button>
+            <button type="submit" name="submit" class="btn btn-primary btn-block my-1"><?= l('login.verify') ?></button>
         </div>
     <?php else: ?>
 
@@ -40,7 +40,7 @@
             <?= \Altum\Alerts::output_field_error('email') ?>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" data-password-toggle-view data-password-toggle-view-show="<?= l('global.show') ?>" data-password-toggle-view-hide="<?= l('global.hide') ?>">
             <label for="password"><?= l('global.password') ?></label>
             <input id="password" type="password" name="password" class="form-control <?= \Altum\Alerts::has_field_errors('password') ? 'is-invalid' : null ?>" value="<?= $data->user ? $data->values['password'] : null ?>" required="required" />
             <?= \Altum\Alerts::output_field_error('password') ?>
@@ -53,33 +53,33 @@
         <?php endif ?>
 
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-            <div class="custom-control custom-checkbox" data-toggle="tooltip" title="<?= l('login.form.remember_me_help') ?>" data-tooltip-hide-on-click>
+            <div class="custom-control custom-checkbox" data-toggle="tooltip" title="<?= sprintf(l('login.remember_me_help'), settings()->users->login_rememberme_cookie_days ?? 30) ?>" data-tooltip-hide-on-click>
                 <input type="checkbox" name="rememberme" class="custom-control-input" id="rememberme" <?= $data->values['rememberme'] ? 'checked="checked"' : null ?>>
-                <label class="custom-control-label" for="rememberme"><small class="text-muted"><?= l('login.form.remember_me') ?></small></label>
+                <label class="custom-control-label" for="rememberme"><small class="text-muted"><?= l('login.remember_me') ?></small></label>
             </div>
 
             <small class="text-muted">
-                <a href="<?= url('lost-password' . $data->redirect_append) ?>" class="text-muted"><?= l('login.display.lost_password') ?></a>
+                <a href="<?= url('lost-password' . $data->redirect_append) ?>" class="text-muted"><?= l('login.lost_password') ?></a>
                 <?php if(settings()->users->email_confirmation): ?>
-                    / <a href="<?= url('resend-activation' . $data->redirect_append) ?>" class="text-muted" role="button"><?= l('login.display.resend_activation') ?></a>
+                    / <a href="<?= url('resend-activation' . $data->redirect_append) ?>" class="text-muted" role="button"><?= l('login.resend_activation') ?></a>
                 <?php endif ?>
             </small>
         </div>
 
         <div class="form-group mt-4">
-            <button type="submit" name="submit" class="btn btn-primary btn-block my-1" <?= isset($_COOKIE['login_lockout']) ? 'disabled="disabled"' : null ?>><?= l('login.form.login') ?></button>
+            <button type="submit" name="submit" class="btn btn-primary btn-block my-1" <?= isset($_COOKIE['login_lockout']) ? 'disabled="disabled"' : null ?>><?= l('login.login') ?></button>
         </div>
     <?php endif ?>
 
     <?php if(settings()->facebook->is_enabled || settings()->google->is_enabled || settings()->twitter->is_enabled || settings()->discord->is_enabled || settings()->linkedin->is_enabled || settings()->microsoft->is_enabled): ?>
         <hr class="border-gray-100 my-3" />
 
-        <div class="">
+        <div>
             <?php if(settings()->facebook->is_enabled): ?>
                 <div class="mt-2">
                     <a href="<?= url('login/facebook-initiate') ?>" class="btn btn-light btn-block">
                         <img src="<?= ASSETS_FULL_URL . 'images/facebook.svg' ?>" class="mr-1" />
-                        <?= l('login.display.facebook') ?>
+                        <?= l('login.facebook') ?>
                     </a>
                 </div>
             <?php endif ?>
@@ -87,7 +87,7 @@
                 <div class="mt-2">
                     <a href="<?= url('login/google-initiate') ?>" class="btn btn-light btn-block">
                         <img src="<?= ASSETS_FULL_URL . 'images/google.svg' ?>" class="mr-1" />
-                        <?= l('login.display.google') ?>
+                        <?= l('login.google') ?>
                     </a>
                 </div>
             <?php endif ?>
@@ -95,7 +95,7 @@
                 <div class="mt-2">
                     <a href="<?= url('login/twitter-initiate') ?>" class="btn btn-light btn-block">
                         <img src="<?= ASSETS_FULL_URL . 'images/x.svg' ?>" class="mr-1" />
-                        <?= l('login.display.twitter') ?>
+                        <?= l('login.twitter') ?>
                     </a>
                 </div>
             <?php endif ?>
@@ -103,7 +103,7 @@
                 <div class="mt-2">
                     <a href="<?= url('login/discord-initiate') ?>" class="btn btn-light btn-block">
                         <img src="<?= ASSETS_FULL_URL . 'images/discord.svg' ?>" class="mr-1" />
-                        <?= l('login.display.discord') ?>
+                        <?= l('login.discord') ?>
                     </a>
                 </div>
             <?php endif ?>
@@ -111,7 +111,7 @@
                 <div class="mt-2">
                     <a href="<?= url('login/linkedin-initiate') ?>" class="btn btn-light btn-block">
                         <img src="<?= ASSETS_FULL_URL . 'images/linkedin.svg' ?>" class="mr-1" />
-                        <?= l('login.display.linkedin') ?>
+                        <?= l('login.linkedin') ?>
                     </a>
                 </div>
             <?php endif ?>
@@ -119,7 +119,7 @@
                 <div class="mt-2">
                     <a href="<?= url('login/microsoft-initiate') ?>" class="btn btn-light btn-block">
                         <img src="<?= ASSETS_FULL_URL . 'images/microsoft.svg' ?>" class="mr-1" />
-                        <?= l('login.display.microsoft') ?>
+                        <?= l('login.microsoft') ?>
                     </a>
                 </div>
             <?php endif ?>
@@ -129,7 +129,29 @@
 
 <?php if(settings()->users->register_is_enabled): ?>
     <div class="mt-5 text-center text-muted">
-        <?= sprintf(l('login.display.register'), '<a href="' . url('register' . $data->redirect_append) . '" class="font-weight-bold">' . l('login.display.register_help') . '</a>') ?></a>
+        <?= sprintf(l('login.register'), '<a href="' . url('register' . $data->redirect_append) . '" class="font-weight-bold">' . l('login.register_help') . '</a>') ?></a>
     </div>
 <?php endif ?>
 
+<?php ob_start() ?>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "<?= l('index.title') ?>",
+                    "item": "<?= url() ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "<?= l('login.title') ?>",
+                    "item": "<?= url('login') ?>"
+                }
+            ]
+        }
+    </script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

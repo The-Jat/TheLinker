@@ -22,7 +22,7 @@ CREATE TABLE `broadcasts_statistics` (
 `id` bigint unsigned NOT NULL AUTO_INCREMENT,
 `user_id` int DEFAULT NULL,
 `broadcast_id` bigint unsigned DEFAULT NULL,
-`type` varchar(16) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`type` enum('view','click') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
 `target` varchar(2048) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
 `datetime` datetime DEFAULT NULL,
 PRIMARY KEY (`id`),
@@ -38,20 +38,20 @@ INSERT INTO `settings` (`key`, `value`) VALUES ('internal_notifications', '{}');
 
 -- SEPARATOR --
 
-alter table users add has_pending_internal_notifications tinyint unsigned default 0 null after is_newsletter_subscribed;
+alter table users add has_pending_internal_notifications tinyint default 0 null after is_newsletter_subscribed;
 
 -- SEPARATOR --
 
 CREATE TABLE `internal_notifications` (
 `internal_notification_id` bigint unsigned NOT NULL AUTO_INCREMENT,
 `user_id` int DEFAULT NULL,
-`for_who` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-`from_who` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-`icon` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-`title` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-`description` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`for_who` varchar(16) DEFAULT NULL,
+`from_who` varchar(16) DEFAULT NULL,
+`icon` varchar(64) DEFAULT NULL,
+`title` varchar(128) DEFAULT NULL,
+`description` varchar(1024) DEFAULT NULL,
 `url` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-`is_read` tinyint unsigned DEFAULT '0',
+`is_read` tinyint DEFAULT '0',
 `datetime` datetime DEFAULT NULL,
 `read_datetime` datetime DEFAULT NULL,
 PRIMARY KEY (`internal_notification_id`),

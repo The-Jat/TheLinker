@@ -6,7 +6,7 @@
 
             <div class="modal-header">
                 <button type="button" data-toggle="modal" data-target="#biolink_link_create_modal" data-dismiss="modal" class="btn btn-sm btn-link"><i class="fas fa-fw fa-chevron-circle-left text-muted"></i></button>
-                <h5 class="modal-title"><?= l('create_biolink_markdown_modal.header') ?></h5>
+                <h5 class="modal-title"><?= l('biolink_markdown.header') ?></h5>
                 <button type="button" class="close" data-dismiss="modal" title="<?= l('global.close') ?>">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -22,12 +22,15 @@
                     <div class="notification-container"></div>
 
                     <div class="form-group">
-                        <label for="markdown_text"><i class="fas fa-fw fa-paragraph fa-sm text-muted mr-1"></i> <?= l('create_biolink_link_modal.input.text') ?></label>
-                        <textarea id="markdown_text" class="form-control" name="text" maxlength="2048"></textarea>
+                        <label for="markdown_text"><i class="fas fa-fw fa-paragraph fa-sm text-muted mr-1"></i> <?= l('biolink_link.markdown_text') ?></label>
+                        <textarea id="markdown_text" class="form-control" name="text" maxlength="10000"></textarea>
+                        <small class="form-text text-muted"><?= l('biolink_link.markdown_text_help') ?></small>
                     </div>
 
+                    <p class="small text-muted"><i class="fas fa-fw fa-sm fa-circle-info mr-1"></i> <?= l('link.create_info') ?></p>
+
                     <div class="text-center mt-4">
-                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('global.submit') ?></button>
+                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('link.biolink.create_block') ?></button>
                     </div>
                 </form>
             </div>

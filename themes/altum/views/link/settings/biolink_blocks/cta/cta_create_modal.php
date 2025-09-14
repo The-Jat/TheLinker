@@ -6,7 +6,7 @@
 
             <div class="modal-header">
                 <button type="button" data-toggle="modal" data-target="#biolink_link_create_modal" data-dismiss="modal" class="btn btn-sm btn-link"><i class="fas fa-fw fa-chevron-circle-left text-muted"></i></button>
-                <h5 class="modal-title"><?= l('create_biolink_cta_modal.header') ?></h5>
+                <h5 class="modal-title"><?= l('biolink_cta.header') ?></h5>
                 <button type="button" class="close" data-dismiss="modal" title="<?= l('global.close') ?>">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -22,32 +22,34 @@
                     <div class="notification-container"></div>
 
                     <div class="form-group">
-                        <label for="cta_type"><i class="fas fa-fw fa-comments fa-sm text-muted mr-1"></i> <?= l('create_biolink_cta_modal.type') ?></label>
+                        <label for="cta_type"><i class="fas fa-fw fa-comments fa-sm text-muted mr-1"></i> <?= l('global.type') ?></label>
                         <select id="cta_type" name="type" class="custom-select">
-                            <option value="email"><?= l('create_biolink_cta_modal.type_email') ?></option>
-                            <option value="call"><?= l('create_biolink_cta_modal.type_call') ?></option>
-                            <option value="sms"><?= l('create_biolink_cta_modal.type_sms') ?></option>
-                            <option value="facetime"><?= l('create_biolink_cta_modal.type_facetime') ?></option>
+                            <option value="email"><?= l('biolink_cta.type_email') ?></option>
+                            <option value="call"><?= l('biolink_cta.type_call') ?></option>
+                            <option value="sms"><?= l('biolink_cta.type_sms') ?></option>
+                            <option value="facetime"><?= l('biolink_cta.type_facetime') ?></option>
                         </select>
                     </div>
 
                     <div class="form-group">
                         <label for="cta_value">
-                            <span data-cta-type="email" class="d-none"><i class="fas fa-fw fa-envelope fa-sm text-muted mr-1"></i> <?= l('create_biolink_cta_modal.value_email') ?></span>
-                            <span data-cta-type="call" class="d-none"><i class="fas fa-fw fa-phone-square-alt fa-sm text-muted mr-1"></i> <?= l('create_biolink_cta_modal.value_call') ?></span>
-                            <span data-cta-type="sms" class="d-none"><i class="fas fa-fw fa-sms fa-sm text-muted mr-1"></i> <?= l('create_biolink_cta_modal.value_sms') ?></span>
-                            <span data-cta-type="facetime" class="d-none"><i class="fas fa-fw fa-headset fa-sm text-muted mr-1"></i> <?= l('create_biolink_cta_modal.value_facetime') ?></span>
+                            <span data-cta-type="email" class="d-none"><i class="fas fa-fw fa-envelope fa-sm text-muted mr-1"></i> <?= l('biolink_cta.value_email') ?></span>
+                            <span data-cta-type="call" class="d-none"><i class="fas fa-fw fa-phone-square-alt fa-sm text-muted mr-1"></i> <?= l('biolink_cta.value_call') ?></span>
+                            <span data-cta-type="sms" class="d-none"><i class="fas fa-fw fa-sms fa-sm text-muted mr-1"></i> <?= l('biolink_cta.value_sms') ?></span>
+                            <span data-cta-type="facetime" class="d-none"><i class="fas fa-fw fa-headset fa-sm text-muted mr-1"></i> <?= l('biolink_cta.value_facetime') ?></span>
                         </label>
                         <input id="cta_value" type="text" class="form-control" name="value" maxlength="320" required="required" />
                     </div>
 
                     <div class="form-group">
-                        <label for="cta_name"><i class="fas fa-fw fa-signature fa-sm text-muted mr-1"></i> <?= l('create_biolink_link_modal.input.name') ?></label>
+                        <label for="cta_name"><i class="fas fa-fw fa-signature fa-sm text-muted mr-1"></i> <?= l('biolink_link.name') ?></label>
                         <input id="cta_name" type="text" name="name" maxlength="128" class="form-control" required="required" />
                     </div>
 
+                    <p class="small text-muted"><i class="fas fa-fw fa-sm fa-circle-info mr-1"></i> <?= l('link.create_info') ?></p>
+                    
                     <div class="text-center mt-4">
-                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('global.submit') ?></button>
+                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('link.biolink.create_block') ?></button>
                     </div>
                 </form>
             </div>
@@ -58,6 +60,8 @@
 
 <?php ob_start() ?>
 <script>
+    'use strict';
+    
     type_handler('#cta_type', 'data-cta-type');
     document.querySelector('#cta_type') && document.querySelectorAll('#cta_type').forEach(element => element.addEventListener('change', () => { type_handler('#cta_type', 'data-cta-type'); }));
 </script>

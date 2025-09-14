@@ -1,16 +1,25 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Response;
 use Altum\Traits\Apiable;
+
+defined('ALTUMCODE') || die();
 
 class ApiLogs extends Controller {
     use Apiable;
@@ -41,7 +50,7 @@ class ApiLogs extends Controller {
 
         /* Prepare the paginator */
         $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `users_logs` WHERE `user_id` = {$this->api_user->user_id}")->fetch_object()->total ?? 0;
-        $paginator = (new \Altum\Paginator($total_rows, $filters->get_results_per_page(), $_GET['page'] ?? 1, url('api/users_logs?' . $filters->get_get() . '&page=%d')));
+        $paginator = (new \Altum\Paginator($total_rows, $filters->get_results_per_page(), $_GET['page'] ?? 1, url('api/logs?' . $filters->get_get() . '&page=%d')));
 
         /* Get the data */
         $data = [];
@@ -61,6 +70,8 @@ class ApiLogs extends Controller {
 
             /* Prepare the data */
             $row = [
+                'id' => (int) $row->id,
+                'user_id' => (int) $row->user_id,
                 'type' => $row->type,
                 'ip' => $row->ip,
                 'device_type' => $row->device_type,

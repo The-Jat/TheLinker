@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,6 +19,8 @@ namespace Altum\Controllers;
 use Altum\Alerts;
 use Altum\Logger;
 use Altum\Models\User;
+
+defined('ALTUMCODE') || die();
 
 class AdminUserCreate extends Controller {
 
@@ -77,20 +86,20 @@ class AdminUserCreate extends Controller {
                     json_encode(settings()->plan_free->settings),
                     null,
                     settings()->main->default_timezone,
+                    '',
                     true
                 );
 
                 /* Send webhook notification if needed */
                 if(settings()->webhooks->user_new) {
-
-                    \Unirest\Request::post(settings()->webhooks->user_new, [], [
+                    fire_and_forget('post', settings()->webhooks->user_new, [
                         'user_id' => $registered_user['user_id'],
                         'email' => $_POST['email'],
                         'name' => $_POST['name'],
                         'source' => 'admin_create',
                         'is_newsletter_subscribed' => false,
+                        'datetime' => get_date(),
                     ]);
-
                 }
 
                 /* Log the action */

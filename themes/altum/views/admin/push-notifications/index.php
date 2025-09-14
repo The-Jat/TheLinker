@@ -1,42 +1,55 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<?php if(count($data->push_notifications) || count($data->filters->get)): ?>
+<?php if(!settings()->push_notifications->is_enabled): ?>
+    <div class="alert alert-info">
+        <i class="fas fa-fw fa-info-circle mr-1"></i>
+        <?= sprintf(l('global.info_message.admin_feature_disabled'), url('admin/settings/push-notifications')) ?>
+    </div>
+<?php endif ?>
+
+<?php if(count($data->push_notifications) || $data->filters->has_applied_filters): ?>
 
     <div class="d-flex flex-column flex-md-row justify-content-between mb-4">
-        <h1 class="h3 mb-3 mb-md-0"><i class="fas fa-fw fa-xs fa-bolt-lightning text-primary-900 mr-2"></i> <?= l('admin_push_notifications.header') ?></h1>
+        <h1 class="h3 mb-3 mb-md-0 text-truncate"><i class="fas fa-fw fa-xs fa-bolt-lightning text-primary-900 mr-2"></i> <?= l('admin_push_notifications.header') ?></h1>
 
         <div class="d-flex position-relative">
-            <div class="">
-                <a href="<?= url('admin/push-notification-create') ?>" class="btn btn-primary"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_push_notifications.create') ?></a>
+            <div>
+                <a href="<?= url('admin/push-notification-create') ?>" class="btn btn-primary text-nowrap"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_push_notifications.create') ?></a>
             </div>
 
             <div class="ml-3">
-                <a href="<?= url('admin/push-subscribers') ?>" class="btn btn-outline-primary"><i class="fas fa-fw fa-user-check fa-sm mr-1"></i> <?= l('admin_push_subscribers.menu') ?></a>
+                <a href="<?= url('admin/push-subscribers') ?>" class="btn btn-outline-primary" data-tooltip title="<?= l('admin_push_subscribers.menu') ?>" data-tooltip-hide-on-click><i class="fas fa-fw fa-user-check fa-sm"></i></a>
+            </div>
+
+            <div class="ml-3">
+                <a href="<?= url('admin/statistics/push_notifications') ?>" class="btn btn-gray-300" data-tooltip title="<?= l('global.statistics') ?>">
+                    <i class="fas fa-fw fa-sm fa-chart-bar"></i>
+                </a>
             </div>
 
             <div class="ml-3">
                 <div class="dropdown">
-                    <button type="button" class="btn btn-gray-300 dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>">
+                    <button type="button" class="btn btn-gray-300 dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-download"></i>
                     </button>
 
                     <div class="dropdown-menu dropdown-menu-right d-print-none">
-                        <a href="<?= url('admin/push-notifications?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item">
-                            <i class="fas fa-fw fa-sm fa-file-csv mr-1"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
+                        <a href="<?= url('admin/push-notifications?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->csv ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->csv ? null : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-csv mr-2"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
                         </a>
-                        <a href="<?= url('admin/push-notifications?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item">
-                            <i class="fas fa-fw fa-sm fa-file-code mr-1"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
+                        <a href="<?= url('admin/push-notifications?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                         </a>
-                        <button type="button" onclick="window.print();" class="dropdown-item">
-                            <i class="fas fa-fw fa-sm fa-file-pdf mr-1"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
-                        </button>
+                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
+                        </a>
                     </div>
                 </div>
             </div>
 
             <div class="ml-3">
                 <div class="dropdown">
-                    <button type="button" class="btn <?= count($data->filters->get) ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.filters.header') ?>">
+                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-filter"></i>
                     </button>
 
@@ -44,8 +57,8 @@
                         <div class="dropdown-header d-flex justify-content-between">
                             <span class="h6 m-0"><?= l('global.filters.header') ?></span>
 
-                            <?php if(count($data->filters->get)): ?>
-                                <a href="<?= url('admin/push-notifications') ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
+                            <?php if($data->filters->has_applied_filters): ?>
+                                <a href="<?= url(\Altum\Router::$original_request) ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
                             <?php endif ?>
                         </div>
 
@@ -78,6 +91,7 @@
                             <div class="form-group px-4">
                                 <label for="filters_order_by" class="small"><?= l('global.filters.order_by') ?></label>
                                 <select name="order_by" id="filters_order_by" class="custom-select custom-select-sm">
+                                    <option value="push_notification_id" <?= $data->filters->order_by == 'push_notification_id' ? 'selected="selected"' : null ?>><?= l('global.id') ?></option>
                                     <option value="datetime" <?= $data->filters->order_by == 'datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_datetime') ?></option>
                                     <option value="last_datetime" <?= $data->filters->order_by == 'last_datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_last_datetime') ?></option>
                                     <option value="sent_push_notifications" <?= $data->filters->search_by == 'sent_push_notifications' ? 'selected="selected"' : null ?>><?= l('admin_push_notifications.main.sent_push_notifications') ?></option>
@@ -116,7 +130,7 @@
                 <button id="bulk_enable" type="button" class="btn btn-gray-300" data-toggle="tooltip" title="<?= l('global.bulk_actions') ?>"><i class="fas fa-fw fa-sm fa-list"></i></button>
 
                 <div id="bulk_group" class="btn-group d-none" role="group">
-                    <div class="btn-group" role="group">
+                    <div class="btn-group dropdown" role="group">
                         <button id="bulk_actions" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
                             <?= l('global.bulk_actions') ?> <span id="bulk_counter" class="d-none"></span>
                         </button>
@@ -136,6 +150,8 @@
     <form id="table" action="<?= SITE_URL . 'admin/push-notifications/bulk' ?>" method="post" role="form">
         <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
         <input type="hidden" name="type" value="" data-bulk-type />
+        <input type="hidden" name="original_request" value="<?= base64_encode(\Altum\Router::$original_request) ?>" />
+        <input type="hidden" name="original_request_query" value="<?= base64_encode(\Altum\Router::$original_request_query) ?>" />
 
         <div class="table-responsive table-custom-container">
             <table class="table table-custom">
@@ -151,6 +167,7 @@
                     <th><?= l('admin_push_notifications.main.segment') ?></th>
                     <th><?= l('admin_push_notifications.main.sent_push_notifications') ?></th>
                     <th><?= l('global.status') ?></th>
+                    <th></th>
                     <th></th>
                 </tr>
                 </thead>
@@ -195,15 +212,15 @@
 
                         <td class="text-nowrap">
                             <div class="d-flex align-items-center">
-                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('admin_push_notifications.main.last_sent_datetime'), ($row->last_sent_datetime ? '<br />' . \Altum\Date::get($row->last_sent_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_sent_datetime, 3) . '</small>' : '-')) ?>">
+                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('admin_push_notifications.main.last_sent_datetime'), ($row->last_sent_datetime ? '<br />' . \Altum\Date::get($row->last_sent_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_sent_datetime, 3) . '</small>' : '<br />' . l('global.na'))) ?>">
                                     <i class="fas fa-fw fa-paper-plane text-muted"></i>
                                 </span>
 
-                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>') ?>">
-                                    <i class="fas fa-fw fa-clock text-muted"></i>
+                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
+                                    <i class="fas fa-fw fa-calendar text-muted"></i>
                                 </span>
 
-                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.last_datetime_tooltip'), ($row->last_datetime ? '<br />' . \Altum\Date::get($row->last_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_datetime, 3) . '</small>' : '-')) ?>">
+                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.last_datetime_tooltip'), ($row->last_datetime ? '<br />' . \Altum\Date::get($row->last_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->last_datetime) . ')</small>' : '<br />' . l('global.na'))) ?>">
                                     <i class="fas fa-fw fa-history text-muted"></i>
                                 </span>
                             </div>
@@ -238,7 +255,7 @@
                     <p class="text-muted"><?= l('admin_push_notifications.subheader_no_data') ?></p>
 
                     <div>
-                        <a href="<?= url('admin/push-notification-create') ?>" class="btn btn-primary"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_push_notifications.create') ?></a>
+                        <a href="<?= url('admin/push-notification-create') ?>" class="btn btn-primary text-nowrap"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_push_notifications.create') ?></a>
                         <a href="<?= url('admin/push-subscribers') ?>" class="btn btn-outline-primary"><i class="fas fa-fw fa-user-check fa-sm mr-1"></i> <?= l('admin_push_subscribers.menu') ?></a>
                     </div>
                 </div>
@@ -248,5 +265,5 @@
 
 <?php endif ?>
 
-<?php require THEME_PATH . 'views/admin/partials/js_bulk.php' ?>
-<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/admin/partials/bulk_delete_modal.php'), 'modals'); ?>
+<?php require THEME_PATH . 'views/partials/js_bulk.php' ?>
+<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/bulk_delete_modal.php'), 'modals'); ?>

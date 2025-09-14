@@ -1,13 +1,22 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Models;
+
+defined('ALTUMCODE') || die();
 
 class Payments extends Model {
 
@@ -45,6 +54,29 @@ class Payments extends Model {
             }
         }
 
+        /* Check for potential paid plans */
+        if($payment_total == 0) {
+            /* Determine the expiration date of the plan */
+            $plan_expiration_date = (new \DateTime())->modify('+' . $plan->trial_days . ' days')->format('Y-m-d H:i:s');
+
+            /* Database query */
+            db()->where('user_id', $user->user_id)->update('users', [
+                'plan_id' => $plan->plan_id,
+                'plan_settings' => $plan->settings,
+                'plan_expiration_date' => $plan_expiration_date,
+                'plan_trial_done' => 1,
+                'payment_subscription_id' => $payment_subscription_id,
+                'payment_processor' => $payment_processor,
+                'payment_total_amount' => $base_amount - $discount_amount,
+                'payment_currency' => $payment_currency,
+            ]);
+
+            /* Clear the cache */
+            cache()->deleteItemsByTag('user_id=' . $user->user_id);
+
+            return;
+        }
+
         /* Codes */
         $code = (new Payments())->codes_payment_check($code, $user);
 
@@ -63,6 +95,8 @@ class Payments extends Model {
                 /* :) */
             }
         }
+
+        $payment_datetime = get_date();
 
         /* Add a log into the database */
         $payment_id = db()->insert('payments', [
@@ -84,24 +118,19 @@ class Payments extends Model {
             'total_amount' => $payment_total,
             'total_amount_default_currency' => $total_amount_default_currency,
             'currency' => $payment_currency,
-            'datetime' => \Altum\Date::$date
+            'datetime' => $payment_datetime
         ]);
 
         /* Update the user with the new plan */
         $current_plan_expiration_date = $plan_id == $user->plan_id ? $user->plan_expiration_date : '';
-        switch($payment_frequency) {
-            case 'monthly':
-                $plan_expiration_date = (new \DateTime($current_plan_expiration_date))->modify('+30 days')->format('Y-m-d H:i:s');
-                break;
-
-            case 'annual':
-                $plan_expiration_date = (new \DateTime($current_plan_expiration_date))->modify('+12 months')->format('Y-m-d H:i:s');
-                break;
-
-            case 'lifetime':
-                $plan_expiration_date = (new \DateTime($current_plan_expiration_date))->modify('+100 years')->format('Y-m-d H:i:s');
-                break;
-        }
+        $modifier = match ($payment_frequency) {
+            'monthly' => '+30 days +12 hours',
+            'quarterly' => '+3 months +12 hours',
+            'biannual' => '+6 months +12 hours',
+            'annual' => '+12 months +12 hours',
+            'lifetime' => '+100 years +12 hours',
+        };
+        $plan_expiration_date = (new \DateTime($current_plan_expiration_date))->modify($modifier)->format('Y-m-d H:i:s');
 
         /* Database query */
         db()->where('user_id', $user_id)->update('users', [
@@ -116,8 +145,11 @@ class Payments extends Model {
             'payment_currency' => $payment_currency,
         ]);
 
+        /* Run potential hooks */
+        \Altum\CustomHooks::user_payment_finished(['user' => $user, 'plan' => $plan]);
+
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $user_id);
+        cache()->deleteItemsByTag('user_id=' . $user_id);
 
         /* Send notification to the user */
         $email_template = get_email_template(
@@ -125,6 +157,7 @@ class Payments extends Model {
             l('global.emails.user_payment.subject'),
             [
                 '{{NAME}}' => $user->name,
+                '{{PLAN_NAME}}' => $plan->name,
                 '{{PLAN_EXPIRATION_DATE}}' => \Altum\Date::get($plan_expiration_date, 2),
                 '{{USER_PLAN_LINK}}' => url('account-plan'),
                 '{{USER_PAYMENTS_LINK}}' => url('account-payments'),
@@ -139,17 +172,28 @@ class Payments extends Model {
 
             $email_template = get_email_template(
                 [
-                    '{{PROCESSOR}}' => $payment_processor,
+                    '{{PROCESSOR}}' => l('pay.custom_plan.' . $payment_processor),
                     '{{TOTAL_AMOUNT}}' => $payment_total,
                     '{{CURRENCY}}' => $payment_currency,
                 ],
                 l('global.emails.admin_new_payment_notification.subject'),
                 [
-                    '{{PROCESSOR}}' => $payment_processor,
+                    '{{PROCESSOR}}' => l('pay.custom_plan.' . $payment_processor),
                     '{{TOTAL_AMOUNT}}' => $payment_total,
                     '{{CURRENCY}}' => $payment_currency,
                     '{{NAME}}' => $user->email,
                     '{{EMAIL}}' => $user->email,
+                    '{{PLAN_NAME}}' => $plan->name,
+                    '{{PAYMENT_FREQUENCY}}' => l('plan.custom_plan.' . $payment_frequency),
+                    '{{PAYMENT_TYPE}}' => l('pay.custom_plan.' . $payment_type . '_type'),
+                    '{{PAYMENT_ID}}' => $payment_id,
+                    '{{EXTERNAL_PAYMENT_ID}}' => $external_payment_id,
+                    '{{PAYMENT_LINK}}' => url('admin/payments?id=' . $payment_id),
+                    '{{DATE}}' => get_date(),
+                    '{{DATE_TIMEZONE}}' => \Altum\Date::$default_timezone,
+                    '{{CODE}}' => $code ?: l('global.none'),
+                    '{{DISCOUNT_AMOUNT}}' => $discount_amount,
+                    '{{PAYMENT_STATUS}}' => l('account_payments.status_approved'),
                 ],
                 l('global.emails.admin_new_payment_notification.body')
             );
@@ -161,7 +205,7 @@ class Payments extends Model {
         /* Send webhook notification if needed */
         if(settings()->webhooks->payment_new) {
 
-            \Unirest\Request::post(settings()->webhooks->payment_new, [], [
+            fire_and_forget('post', settings()->webhooks->payment_new, [
                 'user_id' => $user->user_id,
                 'email' => $user->email,
                 'name' => $user->name,
@@ -174,6 +218,7 @@ class Payments extends Model {
                 'payment_total_amount' => $payment_total,
                 'payment_currency' => $payment_currency,
                 'payment_code' => $code->code,
+                'datetime' => $payment_datetime,
             ]);
 
         }
@@ -186,7 +231,7 @@ class Payments extends Model {
                 'title' => l('global.notifications.new_payment.title'),
                 'description' => sprintf(l('global.notifications.new_payment.description'), $user->name, $user->email, $payment_total, $payment_currency, l('pay.custom_plan.' . $payment_processor)),
                 'url' => 'admin/payments',
-                'datetime' => \Altum\Date::$date,
+                'datetime' => get_date(),
             ]);
         }
 
@@ -209,7 +254,7 @@ class Payments extends Model {
                 db()->insert('redeemed_codes', [
                     'code_id'   => $codes_code->code_id,
                     'user_id'   => $user->user_id,
-                    'datetime'  => \Altum\Date::$date
+                    'datetime'  => get_date()
                 ]);
             }
 
@@ -236,7 +281,7 @@ class Payments extends Model {
                         'payment_id' => $payment_id,
                         'amount' => $amount,
                         'currency' => $payment_currency,
-                        'datetime' => \Altum\Date::$date
+                        'datetime' => get_date()
                     ]);
 
                     /* Update the referred user */

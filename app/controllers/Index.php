@@ -1,16 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
-use Altum\Meta;
-use Altum\Models\Page;
+use Altum\Models\Domain;
+
+defined('ALTUMCODE') || die();
 
 class Index extends Controller {
 
@@ -25,22 +33,13 @@ class Index extends Controller {
         $view = new \Altum\View('partials/plans', (array) $this);
         $this->add_view_content('plans', $view->run());
 
-        /* Meta */
-        Meta::set_canonical_url();
-
-        /* Opengraph image */
-        if(settings()->main->opengraph) {
-            Meta::set_social_url(SITE_URL);
-            Meta::set_social_description(l('index.meta_description'));
-            Meta::set_social_image(\Altum\Uploads::get_full_url('opengraph') . settings()->main->opengraph);
-        }
-
         /* Check if the cache exists */
-        $cache_instance = \Altum\Cache::$adapter->getItem('index_stats');
+        $cache_instance = cache()->getItem('index_stats');
 
         /* Set cache if not existing */
         if(is_null($cache_instance->get())) {
 
+            $total_users = database()->query("SELECT MAX(`user_id`) AS `total` FROM `users`")->fetch_object()->total ?? 0;
             $total_links = database()->query("SELECT MAX(`link_id`) AS `total` FROM `links`")->fetch_object()->total ?? 0;
             $total_qr_codes = database()->query("SELECT MAX(`qr_code_id`) AS `total` FROM `qr_codes`")->fetch_object()->total ?? 0;
             $total_track_links = database()->query("SELECT MAX(`id`) AS `total` FROM `track_links`")->fetch_object()->total ?? 0;
@@ -55,6 +54,7 @@ class Index extends Controller {
                 }
             }
             $stats = [
+                'total_users' => $total_users,
                 'total_links' => $total_links,
                 'total_qr_codes' => $total_qr_codes,
                 'total_track_links' => $total_track_links,
@@ -64,7 +64,7 @@ class Index extends Controller {
             ];
 
             /* Save to cache */
-            \Altum\Cache::$adapter->save($cache_instance->set($stats)->expiresAfter(3600));
+            cache()->save($cache_instance->set($stats)->expiresAfter(3600));
 
         } else {
 
@@ -94,7 +94,7 @@ class Index extends Controller {
 
                 while($row = $blog_posts_result->fetch_object()) {
                     /* Transform content if needed */
-                    $row->content = json_decode($row->content) ? convert_editorjs_json_to_html($row->content) : nl2br($row->content);
+                    $row->content = json_decode($row->content) ? convert_editorjs_json_to_html($row->content) : output_blog_post_content($row->content);
 
                     $blog_posts[] = $row;
                 }
@@ -103,9 +103,16 @@ class Index extends Controller {
             });
         }
 
+        $tools_categories = require APP_PATH . 'includes/tools/categories.php';
+        $enabled_tools = count(array_filter((array) settings()->tools->available_tools));
+
+        /* Get the available domains to use */
+        $domains = (new Domain())->get_available_additional_domains();
+
         /* Main View */
         $view = new \Altum\View('index/index', (array) $this);
         $this->add_view_content('content', $view->run([
+            'total_users' => $total_users,
             'total_links' => $total_links,
             'total_qr_codes' => $total_qr_codes,
             'total_track_links' => $total_track_links,
@@ -113,6 +120,9 @@ class Index extends Controller {
             'total_images' => $total_images ?? null,
             'images' => $images ?? null,
             'blog_posts' => $blog_posts ?? [],
+            'tools_categories' => $tools_categories,
+            'enabled_tools' => $enabled_tools,
+            'domains' => $domains,
         ]));
 
     }

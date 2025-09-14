@@ -6,15 +6,15 @@
             class="h5 footer-heading"
             href="<?= url() ?>"
             data-logo
-            data-light-value="<?= settings()->main->logo_light != '' ? \Altum\Uploads::get_full_url('logo_light') . settings()->main->logo_light : settings()->main->title ?>"
+            data-light-value="<?= settings()->main->logo_light != '' ? settings()->main->logo_light_full_url : settings()->main->title ?>"
             data-light-class="<?= settings()->main->logo_light != '' ? 'mb-2 footer-logo' : 'mb-2' ?>"
             data-light-tag="<?= settings()->main->logo_light != '' ? 'img' : 'span' ?>"
-            data-dark-value="<?= settings()->main->logo_dark != '' ? \Altum\Uploads::get_full_url('logo_dark') . settings()->main->logo_dark : settings()->main->title ?>"
+            data-dark-value="<?= settings()->main->logo_dark != '' ? settings()->main->logo_dark_full_url : settings()->main->title ?>"
             data-dark-class="<?= settings()->main->logo_dark != '' ? 'mb-2 footer-logo' : 'mb-2' ?>"
             data-dark-tag="<?= settings()->main->logo_dark != '' ? 'img' : 'span' ?>"
         >
             <?php if(settings()->main->{'logo_' . \Altum\ThemeStyle::get()} != ''): ?>
-                <img src="<?= \Altum\Uploads::get_full_url('logo_' . \Altum\ThemeStyle::get()) . settings()->main->{'logo_' . \Altum\ThemeStyle::get()} ?>" class="mb-2 footer-logo" alt="<?= l('global.accessibility.logo_alt') ?>" />
+                <img src="<?= settings()->main->{'logo_' . \Altum\ThemeStyle::get() . '_full_url'} ?>" class="mb-2 footer-logo" alt="<?= l('global.accessibility.logo_alt') ?>" />
             <?php else: ?>
                 <span class="mb-2"><?= settings()->main->title ?></span>
             <?php endif ?>
@@ -22,17 +22,24 @@
         <div class="text-muted"><?= sprintf(l('global.footer.copyright'), date('Y'), settings()->main->title) ?></div>
     </div>
 
-    <div class="d-flex flex-column flex-lg-row">
+    <div class="d-flex flex-row flex-truncate">
         <?php if(count(\Altum\Language::$active_languages) > 1): ?>
-            <div class="dropdown mb-2 ml-lg-3">
+            <div class="dropdown mr-3 ml-lg-3 mr-lg-0">
                 <button type="button" class="btn btn-link text-decoration-none p-0" id="language_switch" data-tooltip data-tooltip-hide-on-click title="<?= l('global.choose_language') ?>" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <i class="fas fa-fw fa-sm fa-language mr-1"></i> <?= \Altum\Language::$name ?>
                 </button>
 
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="language_switch">
                     <?php foreach(\Altum\Language::$languages_ordered as $language): ?>
-                        <?php if($language['status'] == 'active'): ?>
-                            <a href="<?= SITE_URL . $language['code'] . '/' . \Altum\Router::$original_request . (\Altum\Router::$original_request_query ? '?' . \Altum\Router::$original_request_query : null) ?>" class="dropdown-item" data-set-language="<?= $language['name'] ?>">
+                        <?php if($language['status']): ?>
+                            <?php
+                            $new_url = match(\Altum\Router::$controller_key) {
+                                'pages', 'page' => SITE_URL . $language['code'] . '/' . 'pages',
+                                'blog' => SITE_URL . $language['code'] . '/' . 'blog',
+                                default => SITE_URL . $language['code'] . '/' . \Altum\Router::$original_request . (\Altum\Router::$original_request_query ? '?' . \Altum\Router::$original_request_query : null)
+                            };
+                            ?>
+                            <a href="<?= $new_url ?>" class="dropdown-item" data-set-language="<?= $language['name'] ?>">
                                 <?php if($language['name'] == \Altum\Language::$name): ?>
                                     <i class="fas fa-fw fa-sm fa-check mr-2 text-success"></i>
                                 <?php else: ?>
@@ -62,8 +69,8 @@
             <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
         <?php endif ?>
 
-        <?php if(count((array) settings()->payment->currencies ?? []) > 1): ?>
-            <div class="dropdown mb-2 ml-lg-3">
+        <?php if(\Altum\Router::$controller_settings['currency_switcher'] && count((array) settings()->payment->currencies ?? []) > 1): ?>
+            <div class="dropdown mr-3 ml-lg-3 mr-lg-0">
                 <button type="button" class="btn btn-link text-decoration-none p-0" id="currency_switch" data-tooltip data-tooltip-hide-on-click title="<?= l('global.choose_currency') ?>" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <i class="fas fa-fw fa-sm fa-coins mr-1"></i> <?= currency() ?>
                 </button>
@@ -97,11 +104,19 @@
             <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
         <?php endif ?>
 
+        <?php if(is_logged_in() && ((user()->type == 1 && settings()->main->admin_spotlight_is_enabled) || (settings()->main->user_spotlight_is_enabled && user()->type == 0))): ?>
+        <div class="mr-3 ml-lg-3 mr-lg-0">
+            <button type="button" class="btn btn-link text-decoration-none p-0" data-toggle="tooltip" title="<?= l('global.spotlight.tooltip') ?>" aria-label="<?= l('global.spotlight.tooltip') ?>" onclick="spotlight_display()" data-tooltip-hide-on-click>
+                <i class="fas fa-fw fa-sm fa-search"></i>
+            </button>
+        </div>
+        <?php endif ?>
+
         <?php if(settings()->main->theme_style_change_is_enabled): ?>
-            <div class="mb-2 ml-lg-3">
-                <button type="button" id="switch_theme_style" class="btn btn-link text-decoration-none p-0" data-toggle="tooltip" title="<?= sprintf(l('global.theme_style'), (\Altum\ThemeStyle::get() == 'light' ? l('global.theme_style_dark') : l('global.theme_style_light'))) ?>" data-title-theme-style-light="<?= sprintf(l('global.theme_style'), l('global.theme_style_light')) ?>" data-title-theme-style-dark="<?= sprintf(l('global.theme_style'), l('global.theme_style_dark')) ?>">
-                    <span data-theme-style="light" class="<?= \Altum\ThemeStyle::get() == 'light' ? null : 'd-none' ?>"><i class="fas fa-fw fa-sm fa-sun mr-1"></i> <?=  l('global.theme_style_light') ?></span>
-                    <span data-theme-style="dark" class="<?= \Altum\ThemeStyle::get() == 'dark' ? null : 'd-none' ?>"><i class="fas fa-fw fa-sm fa-moon mr-1"></i> <?=  l('global.theme_style_dark') ?></span>
+            <div class="mr-3 ml-lg-3 mr-lg-0">
+                <button type="button" id="switch_theme_style" class="btn btn-link text-decoration-none p-0" data-toggle="tooltip" title="<?= sprintf(l('global.theme_style'), (\Altum\ThemeStyle::get() == 'light' ? l('global.theme_style_dark') : l('global.theme_style_light'))) ?>" aria-label="<?= sprintf(l('global.theme_style'), (\Altum\ThemeStyle::get() == 'light' ? l('global.theme_style_dark') : l('global.theme_style_light'))) ?>" data-title-theme-style-light="<?= sprintf(l('global.theme_style'), l('global.theme_style_light')) ?>" data-title-theme-style-dark="<?= sprintf(l('global.theme_style'), l('global.theme_style_dark')) ?>">
+                    <span data-theme-style="light" class="<?= \Altum\ThemeStyle::get() == 'light' ? null : 'd-none' ?>"><i class="fas fa-fw fa-sm fa-sun text-warning"></i></span>
+                    <span data-theme-style="dark" class="<?= \Altum\ThemeStyle::get() == 'dark' ? null : 'd-none' ?>"><i class="fas fa-fw fa-sm fa-moon"></i></span>
                 </button>
             </div>
 
@@ -131,13 +146,21 @@
                 <li class="mb-2 mr-lg-3"><a href="#" data-cc="show-preferencesModal"><?= l('global.cookie_consent.menu') ?></a></li>
             <?php endif ?>
 
-            <?php if(\Altum\Plugin::is_active('push-notifications') && settings()->push_notifications->is_enabled && (\Altum\Authentication::check() || (!\Altum\Authentication::check() && settings()->push_notifications->guests_is_enabled))): ?>
+            <?php if(\Altum\Plugin::is_active('push-notifications') && settings()->push_notifications->is_enabled && (is_logged_in() || (!is_logged_in() && settings()->push_notifications->guests_is_enabled))): ?>
                 <li class="mb-2 mr-lg-3"><a href="#" data-toggle="modal" data-target="#push_notifications_modal"><?= l('push_notifications_modal.menu') ?></a></li>
             <?php endif ?>
 
             <?php if(count($data->pages)): ?>
                 <?php foreach($data->pages as $row): ?>
-                    <li class="mb-2 mr-lg-3"><a href="<?= $row->url ?>" target="<?= $row->target ?>"><?= $row->title ?></a></li>
+                    <li class="mb-2 mr-lg-3">
+                        <a href="<?= $row->url ?>" target="<?= $row->target ?>">
+                            <?php if($row->icon): ?>
+                                <i class="<?= $row->icon ?> fa-fw fa-sm mr-1"></i>
+                            <?php endif ?>
+
+                            <?= $row->title ?>
+                        </a>
+                    </li>
                 <?php endforeach ?>
             <?php endif ?>
         </ul>
@@ -148,7 +171,9 @@
         <div class="d-flex flex-wrap">
             <?php foreach(require APP_PATH . 'includes/admin_socials.php' as $key => $value): ?>
                 <?php if(isset(settings()->socials->{$key}) && !empty(settings()->socials->{$key})): ?>
-                    <a href="<?= sprintf($value['format'], settings()->socials->{$key}) ?>" class="mr-2 mr-lg-0 ml-lg-2 mb-2" target="_blank" data-toggle="tooltip" title="<?= $value['name'] ?>"><i class="<?= $value['icon'] ?> fa-fw fa-lg"></i></a>
+                    <a href="<?= sprintf($value['format'], settings()->socials->{$key}) ?>" class="mr-2 mr-lg-0 ml-lg-2 mb-2" target="_blank" rel="noreferrer" data-toggle="tooltip" title="<?= $value['name'] ?>">
+                        <i class="<?= $value['icon'] ?> fa-fw fa-lg"></i>
+                    </a>
                 <?php endif ?>
             <?php endforeach ?>
         </div>

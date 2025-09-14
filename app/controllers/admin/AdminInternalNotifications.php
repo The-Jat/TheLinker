@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,12 +19,14 @@ namespace Altum\Controllers;
 use Altum\Alerts;
 use Altum\Response;
 
+defined('ALTUMCODE') || die();
+
 class AdminInternalNotifications extends Controller {
 
     public function index() {
 
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['user_id', 'from_who', 'for_who', 'is_read'], ['title', 'description'], ['datetime', 'read_datetime']));
+        $filters = (new \Altum\Filters(['user_id', 'from_who', 'for_who', 'is_read'], ['title', 'description'], ['internal_notification_id', 'datetime', 'read_datetime']));
         $filters->set_default_order_by('internal_notification_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
@@ -29,7 +38,7 @@ class AdminInternalNotifications extends Controller {
         $internal_notifications = [];
         $internal_notifications_result = database()->query("
             SELECT
-                `internal_notifications`.*, `users`.`name` AS `user_name`, `users`.`email` AS `user_email`
+                `internal_notifications`.*, `users`.`name` AS `user_name`, `users`.`email` AS `user_email`, `users`.`avatar` AS `user_avatar`
             FROM
                 `internal_notifications`
             LEFT JOIN
@@ -46,8 +55,8 @@ class AdminInternalNotifications extends Controller {
         }
 
         /* Export handler */
-        process_export_json($internal_notifications, 'include', ['internal_notification_id', 'user_id', 'for_who', 'from_who', 'icon', 'title', 'description', 'url', 'is_read', 'datetime', 'read_datetime',]);
-        process_export_csv($internal_notifications, 'include', ['internal_notification_id', 'user_id', 'for_who', 'from_who', 'icon', 'title', 'description', 'url', 'is_read', 'datetime', 'read_datetime',]);
+        process_export_json($internal_notifications, ['internal_notification_id', 'user_id', 'for_who', 'from_who', 'icon', 'title', 'description', 'url', 'is_read', 'datetime', 'read_datetime',]);
+        process_export_csv($internal_notifications, ['internal_notification_id', 'user_id', 'for_who', 'from_who', 'icon', 'title', 'description', 'url', 'is_read', 'datetime', 'read_datetime',]);
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/admin_pagination', (array) $this))->run(['paginator' => $paginator]);
@@ -139,6 +148,57 @@ class AdminInternalNotifications extends Controller {
                     $query->where('device_type', $_GET['filters_device_type'], 'IN');
                 }
 
+                /* Languages */
+                if(isset($_GET['filters_languages'])) {
+                    $has_filters = true;
+                    $query->where('language', $_GET['filters_languages'], 'IN');
+                }
+
+                /* Cities */
+                if(!empty($_GET['filters_cities'])) {
+                    $_GET['filters_cities'] = is_array($_GET['filters_cities']) ? $_GET['filters_cities'] : explode(',', $_GET['filters_cities']);
+
+                    if(count($_GET['filters_cities'])) {
+                        $_GET['filters_cities'] = array_map(function($city) {
+                            return query_clean($city);
+                        }, $_GET['filters_cities']);
+                        $_GET['filters_cities'] = array_unique($_GET['filters_cities']);
+
+                        $has_filters = true;
+                        $query->where('city_name', $_GET['filters_cities'], 'IN');
+                    }
+                }
+
+                /* Languages */
+                if(isset($_GET['filters_browser_languages'])) {
+                    $_GET['filters_browser_languages'] = array_filter($_GET['filters_browser_languages'], function($locale) {
+                        return array_key_exists($locale, get_locale_languages_array());
+                    });
+
+                    $has_filters = true;
+                    $query->where('browser_language', $_GET['filters_browser_languages'], 'IN');
+                }
+
+                /* Filters operating systems */
+                if(isset($_GET['filters_operating_systems'])) {
+                    $_GET['filters_operating_systems'] = array_filter($_GET['filters_operating_systems'], function($os_name) {
+                        return in_array($os_name, ['iOS', 'Android', 'Windows', 'OS X', 'Linux', 'Ubuntu', 'Chrome OS']);
+                    });
+
+                    $has_filters = true;
+                    $query->where('os_name', $_GET['filters_operating_systems'], 'IN');
+                }
+
+                /* Filters browsers */
+                if(isset($_GET['filters_browsers'])) {
+                    $_GET['filters_browsers'] = array_filter($_GET['filters_browsers'], function($browser_name) {
+                        return in_array($browser_name, ['Chrome', 'Firefox', 'Safari', 'Edge', 'Opera', 'Samsung Internet']);
+                    });
+
+                    $has_filters = true;
+                    $query->where('browser_name', $_GET['filters_browsers'], 'IN');
+                }
+
                 $count = $has_filters ? $query->getValue('users', 'COUNT(*)') : 0;
 
                 break;
@@ -162,7 +222,7 @@ class AdminInternalNotifications extends Controller {
             redirect('admin/internal-notifications');
         }
 
-        if(!isset($_POST['type']) || (isset($_POST['type']) && !in_array($_POST['type'], ['delete']))) {
+        if(!isset($_POST['type'])) {
             redirect('admin/internal-notifications');
         }
 
@@ -174,6 +234,10 @@ class AdminInternalNotifications extends Controller {
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
+            set_time_limit(0);
+
+            session_write_close();
+
             switch($_POST['type']) {
                 case 'delete':
 
@@ -183,8 +247,10 @@ class AdminInternalNotifications extends Controller {
                     break;
             }
 
+            session_start();
+            
             /* Set a nice success message */
-            Alerts::add_success(l('admin_bulk_delete_modal.success_message'));
+            Alerts::add_success(l('bulk_delete_modal.success_message'));
 
         }
 

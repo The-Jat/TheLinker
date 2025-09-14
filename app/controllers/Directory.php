@@ -1,19 +1,28 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
+
+defined('ALTUMCODE') || die();
 
 class Directory extends Controller {
 
     public function index() {
         if(!settings()->links->biolinks_is_enabled || !settings()->links->directory_is_enabled) {
-            redirect();
+            redirect('not-found');
         }
 
         if(settings()->links->directory_access == 'users') {
@@ -29,13 +38,13 @@ class Directory extends Controller {
         $directory_display_where = settings()->links->directory_display == 'all' ? null : 'AND `is_verified` = 1';
 
         /* Prepare the paginator */
-        $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `links` WHERE `type` = 'biolink' AND `is_enabled` = 1 {$directory_display_where} {$filters->get_sql_where()}")->fetch_object()->total ?? 0;
+        $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `links` WHERE `type` = 'biolink' AND `is_enabled` = 1 AND `links`.`directory_is_enabled` = 1 {$directory_display_where} {$filters->get_sql_where()}")->fetch_object()->total ?? 0;
         $paginator = (new \Altum\Paginator($total_rows, $filters->get_results_per_page(), $_GET['page'] ?? 1, url('directory?' . $filters->get_get() . '&page=%d')));
 
         /* Get the links list for the project */
         $links_result = database()->query("
             SELECT 
-                `links`.*, `domains`.`scheme`, `domains`.`host`
+                `links`.*, `domains`.`scheme`, `domains`.`host`, `domains`.`link_id` as `domain_link_id`
             FROM 
                 `links`
             LEFT JOIN 
@@ -43,6 +52,7 @@ class Directory extends Controller {
             WHERE 
                 `links`.`type` = 'biolink'
                 AND `links`.`is_enabled` = 1
+                AND `links`.`directory_is_enabled` = 1
                 {$directory_display_where}
                 {$filters->get_sql_where('links')}
                 {$filters->get_sql_order_by('links')}
@@ -53,20 +63,20 @@ class Directory extends Controller {
         $links = [];
 
         while($row = $links_result->fetch_object()) {
-            $row->full_url = $row->domain_id ? $row->scheme . $row->host . '/' . $row->url : SITE_URL . $row->url;
+            $row->full_url = $row->domain_id ? $row->scheme . $row->host . '/' . ($row->domain_link_id == $row->link_id ? null : $row->url) : SITE_URL . $row->url;
             $row->settings = json_decode($row->settings ?? '');
 
             $links[] = $row;
         }
 
         /* Export handler */
-        process_export_csv($links, 'include', ['url', 'full_url', 'clicks', 'is_verified'], sprintf(l('links.title')));
-        process_export_json($links, 'include', ['url', 'full_url', 'clicks', 'is_verified'], sprintf(l('links.title')));
+        process_export_csv($links, ['url', 'full_url', 'clicks', 'is_verified'], sprintf(l('links.title')));
+        process_export_json($links, ['url', 'full_url', 'clicks', 'is_verified'], sprintf(l('links.title')));
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/pagination', (array) $this))->run(['paginator' => $paginator]);
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'links'             => $links,
             'pagination'        => $pagination,

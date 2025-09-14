@@ -6,13 +6,13 @@
     <?= $this->views['account_header_menu'] ?>
 
     <h1 class="h4"><?= l('referrals.invite.header') ?></h1>
-    <p class="text-muted"><?= sprintf(l('referrals.invite.subheader_' . settings()->affiliate->commission_type), '<strong>' . settings()->main->title . '</strong>', '<strong>' . $this->user->plan_settings->affiliate_commission_percentage . '%</strong>') ?></p>
+    <p class="text-muted font-size-small"><?= sprintf(l('referrals.invite.subheader_' . settings()->affiliate->commission_type), '<strong>' . settings()->main->title . '</strong>', '<strong>' . $this->user->plan_settings->affiliate_commission_percentage . '%</strong>') ?></p>
 
-    <div <?= $this->user->plan_settings->affiliate_commission_percentage ? null : 'data-toggle="tooltip" title="' . l('global.info_message.plan_feature_no_access') . '"' ?>>
+    <div <?= $this->user->plan_settings->affiliate_commission_percentage ? null : get_plan_feature_disabled_info() ?>>
         <div class="card <?= $this->user->plan_settings->affiliate_commission_percentage ? null : 'container-disabled' ?>">
             <div class="card-body">
 
-                <div class="form-group">
+                <div class="form-group mb-0">
                     <label for="referral_key"><?= l('referrals.invite.referral_key') ?></label>
                     <div class="input-group">
                         <input type="text" id="referral_key" name="referral_key" value="<?= SITE_URL . '?ref=' . $this->user->referral_key ?>" class="form-control" onclick="this.select();" readonly="readonly" />
@@ -20,7 +20,7 @@
                             <button
                                     id="url_copy"
                                     type="button"
-                                    class="btn btn-light"
+                                    class="btn btn-light border border-left-0"
                                     data-toggle="tooltip"
                                     title="<?= l('global.clipboard_copy') ?>"
                                     aria-label="<?= l('global.clipboard_copy') ?>"
@@ -44,7 +44,7 @@
     <h1 class="h4 mb-3"><?= l('referrals.statistics.header') ?></h1>
 
     <div class="row justify-content-between">
-        <div class="col-12 col-xl mb-3 mb-xl-0">
+        <div class="col-12 col-lg-6 col-xl p-3">
             <div class="card h-100">
                 <div class="card-body">
 
@@ -64,7 +64,7 @@
             </div>
         </div>
 
-        <div class="col-12 col-xl mb-3 mb-xl-0">
+        <div class="col-12 col-lg-6 col-xl p-3">
             <div class="card h-100">
                 <div class="card-body">
 
@@ -84,7 +84,7 @@
             </div>
         </div>
 
-        <div class="col-12 col-xl mb-3 mb-xl-0">
+        <div class="col-12 col-lg-6 col-xl p-3">
             <div class="card h-100">
                 <div class="card-body">
 
@@ -104,7 +104,7 @@
             </div>
         </div>
 
-        <div class="col-12 col-xl mb-3 mb-xl-0">
+        <div class="col-12 col-lg-6 col-xl p-3">
             <div class="card h-100">
                 <div class="card-body">
 
@@ -128,7 +128,7 @@
     <hr class="border-gray-50 my-4" />
 
     <h1 class="h4"><?= l('referrals.withdraw.header') ?></h1>
-    <p class="text-muted"><?= sprintf(l('referrals.withdraw.subheader'), '<strong>' . settings()->affiliate->minimum_withdrawal_amount . ' ' . settings()->payment->default_currency . '</strong>') ?></p>
+    <p class="text-muted font-size-small"><?= sprintf(l('referrals.withdraw.subheader'), '<strong>' . settings()->affiliate->minimum_withdrawal_amount . ' ' . settings()->payment->default_currency . '</strong>') ?></p>
 
     <div class="card">
         <div class="card-body">
@@ -147,7 +147,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="note"><?= settings()->affiliate->withdrawal_notes ?></label>
+                    <label for="note"><?= settings()->affiliate->translations->{\Altum\Language::$name}->withdrawal_notes ?: settings()->affiliate->withdrawal_notes; ?></label>
                     <textarea id="note" name="note" class="form-control"></textarea>
                 </div>
 

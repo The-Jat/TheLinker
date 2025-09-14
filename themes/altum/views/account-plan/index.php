@@ -5,16 +5,18 @@
 
     <?= $this->views['account_header_menu'] ?>
 
-    <div class="">
+    <div>
         <div class="row mb-3">
             <div class="col-12 col-xl mb-3 mb-xl-0">
-                <h1 class="h4"><?= $this->user->plan->name ?></h1>
-                <?php if($this->user->plan_id != 'free' && (new \DateTime($this->user->plan_expiration_date)) < (new \DateTime())->modify('+5 years')): ?>
-                    <p class="text-muted m-0">
+                <h1 class="h4"><?= $this->user->plan->translations->{\Altum\Language::$name}->name ?? $this->user->plan->name ?></h1>
+                <?php if($this->user->plan_id != 'free'): ?>
+                    <p class="text-muted font-size-small m-0">
                         <?=
-                        $this->user->payment_subscription_id ?
-                            sprintf(l('account_plan.plan.renews'), '<strong>' . \Altum\Date::get($this->user->plan_expiration_date, 2) . '</strong>', l('pay.custom_plan.' . $this->user->payment_processor), nr($this->user->payment_total_amount), $this->user->payment_currency)
-                            : sprintf(l('account_plan.plan.expires'), '<strong>' . \Altum\Date::get($this->user->plan_expiration_date, 2) . '</strong>')
+                        (new \DateTime($this->user->plan_expiration_date)) < (new \DateTime())->modify('+10 years') ?
+                            ($this->user->payment_subscription_id ?
+                            '<i class="fas fa-fw fa-sm fa-rotate mr-1"></i>' . sprintf(l('account_plan.plan.renews'), '<strong>' . \Altum\Date::get($this->user->plan_expiration_date, 2) . '</strong>', l('pay.custom_plan.' . $this->user->payment_processor), nr($this->user->payment_total_amount), $this->user->payment_currency)
+                            : '<i class="fas fa-fw fa-sm fa-hourglass-end mr-1"></i>' .sprintf(l('account_plan.plan.expires'), '<strong>' . \Altum\Date::get($this->user->plan_expiration_date, 2) . '</strong>'))
+                            : '<i class="fas fa-fw fa-sm fa-infinity mr-1"></i>' . l('account_plan.plan.lifetime')
                         ?>
                     </p>
                 <?php endif ?>

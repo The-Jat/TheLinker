@@ -3,8 +3,8 @@
 <?php $teams_access = require APP_PATH . 'includes/teams_access.php'; ?>
 
 <div class="container">
-    <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
+<?php if(settings()->main->breadcrumbs_is_enabled): ?>
+    <nav aria-label="breadcrumb">
         <ol class="custom-breadcrumbs small">
             <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
             <li><a href="<?= url('api-documentation') ?>"><?= l('api_documentation.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
@@ -43,37 +43,38 @@
                             <div class="card-body">
                                 curl --request GET \<br />
                                 --url '<?= SITE_URL ?>api/team-members/<span class="text-primary">{team_id}</span>' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
     "data": [
-    {
-        "id": 1,
-        "team_id": 1,
-        "user_email": "hello@example.com",
-        "access": {
-            "read": true,
-            "create": true,
-            "update": true,
-            "delete": false
-        },
-        "status": 1,
-        "datetime": "2022-06-05 14:37:10",
-        "last_datetime": "2022-06-07 13:04:31"
+        {
+            "id": 1,
+            "team_id": 1,
+            "user_email": "hello@example.com",
+            "access": {
+                "read": true,
+                "create": true,
+                "update": true,
+                "delete": false
+            },
+            "status": 1,
+            "datetime": "<?= get_date() ?>",
+            "last_datetime": null
         }
     ]
 }
+</pre>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
 
         <div class="card">
             <div class="card-header bg-white p-3 position-relative">
@@ -109,25 +110,25 @@
                             <tr>
                                 <td>team_id</td>
                                 <td>
-                                    <span class="badge badge-danger"><?= l('api_documentation.required') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-danger"><i class="fas fa-fw fa-sm fa-asterisk mr-1"></i> <?= l('api_documentation.required') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>user_email</td>
                                 <td>
-                                    <span class="badge badge-danger"><?= l('api_documentation.required') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-danger"><i class="fas fa-fw fa-sm fa-asterisk mr-1"></i> <?= l('api_documentation.required') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
                                 </td>
                                 <td>-</td>
                             </tr>
                             <tr>
                                 <td>access</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.array') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-list mr-1"></i> <?= l('api_documentation.array') ?></span>
                                 </td>
                                 <td>
                                     <?php foreach($teams_access as $key => $value): ?>
@@ -145,7 +146,7 @@
                             <div class="card-body">
                                 curl --request POST \<br />
                                 --url '<?= SITE_URL ?>api/team-members' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \<br />
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \<br />
                                 --header 'Content-Type: multipart/form-data' \<br />
                                 --form 'team_id=<span class="text-primary">1</span>' \<br />
                                 --form 'user_email=<span class="text-primary">hello@example.com</span>' \<br />
@@ -155,18 +156,18 @@
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
     "data": {
         "id": 1
     }
-}
+}</pre>
                         </div>
                     </div>
 
                 </div>
             </div>
-        </div>
+
 
         <div class="card">
             <div class="card-header bg-white p-3 position-relative">
@@ -202,9 +203,9 @@
                             <tr>
                                 <td>access</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.string') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.array') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-signature mr-1"></i> <?= l('api_documentation.string') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-list mr-1"></i> <?= l('api_documentation.array') ?></span>
                                 </td>
                                 <td>
                                     <?php foreach($teams_access as $key => $value): ?>
@@ -222,7 +223,7 @@
                             <div class="card-body">
                                 curl --request POST \<br />
                                 --url '<?= SITE_URL ?>api/team-members/<span class="text-primary">{team_member_id}</span>' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \<br />
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \<br />
                                 --header 'Content-Type: multipart/form-data' \<br />
                                 --form 'access[]=<span class="text-primary">create</span>' \<br />
                                 --form 'access[]=<span class="text-primary">update</span>' \<br />
@@ -232,18 +233,18 @@
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
     "data": {
         "id": 1
     }
-}
+}</pre>
                         </div>
                     </div>
 
                 </div>
             </div>
-        </div>
+
 
         <div class="card">
             <div class="card-header bg-white p-3 position-relative">
@@ -272,14 +273,14 @@
                             <div class="card-body">
                                 curl --request DELETE \<br />
                                 --url '<?= SITE_URL ?>api/team-members/<span class="text-primary">{team_member_id}</span>' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \<br />
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \<br />
                             </div>
                         </div>
                     </div>
 
                 </div>
             </div>
-        </div>
+
     </div>
 </div>
 

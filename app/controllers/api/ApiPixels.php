@@ -1,16 +1,25 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Response;
 use Altum\Traits\Apiable;
+
+defined('ALTUMCODE') || die();
 
 class ApiPixels extends Controller {
     use Apiable;
@@ -30,7 +39,7 @@ class ApiPixels extends Controller {
                     $this->get_all();
                 }
 
-            break;
+                break;
 
             case 'POST':
 
@@ -41,11 +50,11 @@ class ApiPixels extends Controller {
                     $this->post();
                 }
 
-            break;
+                break;
 
             case 'DELETE':
                 $this->delete();
-            break;
+                break;
         }
 
         $this->return_404();
@@ -82,6 +91,7 @@ class ApiPixels extends Controller {
             /* Prepare the data */
             $row = [
                 'id' => (int) $row->pixel_id,
+                'user_id' => (int) $row->user_id,
                 'type' => $row->type,
                 'name' => $row->name,
                 'pixel' => $row->pixel,
@@ -127,6 +137,7 @@ class ApiPixels extends Controller {
         /* Prepare the data */
         $data = [
             'id' => (int) $pixel->pixel_id,
+            'user_id' => (int) $pixel->user_id,
             'type' => $pixel->type,
             'name' => $pixel->name,
             'pixel' => $pixel->pixel,
@@ -156,25 +167,31 @@ class ApiPixels extends Controller {
             }
         }
 
-        $_POST['type'] = array_key_exists($_POST['type'], require APP_PATH . 'includes/v/pixels.php') ? $_POST['type'] : '';
+        $_POST['type'] = array_key_exists($_POST['type'], require APP_PATH . 'includes/pixels.php') ? $_POST['type'] : '';
         $_POST['name'] = trim($_POST['name']);
         $_POST['pixel'] = trim($_POST['pixel']);
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         $pixel_id = db()->insert('pixels', [
             'user_id' => $this->api_user->user_id,
             'type' => $_POST['type'],
             'name' => $_POST['name'],
             'pixel' => $_POST['pixel'],
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItemsByTag('pixels?user_id=' . $this->api_user->user_id);
+        cache()->deleteItemsByTag('pixels?user_id=' . $this->api_user->user_id);
 
         /* Prepare the data */
         $data = [
-            'id' => $pixel_id
+            'id' => (int) $pixel_id,
+            'user_id' => (int) $this->api_user->user_id,
+            'type' => $_POST['type'],
+            'name' => $_POST['name'],
+            'pixel' => $_POST['pixel'],
+            'last_datetime' => null,
+            'datetime' => get_date(),
         ];
 
         Response::jsonapi_success($data, null, 201);
@@ -193,7 +210,7 @@ class ApiPixels extends Controller {
             $this->return_404();
         }
 
-        $_POST['type'] = array_key_exists($_POST['type'] ?? $pixel->type, require APP_PATH . 'includes/v/pixels.php') ? $_POST['type'] : '';
+        $_POST['type'] = array_key_exists($_POST['type'] ?? $pixel->type, require APP_PATH . 'includes/pixels.php') ? $_POST['type'] : '';
         $_POST['name'] = trim($_POST['name'] ?? $pixel->name);
         $_POST['pixel'] = trim($_POST['pixel'] ?? $pixel->pixel);
 
@@ -202,15 +219,21 @@ class ApiPixels extends Controller {
             'type' => $_POST['type'],
             'name' => $_POST['name'],
             'pixel' => $_POST['pixel'],
-            'last_datetime' => \Altum\Date::$date,
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItemsByTag('pixels?user_id=' . $this->api_user->user_id);
+        cache()->deleteItemsByTag('pixels?user_id=' . $this->api_user->user_id);
 
         /* Prepare the data */
         $data = [
-            'id' => $pixel->pixel_id
+            'id' => (int) $pixel->pixel_id,
+            'user_id' => (int) $this->api_user->user_id,
+            'type' => $_POST['type'],
+            'name' => $_POST['name'],
+            'pixel' => $_POST['pixel'],
+            'last_datetime' => get_date(),
+            'datetime' => $pixel->datetime,
         ];
 
         Response::jsonapi_success($data, null, 200);
@@ -229,11 +252,11 @@ class ApiPixels extends Controller {
             $this->return_404();
         }
 
-        /* Delete the resource */
+        /* Delete the pixel */
         db()->where('pixel_id', $pixel_id)->delete('pixels');
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItemsByTag('pixels?user_id=' . $this->api_user->user_id);
+        cache()->deleteItemsByTag('pixels?user_id=' . $this->api_user->user_id);
 
         http_response_code(200);
         die();

@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,19 +19,21 @@ namespace Altum\Controllers;
 use Altum\Alerts;
 use Altum\Models\QrCode;
 
+defined('ALTUMCODE') || die();
+
 class QrCodes extends Controller {
 
     public function index() {
 
         \Altum\Authentication::guard();
 
-        if(!settings()->links->qr_codes_is_enabled) {
-            redirect();
+        if(!settings()->codes->qr_codes_is_enabled) {
+            redirect('not-found');
         }
 
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['project_id', 'type'], ['name'], ['name', 'datetime']));
-        $filters->set_default_order_by('qr_code_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
+        $filters = (new \Altum\Filters(['project_id', 'type'], ['name'], ['qr_code_id', 'type', 'name', 'datetime', 'last_datetime']));
+        $filters->set_default_order_by($this->user->preferences->qr_codes_default_order_by, $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
         /* Prepare the paginator */
@@ -34,11 +43,18 @@ class QrCodes extends Controller {
         /* Get the qr_codes list for the user */
         $qr_codes = [];
         $qr_codes_result = database()->query("SELECT * FROM `qr_codes` WHERE `user_id` = {$this->user->user_id} {$filters->get_sql_where()} {$filters->get_sql_order_by()} {$paginator->get_sql_limit()}");
-        while($row = $qr_codes_result->fetch_object()) $qr_codes[] = $row;
+        while($row = $qr_codes_result->fetch_object()) {
+            $row->settings = json_decode($row->settings ?? '');
+            $row->qr_code_url = $row->qr_code ?\Altum\Uploads::get_full_url('qr_code') . $row->qr_code : null;
+            $row->qr_code_logo_url = $row->qr_code_logo ?\Altum\Uploads::get_full_url('qr_code_logo') . $row->qr_code_logo : null;
+            $row->qr_code_background_url = $row->qr_code_background ?\Altum\Uploads::get_full_url('qr_code_background') . $row->qr_code_background : null;
+            $row->qr_code_background_url = $row->qr_code_background ?\Altum\Uploads::get_full_url('qr_code_background') . $row->qr_code_background : null;
+            $qr_codes[] = $row;
+        }
 
         /* Export handler */
-        process_export_csv($qr_codes, 'include', ['qr_code_id', 'user_id', 'project_id', 'type', 'name', 'last_datetime', 'datetime'], sprintf(l('qr_codes.title')));
-        process_export_json($qr_codes, 'include', ['qr_code_id', 'user_id', 'project_id', 'type', 'name', 'settings','last_datetime', 'datetime'], sprintf(l('qr_codes.title')));
+        process_export_csv_new($qr_codes, ['qr_code_id', 'user_id', 'project_id', 'type', 'name', 'qr_code', 'qr_code_url', 'qr_code_logo', 'qr_code_logo_url', 'qr_code_background', 'qr_code_background_url', 'qr_code_foreground', 'qr_code_foreground_url', 'embedded_data', 'settings', 'last_datetime', 'datetime'], ['settings'], sprintf(l('qr_codes.title')));
+        process_export_json($qr_codes, ['qr_code_id', 'user_id', 'project_id', 'type', 'name', 'qr_code', 'qr_code_url', 'qr_code_logo', 'qr_code_logo_url', 'qr_code_background', 'qr_code_background_url', 'qr_code_foreground', 'qr_code_foreground_url', 'embedded_data', 'settings','last_datetime', 'datetime'], sprintf(l('qr_codes.title')));
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/pagination', (array) $this))->run(['paginator' => $paginator]);
@@ -46,11 +62,11 @@ class QrCodes extends Controller {
         /* Existing projects */
         $projects = (new \Altum\Models\Projects())->get_projects_by_user_id($this->user->user_id);
 
-        $qr_code_settings = require APP_PATH . 'includes/qr_code.php';
+        $available_qr_codes = require APP_PATH . 'includes/enabled_qr_codes.php';
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
-            'qr_code_settings'    => $qr_code_settings,
+            'available_qr_codes'  => $available_qr_codes,
             'qr_codes'            => $qr_codes,
             'total_qr_codes'      => $total_rows,
             'pagination'          => $pagination,
@@ -103,17 +119,22 @@ class QrCodes extends Controller {
             /* Duplicate the files */
             $qr_code_image = \Altum\Uploads::copy_uploaded_file($qr_code->qr_code, \Altum\Uploads::get_path('qr_code'), \Altum\Uploads::get_path('qr_code'));
             $qr_code_logo = \Altum\Uploads::copy_uploaded_file($qr_code->qr_code_logo, \Altum\Uploads::get_path('qr_code_logo'), \Altum\Uploads::get_path('qr_code_logo'));
+            $qr_code_background = \Altum\Uploads::copy_uploaded_file($qr_code->qr_code_background, \Altum\Uploads::get_path('qr_code_background'), \Altum\Uploads::get_path('qr_code_background'));
+            $qr_code_foreground = \Altum\Uploads::copy_uploaded_file($qr_code->qr_code_foreground, \Altum\Uploads::get_path('qr_code_foreground'), \Altum\Uploads::get_path('qr_code_foreground'));
 
             /* Insert to database */
             $qr_code_id = db()->insert('qr_codes', [
                 'user_id' => $this->user->user_id,
                 'project_id' => $qr_code->project_id,
-                'name' => $qr_code->name . ' - ' . l('global.duplicated'),
+                'name' => string_truncate($qr_code->name . ' - ' . l('global.duplicated'), 64, null),
                 'type' => $qr_code->type,
                 'qr_code_logo' => $qr_code_logo,
+                'qr_code_background' => $qr_code_background,
+                'qr_code_foreground' => $qr_code_foreground,
                 'qr_code' => $qr_code_image,
                 'settings' => $qr_code->settings,
-                'datetime' => \Altum\Date::$date,
+                'embedded_data' => $qr_code->embedded_data,
+                'datetime' => get_date(),
             ]);
 
             /* Set a nice success message */
@@ -121,6 +142,78 @@ class QrCodes extends Controller {
 
             /* Redirect */
             redirect('qr-code-update/' . $qr_code_id);
+
+        }
+
+        redirect('qr-codes');
+    }
+
+    public function bulk() {
+
+        \Altum\Authentication::guard();
+
+        //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+        /* Check for any errors */
+        if(empty($_POST)) {
+            redirect('qr-codes');
+        }
+
+        if(empty($_POST['selected'])) {
+            redirect('qr-codes');
+        }
+
+        if(!isset($_POST['type'])) {
+            redirect('qr-codes');
+        }
+
+        if(!\Altum\Csrf::check()) {
+            Alerts::add_error(l('global.error_message.invalid_csrf_token'));
+        }
+
+        if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+
+            set_time_limit(0);
+
+            session_write_close();
+
+            switch($_POST['type']) {
+                case 'delete':
+
+                    /* Team checks */
+                    if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.qr_codes')) {
+                        Alerts::add_info(l('global.info_message.team_no_access'));
+                        redirect('qr-codes');
+                    }
+
+                    foreach($_POST['selected'] as $qr_code_id) {
+                        if($qr_code = db()->where('qr_code_id', $qr_code_id)->where('user_id', $this->user->user_id)->getOne('qr_codes', ['qr_code'])) {
+                            /* Delete the qr_code */
+                            (new QrCode())->delete($qr_code_id);
+                        }
+                    }
+
+                    break;
+
+                case 'download':
+
+                    $files = [];
+
+                    foreach($_POST['selected'] as $qr_code_id) {
+                        if($qr_code = db()->where('qr_code_id', $qr_code_id)->where('user_id', $this->user->user_id)->getOne('qr_codes', ['qr_code'])) {
+                            $files[$qr_code->qr_code] = \Altum\Uploads::get_path('qr_code');
+                        }
+                    }
+
+                    \Altum\Uploads::download_files_as_zip($files, l('global.download'));
+
+                    break;
+            }
+
+            session_start();
+
+            /* Set a nice success message */
+            Alerts::add_success(l('bulk_delete_modal.success_message'));
 
         }
 

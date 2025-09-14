@@ -1,27 +1,36 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class AdminImages extends Controller {
 
     public function index() {
 
         if(!\Altum\Plugin::is_active('aix')) {
-            redirect('dashboard');
+            redirect('not-found');
         }
 
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['user_id', 'project_id', 'size', 'artist', 'lighting', 'style', 'mood'], ['name'], ['last_datetime', 'datetime', 'name']));
-        $filters->set_default_order_by('image_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
+        $filters = (new \Altum\Filters(['user_id', 'project_id', 'size', 'artist', 'lighting', 'style', 'mood', 'api'], ['name'], ['image_id', 'last_datetime', 'datetime', 'name']));
+        $filters->set_default_order_by($this->user->preferences->images_default_order_by, $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
         /* Prepare the paginator */
@@ -32,7 +41,7 @@ class AdminImages extends Controller {
         $images = [];
         $images_result = database()->query("
             SELECT
-                `images`.*, `users`.`name` AS `user_name`, `users`.`email` AS `user_email`
+                `images`.*, `users`.`name` AS `user_name`, `users`.`email` AS `user_email`, `users`.`avatar` AS `user_avatar`
             FROM
                 `images`
             LEFT JOIN
@@ -46,12 +55,13 @@ class AdminImages extends Controller {
         ");
         while($row = $images_result->fetch_object()) {
             $row->settings = json_decode($row->settings ?? '');
+            $row->image_url = $row->image ? \Altum\Uploads::get_full_url('images') . $row->image : null;
             $images[] = $row;
         }
 
         /* Export handler */
-        process_export_csv($images, 'include', ['image_id', 'project_id', 'user_id', 'name', 'input', 'image', 'style', 'artist', 'lighting', 'mood', 'size', 'api_response_time', 'datetime', 'last_datetime'], sprintf(l('images.title')));
-        process_export_json($images, 'include', ['image_id', 'project_id', 'user_id', 'name', 'input', 'image', 'style', 'artist', 'lighting', 'mood', 'size', 'settings', 'api_response_time', 'datetime', 'last_datetime'], sprintf(l('images.title')));
+        process_export_csv($images, ['image_id', 'project_id', 'user_id', 'name', 'input', 'image', 'image_url', 'style', 'artist', 'lighting', 'mood', 'size', 'api', 'api_response_time', 'datetime', 'last_datetime'], sprintf(l('images.title')));
+        process_export_json($images, ['image_id', 'project_id', 'user_id', 'name', 'input', 'image', 'image_url', 'style', 'artist', 'lighting', 'mood', 'size', 'settings', 'api', 'api_response_time', 'datetime', 'last_datetime'], sprintf(l('images.title')));
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/admin_pagination', (array) $this))->run(['paginator' => $paginator]);
@@ -83,7 +93,7 @@ class AdminImages extends Controller {
             redirect('admin/images');
         }
 
-        if(!isset($_POST['type']) || (isset($_POST['type']) && !in_array($_POST['type'], ['delete']))) {
+        if(!isset($_POST['type'])) {
             redirect('admin/images');
         }
 
@@ -94,6 +104,10 @@ class AdminImages extends Controller {
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+
+            set_time_limit(0);
+
+            session_write_close();
 
             switch($_POST['type']) {
                 case 'delete':
@@ -111,10 +125,26 @@ class AdminImages extends Controller {
                     }
 
                     break;
+
+                case 'download':
+
+                    $files = [];
+
+                    foreach($_POST['selected'] as $image_id) {
+                        if($image = db()->where('image_id', $image_id)->getOne('images', ['image'])) {
+                            $files[$image->image] = \Altum\Uploads::get_path('images');
+                        }
+                    }
+
+                    \Altum\Uploads::download_files_as_zip($files, l('global.download'));
+
+                    break;
             }
 
+            session_start();
+            
             /* Set a nice success message */
-            Alerts::add_success(l('admin_bulk_delete_modal.success_message'));
+            Alerts::add_success(l('bulk_delete_modal.success_message'));
 
         }
 

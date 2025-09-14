@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,13 +19,15 @@ namespace Altum\Controllers;
 use Altum\Alerts;
 use Altum\Models\User;
 
+defined('ALTUMCODE') || die();
+
 class AccountRedeemCode extends Controller {
 
     public function index() {
         \Altum\Authentication::guard();
 
         if(!settings()->payment->is_enabled || !settings()->payment->codes_is_enabled) {
-            redirect();
+            redirect('not-found');
         }
 
         /* Get all plans */
@@ -43,7 +52,7 @@ class AccountRedeemCode extends Controller {
                 Alerts::add_field_error('code', l('account_redeem_code.error_message.code_invalid')); redirect('account-redeem-code');
             }
 
-            $code->plans_ids = json_decode($code->plans_ids ?? '');
+            $code->plans_ids = json_decode($code->plans_ids ?? '[]');
 
             if(!in_array($_POST['plan_id'], $code->plans_ids)) {
                 Alerts::add_field_error('code', l('account_redeem_code.error_message.code_invalid')); redirect('account-redeem-code');
@@ -66,6 +75,7 @@ class AccountRedeemCode extends Controller {
 
                 $datetime = $this->user->plan_id == $_POST['plan_id'] ? $this->user->plan_expiration_date : '';
                 $plan_expiration_date = (new \DateTime($datetime))->modify('+' . $code->days . ' days')->format('Y-m-d H:i:s');
+                $plan = $plans[$_POST['plan_id']];
                 $plan_settings = json_encode($plan->settings ?? '');
 
                 /* Database query */
@@ -83,12 +93,12 @@ class AccountRedeemCode extends Controller {
                 db()->insert('redeemed_codes', [
                     'code_id'   => $code->code_id,
                     'user_id'   => $this->user->user_id,
-                    'datetime'  => \Altum\Date::$date
+                    'datetime'  => get_date()
                 ]);
 
                 /* Send webhook notification if needed */
                 if(settings()->webhooks->code_redeemed) {
-                    \Unirest\Request::post(settings()->webhooks->code_redeemed, [], [
+                    fire_and_forget('post', settings()->webhooks->code_redeemed, [
                         'user_id' => $this->user->user_id,
                         'email' => $this->user->email,
                         'name' => $this->user->name,
@@ -98,14 +108,19 @@ class AccountRedeemCode extends Controller {
                         'code' => $code->code,
                         'code_name' => $code->name,
                         'redeemed_days' => $code->days,
+                        'datetime' => get_date(),
                     ]);
                 }
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $this->user->user_id);
+                cache()->deleteItemsByTag('user_id=' . $this->user->user_id);
 
                 /* Set a nice success message */
-                Alerts::add_success(sprintf(l('account_redeem_code.success_message'), $code->days, $plan->name));
+                if($code->days >= 10*365) {
+                    Alerts::add_success(sprintf(l('account_redeem_code.success_message_lifetime'), $plan->translations->{\Altum\Language::$name}->name ?: $plan->name));
+                } else {
+                    Alerts::add_success(sprintf(l('account_redeem_code.success_message'), $code->days, $plan->translations->{\Altum\Language::$name}->name ?: $plan->name));
+                }
 
                 redirect('account-redeem-code');
             }
@@ -122,7 +137,7 @@ class AccountRedeemCode extends Controller {
         $menu = new \Altum\View('partials/account_header_menu', (array) $this);
         $this->add_view_content('account_header_menu', $menu->run());
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'plans' => $plans,
             'values' => $values,

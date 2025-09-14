@@ -1,4 +1,4 @@
-/*!
+/*
  * Quill Editor v1.3.6
  * https://quilljs.com/
  * Copyright (c) 2014, Jason Chen
@@ -947,4 +947,10 @@
   border: 1px solid var(--gray-200);
   border-bottom-left-radius: var(--border-radius);
   border-bottom-right-radius: var(--border-radius);
+}
+.ql-editor li[data-list="bullet"] {
+  list-style-type: disc;
+}
+.ql-editor li[data-list="bullet"] {
+  list-style-type: disc;
 }

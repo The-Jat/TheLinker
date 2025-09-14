@@ -1,21 +1,31 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum;
 
 use Altum\Models\User;
 
+defined('ALTUMCODE') || die();
+
 class Authentication {
 
     public static $is_logged_in = null;
     public static $user_id = null;
     public static $user = null;
+    public static $login_guard_is_set = false;
 
     public static function check() {
 
@@ -34,9 +44,9 @@ class Authentication {
             isset($_COOKIE['user_id'])
             && isset($_COOKIE['token_code'])
             && mb_strlen($_COOKIE['token_code']) > 0
-            && $user = (new User())->get_user_by_user_id_and_token_code($_COOKIE['user_id'], $_COOKIE['token_code'])
+            && $user = (new User())->get_user_by_user_id($_COOKIE['user_id'])
         ) {
-           if(isset($_COOKIE['user_password_hash']) && $_COOKIE['user_password_hash'] == md5($user->password)) {
+           if($user->token_code == $_COOKIE['token_code'] && isset($_COOKIE['user_password_hash']) && $_COOKIE['user_password_hash'] == md5($user->password)) {
                self::$is_logged_in = true;
                self::$user_id = $user->user_id;
 
@@ -52,7 +62,7 @@ class Authentication {
             && !empty($_SESSION['user_id'])
             && $user = (new User())->get_user_by_user_id($_SESSION['user_id'])
         ) {
-            if(isset($_SESSION['user_password_hash']) && $_SESSION['user_password_hash'] == md5($user->password)) {
+            if(isset($_SESSION['user_password_hash']) && $_SESSION['user_password_hash'] == md5($user->password ?? '')) {
                 self::$is_logged_in = true;
                 self::$user_id = $user->user_id;
 
@@ -90,7 +100,7 @@ class Authentication {
             case 'user':
 
                 if(!self::check()) {
-                    redirect('login?redirect=' . \Altum\Router::$original_request . '?' . \Altum\Router::$original_request_query);
+                    redirect('login?redirect=' . \Altum\Router::$original_request . (\Altum\Router::$original_request_query ? '?' . \Altum\Router::$original_request_query : null));
                 }
 
                 /* Check if user is banned */
@@ -98,12 +108,14 @@ class Authentication {
                     self::logout();
                 }
 
+                self::$login_guard_is_set = true;
+
                 break;
 
             case 'admin':
 
                 if(!self::check()) {
-                    redirect('login?redirect=' . \Altum\Router::$original_request . '?' . \Altum\Router::$original_request_query);
+                    redirect('login?redirect=' . \Altum\Router::$original_request . (\Altum\Router::$original_request_query ? '?' . \Altum\Router::$original_request_query : null));
                 }
 
                 /* Check if user is banned */
@@ -115,6 +127,8 @@ class Authentication {
                 if(self::$user->type != 1) {
                     redirect('dashboard');
                 }
+
+                self::$login_guard_is_set = true;
 
                 break;
         }
@@ -128,13 +142,14 @@ class Authentication {
             db()->where('user_id', self::$user_id)->update('users', ['token_code' => '']);
 
             /* Clear the cache */
-            \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . self::$user_id);
+            cache()->deleteItemsByTag('user_id=' . self::$user_id);
         }
 
         session_destroy();
         setcookie('user_id', '', time()-30, COOKIE_PATH);
         setcookie('token_code', '', time()-30, COOKIE_PATH);
         setcookie('user_password_hash', '', time()-30, COOKIE_PATH);
+        setcookie('spotlight_has_results', '', time()-30, COOKIE_PATH);
 
         if($page !== false) {
             redirect($page);

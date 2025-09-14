@@ -16,9 +16,10 @@
             </div>
         </div>
 
-        <div class="chart-container">
+        <div class="chart-container <?= $data->total['push_notifications'] + $data->total['sent_push_notifications'] ? null : 'd-none' ?>">
             <canvas id="push_notifications"></canvas>
         </div>
+        <?= $data->total['push_notifications'] + $data->total['sent_push_notifications'] ? null : include_view(THEME_PATH . 'views/partials/no_chart_data.php', ['has_wrapper' => false]); ?>
     </div>
 </div>
 <?php $html = ob_get_clean() ?>
@@ -34,12 +35,12 @@
         let push_notifications_chart = document.getElementById('push_notifications').getContext('2d');
 
         let sent_push_notifications_color_gradient = push_notifications_chart.createLinearGradient(0, 0, 0, 250);
-        sent_push_notifications_color_gradient.addColorStop(0, 'rgba(63, 136, 253, .1)');
-        sent_push_notifications_color_gradient.addColorStop(1, 'rgba(63, 136, 253, 0.025)')
+        sent_push_notifications_color_gradient.addColorStop(0, set_hex_opacity(sent_push_notifications_color, 0.1));
+        sent_push_notifications_color_gradient.addColorStop(1, set_hex_opacity(sent_push_notifications_color, 0.025));
 
         let push_notifications_color_gradient = push_notifications_chart.createLinearGradient(0, 0, 0, 250);
-        push_notifications_color_gradient.addColorStop(0, 'rgba(160, 174, 192, .1)');
-        push_notifications_color_gradient.addColorStop(1, 'rgba(160, 174, 192, 0.025)')
+        push_notifications_color_gradient.addColorStop(0, set_hex_opacity(push_notifications_color, 0.1));
+        push_notifications_color_gradient.addColorStop(1, set_hex_opacity(push_notifications_color, 0.025));
 
         new Chart(push_notifications_chart, {
             type: 'line',

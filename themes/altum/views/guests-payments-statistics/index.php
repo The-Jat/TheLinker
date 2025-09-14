@@ -28,9 +28,9 @@
                 <i class="fas fa-fw fa-calendar mr-lg-1"></i>
                 <span class="d-none d-lg-inline-block">
                         <?php if($data->datetime['start_date'] == $data->datetime['end_date']): ?>
-                            <?= \Altum\Date::get($data->datetime['start_date'], 2, \Altum\Date::$default_timezone) ?>
+                            <?= \Altum\Date::get($data->datetime['start_date'], 6, \Altum\Date::$default_timezone) ?>
                         <?php else: ?>
-                            <?= \Altum\Date::get($data->datetime['start_date'], 2, \Altum\Date::$default_timezone) . ' - ' . \Altum\Date::get($data->datetime['end_date'], 2, \Altum\Date::$default_timezone) ?>
+                            <?= \Altum\Date::get($data->datetime['start_date'], 6, \Altum\Date::$default_timezone) . ' - ' . \Altum\Date::get($data->datetime['end_date'], 6, \Altum\Date::$default_timezone) ?>
                         <?php endif ?>
                     </span>
                 <i class="fas fa-fw fa-caret-down d-none d-lg-inline-block ml-lg-1"></i>
@@ -47,32 +47,31 @@
             </div>
         </div>
     <?php else: ?>
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex flex-column align-items-center justify-content-center py-3">
-                    <img src="<?= ASSETS_FULL_URL . 'images/no_rows.svg' ?>" class="col-10 col-md-7 col-lg-4 mb-3" alt="<?= l('guests_payments_statistics.no_data') ?>" />
-                    <h2 class="h4 text-muted"><?= l('guests_payments_statistics.no_data') ?></h2>
-                </div>
-            </div>
-        </div>
+
+        <?= include_view(THEME_PATH . 'views/partials/no_data.php', [
+            'filters_get' => $data->filters->get ?? [],
+            'name' => 'guests_payments_statistics',
+            'has_secondary_text' => false,
+        ]); ?>
+
     <?php endif ?>
 </section>
 
 <?php ob_start() ?>
-<link href="<?= ASSETS_FULL_URL . 'css/libraries/daterangepicker.min.css' ?>" rel="stylesheet" media="screen,print">
+<link href="<?= ASSETS_FULL_URL . 'css/libraries/daterangepicker.min.css?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
 <?php \Altum\Event::add_content(ob_get_clean(), 'head') ?>
 
+<?php require THEME_PATH . 'views/partials/js_chart_defaults.php' ?>
+
 <?php ob_start() ?>
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/Chart.bundle.min.js' ?>"></script>
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment.min.js' ?>"></script>
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/daterangepicker.min.js' ?>"></script>
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment-timezone-with-data-10-year-range.min.js' ?>"></script>
-<script src="<?= ASSETS_FULL_URL . 'js/chartjs_defaults.js' ?>"></script>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment.min.js?v=' . PRODUCT_CODE ?>"></script>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/daterangepicker.min.js?v=' . PRODUCT_CODE ?>"></script>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment-timezone-with-data-10-year-range.min.js?v=' . PRODUCT_CODE ?>"></script>
 
 <script>
     'use strict';
-
-    moment.tz.setDefault(<?= json_encode($this->user->timezone) ?>);
+    
+moment.tz.setDefault(<?= json_encode($this->user->timezone) ?>);
 
     /* Daterangepicker */
     $('#daterangepicker').daterangepicker({
@@ -95,8 +94,13 @@
         locale: <?= json_encode(require APP_PATH . 'includes/daterangepicker_translations.php') ?>,
     }, (start, end, label) => {
 
+        <?php
+        parse_str(\Altum\Router::$original_request_query, $original_request_query_array);
+        $modified_request_query_array = array_diff_key($original_request_query_array, ['start_date' => '', 'end_date' => '']);
+        ?>
+
         /* Redirect */
-        redirect(`<?= url('guests-payments-statistics?biolink_block_id=' . $data->biolink_block->biolink_block_id) ?>&start_date=${start.format('YYYY-MM-DD')}&end_date=${end.format('YYYY-MM-DD')}`, true);
+        redirect(`<?= url(\Altum\Router::$original_request . '?' . http_build_query($modified_request_query_array)) ?>&start_date=${start.format('YYYY-MM-DD')}&end_date=${end.format('YYYY-MM-DD')}`, true);
 
     });
 
@@ -104,18 +108,23 @@
 
     let css = window.getComputedStyle(document.body)
 
-    /* Orders chart */
+    /* Colors */
+    let total_amount_color = css.getPropertyValue('--primary');
+    let total_payments_color = css.getPropertyValue('--gray-400');
+    let payments_gradient = null;
+    let total_amount_gradient = null;
+
+    /* Chart */
     let guests_payments_chart = document.getElementById('guests_payments_chart').getContext('2d');
 
-    let total_amount_color = '#38B2AC';
-    let total_amount_gradient = guests_payments_chart.createLinearGradient(0, 0, 0, 250);
-    total_amount_gradient.addColorStop(0, 'rgba(56, 178, 172, 0.6)');
-    total_amount_gradient.addColorStop(1, 'rgba(56, 178, 172, 0.05)');
+    /* Colors */
+    total_amount_gradient = pageviews_chart.createLinearGradient(0, 0, 0, 250);
+    total_amount_gradient.addColorStop(0, set_hex_opacity(total_amount_color, 0.6));
+    total_amount_gradient.addColorStop(1, set_hex_opacity(total_amount_color, 0.1));
 
-    let payments_color = '#383eb2';
-    let payments_gradient = guests_payments_chart.createLinearGradient(0, 0, 0, 250);
-    payments_gradient.addColorStop(0, 'rgba(56,62,178,0.6)');
-    payments_gradient.addColorStop(1, 'rgba(56, 62, 178, 0.05)');
+    payments_gradient = pageviews_chart.createLinearGradient(0, 0, 0, 250);
+    payments_gradient.addColorStop(0, set_hex_opacity(total_payments_color, 0.6));
+    payments_gradient.addColorStop(1, set_hex_opacity(total_payments_color, 0.1));
 
     /* Display chart */
     new Chart(guests_payments_chart, {

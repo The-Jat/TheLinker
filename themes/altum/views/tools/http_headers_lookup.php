@@ -13,8 +13,8 @@
 <?php endif ?>
 
     <div class="row mb-4">
-        <div class="col-12 col-xl d-flex align-items-center mb-3 mb-xl-0">
-            <h1 class="h4 m-0"><?= l('tools.http_headers_lookup.name') ?></h1>
+        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0 text-truncate">
+            <h1 class="h4 m-0 text-truncate"><?= l('tools.http_headers_lookup.name') ?></h1>
 
             <div class="ml-2">
                 <span data-toggle="tooltip" title="<?= l('tools.http_headers_lookup.description') ?>">
@@ -22,6 +22,8 @@
                 </span>
             </div>
         </div>
+
+        <?= $this->views['ratings'] ?>
     </div>
 
     <div class="card">
@@ -32,7 +34,7 @@
 
                 <div class="form-group">
                     <label for="url"><i class="fas fa-fw fa-link fa-sm text-muted mr-1"></i> <?= l('global.url') ?></label>
-                    <input type="url" id="url" name="url" class="form-control <?= \Altum\Alerts::has_field_errors('url') ? 'is-invalid' : null ?>" value="<?= $data->values['url'] ?>" required="required" />
+                    <input type="url" id="url" name="url" class="form-control <?= \Altum\Alerts::has_field_errors('url') ? 'is-invalid' : null ?>" value="<?= $data->values['url'] ?>" placeholder="<?= l('global.url_placeholder') ?>" required="required" />
                     <?= \Altum\Alerts::output_field_error('url') ?>
                 </div>
 
@@ -50,10 +52,18 @@
                     <?php foreach($data->result as $key => $value): ?>
                         <tr>
                             <td class="font-weight-bold">
-                                <?= $key ?>
+                                <?= $key ?: null ?>
                             </td>
                             <td class="text-nowrap">
-                                <?= is_array($value) ? '<pre>' . json_encode($value) . '</pre>' : $value ?>
+                                <?php if(is_array($value)): ?>
+                                    <?php foreach($value as $header_value): ?>
+                                    <div>
+                                        <span><?= $header_value ?></span>
+                                    </div>
+                                    <?php endforeach ?>
+                                <?php else: ?>
+                                    <?= $value ?>
+                                <?php endif ?>
                             </td>
                         </tr>
                     <?php endforeach ?>
@@ -66,6 +76,8 @@
     <?= $this->views['extra_content'] ?>
 
     <?= $this->views['similar_tools'] ?>
+
+    <?= $this->views['popular_tools'] ?>
 </div>
 
 <?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>

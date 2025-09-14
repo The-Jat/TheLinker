@@ -1,28 +1,37 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class Teams extends Controller {
 
     public function index() {
 
-        \Altum\Authentication::guard();
-
         if(!\Altum\Plugin::is_active('teams')) {
-            redirect('dashboard');
+            redirect('not-found');
         }
 
+        \Altum\Authentication::guard();
+
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters([], ['name'], ['datetime', 'last_datetime']));
+        $filters = (new \Altum\Filters([], ['name'], ['team_id', 'name', 'datetime', 'last_datetime']));
         $filters->set_default_order_by('team_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
@@ -44,13 +53,13 @@ class Teams extends Controller {
         while($row = $teams_result->fetch_object()) $teams[] = $row;
 
         /* Export handler */
-        process_export_json($teams, 'include', ['team_id', 'user_id', 'name', 'members', 'datetime', 'last_datetime']);
-        process_export_csv($teams, 'include', ['team_id', 'user_id', 'name', 'members', 'datetime', 'last_datetime']);
+        process_export_json($teams, ['team_id', 'user_id', 'name', 'members', 'datetime', 'last_datetime']);
+        process_export_csv($teams, ['team_id', 'user_id', 'name', 'members', 'datetime', 'last_datetime']);
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/pagination', (array) $this))->run(['paginator' => $paginator]);
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'teams' => $teams,
             'total_teams' => $total_rows,
@@ -91,8 +100,8 @@ class Teams extends Controller {
             db()->where('team_id', $team->team_id)->delete('teams');
 
             /* Clear the cache */
-            \Altum\Cache::$adapter->deleteItemsByTag('team_id=' . $team->team_id);
-            \Altum\Cache::$adapter->deleteItem('team?team_id=' . $team->team_id);
+            cache()->deleteItemsByTag('team_id=' . $team->team_id);
+            cache()->deleteItem('team?team_id=' . $team->team_id);
 
             /* Set a nice success message */
             Alerts::add_success(sprintf(l('global.success_message.delete1'), '<strong>' . $team->name . '</strong>'));

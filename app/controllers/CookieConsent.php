@@ -1,21 +1,30 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
+
+defined('ALTUMCODE') || die();
 
 class CookieConsent extends Controller {
 
     public function index() {
 
         if(!settings()->cookie_consent->is_enabled || !settings()->cookie_consent->logging_is_enabled) {
-            redirect();
+            redirect('not-found');
         }
 
         $payload = @file_get_contents('php://input');
@@ -42,7 +51,7 @@ class CookieConsent extends Controller {
         $browser_name = $whichbrowser->browser->name ?? null;
         $os_name = $whichbrowser->os->name ?? null;
         $browser_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? mb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
-        $device_type = get_device_type($_SERVER['HTTP_USER_AGENT']);
+        $device_type = get_this_device_type();
         $ip = get_ip();
         $date = (new \DateTime())->format('Y-m-d');
         $time = (new \DateTime())->format('H:i:s') . ' UTC';

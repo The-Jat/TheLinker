@@ -29,8 +29,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* On modal show load new data */
+    
+/* On modal show load new data */
     $('#plugin_uninstall_modal').on('show.bs.modal', event => {
         let plugin_id = $(event.relatedTarget).data('plugin-id');
 

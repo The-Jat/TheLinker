@@ -32,9 +32,9 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="color"><i class="fas fa-fw fa-palette fa-sm text-muted mr-1"></i> <?= l('projects.input.color') ?></label>
+                    <label for="color"><i class="fas fa-fw fa-palette fa-sm text-muted mr-1"></i> <?= l('projects.color') ?></label>
                     <input type="hidden" id="color" name="color" class="form-control" value="<?= $data->project->color ?>" required="required" data-color-picker />
-                    <small class="text-muted form-text"><?= l('projects.input.color_help') ?></small>
+                    <small class="text-muted form-text"><?= l('projects.color_help') ?></small>
                 </div>
 
                 <button type="submit" name="submit" class="btn btn-block btn-primary"><?= l('global.update') ?></button>
@@ -44,11 +44,6 @@
     </div>
 </div>
 
-<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/universal_delete_modal_form.php', [
-    'name' => 'project',
-    'resource_id' => 'project_id',
-    'has_dynamic_resource_name' => true,
-    'path' => 'projects/delete'
-]), 'modals'); ?>
+
 
 <?php include_view(THEME_PATH . 'views/partials/color_picker_js.php') ?>

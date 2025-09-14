@@ -8,7 +8,7 @@
         <div class="d-flex flex-column flex-lg-row justify-content-lg-between align-items-lg-center">
             <div class="text-center text-lg-left">
                 <p class="text-muted mb-0">
-                    <?= sprintf(l('global.pagination.results'), '<strong>' . $data->paginator->getCurrentPageFirstItem() . '</strong>', '<strong>' . $data->paginator->getCurrentPageLastItem() . '</strong>', '<strong>' . $data->paginator->getTotalItems() . '</strong>') ?>
+                    <?= sprintf(l('global.pagination.results'), '<strong>' . nr($data->paginator->getCurrentPageFirstItem()) . '</strong>', '<strong>' . nr($data->paginator->getCurrentPageLastItem()) . '</strong>', '<strong>' . nr($data->paginator->getTotalItems()) . '</strong>') ?>
                 </p>
             </div>
 

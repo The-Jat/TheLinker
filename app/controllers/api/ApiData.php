@@ -1,16 +1,25 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Response;
 use Altum\Traits\Apiable;
+
+defined('ALTUMCODE') || die();
 
 class ApiData extends Controller {
     use Apiable;
@@ -71,6 +80,7 @@ class ApiData extends Controller {
             /* Prepare the data */
             $row = [
                 'id' => (int) $row->datum_id,
+                'user_id' => (int) $row->user_id,
                 'biolink_block_id' => (int) $row->biolink_block_id,
                 'link_id' => (int) $row->link_id,
                 'project_id' => (int) $row->project_id,
@@ -117,6 +127,7 @@ class ApiData extends Controller {
         /* Prepare the data */
         $data = [
             'id' => (int) $datum->datum_id,
+            'user_id' => (int) $datum->user_id,
             'biolink_block_id' => (int) $datum->biolink_block_id,
             'link_id' => (int) $datum->link_id,
             'project_id' => (int) $datum->project_id,

@@ -35,7 +35,7 @@
                 <?= \Altum\Alerts::output_field_error('email') ?>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" data-password-toggle-view data-password-toggle-view-show="<?= l('global.show') ?>" data-password-toggle-view-hide="<?= l('global.hide') ?>">
                 <label for="password"><i class="fas fa-fw fa-sm fa-key text-muted mr-1"></i> <?= l('global.password') ?></label>
                 <input id="password" type="password" name="password" class="form-control <?= \Altum\Alerts::has_field_errors('password') ? 'is-invalid' : null ?>" value="<?= $data->values['password'] ?>" required="required" />
                 <?= \Altum\Alerts::output_field_error('password') ?>

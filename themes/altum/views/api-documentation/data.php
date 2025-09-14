@@ -2,16 +2,16 @@
 
 <div class="container">
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li><a href="<?= url('api-documentation') ?>"><?= l('api_documentation.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li class="active" aria-current="page"><?= l('api_documentation.data') ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li><a href="<?= url('api-documentation') ?>"><?= l('api_documentation.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li class="active" aria-current="page"><?= l('data.title') ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
-    <h1 class="h4 mb-4"><?= l('api_documentation.data') ?></h1>
+    <h1 class="h4 mb-4"><?= l('data.title') ?></h1>
 
     <div class="accordion">
         <div class="card">
@@ -41,7 +41,7 @@
                             <div class="card-body">
                                 curl --request GET \<br />
                                 --url '<?= SITE_URL ?>api/data/' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \
                             </div>
                         </div>
                     </div>
@@ -59,16 +59,16 @@
                             <tr>
                                 <td>page</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td><?= l('api_documentation.filters.page') ?></td>
                             </tr>
                             <tr>
                                 <td>results_per_page</td>
                                 <td>
-                                    <span class="badge badge-info"><?= l('api_documentation.optional') ?></span>
-                                    <span class="badge badge-secondary"><?= l('api_documentation.int') ?></span>
+                                    <span class="badge badge-info"><i class="fas fa-fw fa-sm fa-circle-notch mr-1"></i> <?= l('api_documentation.optional') ?></span>
+                                    <span class="badge badge-secondary"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('api_documentation.int') ?></span>
                                 </td>
                                 <td><?= sprintf(l('api_documentation.filters.results_per_page'), '<code>' . implode('</code> , <code>', [10, 25, 50, 100, 250, 500, 1000]) . '</code>', 25) ?></td>
                             </tr>
@@ -78,7 +78,7 @@
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
     "data": [
         {
@@ -91,7 +91,7 @@
                 "email": "email@example.com",
                 "name": "John doe"
             },
-            "datetime": "2021-09-17 20:56:23"
+            "datetime": "<?= get_date() ?>",
         },
     ],
     "meta": {
@@ -101,14 +101,13 @@
         "total_pages": 1
     },
     "links": {
-        "first": "<?= SITE_URL ?>api/data?&page=1",
-        "last": "<?= SITE_URL ?>api/data?&page=1",
+        "first": "<?= SITE_URL ?>api/data?page=1",
+        "last": "<?= SITE_URL ?>api/data?page=1",
         "next": null,
         "prev": null,
-        "self": "<?= SITE_URL ?>api/data?&page=1"
+        "self": "<?= SITE_URL ?>api/data?page=1"
     }
-}
-                        </div>
+}</pre>
                     </div>
                 </div>
             </div>
@@ -141,14 +140,14 @@
                             <div class="card-body">
                                 curl --request GET \<br />
                                 --url '<?= SITE_URL ?>api/data/<span class="text-primary">{datum_id}</span>' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label><?= l('api_documentation.response') ?></label>
-                        <div data-shiki="json">
+                        <pre data-shiki="json">
 {
     "data": {
         "id": 1,
@@ -160,10 +159,9 @@
             "email": "email@example.com",
             "name": "John doe"
         },
-        "datetime": "2021-09-17 20:56:23"
+        "datetime": "<?= get_date() ?>",
     }
-}
-                        </div>
+}</pre>
                     </div>
                 </div>
             </div>
@@ -196,13 +194,14 @@
                             <div class="card-body">
                                 curl --request DELETE \<br />
                                 --url '<?= SITE_URL ?>api/data/<span class="text-primary">{datum_id}</span>' \<br />
-                                --header 'Authorization: Bearer <span class="text-primary">{api_key}</span>' \<br />
+                                --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \<br />
                             </div>
                         </div>
                     </div>
 
                 </div>
             </div>
+
         </div>
     </div>
 </div>

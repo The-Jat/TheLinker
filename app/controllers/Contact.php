@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,12 +19,14 @@ namespace Altum\Controllers;
 use Altum\Alerts;
 use Altum\Captcha;
 
+defined('ALTUMCODE') || die();
+
 class Contact extends Controller {
 
     public function index() {
 
         if(!settings()->email_notifications->contact || empty(settings()->email_notifications->emails)) {
-            redirect();
+            redirect('not-found');
         }
 
         /* Initiate captcha */
@@ -25,7 +34,7 @@ class Contact extends Controller {
 
         if(!empty($_POST)) {
             $_POST['name'] = input_clean($_POST['name'], 64);
-            $_POST['email'] = mb_substr(filter_var($_POST['email'], FILTER_SANITIZE_EMAIL), 0, 320);
+            $_POST['email'] = input_clean_email($_POST['email'] ?? '');
             $_POST['subject'] = input_clean($_POST['subject'], 128);
             $_POST['message'] = input_clean($_POST['message'], 2048);
 
@@ -68,11 +77,12 @@ class Contact extends Controller {
 
                 /* Send webhook notification if needed */
                 if(settings()->webhooks->contact) {
-                    \Unirest\Request::post(settings()->webhooks->contact, [], [
+                    fire_and_forget('post', settings()->webhooks->contact, [
                         'name' => $_POST['name'],
                         'email' => $_POST['email'],
                         'subject' => $_POST['subject'],
                         'message' => $_POST['message'],
+                        'datetime' => get_date(),
                     ]);
                 }
 
@@ -84,13 +94,13 @@ class Contact extends Controller {
         }
 
         $values = [
-            'name' => \Altum\Authentication::check() ? $this->user->name : ($_POST['name'] ??  ''),
-            'email' => \Altum\Authentication::check() ? $this->user->email : ($_POST['email'] ??  ''),
-            'subject' => $_POST['subject'] ?? '',
-            'message' => $_POST['message'] ?? '',
+            'name' => is_logged_in() ? $this->user->name : ($_POST['name'] ??  ''),
+            'email' => is_logged_in() ? $this->user->email : ($_POST['email'] ??  ''),
+            'subject' => $_POST['subject'] ?? $_GET['subject'] ?? '',
+            'message' => $_POST['message'] ?? $_GET['message'] ?? '',
         ];
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'captcha' => $captcha,
             'values' => $values,

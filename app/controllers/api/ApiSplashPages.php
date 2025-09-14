@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,10 +19,16 @@ namespace Altum\Controllers;
 use Altum\Response;
 use Altum\Traits\Apiable;
 
+defined('ALTUMCODE') || die();
+
 class ApiSplashPages extends Controller {
     use Apiable;
 
     public function index() {
+
+        if(!settings()->links->splash_page_is_enabled) {
+            redirect('not-found');
+        }
 
         $this->verify_request();
 
@@ -82,6 +95,7 @@ class ApiSplashPages extends Controller {
             /* Prepare the data */
             $row = [
                 'id' => (int) $row->splash_page_id,
+                'user_id' => (int) $row->user_id,
                 'name' => $row->name,
                 'title' => $row->title,
                 'description' => $row->description,
@@ -130,6 +144,7 @@ class ApiSplashPages extends Controller {
         /* Prepare the data */
         $data = [
             'id' => (int) $splash_page->splash_page_id,
+            'user_id' => (int) $splash_page->user_id,
             'name' => $splash_page->name,
             'title' => $splash_page->title,
             'description' => $splash_page->description,
@@ -167,16 +182,21 @@ class ApiSplashPages extends Controller {
         $_POST['description'] = input_clean($_POST['description'] ?? '', 2048);
         $_POST['secondary_button_name'] = input_clean($_POST['secondary_button_name'] ?? '', 256);
         $_POST['secondary_button_url'] = input_clean($_POST['secondary_button_url'] ?? '', 1024);
-        $_POST['custom_css'] = input_clean($_POST['custom_css'] ?? '', 8192);
-        $_POST['custom_js'] = input_clean($_POST['custom_js'] ?? '', 8192);
-        $_POST['ads_header'] = input_clean($_POST['ads_header'] ?? '', 8192);
-        $_POST['ads_footer'] = input_clean($_POST['ads_footer'] ?? '', 8192);
+        $_POST['custom_css'] = mb_substr(trim($_POST['custom_css'] ?? ''), 0, 10000);
+        $_POST['custom_js'] = mb_substr(trim($_POST['custom_js'] ?? ''), 0, 10000);
+        $_POST['ads_header'] = mb_substr(trim($_POST['ads_header'] ?? ''), 0, 10000);
+        $_POST['ads_footer'] = mb_substr(trim($_POST['ads_footer'] ?? ''), 0, 10000);
         $_POST['link_unlock_seconds'] = (int) ($_POST['link_unlock_seconds'] ?? 5);
         $_POST['auto_redirect'] = (int) isset($_POST['auto_redirect']);
+
         $logo = \Altum\Uploads::process_upload(null, 'splash_pages', 'logo', 'logo_remove', settings()->links->avatar_size_limit);
+        $favicon = \Altum\Uploads::process_upload(null, 'splash_pages', 'favicon', 'favicon_remove', settings()->links->favicon_size_limit);
+        $opengraph = \Altum\Uploads::process_upload(null, 'splash_pages', 'opengraph', 'opengraph_remove', settings()->links->seo_image_size_limit);
 
         $settings = json_encode([
             'logo' => $logo,
+            'favicon' => $favicon,
+            'opengraph' => $opengraph,
             'secondary_button_name' => $_POST['secondary_button_name'],
             'secondary_button_url' => $_POST['secondary_button_url'],
             'custom_css' => $_POST['custom_css'],
@@ -185,7 +205,7 @@ class ApiSplashPages extends Controller {
             'ads_footer' => $_POST['ads_footer'],
         ]);
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         $splash_page_id = db()->insert('splash_pages', [
             'user_id' => $this->api_user->user_id,
             'name' => $_POST['name'],
@@ -193,11 +213,11 @@ class ApiSplashPages extends Controller {
             'link_unlock_seconds' => $_POST['link_unlock_seconds'],
             'auto_redirect' => $_POST['auto_redirect'],
             'settings' => $settings,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('splash_pages?user_id=' . $this->api_user->user_id);
+        cache()->deleteItem('splash_pages?user_id=' . $this->api_user->user_id);
 
         /* Prepare the data */
         $data = [
@@ -227,17 +247,21 @@ class ApiSplashPages extends Controller {
         $_POST['description'] = input_clean($_POST['description'] ?? $splash_page->description, 2048);
         $_POST['secondary_button_name'] = input_clean($_POST['secondary_button_name'] ?? $splash_page->settings->secondary_button_name, 256);
         $_POST['secondary_button_url'] = input_clean($_POST['secondary_button_url'] ?? $splash_page->settings->secondary_button_url, 1024);
-        $_POST['custom_css'] = input_clean($_POST['custom_css'] ?? $splash_page->settings->custom_css, 8192);
-        $_POST['custom_js'] = input_clean($_POST['custom_js'] ?? $splash_page->settings->custom_js, 8192);
-        $_POST['ads_header'] = input_clean($_POST['ads_header'] ?? $splash_page->settings->ads_header, 8192);
-        $_POST['ads_footer'] = input_clean($_POST['ads_footer'] ?? $splash_page->settings->ads_footer, 8192);
+        $_POST['custom_css'] = mb_substr(trim($splash_page->settings->custom_css ?? ''), 0, 10000);
+        $_POST['custom_js'] = mb_substr(trim($splash_page->settings->custom_js ?? ''), 0, 10000);
+        $_POST['ads_header'] = mb_substr(trim($splash_page->settings->ads_header ?? ''), 0, 10000);
+        $_POST['ads_footer'] = mb_substr(trim($splash_page->settings->ads_footer ?? ''), 0, 10000);
         $_POST['link_unlock_seconds'] = isset($_POST['link_unlock_seconds']) ? (int) $_POST['link_unlock_seconds'] : $splash_page->link_unlock_seconds;
         $_POST['auto_redirect'] = isset($_POST['auto_redirect']) ? (int) (bool) $_POST['auto_redirect'] : $splash_page->auto_redirect;
 
         $logo = \Altum\Uploads::process_upload($splash_page->settings->logo, 'splash_pages', 'logo', 'logo_remove', settings()->links->avatar_size_limit);
+        $favicon = \Altum\Uploads::process_upload($splash_page->settings->favicon, 'splash_pages', 'favicon', 'favicon_remove', settings()->links->favicon_size_limit);
+        $opengraph = \Altum\Uploads::process_upload($splash_page->settings->opengraph, 'splash_pages', 'opengraph', 'opengraph_remove', settings()->links->seo_image_size_limit);
 
         $settings = json_encode([
             'logo' => $logo,
+            'favicon' => $favicon,
+            'opengraph' => $opengraph,
             'secondary_button_name' => $_POST['secondary_button_name'],
             'secondary_button_url' => $_POST['secondary_button_url'],
             'custom_css' => $_POST['custom_css'],
@@ -253,11 +277,11 @@ class ApiSplashPages extends Controller {
             'link_unlock_seconds' => $_POST['link_unlock_seconds'],
             'auto_redirect' => $_POST['auto_redirect'],
             'settings' => $settings,
-            'last_datetime' => \Altum\Date::$date,
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('splash_pages?user_id=' . $this->api_user->user_id);
+        cache()->deleteItem('splash_pages?user_id=' . $this->api_user->user_id);
 
         /* Prepare the data */
         $data = [

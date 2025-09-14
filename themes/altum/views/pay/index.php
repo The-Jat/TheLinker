@@ -7,9 +7,12 @@
     /* Declare some used variables inside javascript */
     window.altum.plan_id = $('input[name="plan_id"]').val();
     window.altum.monthly_price = $('input[name="monthly_price"]').val();
+    window.altum.quarterly_price = $('input[name="quarterly_price"]').val();
+    window.altum.biannual_price = $('input[name="biannual_price"]').val();
     window.altum.annual_price = $('input[name="annual_price"]').val();
     window.altum.lifetime_price = $('input[name="lifetime_price"]').val();
     window.altum.code = null;
+    window.altum.allowed_trials = <?= settings()->payment->trial_require_card && $data->plan->trial_days && !$this->user->plan_trial_done && !isset($_GET['trial_skip']) ? json_encode(['stripe']) : json_encode([]) ?>;
 
     window.altum.payment_type_one_time_enabled = <?= json_encode((bool) in_array(settings()->payment->type, ['one_time', 'both'])) ?>;
     window.altum.payment_type_recurring_enabled = <?= json_encode((bool) in_array(settings()->payment->type, ['recurring', 'both'])) ?>;
@@ -22,19 +25,21 @@
     <?= \Altum\Alerts::output_alerts() ?>
 
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li><a href="<?= url('plan') ?>"><?= l('plan.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li><a href="<?= url('pay-billing/' . $data->plan_id) ?>"><?= l('pay_billing.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li class="active" aria-current="page"><?= sprintf(l('pay.breadcrumb'), $data->plan->name) ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li><a href="<?= url('plan') ?>"><?= l('plan.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <?php if(settings()->payment->taxes_and_billing_is_enabled): ?>
+                    <li><a href="<?= url('pay-billing/' . $data->plan_id) ?>"><?= l('pay_billing.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <?php endif ?>
+                <li class="active" aria-current="page"><?= sprintf(l('pay.breadcrumb'), $data->plan->translations->{\Altum\Language::$name}->name ?? $data->plan->name) ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
-    <?php if($data->plan->trial_days && !$this->user->plan_trial_done && !isset($_GET['trial_skip'])): ?>
+    <?php if(!settings()->payment->trial_require_card && $data->plan->trial_days && !$this->user->plan_trial_done && !isset($_GET['trial_skip'])): ?>
         <div class="d-flex align-items-center mb-5">
-            <h1 class="h3 m-0"><?= sprintf(l('pay.trial.header'), $data->plan->name) ?></h1>
+            <h1 class="h3 m-0"><?= sprintf(l('pay.trial.header'), $data->plan->translations->{\Altum\Language::$name}->name ?? $data->plan->name) ?></h1>
 
             <div class="ml-2">
                 <span data-toggle="tooltip" title="<?= l('pay.trial.subheader') ?>">
@@ -54,9 +59,9 @@
                     <div class="mt-3 text-muted text-center">
                         <small>
                             <?= sprintf(
-                                l('pay.accept'),
-                                '<a href="' . settings()->main->terms_and_conditions_url . '" target="_blank">' . l('global.terms_and_conditions') . '</a>',
-                                '<a href="' . settings()->main->privacy_policy_url . '" target="_blank">' . l('global.privacy_policy') . '</a>'
+                                    l('pay.accept'),
+                                    '<a href="' . settings()->main->terms_and_conditions_url . '" target="_blank">' . l('global.terms_and_conditions') . '</a>',
+                                    '<a href="' . settings()->main->privacy_policy_url . '" target="_blank">' . l('global.privacy_policy') . '</a>'
                             ) ?>
                         </small>
                     </div>
@@ -64,9 +69,9 @@
                 </div>
 
                 <div class="mb-5 col-12 col-xl-4 order-0 order-xl-1">
-                    <div class="">
-                        <div class="">
-                            <h2 class="h5 mb-4 text-muted">
+                    <div>
+                        <div>
+                            <h2 class="h5 mb-4">
                                 <i class="fas fa-fw fa-sm fa-hand-holding-heart mr-2"></i> <?= l('pay.plan_details') ?>
                             </h2>
 
@@ -83,17 +88,10 @@
             <div class="row"><div class="col-12 col-xl-8"></div></div>
         </form>
 
-
     <?php elseif(is_numeric($data->plan_id)): ?>
 
-        <?php
-        /* Check for extra savings on the prices */
-        $annual_price_savings = number_format($data->plan->prices->annual->{currency()} - ($data->plan->prices->monthly->{currency()} * 12), 2);
-
-        ?>
-
         <div class="d-flex align-items-center mb-5">
-            <h1 class="h3 m-0"><?= sprintf(l('pay.custom_plan.header'), $data->plan->name) ?></h1>
+            <h1 class="h3 m-0"><?= sprintf(l('pay.custom_plan.header'), $data->plan->translations->{\Altum\Language::$name}->name ?? $data->plan->name) ?></h1>
 
             <div class="ml-2">
                 <span data-toggle="tooltip" title="<?= l('pay.custom_plan.subheader') ?>">
@@ -105,6 +103,8 @@
         <form action="" method="post" enctype="multipart/form-data" role="form">
             <input type="hidden" name="plan_id" value="<?= $data->plan_id ?>" />
             <input type="hidden" name="monthly_price" value="<?= $data->plan->prices->monthly->{currency()} ?>" />
+            <input type="hidden" name="quarterly_price" value="<?= $data->plan->prices->quarterly->{currency()} ?>" />
+            <input type="hidden" name="biannual_price" value="<?= $data->plan->prices->biannual->{currency()} ?>" />
             <input type="hidden" name="annual_price" value="<?= $data->plan->prices->annual->{currency()} ?>" />
             <input type="hidden" name="lifetime_price" value="<?= $data->plan->prices->lifetime->{currency()} ?>" />
             <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
@@ -112,58 +112,160 @@
             <div class="row">
                 <div class="col-12 col-xl-8">
 
-                    <h2 class="h5 mb-4 text-muted"><i class="fas fa-fw fa-sm fa-box-open mr-2"></i> <?= l('pay.custom_plan.payment_frequency') ?></h2>
+                    <h2 class="h5 mb-4"><i class="fas fa-fw fa-sm fa-shopping-bag mr-2"></i> <?= l('pay.custom_plan.payment_frequency') ?></h2>
 
                     <div>
                         <div class="row d-flex align-items-stretch">
 
-                            <?php if($data->plan->prices->monthly->{currency()}): ?>
-                                <label class="col-12 my-2 custom-radio-box">
-                                    <input type="radio" id="monthly_price" name="payment_frequency" value="monthly" class="custom-control-input" required="required" <?= settings()->payment->default_payment_frequency == 'monthly' ? 'checked="checked"' : null ?>>
+                            <?php
+                            /* gather prices in current currency */
+                            $monthly_price = (float) ($data->plan->prices->monthly->{currency()} ?? 0);
+                            $quarterly_price = (float) ($data->plan->prices->quarterly->{currency()} ?? 0);
+                            $biannual_price = (float) ($data->plan->prices->biannual->{currency()} ?? 0);
+                            $annual_price = (float) ($data->plan->prices->annual->{currency()} ?? 0);
+                            $lifetime_price = (float) ($data->plan->prices->lifetime->{currency()} ?? 0);
+
+                            /* decide comparison base: monthly → quarterly → biannual */
+                            $base_months = 0;
+                            $base_price = 0;
+                            $base_label = null;
+
+                            if($monthly_price > 0) {
+                                /* compare everything vs monthly */
+                                $base_months = 1;
+                                $base_price = $monthly_price;
+                                $base_label = 'monthly';
+                            } elseif($quarterly_price > 0) {
+                                /* compare everything vs quarterly */
+                                $base_months = 3;
+                                $base_price = $quarterly_price;
+                                $base_label = 'quarterly';
+                            } elseif($biannual_price > 0) {
+                                /* compare everything vs biannual */
+                                $base_months = 6;
+                                $base_price = $biannual_price;
+                                $base_label = 'biannual';
+                            }
+
+                            /* compute savings (no lifetime), never negative, and never for the base itself */
+                            $quarterly_price_savings = 0;
+                            if($quarterly_price > 0 && $base_months > 0 && $base_label !== 'quarterly') {
+                                $quarterly_price_savings = ceil(($base_price * (3 / $base_months)) - $quarterly_price);
+                                $quarterly_price_savings = $quarterly_price_savings > 0 ? $quarterly_price_savings : 0;
+                            }
+
+                            $biannual_price_savings = 0;
+                            if($biannual_price > 0 && $base_months > 0 && $base_label !== 'biannual') {
+                                $biannual_price_savings = ceil(($base_price * (6 / $base_months)) - $biannual_price);
+                                $biannual_price_savings = $biannual_price_savings > 0 ? $biannual_price_savings : 0;
+                            }
+
+                            $annual_price_savings = 0;
+                            if($annual_price > 0 && $base_months > 0 && $base_label !== 'annual') {
+                                $annual_price_savings = ceil(($base_price * (12 / $base_months)) - $annual_price);
+                                $annual_price_savings = $annual_price_savings > 0 ? $annual_price_savings : 0;
+                            }
+
+                            /* choose checked radio: prefer configured if available, else first available in order */
+                            $default_checked_frequency = null;
+                            $wanted = settings()->payment->default_payment_frequency ?? 'monthly';
+                            if($wanted === 'monthly' && $monthly_price > 0) { $default_checked_frequency = 'monthly'; }
+                            elseif($wanted === 'quarterly' && $quarterly_price > 0) { $default_checked_frequency = 'quarterly'; }
+                            elseif($wanted === 'biannual' && $biannual_price > 0) { $default_checked_frequency = 'biannual'; }
+                            elseif($wanted === 'annual' && $annual_price > 0) { $default_checked_frequency = 'annual'; }
+                            elseif($wanted === 'lifetime' && $lifetime_price > 0) { $default_checked_frequency = 'lifetime'; }
+                            elseif($monthly_price > 0) { $default_checked_frequency = 'monthly'; }
+                            elseif($quarterly_price > 0) { $default_checked_frequency = 'quarterly'; }
+                            elseif($biannual_price > 0) { $default_checked_frequency = 'biannual'; }
+                            elseif($annual_price > 0) { $default_checked_frequency = 'annual'; }
+                            elseif($lifetime_price > 0) { $default_checked_frequency = 'lifetime'; }
+                            ?>
+
+                            <?php if($monthly_price > 0): ?>
+                                <label class="col-12 p-2 custom-radio-box m-0">
+                                    <input type="radio" id="monthly_price" name="payment_frequency" value="monthly" class="custom-control-input" required="required" <?= $default_checked_frequency === 'monthly' ? 'checked="checked"' : null ?>>
 
                                     <div class="card">
                                         <div class="card-body d-flex align-items-center justify-content-between">
                                             <div class="card-title mb-0"><?= l('pay.custom_plan.monthly') ?></div>
-
-                                            <div class="">
-                                                <div class="d-flex align-items-center">
-                                                    <span id="monthly_price_amount" class="custom-radio-box-main-text"><?= nr($data->plan->prices->monthly->{currency()}, 2) ?></span>
-                                                    <span class="ml-1"><?= currency() ?></span>
-                                                </div>
+                                            <div class="d-flex align-items-center">
+                                                <span id="monthly_price_amount" class="custom-radio-box-main-text"><?= nr($monthly_price, 2) ?></span>
+                                                <span class="ml-1"><?= currency() ?></span>
                                             </div>
-
                                         </div>
                                     </div>
                                 </label>
                             <?php endif ?>
 
-                            <?php if($data->plan->prices->annual->{currency()}): ?>
-                                <label class="col-12 my-2 custom-radio-box">
-                                    <input type="radio" id="annual_price" name="payment_frequency" value="annual" class="custom-control-input" required="required" <?= settings()->payment->default_payment_frequency == 'annual' ? 'checked="checked"' : null ?>>
+                            <?php if($quarterly_price > 0): ?>
+                                <label class="col-12 p-2 custom-radio-box m-0">
+                                    <input type="radio" id="quarterly_price" name="payment_frequency" value="quarterly" class="custom-control-input" required="required" <?= $default_checked_frequency === 'quarterly' ? 'checked="checked"' : null ?>>
+
+                                    <div class="card">
+                                        <div class="card-body d-flex align-items-center justify-content-between">
+                                            <div class="card-title mb-0"><?= l('pay.custom_plan.quarterly') ?></div>
+
+                                            <div class="d-flex align-items-center">
+                                                <?php if($quarterly_price_savings > 0): ?>
+                                                    <div class="payment-price-savings mr-2">
+                                                        <span><?= sprintf(l('pay.custom_plan.savings'), '<span class="badge badge-success">-' . nr($quarterly_price_savings, 2, false), currency() . '</span>') ?></span>
+                                                    </div>
+                                                <?php endif ?>
+                                                <span id="quarterly_price_amount" class="custom-radio-box-main-text"><?= nr($quarterly_price, 2) ?></span>
+                                                <span class="ml-1"><?= currency() ?></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+                            <?php endif ?>
+
+                            <?php if($biannual_price > 0): ?>
+                                <label class="col-12 p-2 custom-radio-box m-0">
+                                    <input type="radio" id="biannual_price" name="payment_frequency" value="biannual" class="custom-control-input" required="required" <?= $default_checked_frequency === 'biannual' ? 'checked="checked"' : null ?>>
+
+                                    <div class="card">
+                                        <div class="card-body d-flex align-items-center justify-content-between">
+                                            <div class="card-title mb-0"><?= l('pay.custom_plan.biannual') ?></div>
+
+                                            <div class="d-flex align-items-center">
+                                                <?php if($biannual_price_savings > 0): ?>
+                                                    <div class="payment-price-savings mr-2">
+                                                        <span><?= sprintf(l('pay.custom_plan.savings'), '<span class="badge badge-success">-' . nr($biannual_price_savings, 2, false), currency() . '</span>') ?></span>
+                                                    </div>
+                                                <?php endif ?>
+                                                <span id="biannual_price_amount" class="custom-radio-box-main-text"><?= nr($biannual_price, 2) ?></span>
+                                                <span class="ml-1"><?= currency() ?></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+                            <?php endif ?>
+
+                            <?php if($annual_price > 0): ?>
+                                <label class="col-12 p-2 custom-radio-box m-0">
+                                    <input type="radio" id="annual_price" name="payment_frequency" value="annual" class="custom-control-input" required="required" <?= $default_checked_frequency === 'annual' ? 'checked="checked"' : null ?>>
 
                                     <div class="card">
                                         <div class="card-body d-flex align-items-center justify-content-between">
                                             <div class="card-title mb-0"><?= l('pay.custom_plan.annual') ?></div>
 
                                             <div class="d-flex align-items-center">
-                                                <?php if($data->plan->prices->monthly->{currency()} && $annual_price_savings > 0): ?>
+                                                <?php if($annual_price_savings > 0): ?>
                                                     <div class="payment-price-savings mr-2">
-                                                        <span><?= sprintf(l('pay.custom_plan.annual_savings'), '<span class="badge badge-success">-' . $annual_price_savings, currency() . '</span>') ?></span>
+                                                        <span><?= sprintf(l('pay.custom_plan.savings'), '<span class="badge badge-success">-' . nr($annual_price_savings, 2, false), currency() . '</span>') ?></span>
                                                     </div>
                                                 <?php endif ?>
-
-                                                <span id="annual_price_amount" class="custom-radio-box-main-text"><?= nr($data->plan->prices->annual->{currency()}, 2) ?></span>
+                                                <span id="annual_price_amount" class="custom-radio-box-main-text"><?= nr($annual_price, 2) ?></span>
                                                 <span class="ml-1"><?= currency() ?></span>
                                             </div>
-
                                         </div>
                                     </div>
                                 </label>
                             <?php endif ?>
 
-                            <?php if($data->plan->prices->lifetime->{currency()}): ?>
-                                <label class="col-12 my-2 custom-radio-box">
-                                    <input type="radio" id="lifetime_price" name="payment_frequency" value="lifetime" class="custom-control-input" required="required" <?= settings()->payment->default_payment_frequency == 'lifetime' ? 'checked="checked"' : null ?>>
+                            <?php if($lifetime_price > 0): ?>
+                                <label class="col-12 p-2 custom-radio-box m-0">
+                                    <input type="radio" id="lifetime_price" name="payment_frequency" value="lifetime" class="custom-control-input" required="required" <?= $default_checked_frequency === 'lifetime' ? 'checked="checked"' : null ?>>
 
                                     <div class="card">
                                         <div class="card-body d-flex align-items-center justify-content-between">
@@ -173,11 +275,9 @@
                                                 <div class="payment-price-savings mr-2">
                                                     <small><?= l('pay.custom_plan.lifetime_help') ?></small>
                                                 </div>
-
-                                                <span id="lifetime_price_amount" class="custom-radio-box-main-text"><?= nr($data->plan->prices->lifetime->{currency()}, 2) ?></span>
+                                                <span id="lifetime_price_amount" class="custom-radio-box-main-text"><?= nr($lifetime_price, 2) ?></span>
                                                 <span class="ml-1"><?= currency() ?></span>
                                             </div>
-
                                         </div>
                                     </div>
                                 </label>
@@ -186,7 +286,7 @@
                         </div>
                     </div>
 
-                    <h2 class="h5 mt-5 mb-4 text-muted"><i class="fas fa-fw fa-sm fa-money-check-alt mr-2"></i> <?= l('pay.custom_plan.payment_processor') ?></h2>
+                    <h2 class="h5 mt-5 mb-4"><i class="fas fa-fw fa-sm fa-money-check-alt mr-2"></i> <?= l('pay.custom_plan.payment_processor') ?></h2>
 
                     <?php
                     $at_least_one_payment_processor_is_enabled = null;
@@ -200,8 +300,18 @@
 
 
                     <?php if(!$at_least_one_payment_processor_is_enabled): ?>
-                        <div class="alert alert-info" role="alert">
-                            <?= l('pay.custom_plan.no_processor') ?>
+                        <div class="row d-flex align-items-stretch">
+                            <label class="col-12 p-2 custom-radio-box m-0">
+                                <div class="card border-warning">
+                                    <div class="card-body d-flex align-items-center justify-content-between">
+                                        <div class="card-title mb-0"><?= l('pay.custom_plan.no_processor') ?></div>
+
+                                        <div>
+                                            <span class="custom-radio-box-main-icon"><i class="fas fa-fw fa-exclamation-triangle"></i></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
                         </div>
                     <?php else: ?>
 
@@ -209,17 +319,18 @@
                             <div class="row d-flex align-items-stretch">
                                 <?php foreach($data->payment_processors as $key => $value): ?>
                                     <?php if(settings()->{$key}->is_enabled && in_array(currency(), settings()->{$key}->currencies ?? [])): ?>
-                                        <label class="col-12 my-2 custom-radio-box">
+                                        <label class="col-6 p-2 custom-radio-box m-0">
                                             <input type="radio" name="payment_processor" value="<?= $key ?>" class="custom-control-input" required="required" <?= $key == settings()->payment->currencies->{currency()}->default_payment_processor ? 'checked="checked"' : null ?>>
 
                                             <div class="card">
-                                                <div class="card-body d-flex align-items-center justify-content-between">
-                                                    <div class="card-title mb-0"><?= l('pay.custom_plan.' . $key) ?></div>
-
-                                                    <div class="">
-                                                        <span class="custom-radio-box-main-icon"><i class="<?= $value['icon'] ?> fa-fw" style="color: <?= $value['color'] ?>"></i></span>
+                                                <div class="card-body d-flex flex-column align-items-center justify-content-between">
+                                                    <div class="mb-3">
+                                                        <span class="custom-radio-box-main-icon">
+                                                            <i class="<?= $value['icon'] ?> fa-fw" style="color: <?= $value['color'] ?>"></i>
+                                                        </span>
                                                     </div>
 
+                                                    <div class="card-title mb-0"><?= l('pay.custom_plan.' . $key) ?></div>
                                                 </div>
                                             </div>
                                         </label>
@@ -236,18 +347,18 @@
                                 <div class="form-group mt-4">
                                     <label><?= l('pay.custom_plan.offline_payment_proof') ?></label>
                                     <input id="offline_payment_proof" type="file" name="offline_payment_proof" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('offline_payment_proofs') ?>" class="form-control-file altum-file-input" />
-                                    <div class="mt-2"><span class="text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('offline_payment_proofs'))  . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->offline_payment->proof_size_limit) ?></span></div>
+                                    <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('offline_payment_proofs'))  . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->offline_payment->proof_size_limit) ?></small>
                                 </div>
                             </div>
                         </div>
                     <?php endif ?>
 
-                    <h2 class="h5 mt-5 mb-4 text-muted"><i class="fas fa-fw fa-sm fa-dollar-sign mr-2"></i> <?= l('pay.custom_plan.payment_type') ?></h2>
+                    <h2 class="h5 mt-5 mb-4"><i class="fas fa-fw fa-sm fa-dollar-sign mr-2"></i> <?= l('pay.custom_plan.payment_type') ?></h2>
 
                     <div>
                         <div class="row d-flex align-items-stretch">
 
-                            <label class="col-12 my-2 custom-radio-box" id="one_time_type_label" <?= in_array(settings()->payment->type, ['one_time', 'both']) ? null : 'style="display: none"' ?>>
+                            <label class="col-12 p-2 custom-radio-box m-0" id="one_time_type_label" <?= in_array(settings()->payment->type, ['one_time', 'both']) ? null : 'style="display: none"' ?>>
                                 <input type="radio" id="one_time_type" name="payment_type" value="one_time" class="custom-control-input" required="required">
 
                                 <div class="card">
@@ -255,7 +366,7 @@
 
                                         <div class="card-title mb-0"><?= l('pay.custom_plan.one_time_type') ?></div>
 
-                                        <div class="">
+                                        <div>
                                             <span class="custom-radio-box-main-icon"><i class="fas fa-fw fa-hand-holding-usd"></i></span>
                                         </div>
 
@@ -263,7 +374,7 @@
                                 </div>
                             </label>
 
-                            <label class="col-12 my-2 custom-radio-box" id="recurring_type_label" <?= in_array(settings()->payment->type, ['recurring', 'both']) ? null : 'style="display: none"' ?>>
+                            <label class="col-12 p-2 custom-radio-box m-0" id="recurring_type_label" <?= in_array(settings()->payment->type, ['recurring', 'both']) ? null : 'style="display: none"' ?>>
                                 <input type="radio" id="recurring_type" name="payment_type" value="recurring" class="custom-control-input" required="required">
 
                                 <div class="card">
@@ -271,7 +382,7 @@
 
                                         <div class="card-title mb-0"><?= l('pay.custom_plan.recurring_type') ?></div>
 
-                                        <div class="">
+                                        <div>
                                             <span class="custom-radio-box-main-icon"><i class="fas fa-fw fa-sync-alt"></i></span>
                                         </div>
 
@@ -285,15 +396,17 @@
                 </div>
 
                 <div class="mt-5 mt-xl-0 col-12 col-xl-4">
-                    <div class="">
+                    <div>
                         <div class="mb-5">
-                            <h2 class="h5 mb-4 text-muted">
+                            <h2 class="h5 mb-4">
                                 <i class="fas fa-fw fa-sm fa-hand-holding-heart mr-2"></i> <?= l('pay.plan_details') ?>
                             </h2>
 
-                            <div class="card">
-                                <div class="card-body">
-                                    <?= (new \Altum\View('partials/plan_features'))->run(['plan_settings' => $data->plan->settings]) ?>
+                            <div class="pt-2">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <?= (new \Altum\View('partials/plan_features'))->run(['plan_settings' => $data->plan->settings]) ?>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -312,7 +425,7 @@
                                         </span>
 
                                         <span>
-                                            <?= $data->plan->name ?>
+                                            <?= $data->plan->translations->{\Altum\Language::$name}->name ?? $data->plan->name ?>
                                         </span>
                                     </div>
 
@@ -328,6 +441,28 @@
                                                 </span>
                                                 <small class="text-right text-muted">
                                                     <?= l('pay.custom_plan.summary.monthly_help') ?>
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <div id="summary_payment_frequency_quarterly" style="display: none;">
+                                            <div class="d-flex flex-column">
+                                                <span class="text-right">
+                                                    <?= l('pay.custom_plan.summary.quarterly') ?>
+                                                </span>
+                                                <small class="text-right text-muted">
+                                                    <?= l('pay.custom_plan.summary.quarterly_help') ?>
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <div id="summary_payment_frequency_biannual" style="display: none;">
+                                            <div class="d-flex flex-column">
+                                                <span class="text-right">
+                                                    <?= l('pay.custom_plan.summary.biannual') ?>
+                                                </span>
+                                                <small class="text-right text-muted">
+                                                    <?= l('pay.custom_plan.summary.biannual_help') ?>
                                                 </small>
                                             </div>
                                         </div>
@@ -429,30 +564,30 @@
 
                                                 <div id="summary_tax_id_<?= $row->tax_id ?>" class="d-flex justify-content-between mb-3">
                                                     <div class="d-flex flex-column">
-                                                    <span class="text-muted">
-                                                        <?= $row->name ?>
+                                                        <span class="text-muted">
+                                                            <?= $row->name ?>
 
-                                                        <span data-toggle="tooltip" title="<?= $row->description ?>"><i class="fas fa-fw fa-sm fa-circle-question"></i></span>
-                                                    </span>
+                                                            <span data-toggle="tooltip" title="<?= $row->description ?>"><i class="fas fa-fw fa-sm fa-circle-question"></i></span>
+                                                        </span>
                                                         <small class="text-muted">
                                                             <?= l('pay.custom_plan.summary.' . ($row->type == 'inclusive' ? 'tax_inclusive' : 'tax_exclusive')) ?>
                                                         </small>
                                                     </div>
 
                                                     <span>
-                                                    <?php if($row->value_type == 'percentage'): ?>
+                                                        <?php if($row->value_type == 'percentage'): ?>
 
-                                                        <span class="tax-value"></span>
-                                                        <span class="text-muted"><?= currency() ?></span>
-                                                        <span class="tax-details text-muted">(<?= $row->value ?>%)</span>
+                                                            <span class="tax-value"></span>
+                                                            <span class="text-muted"><?= currency() ?></span>
+                                                            <span class="tax-details text-muted">(<?= $row->value ?>%)</span>
 
-                                                    <?php elseif($row->value_type == 'fixed'): ?>
+                                                        <?php elseif($row->value_type == 'fixed'): ?>
 
-                                                        <span class="tax-value"></span>
-                                                        <span class="tax-details"><?= '+' . $row->value ?> <span class="text-muted"><?= currency() ?></span></span>
+                                                            <span class="tax-value"></span>
+                                                            <span class="tax-details"><?= '+' . $row->value ?> <span class="text-muted"><?= currency() ?></span></span>
 
-                                                    <?php endif ?>
-                                                </span>
+                                                        <?php endif ?>
+                                                    </span>
                                                 </div>
 
                                             <?php endforeach ?>
@@ -495,8 +630,7 @@
                                                 altum.code = null;
 
                                                 /* Change submit text */
-                                                document.querySelector('#submit_default_text').classList.remove('d-none');
-                                                document.querySelector('#submit_text').classList.add('d-none');
+                                                check_payment_submit_text();
 
                                                 calculate_prices();
 
@@ -528,9 +662,14 @@
                                                         altum.code = data.details.code;
 
                                                         /* Change submit text */
-                                                        document.querySelector('#submit_default_text').classList.add('d-none');
-                                                        document.querySelector('#submit_text').classList.remove('d-none');
-                                                        document.querySelector('#submit_text').innerText = data.details.submit_text;
+                                                        if(data.details.submit_text) {
+                                                            document.querySelector('#submit_default_text').classList.add('d-none');
+                                                            document.querySelector('#submit_trial_text').classList.add('d-none');
+                                                            document.querySelector('#submit_text').classList.remove('d-none');
+                                                            document.querySelector('#submit_text').innerText = data.details.submit_text;
+                                                        } else {
+                                                            check_payment_submit_text();
+                                                        }
 
                                                     } else {
                                                         document.querySelector('input[name="code"]').classList.add('is-invalid');
@@ -542,8 +681,7 @@
                                                         altum.code = null;
 
                                                         /* Change submit text */
-                                                        document.querySelector('#submit_default_text').classList.remove('d-none');
-                                                        document.querySelector('#submit_text').classList.add('d-none');
+                                                        check_payment_submit_text();
                                                     }
 
                                                     calculate_prices();
@@ -607,15 +745,16 @@
                         <button type="submit" name="submit" class="btn btn-lg btn-block btn-primary">
                             <span id="submit_default_text"><?= l('pay.custom_plan.pay') ?></span>
                             <span id="submit_text" class="d-none"><?= l('pay.custom_plan.pay') ?></span>
+                            <span id="submit_trial_text" class="d-none"><?= sprintf(l('pay.trial.trial_start'), $data->plan->trial_days) ?></span>
                         </button>
                     </div>
 
                     <div class="mt-3 text-muted text-center">
                         <small>
                             <?= sprintf(
-                                l('pay.accept'),
-                                '<a href="' . settings()->main->terms_and_conditions_url . '" target="_blank">' . l('global.terms_and_conditions') . '</a>',
-                                '<a href="' . settings()->main->privacy_policy_url . '" target="_blank">' . l('global.privacy_policy') . '</a>'
+                                    l('pay.accept'),
+                                    '<a href="' . settings()->main->terms_and_conditions_url . '" target="_blank">' . l('global.terms_and_conditions') . '</a>',
+                                    '<a href="' . settings()->main->privacy_policy_url . '" target="_blank">' . l('global.privacy_policy') . '</a>'
                             ) ?>
                         </small>
                     </div>
@@ -631,6 +770,7 @@
 <?php ob_start() ?>
 <script>
     'use strict';
+
     /* Attention message */
     let default_page_title = document.title;
 
@@ -643,68 +783,46 @@
     /* Handlers */
     let check_payment_frequency = () => {
         let payment_frequency = document.querySelector('[name="payment_frequency"]:checked')?.value;
+        const all_frequencies = ['monthly', 'quarterly', 'biannual', 'annual', 'lifetime'];
 
-        switch(payment_frequency) {
-            case 'monthly':
+        // Hide all summary sections first
+        all_frequencies.forEach(freq => {
+            $(`#summary_payment_frequency_${freq}`).hide();
+        });
 
-                $('#summary_payment_frequency_monthly').show();
-                $('#summary_payment_frequency_annual').hide();
-                $('#summary_payment_frequency_lifetime').hide();
+        // Hide both payment type labels by default
+        $('#one_time_type_label').hide();
+        $('#recurring_type_label').hide();
 
-                if(altum.payment_type_one_time_enabled) {
-                    $('#one_time_type_label').show();
-                } else {
-                    $('#one_time_type_label').hide();
-                }
+        if(payment_frequency && all_frequencies.includes(payment_frequency)) {
+            $(`#summary_payment_frequency_${payment_frequency}`).show();
 
-                if(altum.payment_type_recurring_enabled) {
-                    $('#recurring_type_label').show();
-                } else {
-                    $('#recurring_type_label').hide();
-                }
-
-                break;
-
-            case 'annual':
-
-                $('#summary_payment_frequency_monthly').hide();
-                $('#summary_payment_frequency_annual').show();
-                $('#summary_payment_frequency_lifetime').hide();
-
-
-                if(altum.payment_type_one_time_enabled) {
-                    $('#one_time_type_label').show();
-                } else {
-                    $('#one_time_type_label').hide();
-                }
-
-                if(altum.payment_type_recurring_enabled) {
-                    $('#recurring_type_label').show();
-                } else {
-                    $('#recurring_type_label').hide();
-                }
-
-                break;
-
-            case 'lifetime':
-
-                $('#summary_payment_frequency_monthly').hide();
-                $('#summary_payment_frequency_annual').hide();
-                $('#summary_payment_frequency_lifetime').show();
-
-                /* Show only the one time payment option for the lifetime plan */
-                $('#recurring_type_label').hide();
+            if(payment_frequency === 'lifetime') {
+                // Only one-time option for lifetime
                 $('#one_time_type_label').show();
-
-                break;
+            } else {
+                // Show available payment types
+                if(altum.payment_type_one_time_enabled) {
+                    $('#one_time_type_label').show();
+                }
+                if(altum.payment_type_recurring_enabled) {
+                    $('#recurring_type_label').show();
+                }
+            }
         }
 
-        $('[name="payment_type"]').filter(':visible:first').click();
+        let default_payment_type = <?= json_encode(settings()->payment->default_payment_type ?? 'one_time') ?>;
+        if($(`#${default_payment_type}_type`).is(':visible')) {
+            $(`#${default_payment_type}_type`).click();
+        } else {
+            $('[name="payment_type"]').filter(':visible:first').click();
+        }
     }
 
     $('[name="payment_frequency"]').on('change', event => {
         check_payment_frequency();
         check_payment_processor();
+        check_payment_submit_text();
         calculate_prices();
     });
 
@@ -721,7 +839,13 @@
 
         document.querySelector(`[data-summary-payment-processor="${payment_processor}"]`).classList.remove('d-none');
 
-        if(['offline_payment', 'coinbase', 'payu', 'iyzico', 'crypto_com', 'paddle', 'mercadopago', 'yookassa', 'midtrans'].includes(payment_processor)) {
+        <?php
+        $one_time_payment_processors = array_keys(array_filter($data->payment_processors, function ($item) {
+            return $item['payment_type'] === ['one_time'];
+        }));
+        ?>
+        let one_time_payment_processors = <?= json_encode($one_time_payment_processors) ?>;
+        if(one_time_payment_processors.includes(payment_processor)) {
             $('#recurring_type_label').hide();
             $('#one_time_type_label').show();
         }
@@ -732,14 +856,19 @@
             $('#offline_payment_processor_wrapper').hide();
         }
 
-        $('[name="payment_type"]').filter(':visible:first').click();
+        let default_payment_type = <?= json_encode(settings()->payment->default_payment_type ?? 'one_time') ?>;
+        if($(`#${default_payment_type}_type`).is(':visible')) {
+            $(`#${default_payment_type}_type`).click();
+        } else {
+            $('[name="payment_type"]').filter(':visible:first').click();
+        }
     };
 
     $('[name="payment_processor"]').on('change', event => {
         check_payment_frequency();
         check_payment_processor();
+        check_payment_submit_text();
     });
-
 
     $('[name="payment_type"]').on('change', event => {
         let payment_type = document.querySelector('[name="payment_type"]:checked')?.value;
@@ -759,7 +888,27 @@
 
                 break;
         }
+
+        check_payment_submit_text();
     });
+
+    let check_payment_submit_text = () => {
+        /* Check for trials */
+        let payment_processor = document.querySelector('[name="payment_processor"]:checked')?.value;
+        let payment_frequency = document.querySelector('[name="payment_frequency"]:checked')?.value;
+        let payment_type = document.querySelector('[name="payment_type"]:checked')?.value;
+
+        /* Change submit text */
+        if(window.altum.allowed_trials.includes(payment_processor) && payment_frequency != 'lifetime' && payment_type == 'recurring') {
+            document.querySelector('#submit_default_text').classList.add('d-none');
+            document.querySelector('#submit_text').classList.add('d-none');
+            document.querySelector('#submit_trial_text').classList.remove('d-none');
+        } else {
+            document.querySelector('#submit_default_text').classList.add('d-none');
+            document.querySelector('#submit_text').classList.remove('d-none');
+            document.querySelector('#submit_trial_text').classList.add('d-none');
+        }
+    }
 
     let calculate_prices = () => {
         let payment_frequency = document.querySelector('[name="payment_frequency"]:checked')?.value;
@@ -832,7 +981,7 @@
             for(let row of altum.taxes) {
                 if(row.type == 'inclusive') continue;
 
-                let exclusive_tax = parseFloat((row.value_type == 'percentage' ? price_without_inclusive_taxes * (parseInt(row.value) / 100) : parseFloat(row.value)).toFixed(2));
+                let exclusive_tax = parseFloat((row.value_type == 'percentage' ? price_without_inclusive_taxes * (parseFloat(row.value) / 100) : parseFloat(row.value)).toFixed(2));
 
                 exclusive_taxes_array.push(exclusive_tax);
 
@@ -859,13 +1008,21 @@
     if(!document.querySelector('[name="payment_processor"]:checked')) {
         $('[name="payment_processor"]:first').click();
     }
-    $('[name="payment_type"]').filter(':visible:first').click();
+
+    let default_payment_type = <?= json_encode(settings()->payment->default_payment_type ?? 'one_time') ?>;
+    if($(`#${default_payment_type}_type`).is(':visible')) {
+        $(`#${default_payment_type}_type`).click();
+    } else {
+        $('[name="payment_type"]').filter(':visible:first').click();
+    }
+
     if(!document.querySelector('[name="payment_frequency"]:checked')) {
         $('[name="payment_frequency"]:first').click();
     }
 
     check_payment_frequency();
     check_payment_processor();
+    check_payment_submit_text();
     calculate_prices();
 </script>
 
@@ -873,6 +1030,8 @@
     <script src="https://cdn.paddle.com/paddle/paddle.js"></script>
 
     <script>
+        'use strict';
+
         Paddle.Setup({ vendor: <?= settings()->paddle->vendor_id ?> });
 
         <?php if(settings()->paddle->mode == 'sandbox'): ?>
@@ -887,3 +1046,6 @@
 <?php endif ?>
 
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+
+
+

@@ -19,12 +19,13 @@
         <meta name="keywords" content="<?= \Altum\Meta::$keywords ?>" />
     <?php endif ?>
 
+    <?php \Altum\Meta::output() ?>
+
     <?php if(\Altum\Meta::$canonical): ?>
         <link rel="canonical" href="<?= \Altum\Meta::$canonical ?>" />
     <?php endif ?>
 
-    <?php if(!settings()->main->se_indexing || \Altum\Meta::$robots): ?>
-        <?php if(!settings()->main->se_indexing) \Altum\Meta::set_robots('noindex'); ?>
+    <?php if(\Altum\Meta::$robots): ?>
         <meta name="robots" content="<?= \Altum\Meta::$robots ?>">
     <?php endif ?>
 
@@ -38,7 +39,7 @@
     <?php endif ?>
 
     <?php if(!empty(settings()->main->favicon)): ?>
-        <link href="<?= \Altum\Uploads::get_full_url('favicon') . settings()->main->favicon ?>" rel="shortcut icon" />
+        <link href="<?= settings()->main->favicon_full_url ?>" rel="icon" />
     <?php endif ?>
 
     <link href="<?= ASSETS_FULL_URL . 'css/' . \Altum\ThemeStyle::get_file() . '?v=' . PRODUCT_CODE ?>" id="css_theme_style" rel="stylesheet" media="screen,print">
@@ -48,8 +49,12 @@
 
     <?= \Altum\Event::get_content('head') ?>
 
+        <?php if(is_logged_in() && !user()->plan_settings->export->pdf): ?>
+            <style>@media print { body { display: none; } }</style>
+        <?php endif ?>
+
     <?php if(!empty(settings()->custom->head_js)): ?>
-        <?= settings()->custom->head_js ?>
+        <?= get_settings_custom_head_js() ?>
     <?php endif ?>
 
     <?php if(!empty(settings()->custom->head_css)): ?>
@@ -58,96 +63,122 @@
 </head>
 
 <body class="<?= l('direction') == 'rtl' ? 'rtl' : null ?> app <?= \Altum\ThemeStyle::get() == 'dark' ? 'cc--darkmode' : null ?>" data-theme-style="<?= \Altum\ThemeStyle::get() ?>">
-<?php //ALTUMCODE:DEMO if(DEMO) echo include_view(THEME_PATH . 'views/partials/ac_banner.php', ['demo_url' => 'https://66biolinks.com/demo/', 'product_name' => PRODUCT_NAME, 'product_url' => PRODUCT_URL]) ?>
-<?php if(\Altum\Plugin::is_active('pwa') && settings()->pwa->is_enabled && settings()->pwa->display_install_bar) require \Altum\Plugin::get('pwa')->path . 'views/partials/pwa.php' ?>
+    <?php if(!empty(settings()->custom->body_content)): ?>
+        <?= settings()->custom->body_content ?>
+    <?php endif ?>
 
-<div id="app_overlay" class="app-overlay" style="display: none"></div>
+    <?php //ALTUMCODE:DEMO if(DEMO) echo include_view(THEME_PATH . 'views/partials/ac_banner.php', ['demo_url' => 'https://66biolinks.com/demo/', 'product_name' => PRODUCT_NAME, 'product_url' => PRODUCT_URL, 'product_buy_url' => PRODUCT_BUY_URL]) ?>
+    <?php if(settings()->main->admin_spotlight_is_enabled || settings()->main->user_spotlight_is_enabled) require THEME_PATH . 'views/partials/spotlight.php' ?>
+    <?php if(\Altum\Plugin::is_active('pwa') && settings()->pwa->is_enabled && settings()->pwa->display_install_bar) require \Altum\Plugin::get('pwa')->path . 'views/partials/pwa.php' ?>
 
-<div class="app-container">
-    <?= $this->views['app_sidebar'] ?>
+    <div id="app_overlay" class="app-overlay" style="display: none"></div>
 
-    <section class="app-content">
+    <div class="app-container">
+        <?= $this->views['app_sidebar'] ?>
 
-        <?php require THEME_PATH . 'views/partials/admin_impersonate_user.php' ?>
-        <?php require THEME_PATH . 'views/partials/team_delegate_access.php' ?>
-        <?php require THEME_PATH . 'views/partials/announcements.php' ?>
-        <?php require THEME_PATH . 'views/partials/cookie_consent.php' ?>
-        <?php require THEME_PATH . 'views/partials/ad_blocker_detector.php' ?>
-        <?php if(\Altum\Plugin::is_active('push-notifications') && settings()->push_notifications->is_enabled) require \Altum\Plugin::get('push-notifications')->path . 'views/partials/push_notifications_js.php' ?>
+        <section class="app-content">
+            <?php require THEME_PATH . 'views/partials/js_welcome.php' ?>
+            <?php require THEME_PATH . 'views/partials/admin_impersonate_user.php' ?>
+            <?php require THEME_PATH . 'views/partials/team_delegate_access.php' ?>
+            <?php require THEME_PATH . 'views/partials/announcements.php' ?>
+            <?php require THEME_PATH . 'views/partials/cookie_consent.php' ?>
+            <?php require THEME_PATH . 'views/partials/ad_blocker_detector.php' ?>
+            <?php if(\Altum\Plugin::is_active('push-notifications') && settings()->push_notifications->is_enabled) require \Altum\Plugin::get('push-notifications')->path . 'views/partials/push_notifications_js.php' ?>
 
-        <?= $this->views['app_menu'] ?>
-
-        <div class="py-3 p-lg-5">
-            <?php require THEME_PATH . 'views/partials/ads_header.php' ?>
-
-            <main class="altum-animate altum-animate-fill-none altum-animate-fade-in">
-                <?= $this->views['content'] ?>
-            </main>
-
-            <?php require THEME_PATH . 'views/partials/ads_footer.php' ?>
-        </div>
-
-        <div class="py-3 px-lg-5 pb-lg-5">
-            <div class="container d-print-none">
-                <footer class="footer app-footer m-0">
-                    <?= $this->views['footer'] ?>
-                </footer>
+            <div class="container">
+                <?= $this->views['app_menu'] ?>
             </div>
-        </div>
-    </section>
-</div>
 
-<?= \Altum\Event::get_content('modals') ?>
+            <div class="py-4 p-lg-5">
+                <?php require THEME_PATH . 'views/partials/ads_header.php' ?>
 
-<?php require THEME_PATH . 'views/partials/js_global_variables.php' ?>
+                <main class="altum-animate altum-animate-fill-none altum-animate-fade-in">
+                    <?= $this->views['content'] ?>
+                </main>
 
-<?php foreach(['libraries/jquery.min.js', 'libraries/popper.min.js', 'libraries/bootstrap.min.js', 'custom.js', 'libraries/fontawesome.min.js', 'libraries/fontawesome-solid.min.js', 'libraries/fontawesome-brands.min.js', 'libraries/select2.js'] as $file): ?>
-    <script src="<?= ASSETS_FULL_URL ?>js/<?= $file ?>?v=<?= PRODUCT_CODE ?>"></script>
-<?php endforeach ?>
+                <?php require THEME_PATH . 'views/partials/ads_footer.php' ?>
+            </div>
 
-<?= \Altum\Event::get_content('javascript') ?>
+            <div class="px-lg-5">
+                <div class="container d-print-none">
+                    <footer class="footer app-footer">
+                        <?= $this->views['footer'] ?>
+                    </footer>
+                </div>
+            </div>
+        </section>
+    </div>
 
-<script>
-    let toggle_app_sidebar = () => {
-        /* Open sidebar menu */
-        let body = document.querySelector('body');
-        body.classList.toggle('app-sidebar-opened');
+    <?= \Altum\Event::get_content('modals') ?>
 
-        /* Toggle overlay */
-        let app_overlay = document.querySelector('#app_overlay');
-        app_overlay.style.display == 'none' ? app_overlay.style.display = 'block' : app_overlay.style.display = 'none';
+    <?php require THEME_PATH . 'views/partials/js_global_variables.php' ?>
 
-        /* Change toggle button content */
-        let button = document.querySelector('#app_menu_toggler');
+    <?php foreach(['libraries/jquery.min.js', 'libraries/popper.min.js', 'libraries/bootstrap.min.js', 'custom.js', 'libraries/select2.min.js'] as $file): ?>
+        <script src="<?= ASSETS_FULL_URL ?>js/<?= $file ?>?v=<?= PRODUCT_CODE ?>"></script>
+    <?php endforeach ?>
 
-        if(body.classList.contains('app-sidebar-opened')) {
-            button.innerHTML = `<i class="fas fa-fw fa-times"></i>`;
-        } else {
-            button.innerHTML = `<i class="fas fa-fw fa-bars"></i>`;
-        }
-    };
+    <?php foreach(['libraries/fontawesome.min.js', 'libraries/fontawesome-solid.min.js', 'libraries/fontawesome-brands.min.js'] as $file): ?>
+        <script src="<?= ASSETS_FULL_URL ?>js/<?= $file ?>?v=<?= PRODUCT_CODE ?>" defer></script>
+    <?php endforeach ?>
 
-    /* Toggler for the sidebar */
-    document.querySelector('#app_menu_toggler').addEventListener('click', event => {
-        event.preventDefault();
+    <?= \Altum\Event::get_content('javascript') ?>
 
-        toggle_app_sidebar();
+    <script>
+    'use strict';
+    
+        let toggle_app_sidebar = () => {
+            /* Open sidebar menu */
+            let body = document.querySelector('body');
+            body.classList.toggle('app-sidebar-opened');
 
-        let app_sidebar_is_opened = document.querySelector('body').classList.contains('app-sidebar-opened');
+            /* Toggle overlay */
+            let app_overlay = document.querySelector('#app_overlay');
+            app_overlay.style.display == 'none' ? app_overlay.style.display = 'block' : app_overlay.style.display = 'none';
 
-        if(app_sidebar_is_opened) {
-            document.querySelector('#app_overlay').removeEventListener('click', toggle_app_sidebar);
-            document.querySelector('#app_overlay').addEventListener('click', toggle_app_sidebar);
-        } else {
-            document.querySelector('#app_overlay').removeEventListener('click', toggle_app_sidebar);
-        }
-    });
+            /* Change toggle button content */
+            let button = document.querySelector('#app_menu_toggler');
 
-    /* Custom select implementation */
-    $('select:not([multiple="multiple"]):not([class="input-group-text"]):not([class="custom-select custom-select-sm"]):not([class^="ql"]):not([data-is-not-custom-select])').select2({
-        dir: <?= json_encode(l('direction')) ?>,
-        minimumResultsForSearch: 5,
-    });
-</script>
+            if(body.classList.contains('app-sidebar-opened')) {
+                button.innerHTML = `<i class="fas fa-fw fa-times"></i>`;
+            } else {
+                button.innerHTML = `<i class="fas fa-fw fa-bars"></i>`;
+            }
+        };
+
+        /* Toggler for the sidebar */
+        document.querySelector('#app_menu_toggler').addEventListener('click', event => {
+            event.preventDefault();
+
+            toggle_app_sidebar();
+
+            let app_sidebar_is_opened = document.querySelector('body').classList.contains('app-sidebar-opened');
+
+            if(app_sidebar_is_opened) {
+                document.querySelector('#app_overlay').removeEventListener('click', toggle_app_sidebar);
+                document.querySelector('#app_overlay').addEventListener('click', toggle_app_sidebar);
+            } else {
+                document.querySelector('#app_overlay').removeEventListener('click', toggle_app_sidebar);
+            }
+        });
+
+        /* Custom select implementation */
+        $('select:not([multiple="multiple"]):not([class="input-group-text"]):not([class="custom-select custom-select-sm"]):not([class^="ql"]):not([data-is-not-custom-select])').each(function() {
+            let $select = $(this);
+            $select.select2({
+                placeholder: <?= json_encode(l('global.no_data')) ?>,
+                    dir: <?= json_encode(l('direction')) ?>,
+                minimumResultsForSearch: 5,
+            });
+
+            /* Make sure to trigger the select when the label is clicked as well */
+            let selectId = $select.attr('id');
+            if(selectId) {
+                $('label[for="' + selectId + '"]').on('click', function(event) {
+                    event.preventDefault();
+                    $select.select2('open');
+                });
+            }
+        });
+    </script>
 </body>
 </html>

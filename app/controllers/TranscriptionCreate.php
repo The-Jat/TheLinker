@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -13,13 +20,15 @@ use Altum\Alerts;
 use Altum\Response;
 use Altum\Uploads;
 
+defined('ALTUMCODE') || die();
+
 class TranscriptionCreate extends Controller {
 
     public function index() {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->transcriptions_is_enabled) {
-            redirect('dashboard');
+            redirect('not-found');
         }
 
         /* Team checks */
@@ -49,13 +58,13 @@ class TranscriptionCreate extends Controller {
         }
 
         $values = [
-            'name' => $_GET['name'] ?? $_POST['name'] ?? sprintf(l('transcription_create.name_x'), \Altum\Date::get()),
+            'name' => $_POST['name'] ?? $_GET['name'] ?? sprintf(l('transcription_create.name_x'), \Altum\Date::get()),
             'input' => $_GET['input'] ?? $_POST['input'] ?? '',
             'language' => $_GET['language'] ?? $_POST['language'] ?? null,
             'project_id' => $_GET['project_id'] ?? $_POST['project_id'] ?? null,
         ];
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'values' => $values,
             'projects' => $projects ?? [],
@@ -80,7 +89,7 @@ class TranscriptionCreate extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->transcriptions_is_enabled) {
-            redirect('dashboard');
+            redirect('not-found');
         }
 
         /* Team checks */
@@ -122,8 +131,7 @@ class TranscriptionCreate extends Controller {
         }
 
         /* Process the uploaded file */
-        $file_extension = explode('.', $_FILES['file']['name']);
-        $file_extension = mb_strtolower(end($file_extension));
+        $file_extension = mb_strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
         $file_temp = $_FILES['file']['tmp_name'];
 
         /* Check for any file errors */
@@ -190,7 +198,7 @@ class TranscriptionCreate extends Controller {
 
         $settings = json_encode([]);
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         $transcription_id = db()->insert('transcriptions', [
             'user_id' => $this->user->user_id,
             'project_id' => $_POST['project_id'],
@@ -200,13 +208,13 @@ class TranscriptionCreate extends Controller {
             'words' => $words,
             'language' => $_POST['language'],
             'settings' => $settings,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Delete temp */
         unlink(UPLOADS_PATH . Uploads::get_path('transcriptions') . $file_new_name);
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         db()->where('user_id', $this->user->user_id)->update('users', [
             'aix_transcriptions_current_month' => db()->inc(1)
         ]);

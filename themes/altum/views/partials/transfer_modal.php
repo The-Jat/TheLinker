@@ -24,6 +24,8 @@
                 <form name="<?= $data->name . '_transfer_modal_form' ?>" method="post" action="" role="form">
                     <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" required="required" />
                     <input type="hidden" name="id" value="" />
+                    <input type="hidden" name="original_request" value="<?= base64_encode(\Altum\Router::$original_request) ?>" />
+                    <input type="hidden" name="original_request_query" value="<?= base64_encode(\Altum\Router::$original_request_query) ?>" />
 
                     <div class="form-group">
                         <label for="email"><i class="fas fa-fw fa-sm fa-envelope text-muted mr-1"></i> <?= l('global.email') ?></label>
@@ -43,8 +45,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* On modal show load new data */
+    
+/* On modal show load new data */
     $('<?= '#' . $data->name . '_transfer_modal' ?>').on('show.bs.modal', event => {
 
         let related_target = event.relatedTarget;

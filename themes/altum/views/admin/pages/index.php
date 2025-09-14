@@ -1,25 +1,25 @@
 <?php defined('ALTUMCODE') || die() ?>
 
 <?php if(!settings()->content->pages_is_enabled): ?>
-    <div class="alert alert-warning">
-        <i class="fas fa-fw fa-exclamation-triangle text-warning mr-1"></i>
-        <?= sprintf(l('admin_resources.warning_message.disabled'), '<a href="' . url('admin/settings/content') . '" class="font-weight-bold">', '</a>') ?>
+    <div class="alert alert-info">
+        <i class="fas fa-fw fa-info-circle mr-1"></i>
+        <?= sprintf(l('global.info_message.admin_feature_disabled'), url('admin/settings/content')) ?>
     </div>
 <?php endif ?>
 
-<?php if(count($data->pages) || count($data->filters->get)): ?>
+<?php if(count($data->pages) || $data->filters->has_applied_filters): ?>
 
     <div class="d-flex flex-column flex-md-row justify-content-between mb-4">
-        <h1 class="h3 mb-3 mb-md-0"><i class="fas fa-fw fa-xs fa-copy text-primary-900 mr-2"></i> <?= l('admin_pages.header') ?></h1>
+        <h1 class="h3 mb-3 mb-md-0 text-truncate"><i class="fas fa-fw fa-xs fa-copy text-primary-900 mr-2"></i> <?= l('admin_pages.header') ?></h1>
 
         <div class="d-flex position-relative">
-            <div class="">
-                <a href="<?= url('admin/page-create') ?>" class="btn btn-primary"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_pages.create') ?></a>
+            <div>
+                <a href="<?= url('admin/page-create') ?>" class="btn btn-primary text-nowrap"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_pages.create') ?></a>
             </div>
 
             <div class="ml-3">
                 <div class="dropdown">
-                    <button type="button" class="btn <?= count($data->filters->get) ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.filters.header') ?>">
+                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-filter"></i>
                     </button>
 
@@ -27,8 +27,8 @@
                         <div class="dropdown-header d-flex justify-content-between">
                             <span class="h6 m-0"><?= l('global.filters.header') ?></span>
 
-                            <?php if(count($data->filters->get)): ?>
-                                <a href="<?= url('admin/pages') ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
+                            <?php if($data->filters->has_applied_filters): ?>
+                                <a href="<?= url(\Altum\Router::$original_request) ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
                             <?php endif ?>
                         </div>
 
@@ -43,15 +43,15 @@
                             <div class="form-group px-4">
                                 <label for="filters_search_by" class="small"><?= l('global.filters.search_by') ?></label>
                                 <select name="search_by" id="filters_search_by" class="custom-select custom-select-sm">
-                                    <option value="title" <?= $data->filters->search_by == 'title' ? 'selected="selected"' : null ?>><?= l('admin_blog.main.title') ?></option>
+                                    <option value="title" <?= $data->filters->search_by == 'title' ? 'selected="selected"' : null ?>><?= l('admin_blog.title') ?></option>
                                     <option value="url" <?= $data->filters->search_by == 'url' ? 'selected="selected"' : null ?>><?= l('global.url') ?></option>
                                     <option value="description" <?= $data->filters->search_by == 'description' ? 'selected="selected"' : null ?>><?= l('global.description') ?></option>
-                                    <option value="keywords" <?= $data->filters->search_by == 'keywords' ? 'selected="selected"' : null ?>><?= l('admin_blog.main.keywords') ?></option>
+                                    <option value="keywords" <?= $data->filters->search_by == 'keywords' ? 'selected="selected"' : null ?>><?= l('admin_blog.keywords') ?></option>
                                 </select>
                             </div>
 
                             <div class="form-group px-4">
-                                <label for="filters_pages_category_id" class="small"><?= l('admin_resources.main.pages_category_id') ?></label>
+                                <label for="filters_pages_category_id" class="small"><?= l('admin_resources.pages_category_id') ?></label>
                                 <select name="pages_category_id" id="filters_pages_category_id" class="custom-select custom-select-sm">
                                     <option value=""><?= l('global.all') ?></option>
                                     <?php foreach($data->pages_categories as $pages_category): ?>
@@ -61,7 +61,7 @@
                             </div>
 
                             <div class="form-group px-4">
-                                <label for="filters_is_published" class="small"><?= l('admin_blog.main.is_published') ?></label>
+                                <label for="filters_is_published" class="small"><?= l('admin_blog.is_published') ?></label>
                                 <select name="is_published" id="filters_is_published" class="custom-select custom-select-sm">
                                     <option value=""><?= l('global.all') ?></option>
                                     <option value="1" <?= isset($data->filters->filters['is_published']) && $data->filters->filters['is_published'] ? 'selected="selected"' : null ?>><?= l('global.yes') ?></option>
@@ -72,6 +72,7 @@
                             <div class="form-group px-4">
                                 <label for="filters_order_by" class="small"><?= l('global.filters.order_by') ?></label>
                                 <select name="order_by" id="filters_order_by" class="custom-select custom-select-sm">
+                                    <option value="page_id" <?= $data->filters->order_by == 'page_id' ? 'selected="selected"' : null ?>><?= l('global.id') ?></option>
                                     <option value="datetime" <?= $data->filters->order_by == 'datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_datetime') ?></option>
                                     <option value="last_datetime" <?= $data->filters->search_by == 'last_datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_last_datetime') ?></option>
                                 </select>
@@ -107,7 +108,7 @@
                 <button id="bulk_enable" type="button" class="btn btn-gray-300" data-toggle="tooltip" title="<?= l('global.bulk_actions') ?>"><i class="fas fa-fw fa-sm fa-list"></i></button>
 
                 <div id="bulk_group" class="btn-group d-none" role="group">
-                    <div class="btn-group" role="group">
+                    <div class="btn-group dropdown" role="group">
                         <button id="bulk_actions" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
                             <?= l('global.bulk_actions') ?> <span id="bulk_counter" class="d-none"></span>
                         </button>
@@ -127,6 +128,8 @@
     <form id="table" action="<?= SITE_URL . 'admin/pages/bulk' ?>" method="post" role="form">
         <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
         <input type="hidden" name="type" value="" data-bulk-type />
+        <input type="hidden" name="original_request" value="<?= base64_encode(\Altum\Router::$original_request) ?>" />
+        <input type="hidden" name="original_request_query" value="<?= base64_encode(\Altum\Router::$original_request_query) ?>" />
 
         <div class="table-responsive table-custom-container">
             <table class="table table-custom">
@@ -140,7 +143,7 @@
                     </th>
                     <th><?= l('admin_pages.table.page') ?></th>
                     <th><?= l('global.language') ?></th>
-                    <th><?= l('admin_resources.main.pages_category_id') ?></th>
+                    <th><?= l('admin_resources.pages_category_id') ?></th>
                     <th></th>
                     <th></th>
                     <th></th>
@@ -164,10 +167,18 @@
 
                                 <div class="d-flex flex-column">
                                     <div>
-                                        <a href="<?= url('admin/page-update/' . $row->page_id) ?>"><?= $row->title ?></a>
-                                        <a href="<?= $row->type == 'internal' ? SITE_URL . ($row->language ? \Altum\Language::$active_languages[$row->language] . '/' : null) . 'page/' . $row->url : $row->url ?>" target="_blank" rel="noreferrer"><i class="fas fa-fw fa-xs fa-external-link-alt ml-1"></i></a>
+                                        <a href="<?= url('admin/page-update/' . $row->page_id) ?>" title="<?= $row->title ?>"><?= string_truncate($row->title, 32) ?></a>
                                     </div>
-                                    <span class="text-muted"><?= $row->url ?></span>
+
+                                    <div class="small text-muted">
+                                        <img referrerpolicy="no-referrer" src="<?= get_favicon_url_from_domain(parse_url($row->url, PHP_URL_HOST) ?? '') ?>" class="img-fluid icon-favicon-small mr-1" loading="lazy" />
+
+                                        <span title="<?= remove_url_protocol_from_url($row->url) ?>"><?= string_truncate(remove_url_protocol_from_url($row->url), 32) ?></span>
+
+                                        <a href="<?= $row->type == 'internal' ? SITE_URL . ($row->language ? \Altum\Language::$active_languages[$row->language] . '/' : null) . 'page/' . $row->url : $row->url ?>" target="_blank" rel="noreferrer">
+                                            <i class="fas fa-fw fa-xs fa-external-link-alt text-muted ml-1"></i>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </td>
@@ -180,17 +191,21 @@
 
                         <td class="text-nowrap">
                             <?php if($row->pages_category_id): ?>
-                                <a href="<?= url('admin/pages-category-update/' . $row->pages_category_id) ?>">
+                                <a href="<?= url('admin/pages-category-update/' . $row->pages_category_id) ?>" class="badge badge-info">
                                     <?= $data->pages_categories[$row->pages_category_id]->title ?? null ?>
                                 </a>
                             <?php else: ?>
-                                <?= l('admin_resources.main.pages_category_id_null') ?>
+                                <div class="badge badge-info">
+                                    <?= l('global.none') ?>
+                                </div>
                             <?php endif ?>
                         </td>
 
                         <td class="text-nowrap text-muted">
                             <?php if($row->type == 'internal'): ?>
-                                <?= sprintf(l('admin_pages.table.total_views'), nr($row->total_views)) ?>
+                                <span class="badge badge-light">
+                                    <i class="fas fa-fw fa-sm fa-eye mr-1"></i> <?= sprintf(l('admin_pages.table.total_views'), nr($row->total_views)) ?>
+                                </span>
                             <?php endif ?>
                         </td>
 
@@ -200,11 +215,11 @@
                                     <i class="fas fa-fw fa-sort text-muted"></i>
                                 </span>
 
-                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>') ?>">
+                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
                                     <i class="fas fa-fw fa-calendar text-muted"></i>
                                 </span>
 
-                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.last_datetime_tooltip'), ($row->last_datetime ? '<br />' . \Altum\Date::get($row->last_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_datetime, 3) . '</small>' : '-')) ?>">
+                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.last_datetime_tooltip'), ($row->last_datetime ? '<br />' . \Altum\Date::get($row->last_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->last_datetime) . ')</small>' : '<br />' . l('global.na'))) ?>">
                                     <i class="fas fa-fw fa-history text-muted"></i>
                                 </span>
                             </div>
@@ -240,7 +255,7 @@
                     <p class="text-muted"><?= l('admin_pages.subheader_no_data') ?></p>
 
                     <div>
-                        <a href="<?= url('admin/page-create') ?>" class="btn btn-primary"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_pages.create') ?></a>
+                        <a href="<?= url('admin/page-create') ?>" class="btn btn-primary text-nowrap"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_pages.create') ?></a>
                     </div>
                 </div>
             </div>
@@ -249,8 +264,8 @@
 
 <?php endif ?>
 
-<?php require THEME_PATH . 'views/admin/partials/js_bulk.php' ?>
-<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/admin/partials/bulk_delete_modal.php'), 'modals'); ?>
+<?php require THEME_PATH . 'views/partials/js_bulk.php' ?>
+<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/bulk_delete_modal.php'), 'modals'); ?>
 <?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/universal_delete_modal_url.php', [
     'name' => 'page',
     'resource_id' => 'page_id',

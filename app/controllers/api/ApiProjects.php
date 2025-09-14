@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,10 +19,16 @@ namespace Altum\Controllers;
 use Altum\Response;
 use Altum\Traits\Apiable;
 
+defined('ALTUMCODE') || die();
+
 class ApiProjects extends Controller {
     use Apiable;
 
     public function index() {
+
+        if(!settings()->links->projects_is_enabled) {
+            redirect('not-found');
+        }
 
         $this->verify_request();
 
@@ -82,6 +95,7 @@ class ApiProjects extends Controller {
             /* Prepare the data */
             $row = [
                 'id' => (int) $row->project_id,
+                'user_id' => (int) $row->user_id,
                 'name' => $row->name,
                 'color' => $row->color,
                 'last_datetime' => $row->last_datetime,
@@ -126,6 +140,7 @@ class ApiProjects extends Controller {
         /* Prepare the data */
         $data = [
             'id' => (int) $project->project_id,
+            'user_id' => (int) $project->user_id,
             'name' => $project->name,
             'color' => $project->color,
             'last_datetime' => $project->last_datetime,
@@ -155,23 +170,28 @@ class ApiProjects extends Controller {
         }
 
         $_POST['name'] = trim($_POST['name']);
-        $_POST['color'] = !isset($_POST['color']) || !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['color']) ? '#000' : $_POST['color'];
+        $_POST['color'] = !isset($_POST['color']) || !verify_hex_color($_POST['color']) ? '#000000' : $_POST['color'];
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         $project_id = db()->insert('projects', [
             'user_id' => $this->api_user->user_id,
             'name' => $_POST['name'],
             'color' => $_POST['color'],
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('projects?user_id=' . $this->api_user->user_id);
-        \Altum\Cache::$adapter->deleteItem('projects_total?user_id=' . $this->api_user->user_id);
+        cache()->deleteItem('projects?user_id=' . $this->api_user->user_id);
+        cache()->deleteItem('projects_total?user_id=' . $this->api_user->user_id);
 
         /* Prepare the data */
         $data = [
-            'id' => $project_id
+            'id' => (int) $project_id,
+            'user_id' => $this->api_user->user_id,
+            'name' => $_POST['name'],
+            'color' => $_POST['color'],
+            'last_datetime' => null,
+            'datetime' => get_date(),
         ];
 
         Response::jsonapi_success($data, null, 201);
@@ -191,21 +211,26 @@ class ApiProjects extends Controller {
         }
 
         $_POST['name'] = trim($_POST['name'] ?? $project->name);
-        $_POST['color'] = isset($_POST['color']) && preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['color']) ? $_POST['color'] : $project->color;
+        $_POST['color'] = isset($_POST['color']) && verify_hex_color($_POST['color']) ? $_POST['color'] : $project->color;
 
         /* Database query */
         db()->where('project_id', $project->project_id)->update('projects', [
             'name' => $_POST['name'],
             'color' => $_POST['color'],
-            'last_datetime' => \Altum\Date::$date,
+            'last_datetime' => get_date(),
         ]);
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('projects?user_id=' . $this->api_user->user_id);
+        cache()->deleteItem('projects?user_id=' . $this->api_user->user_id);
 
         /* Prepare the data */
         $data = [
-            'id' => $project->project_id
+            'id' => (int) $project->project_id,
+            'user_id' => $this->api_user->user_id,
+            'name' => $_POST['name'],
+            'color' => $_POST['color'],
+            'last_datetime' => get_date(),
+            'datetime' => $project->datetime,
         ];
 
         Response::jsonapi_success($data, null, 200);
@@ -224,12 +249,12 @@ class ApiProjects extends Controller {
             $this->return_404();
         }
 
-        /* Delete the project */
+        /* Delete the resource */
         db()->where('project_id', $project_id)->delete('projects');
 
         /* Clear the cache */
-        \Altum\Cache::$adapter->deleteItem('projects?user_id=' . $this->api_user->user_id);
-        \Altum\Cache::$adapter->deleteItem('projects_total?user_id=' . $this->api_user->user_id);
+        cache()->deleteItem('projects?user_id=' . $this->api_user->user_id);
+        cache()->deleteItem('projects_total?user_id=' . $this->api_user->user_id);
 
         http_response_code(200);
         die();

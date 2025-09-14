@@ -1,5 +1,119 @@
 'use strict';
 
+/* File upload handler */
+document.querySelectorAll('[data-file-input-wrapper-size-limit]').forEach(element => {
+    element.querySelector('input[type="file"]').addEventListener('change', event => {
+        let input = event.currentTarget;
+
+        if(input.files && input.files[0] && (input.files[0].size / 1024 / 1024) > element.getAttribute('data-file-input-wrapper-size-limit')) {
+            alert(element.getAttribute('data-file-input-wrapper-size-limit-error'));
+            input.value = '';
+            event.stopPropagation();
+        }
+    })
+});
+
+/* File upload handler */
+document.querySelectorAll('[data-file-input-wrapper-size-limit]').forEach(element => {
+    element.querySelector('input[type="file"]').addEventListener('change', event => {
+        let input = event.currentTarget;
+
+        if(input.files && input.files[0] && (input.files[0].size / 1024 / 1024) > element.getAttribute('data-file-input-wrapper-size-limit')) {
+            alert(element.getAttribute('data-file-input-wrapper-size-limit-error'));
+            input.value = '';
+            event.stopPropagation();
+        }
+    })
+});
+
+/* Image upload preview handler */
+document.querySelectorAll('[data-file-image-input-wrapper]').forEach(element => {
+    element.querySelector('input[type="file"]').addEventListener('change', event => {
+        let input = event.currentTarget;
+        let preview_image = element.querySelector('[id*="_preview"] img');
+
+        /* Preview image */
+        if(input.files && input.files[0]) {
+            let reader = new FileReader();
+
+            reader.onload = event => {
+                /* Display preview wrapper */
+                element.querySelector('[id*="_preview"]').classList.remove('d-none');
+
+                /* Mark it as no default */
+                if(!preview_image.getAttribute('src') && !preview_image.getAttribute('data-src')) {
+                    preview_image.setAttribute('data-no-default-src', 'yes');
+                }
+
+                /* Make sure to save the default src */
+                if(preview_image.getAttribute('src') && !preview_image.getAttribute('data-src') && !preview_image.getAttribute('data-no-default-src')) {
+                    preview_image.setAttribute('data-src', preview_image.getAttribute('src'))
+                }
+
+                /* Display new preview */
+                preview_image.setAttribute('src', event.target.result);
+                preview_image.classList.remove('d-none');
+
+                /* Remove selected file handler */
+                element.querySelector('[id$="_remove_selected_file_wrapper"]').classList.remove('d-none');
+
+                /* Main remove wrapper */
+                element.querySelector('[id$="_remove_wrapper"]').classList.add('d-none');
+
+                /* Disable clicks */
+                element.querySelector('[id*="_preview"] a').style.pointerEvents = 'none';
+            };
+
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        /* Remove image preview / fallback to original */
+        else {
+            if(preview_image.getAttribute('data-src')) {
+                preview_image.setAttribute('src', preview_image.getAttribute('data-src'));
+
+                /* Enable clicks */
+                element.querySelector('[id*="_preview"] a').style.pointerEvents = 'inherit';
+            } else {
+                /* Hide preview wrapper */
+                element.querySelector('[id*="_preview"]').classList.add('d-none');
+                preview_image.classList.add('d-none');
+
+                /* Remove image link */
+                preview_image.setAttribute('src', '')
+            }
+
+            /* Remove selected file handler */
+            element.querySelector('[id$="_remove_selected_file_wrapper"]').classList.add('d-none');
+
+            /* Main remove wrapper */
+            if(preview_image.getAttribute('src')) {
+                element.querySelector('[id$="_remove_wrapper"]').classList.remove('d-none');
+            }
+        }
+    });
+
+    /* Handle remove checkbox */
+    element.querySelector('[id$="_remove"]').addEventListener('change', event => {
+        let is_checked = event.currentTarget.checked;
+
+        if(is_checked) {
+            element.querySelector('input[type="file"]').classList.add('container-disabled');
+            element.querySelector('[id*="_preview"]').classList.add('container-disabled');
+        } else {
+            element.querySelector('input[type="file"]').classList.remove('container-disabled');
+            element.querySelector('[id*="_preview"]').classList.remove('container-disabled');
+        }
+    });
+
+    /* Handle remove selected file */
+    element.querySelector('[id$="_remove_selected_file"]').addEventListener('click', event => {
+        let input = event.currentTarget.closest('.row').querySelector('input');
+        input.value = '';
+        input.dispatchEvent(new Event('change'));
+    });
+});
+
 /* Global type handler */
 let type_handler = (selector, data_key, matching_selector = '=') => {
     if(!document.querySelector(selector)) {
@@ -7,7 +121,7 @@ let type_handler = (selector, data_key, matching_selector = '=') => {
     }
 
     let type = null;
-    if(document.querySelector(selector).type == 'radio') {
+    if(['radio', 'checkbox'].includes(document.querySelector(selector).type)) {
         type = document.querySelector(`${selector}:checked`) ? document.querySelector(`${selector}:checked`).value : null;
     } else {
         type = document.querySelector(selector).value;
@@ -67,12 +181,29 @@ document.querySelectorAll('[type="submit"][name="submit"]:not([data-is-ajax])').
 });
 
 /* Enable tooltips everywhere */
+let tooltips_initiate = () => {
+    if(typeof $ == 'function') {
+        let tooltips = $('[data-toggle="tooltip"],[data-tooltip]');
+        tooltips.tooltip('dispose');
+        tooltips.tooltip({ boundary: 'window' });
+
+        $('[data-tooltip-hide-on-click]').on('click', event => {
+            $(event.currentTarget).tooltip('hide');
+        });
+    }
+
+    window.addEventListener('beforeprint', () => {
+        $('[data-toggle="tooltip"]').tooltip('hide');
+    });
+}
+
+tooltips_initiate();
+
 if(typeof $ == 'function') {
-    $('[data-toggle="tooltip"],[data-tooltip]').tooltip();
-
-
-    $('[data-tooltip-hide-on-click]').on('click', event => {
-        $(event.currentTarget).tooltip('hide');
+    $('.table-responsive table .dropdown').on('show.bs.dropdown', function () {
+        $(this).find('.dropdown-menu').appendTo('body');
+    }).on('hide.bs.dropdown', function () {
+        $(this).find('.dropdown-menu').appendTo($(this));
     });
 }
 
@@ -147,7 +278,7 @@ const display_notifications = (messages, type, selector) => {
 
         html += `
             <div class="alert alert-${type} altum-animate altum-animate-fill-none altum-animate-fade-in">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <button type="button" class="close ml-2" data-dismiss="alert">&times;</button>
                 <i class="fas fa-fw ${icon} mr-2"></i> ${message}
             </div>`;
     }
@@ -323,6 +454,124 @@ let range_counter_initiate = () => {
 }
 
 range_counter_initiate();
+
+let password_toggle_view_initiate = () => {
+    document.querySelectorAll('[data-password-toggle-view]').forEach(element => {
+        let label = element.querySelector('label');
+        let label_html = label.innerHTML;
+
+        /* Create a span element to hold the label text */
+        let label_span = document.createElement('span');
+        label_span.innerHTML = label_html;
+
+        /* Create small element which will display the current range input value */
+        let label_icon = document.createElement('a');
+        label_icon.classList.add('text-muted');
+        label_icon.setAttribute('role', 'button');
+        label_icon.setAttribute('tabindex', '0');
+        label_icon.innerHTML = '<i class="fas fa-fw fa-sm fa-eye-slash"></i>'
+        label_icon.setAttribute('title', element.getAttribute('data-password-toggle-view-show'));
+        label_icon.setAttribute('data-toggle', 'tooltip');
+        label_icon.setAttribute('data-tooltip-hide-on-click', '');
+
+        /* Add the event listeners for the eye */
+        label_icon.addEventListener('click', event => {
+            let input = element.querySelector(`input`);
+            input.type = input.type === 'text' ? 'password' : 'text';
+            label_icon.innerHTML = input.type === 'text' ? '<i class="fas fa-fw fa-sm fa-eye"></i>' : '<i class="fas fa-fw fa-sm fa-eye-slash"></i>';
+            label_icon.setAttribute('title', input.type === 'text' ? element.getAttribute('data-password-toggle-view-hide') : element.getAttribute('data-password-toggle-view-show'));
+            label_icon.setAttribute('data-original-title', input.type === 'text' ? element.getAttribute('data-password-toggle-view-hide') : element.getAttribute('data-password-toggle-view-show'));
+            tooltips_initiate();
+        });
+
+        /* Add new classes to the already existing label */
+        label.classList.add('d-flex', 'justify-content-between', 'align-items-center');
+
+        /* Replace existing label with the new generated content */
+        label.innerHTML = ``;
+        label.appendChild(label_span);
+        label.appendChild(label_icon);
+
+        tooltips_initiate();
+    });
+}
+
+password_toggle_view_initiate();
+
+/* Filters detect and shortcut CMD/CTRL+SHIFT+F */
+document.addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+
+        const filters_button = $('.filters-button');
+
+        /* temporarily disable tooltip */
+        filters_button.tooltip('disable');
+
+        /* toggle dropdown */
+        filters_button.dropdown('toggle');
+
+        /* focus on search input */
+        setTimeout(function() {
+            document.getElementById('filters_search').focus();
+
+            /* re-enable tooltip after short delay */
+            filters_button.tooltip('enable');
+        }, 100);
+    }
+});
+
+let get_plan_feature_limit_info = (used, total, should_display = true, info_message) => {
+    /* return null if not to be displayed */
+    if (!should_display) return null;
+
+    /* calculate percentage used */
+    let percentage_used = (total === -1 || total === 0) ? 0 : (used / total * 100);
+
+    /* determine remaining percentage or unlimited */
+    let percentage_remaining = (total === -1) ? 'Unlimited' : nr(100 - percentage_used) + '%';
+
+    /* build the final message */
+    return info_message
+        .replace('%1$s', '<strong>' + nr(used) + '</strong>')
+        .replace('%2$s', '<strong>' + (total === -1 ? 'Unlimited' : nr(total)) + '</strong>')
+        .replace('%3$s', '<strong>' + percentage_remaining + '</strong>');
+}
+document.querySelectorAll('input[type="url"]').forEach(input => {
+    const fixURL = () => input.value = input.value.trim().replace(/^(?!https?:\/\/)(.+\..+)/i, 'https://$1').replace(/^(https?:\/\/)/i, m => m.toLowerCase());
+
+    input.addEventListener('blur', fixURL);
+    input.addEventListener('keydown', e => e.key === 'Enter' && fixURL());
+});
+
+document.querySelectorAll('form input, form select, form textarea').forEach(field => {
+    field.addEventListener('invalid', () => {
+        const invalid_field = field;
+
+        /* find the nearest collapsed parent */
+        const collapse_container = invalid_field.closest('.collapse');
+
+        if (!collapse_container) {
+            return;
+        }
+
+        /* if collapse already open, scroll immediately */
+        if ($(collapse_container).hasClass('show')) {
+            invalid_field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => invalid_field.focus(), 100);
+            return;
+        }
+
+        /* wait for the collapse animation to finish */
+        $(collapse_container).one('shown.bs.collapse', () => {
+            invalid_field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => invalid_field.focus(), 100);
+        });
+
+        /* trigger the open animation */
+        $(collapse_container).collapse('show');
+    });
+});
 
 /* Product specific functions */
 const ajax_call_helper = (event, controller, request_type, success_callback = () => {}) => {

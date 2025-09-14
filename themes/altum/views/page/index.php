@@ -1,18 +1,18 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div class="container">
-<?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li><a href="<?= url('pages') ?>"><?= l('pages.index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <?php if($data->pages_category): ?>
-                <li><a href="<?= url('pages/' . $data->pages_category->url) ?>"><?= $data->pages_category->title ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <?php endif ?>
-            <li class="active" aria-current="page"><?= l('page.breadcrumb') ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+<div class="container col-lg-8">
+    <?php if(settings()->main->breadcrumbs_is_enabled): ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li><a href="<?= url('pages') ?>"><?= l('pages.index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <?php if($data->pages_category): ?>
+                    <li><a href="<?= url('pages/' . $data->pages_category->url) ?>"><?= $data->pages_category->title ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <?php endif ?>
+                <li class="active" aria-current="page"><?= l('page.breadcrumb') ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
     <div class="card">
         <div class="card-body">
@@ -38,9 +38,13 @@
                 <?php endif ?>
             </p>
 
-            <p><?= $data->page->description ?></p>
+            <div class="blog-post-content">
+                <p><?= $data->page->description ?></p>
 
-            <?= $data->page->content ?>
+                <div class="<?= $data->page->editor == 'wysiwyg' ? 'ql-content' : null ?>">
+                    <?= $data->page->content ?>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -48,9 +52,38 @@
         <div class="card mt-4">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between flex-wrap">
-                    <?= include_view(THEME_PATH . 'views/partials/share_buttons.php', ['url' => url(\Altum\Router::$original_request), 'class' => 'btn btn-gray-100 mb-2 mb-md-0 mr-md-3']) ?>
+                    <?= include_view(THEME_PATH . 'views/partials/share_buttons.php', ['url' => url(\Altum\Router::$original_request), 'class' => 'btn btn-gray-100', 'copy_to_clipboard' => true]) ?>
                 </div>
             </div>
         </div>
     <?php endif ?>
 </div>
+
+<?php ob_start() ?>
+<script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "<?= l('index.title') ?>",
+                    "item": "<?= url() ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "<?= l('blog.title') ?>",
+                    "item": "<?= url('blog') ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 3,
+                    "name": "<?= $data->page->title ?>",
+                    "item": "<?= SITE_URL . ($data->page->language ? \Altum\Language::$active_languages[$data->page->language] . '/' : null) . 'page/' . $data->page->url ?>"
+                }
+            ]
+        }
+</script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

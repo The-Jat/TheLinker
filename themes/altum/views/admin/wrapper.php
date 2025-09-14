@@ -22,7 +22,7 @@
     <?php endif ?>
 
     <?php if(!empty(settings()->main->favicon)): ?>
-        <link href="<?= \Altum\Uploads::get_full_url('favicon') . settings()->main->favicon ?>" rel="shortcut icon" />
+        <link href="<?= settings()->main->favicon_full_url ?>" rel="icon" />
     <?php endif ?>
 
     <link href="<?= ASSETS_FULL_URL . 'css/admin-' . \Altum\ThemeStyle::get_file() . '?v=' . PRODUCT_CODE ?>" id="css_theme_style" rel="stylesheet" media="screen,print">
@@ -31,10 +31,15 @@
     <?php endforeach ?>
 
     <?= \Altum\Event::get_content('head') ?>
+
+        <?php if(is_logged_in() && !user()->plan_settings->export->pdf): ?>
+            <style>@media print { body { display: none; } }</style>
+        <?php endif ?>
 </head>
 
 <body class="<?= l('direction') == 'rtl' ? 'rtl' : null ?>" data-theme-style="<?= \Altum\ThemeStyle::get() ?>">
 <div id="admin_overlay" class="admin-overlay" style="display: none"></div>
+<?php if(settings()->main->admin_spotlight_is_enabled || settings()->main->user_spotlight_is_enabled) require THEME_PATH . 'views/partials/spotlight.php' ?>
 
 <div class="admin-container">
     <?= $this->views['admin_sidebar'] ?>
@@ -43,11 +48,12 @@
         <?= $this->views['admin_menu'] ?>
 
         <div class="p-3 p-lg-5 position-relative">
+            <?= include_view(THEME_PATH . 'views/admin/partials/admin_version_updates_bar.php') ?>
             <?= include_view(THEME_PATH . 'views/admin/partials/admin_support_bar.php') ?>
 
             <?= $this->views['content'] ?>
 
-            <div class="card mt-4">
+            <div class="card mt-4 d-print-none">
                 <div class="card-body">
                     <?= $this->views['footer'] ?>
                 </div>
@@ -60,53 +66,15 @@
 
 <?php require THEME_PATH . 'views/partials/js_global_variables.php' ?>
 
-<?php foreach(['libraries/jquery.slim.min.js', 'libraries/popper.min.js', 'libraries/bootstrap.min.js', 'custom.js', 'libraries/fontawesome.min.js', 'libraries/fontawesome-solid.min.js', 'libraries/fontawesome-brands.min.js', 'libraries/select2.js'] as $file): ?>
+<?php foreach(['libraries/jquery.slim.min.js', 'libraries/popper.min.js', 'libraries/bootstrap.min.js', 'custom.js'] as $file): ?>
     <script src="<?= ASSETS_FULL_URL ?>js/<?= $file ?>?v=<?= PRODUCT_CODE ?>"></script>
+<?php endforeach ?>
+
+<?php foreach(['libraries/select2.min.js', 'admin_custom.js', 'libraries/fontawesome.min.js', 'libraries/fontawesome-solid.min.js', 'libraries/fontawesome-brands.min.js',] as $file): ?>
+    <script src="<?= ASSETS_FULL_URL ?>js/<?= $file ?>?v=<?= PRODUCT_CODE ?>" defer></script>
 <?php endforeach ?>
 
 <?= \Altum\Event::get_content('javascript') ?>
 
-<script>
-    let toggle_admin_sidebar = () => {
-        /* Open sidebar menu */
-        let body = document.querySelector('body');
-        body.classList.toggle('admin-sidebar-opened');
-
-        /* Toggle overlay */
-        let admin_overlay = document.querySelector('#admin_overlay');
-        admin_overlay.style.display == 'none' ? admin_overlay.style.display = 'block' : admin_overlay.style.display = 'none';
-
-        /* Change toggle button content */
-        let button = document.querySelector('#admin_menu_toggler');
-
-        if(body.classList.contains('admin-sidebar-opened')) {
-            button.innerHTML = `<i class="fas fa-fw fa-times"></i>`;
-        } else {
-            button.innerHTML = `<i class="fas fa-fw fa-bars"></i>`;
-        }
-    };
-
-    /* Toggler for the sidebar */
-    document.querySelector('#admin_menu_toggler').addEventListener('click', event => {
-        event.preventDefault();
-
-        toggle_admin_sidebar();
-
-        let admin_sidebar_is_opened = document.querySelector('body').classList.contains('admin-sidebar-opened');
-
-        if(admin_sidebar_is_opened) {
-            document.querySelector('#admin_overlay').removeEventListener('click', toggle_admin_sidebar);
-            document.querySelector('#admin_overlay').addEventListener('click', toggle_admin_sidebar);
-        } else {
-            document.querySelector('#admin_overlay').removeEventListener('click', toggle_admin_sidebar);
-        }
-    });
-
-    /* Custom select implementation */
-    $('select:not([multiple="multiple"]):not([class="input-group-text"]):not([class="custom-select custom-select-sm"]):not([class^="ql"]):not([data-is-not-custom-select])').select2({
-        dir: <?= json_encode(l('direction')) ?>,
-        minimumResultsForSearch: 5,
-    });
-</script>
 </body>
 </html>

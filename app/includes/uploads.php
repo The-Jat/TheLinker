@@ -1,20 +1,29 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
+
+defined('ALTUMCODE') || die();
 
 return [
     /* Main */
     'logo_light' => [
-        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp'],
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'],
         'path' => 'main/',
     ],
     'logo_dark' => [
-        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp'],
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'],
         'path' => 'main/',
     ],
     'logo_email' => [
@@ -26,8 +35,18 @@ return [
         'path' => 'main/',
     ],
     'opengraph' => [
-        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp'],
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'],
         'path' => 'main/',
+    ],
+    'custom_images' => [
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'],
+        'path' => 'main/',
+    ],
+
+    /* Users misc */
+    'users' => [
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'],
+        'path' => 'users/',
     ],
 
     /* PWA plugin */
@@ -43,6 +62,11 @@ return [
         'path' => 'pwa/',
     ],
 
+    /* Dynamic OG images plugin */
+    'dynamic_og_images' => [
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'webp'],
+    ],
+
     'push_notifications_icon' => [
         'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png'],
         'path' => 'main/',
@@ -50,13 +74,13 @@ return [
 
     /* Blog featured images */
     'blog' => [
-        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp'],
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'],
         'path' => 'blog/',
     ],
 
     /* Payment proofs for offline payments */
     'offline_payment_proofs' => [
-        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'pdf'],
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'webp', 'avif', 'pdf'],
         'path' => 'offline_payment_proofs/',
     ],
 
@@ -67,14 +91,17 @@ return [
         'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'gif']
     ],
 
-    /* Biolinks themes preview thumbnail */
-    'biolinks_themes' => [
-        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'gif', 'webp']
+    'qr_code_default_image' => [
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'gif', 'svg'],
+        'path' => 'qr_code/'
     ],
 
-    /* Biolinks templates preview thumbnail */
-    'biolinks_templates' => [
-        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'gif', 'webp']
+    'qr_code_background' => [
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'gif']
+    ],
+
+    'qr_code_foreground' => [
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'gif']
     ],
 
     /* :) */
@@ -86,13 +113,13 @@ return [
 
     /* File upload links */
     'files' => [
-        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'zip', 'rar', 'doc', 'docx']
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'pdf', 'zip', 'rar', 'doc', 'docx']
     ],
 
     /* Static file links */
     'static' => [
         'whitelisted_file_extensions' => ['html', 'zip'],
-        'inside_zip_whitelisted_file_extensions' => ['css', 'js', 'html', 'jpg', 'jpeg', 'png', 'ico', 'svg', 'gif', 'webp'],
+        'inside_zip_whitelisted_file_extensions' => ['css', 'js', 'html', 'jpg', 'jpeg', 'png', 'ico', 'svg', 'gif', 'webp', 'ttf', 'woff', 'woff2', 'eot', 'otf', 'xml', 'json', 'mp3', 'wav', 'mp4', 'webm', 'pdf', 'txt', 'avif'],
     ],
 
     /* Vcard avatars */
@@ -103,13 +130,13 @@ return [
 
     /* Splash pages */
     'splash_pages' => [
-        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp'],
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'],
         'path' => 'splash_pages/',
     ],
 
     /* Biolink */
     'biolink_seo_image' => [
-        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp'],
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'],
         'path' => 'block_images/',
     ],
 
@@ -119,8 +146,14 @@ return [
     ],
 
     'biolink_background' => [
-        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'mp4'],
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'mp4', 'avif'],
         'path' => 'backgrounds/',
+    ],
+
+    /* 66pusher push notifications */
+    'service_workers' => [
+        'whitelisted_file_extensions' => ['js'],
+        'path' => 'service_workers/',
     ],
 
     /* AIX */
@@ -135,12 +168,12 @@ return [
     ],
 
     'chats_assistants' => [
-        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp'],
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'],
         'path' => 'chats_assistants/',
     ],
 
     'chats_images' => [
-        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp'],
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'],
         'path' => 'chats_images/',
     ],
 ];

@@ -19,32 +19,13 @@
         <meta name="keywords" content="<?= \Altum\Meta::$keywords ?>" />
     <?php endif ?>
 
-    <?php if(\Altum\Meta::$open_graph['url']): ?>
-        <!-- Open Graph / Facebook / Twitter -->
-        <?php foreach(\Altum\Meta::$open_graph as $key => $value): ?>
-            <?php if($value): ?>
-                <meta property="og:<?= $key ?>" content="<?= $value ?>" />
-                <meta property="twitter:<?= $key ?>" content="<?= $value ?>" />
-            <?php endif ?>
-        <?php endforeach ?>
-    <?php endif ?>
-
+    <?php \Altum\Meta::output() ?>
 
     <?php if(\Altum\Meta::$canonical): ?>
         <link rel="canonical" href="<?= \Altum\Meta::$canonical ?>" />
     <?php endif ?>
 
-    <?php if(!settings()->main->se_indexing || \Altum\Meta::$robots): ?>
-        <?php if(!settings()->main->se_indexing) \Altum\Meta::set_robots('noindex'); ?>
-        <meta name="robots" content="<?= \Altum\Meta::$robots ?>">
-    <?php endif ?>
-
-    <?php if(\Altum\Meta::$canonical): ?>
-        <link rel="canonical" href="<?= \Altum\Meta::$canonical ?>" />
-    <?php endif ?>
-
-    <?php if(!settings()->main->se_indexing || \Altum\Meta::$robots): ?>
-        <?php if(!settings()->main->se_indexing) \Altum\Meta::set_robots('noindex'); ?>
+    <?php if(\Altum\Meta::$robots): ?>
         <meta name="robots" content="<?= \Altum\Meta::$robots ?>">
     <?php endif ?>
 
@@ -58,7 +39,7 @@
     <?php endif ?>
 
     <?php if(!empty(settings()->main->favicon)): ?>
-        <link href="<?= \Altum\Uploads::get_full_url('favicon') . settings()->main->favicon ?>" rel="shortcut icon" />
+        <link href="<?= settings()->main->favicon_full_url ?>" rel="icon" />
     <?php endif ?>
 
     <link href="<?= ASSETS_FULL_URL . 'css/' . \Altum\ThemeStyle::get_file() . '?v=' . PRODUCT_CODE ?>" id="css_theme_style" rel="stylesheet" media="screen,print">
@@ -68,8 +49,12 @@
 
     <?= \Altum\Event::get_content('head') ?>
 
+        <?php if(is_logged_in() && !user()->plan_settings->export->pdf): ?>
+            <style>@media print { body { display: none; } }</style>
+        <?php endif ?>
+
     <?php if(!empty(settings()->custom->head_js)): ?>
-        <?= settings()->custom->head_js ?>
+        <?= get_settings_custom_head_js() ?>
     <?php endif ?>
 
     <?php if(!empty(settings()->custom->head_css)): ?>
@@ -78,10 +63,15 @@
 </head>
 
 <body class="<?= l('direction') == 'rtl' ? 'rtl' : null ?> bg-gray-50 <?= in_array(\Altum\Router::$controller_key, ['login', 'register']) ? \Altum\Router::$controller_key . '-background' : null ?> <?= \Altum\ThemeStyle::get() == 'dark' ? 'cc--darkmode' : null ?>" data-theme-style="<?= \Altum\ThemeStyle::get() ?>">
-<?php //ALTUMCODE:DEMO if(DEMO) echo include_view(THEME_PATH . 'views/partials/ac_banner.php', ['demo_url' => 'https://66biolinks.com/demo/', 'product_name' => PRODUCT_NAME, 'product_url' => PRODUCT_URL]) ?>
+<?php if(!empty(settings()->custom->body_content)): ?>
+    <?= settings()->custom->body_content ?>
+<?php endif ?>
+
+<?php //ALTUMCODE:DEMO if(DEMO) echo include_view(THEME_PATH . 'views/partials/ac_banner.php', ['demo_url' => 'https://66biolinks.com/demo/', 'product_name' => PRODUCT_NAME, 'product_url' => PRODUCT_URL, 'product_buy_url' => PRODUCT_BUY_URL]) ?>
 
 <?php require THEME_PATH . 'views/partials/announcements.php' ?>
 <?php require THEME_PATH . 'views/partials/cookie_consent.php' ?>
+<?php if(settings()->main->admin_spotlight_is_enabled || settings()->main->user_spotlight_is_enabled) require THEME_PATH . 'views/partials/spotlight.php' ?>
 
 <main class="altum-animate altum-animate-fill-none altum-animate-fade-in py-6">
     <div class="container">
@@ -91,14 +81,14 @@
                 <div class="mb-5 text-center">
                     <a href="<?= url() ?>" class="text-decoration-none text-dark">
                         <?php if(settings()->main->{'logo_' . \Altum\ThemeStyle::get()} != ''): ?>
-                            <img src="<?= \Altum\Uploads::get_full_url('logo_' . \Altum\ThemeStyle::get()) . settings()->main->{'logo_' . \Altum\ThemeStyle::get()} ?>" class="img-fluid navbar-logo" alt="<?= l('global.accessibility.logo_alt') ?>" />
+                            <img src="<?= settings()->main->{'logo_' . \Altum\ThemeStyle::get() . '_full_url'} ?>" class="img-fluid navbar-logo" alt="<?= l('global.accessibility.logo_alt') ?>" />
                         <?php else: ?>
                             <span class="h3"><?= settings()->main->title ?></span>
                         <?php endif ?>
                     </a>
                 </div>
 
-                <div class="card">
+                <div class="card rounded-2x">
                     <div class="card-body p-5">
                         <?= $this->views['content'] ?>
                     </div>

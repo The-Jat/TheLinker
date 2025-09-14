@@ -29,8 +29,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* On modal show load new data */
+    
+/* On modal show load new data */
     $('#tax_delete_modal').on('show.bs.modal', event => {
         let tax_id = $(event.relatedTarget).data('tax-id');
 

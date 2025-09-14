@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,15 +19,17 @@ namespace Altum\Controllers;
 use Altum\Alerts;
 use Altum\Title;
 
+defined('ALTUMCODE') || die();
+
 class TeamMemberCreate extends Controller {
 
     public function index() {
 
-        \Altum\Authentication::guard();
-
         if(!\Altum\Plugin::is_active('teams')) {
-            redirect('dashboard');
+            redirect('not-found');
         }
+
+        \Altum\Authentication::guard();
 
         $team_id = isset($this->params[0]) ? (int) $this->params[0] : null;
 
@@ -80,12 +89,12 @@ class TeamMemberCreate extends Controller {
 
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
-                /* Prepare the statement and execute query */
+                /* Database query */
                 $team_member_id = db()->insert('teams_members', [
                     'team_id' => $team->team_id,
                     'user_email' => $_POST['user_email'],
                     'access' => json_encode($access),
-                    'datetime' => \Altum\Date::$date,
+                    'datetime' => get_date(),
                 ]);
 
                 /* Is the invited user already registered on the platform? */
@@ -94,13 +103,13 @@ class TeamMemberCreate extends Controller {
                 /* Prepare the email */
                 $email_template = get_email_template(
                     [
-                        '{{TEAM_NAME}}' => $team->name,
+                        '{{TEAM:NAME}}' => $team->name,
                     ],
                     l('global.emails.team_member_create.subject'),
                     [
-                        '{{TEAM_NAME}}' => $team->name,
-                        '{{USER_NAME}}' => str_replace('.', '. ', $this->user->name),
-                        '{{USER_EMAIL}}' => $this->user->email,
+                        '{{TEAM:NAME}}' => $team->name,
+                        '{{USER:NAME}}' => str_replace('.', '. ', $this->user->name),
+                        '{{USER:EMAIL}}' => $this->user->email,
                         '{{LOGIN_LINK}}' => url('login?redirect=teams-member&email=' . $_POST['user_email']),
                         '{{REGISTER_LINK}}' => url('register?redirect=teams-member&email=' . $_POST['user_email']) . '&unique_registration_identifier=' . md5($_POST['user_email'] . $_POST['user_email']),
                     ],
@@ -124,7 +133,7 @@ class TeamMemberCreate extends Controller {
         /* Set a custom title */
         Title::set(sprintf(l('team_member_create.title'), $team->name));
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'values' => $values,
             'team' => $team,

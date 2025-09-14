@@ -7,7 +7,7 @@
             <div class="modal-body">
                 <div class="d-flex justify-content-between mb-3">
                     <h5 class="modal-title">
-                        <i class="fas fa-fw fa-sm fa-redo text-dark mr-2"></i>
+                        <i class="fas fa-fw fa-sm fa-eraser text-dark mr-2"></i>
                         <?= l('statistics_reset_modal.header') ?>
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" title="<?= l('global.close') ?>">
@@ -36,8 +36,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* On modal show load new data */
+    
+/* On modal show load new data */
     $('<?= '#' . $data->modal_id ?>').on('show.bs.modal', event => {
         let id = $(event.relatedTarget).data('<?= str_replace('_', '-', $data->resource_id) ?>');
         let start_date = $(event.relatedTarget).data('start-date');

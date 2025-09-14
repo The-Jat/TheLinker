@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -13,13 +20,15 @@ use Altum\Alerts;
 use Altum\Response;
 use Altum\Uploads;
 
+defined('ALTUMCODE') || die();
+
 class ImageCreate extends Controller {
 
     public function index() {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->images_is_enabled) {
-            redirect('dashboard');
+            redirect('not-found');
         }
 
         /* Team checks */
@@ -36,7 +45,7 @@ class ImageCreate extends Controller {
         }
 
         /* Check for exclusive personal API usage limitation */
-        $api_key = $this->user->plan_settings->images_api == 'clipdrop' ? 'clipdrop_api_key' : 'openai_api_key';
+        $api_key = 'openai_api_key';
         if($this->user->plan_settings->exclusive_personal_api_keys && empty($this->user->preferences->{$api_key})) {
             Alerts::add_error(sprintf(l('account_preferences.error_message.aix.' . $api_key), '<a href="' . url('account-preferences') . '"><strong>' . l('account_preferences.menu') . '</strong></a>'));
         }
@@ -66,7 +75,7 @@ class ImageCreate extends Controller {
         }
 
         $values = [
-            'name' => $_GET['name'] ?? $_POST['name'] ?? sprintf(l('image_create.name_x'), \Altum\Date::get()),
+            'name' => $_POST['name'] ?? $_GET['name'] ?? sprintf(l('image_create.name_x'), \Altum\Date::get()),
             'input' => $_GET['input'] ?? $_POST['input'] ?? '',
             'style' => $_GET['style'] ?? $_POST['style'] ?? null,
             'artist' => $_GET['artist'] ?? $_POST['artist'] ?? null,
@@ -77,7 +86,7 @@ class ImageCreate extends Controller {
             'project_id' => $_GET['project_id'] ?? $_POST['project_id'] ?? null,
         ];
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'values' => $values,
             'ai_images_lighting' => $ai_images_lighting,
@@ -105,7 +114,7 @@ class ImageCreate extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->images_is_enabled) {
-            redirect('dashboard');
+            redirect('not-found');
         }
 
         /* Team checks */
@@ -166,7 +175,7 @@ class ImageCreate extends Controller {
 
         /* Check for timeouts */
         if(settings()->aix->input_moderation_is_enabled) {
-        $cache_instance = \Altum\Cache::$adapter->getItem('user?flagged=' . $this->user->user_id);
+        $cache_instance = cache()->getItem('user?flagged=' . $this->user->user_id);
             if(!is_null($cache_instance->get())) {
                 Response::json(l('documents.error_message.timed_out'), 'error');
             }
@@ -217,8 +226,8 @@ class ImageCreate extends Controller {
 
                 if($response->body->results[0]->flagged ?? null) {
                     /* Time out the user for a few minutes */
-                    \Altum\Cache::$adapter->save(
-                        $cache_instance->set('true')->expiresAfter(3 * 60)->addTag('users')->addTag('user_id=' . $this->user->user_id)
+                    cache()->save(
+                        $cache_instance->set('true')->expiresAfter(3 * 60)->addTag('user_id=' . $this->user->user_id)
                     );
 
                     /* Return the error */
@@ -235,8 +244,20 @@ class ImageCreate extends Controller {
 
         /* Request based on the chosen API */
         switch($this->user->plan_settings->images_api) {
-            case 'dall-e-2':
+            case 'gpt-image-1':
             case 'dall-e-3':
+
+                $request_body = [
+                    'model' => $this->user->plan_settings->images_api,
+                    'prompt' => $input,
+                    'size' => $_POST['size'],
+                    'n' => $_POST['variants'],
+                    'user' => 'user_id:' . $this->user->user_id,
+                ];
+
+                if($this->user->plan_settings->images_api == 'dall-e-3') {
+                    $request_body['response_format'] = 'b64_json';
+                }
 
                 try {
                     $response = \Unirest\Request::post(
@@ -245,15 +266,7 @@ class ImageCreate extends Controller {
                             'Authorization' => 'Bearer '  . get_random_line_from_text($this->user->plan_settings->exclusive_personal_api_keys ? $this->user->preferences->openai_api_key : settings()->aix->openai_api_key),
                             'Content-Type' => 'application/json',
                         ],
-                        \Unirest\Request\Body::json([
-                            'model' => $this->user->plan_settings->images_api,
-                            'prompt' => $input,
-                            'size' => $_POST['size'],
-                            'n' => $_POST['variants'],
-                            'quality' => 'hd',
-                            'response_format' => 'b64_json',
-                            'user' => 'user_id:' . $this->user->user_id,
-                        ])
+                        \Unirest\Request\Body::json($request_body)
                     );
 
                     if($response->code >= 400) {
@@ -297,7 +310,7 @@ class ImageCreate extends Controller {
                         $name .= ' - ' . ($key + 1) . '/' . count($response->body->data);
                     }
 
-                    /* Prepare the statement and execute query */
+                    /* Database query */
                     $image_id = db()->insert('images', [
                         'user_id' => $this->user->user_id,
                         'project_id' => $_POST['project_id'],
@@ -312,88 +325,12 @@ class ImageCreate extends Controller {
                         'settings' => $settings,
                         'api' => $this->user->plan_settings->images_api,
                         'api_response_time' => $api_response_time,
-                        'datetime' => \Altum\Date::$date,
+                        'datetime' => get_date(),
                     ]);
 
                     /* Add variant to the array */
                     $variants_ids[] = $image_id;
                 }
-
-                break;
-
-            case 'clipdrop':
-
-                //$width = $height = strstr($_POST['size'], 'x', true);
-
-                try {
-                    $response = \Unirest\Request::post(
-                        'https://clipdrop-api.co/text-to-image/v1',
-                        [
-                            'x-api-key' => get_random_line_from_text($this->user->plan_settings->exclusive_personal_api_keys ? $this->user->preferences->clipdrop_api_key : settings()->aix->clipdrop_api_key),
-                        ],
-                        \Unirest\Request\Body::multipart([
-                            'prompt' => $input,
-                            //'width' => $width,
-                            //'height' => $height,
-                            //'samples' => $_POST['variants'],
-                        ])
-                    );
-
-                    if($response->code >= 400) {
-                        Response::json($response->body->error, 'error');
-                    }
-
-                } catch (\Exception $exception) {
-                    Response::json($exception->getMessage(), 'error');
-                }
-
-                /* Get info after the request */
-                $info = \Unirest\Request::getInfo();
-
-                /* Some needed variables */
-                $api_response_time = $info['total_time'] * 1000;
-
-                /* Save the image temporarily */
-                $temp_image_name = md5(uniqid()) . '.png';
-                file_put_contents(Uploads::get_full_path('images') . $temp_image_name , $response->raw_body);
-
-                /* Fake uploaded image */
-                $_FILES['image'] = [
-                    'name' => 'altum.png',
-                    'tmp_name' => Uploads::get_full_path('images') . $temp_image_name,
-                    'error' => null,
-                    'size' => 0,
-                ];
-
-                $image = \Altum\Uploads::process_upload_fake('images', 'image', 'json_error', null);
-
-                $settings = json_encode([
-                    'variants' => $_POST['variants'],
-                ]);
-
-                /* Prepare a custom name if needed */
-                $name = $_POST['name'];
-
-                /* Prepare the statement and execute query */
-                $image_id = db()->insert('images', [
-                    'user_id' => $this->user->user_id,
-                    'project_id' => $_POST['project_id'],
-                    'name' => $name,
-                    'input' => $_POST['input'],
-                    'image' => $image,
-                    'style' => $_POST['style'],
-                    'artist' => $_POST['artist'],
-                    'lighting' => $_POST['lighting'],
-                    'mood' => $_POST['mood'],
-                    'size' => $_POST['size'],
-                    'settings' => $settings,
-                    'api' => $this->user->plan_settings->images_api,
-                    'api_response_time' => $api_response_time,
-                    'datetime' => \Altum\Date::$date,
-                ]);
-
-                /* Add variant to the array */
-                $variants_ids[] = $image_id;
 
                 break;
         }
@@ -406,7 +343,7 @@ class ImageCreate extends Controller {
             ]);
         }
 
-        /* Prepare the statement and execute query */
+        /* Database query */
         db()->where('user_id', $this->user->user_id)->update('users', [
             'aix_images_current_month' => db()->inc($_POST['variants'])
         ]);

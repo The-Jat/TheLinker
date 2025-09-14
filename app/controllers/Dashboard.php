@@ -1,15 +1,25 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Models\Domain;
+use Altum\Response;
+
+defined('ALTUMCODE') || die();
 
 class Dashboard extends Controller {
 
@@ -18,8 +28,8 @@ class Dashboard extends Controller {
         \Altum\Authentication::guard();
 
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['is_enabled', 'type'], ['url'], ['datetime', 'clicks', 'url']));
-        $filters->set_default_order_by('link_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
+        $filters = (new \Altum\Filters(['is_enabled', 'type'], ['url', 'location_url'], ['link_id', 'last_datetime', 'datetime', 'clicks', 'url']));
+        $filters->set_default_order_by($this->user->preferences->links_default_order_by, $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
         /* Prepare the paginator */
@@ -47,98 +57,20 @@ class Dashboard extends Controller {
         $links = [];
 
         while($row = $links_result->fetch_object()) {
-            $row->full_url = $row->domain_id ? $domains[$row->domain_id]->scheme . $domains[$row->domain_id]->host . '/' . $row->url : SITE_URL . $row->url;
+            $row->full_url = $row->domain_id && isset($domains[$row->domain_id]) ? $domains[$row->domain_id]->scheme . $domains[$row->domain_id]->host . '/' . ($domains[$row->domain_id]->link_id == $row->link_id ? null : $row->url) : SITE_URL . $row->url;
 
             /* Static links need the / for proper asset pathing */
             if($row->type == 'static') {
                 $row->full_url .= '/';
             }
 
+            $row->settings = json_decode($row->settings);
+
             $links[] = $row;
         }
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/pagination', (array) $this))->run(['paginator' => $paginator]);
-
-        /* Get statistics */
-        if(count($links)) {
-            $links_chart = [];
-            $start_date_query = (new \DateTime())->modify('-30 day')->format('Y-m-d H:i:s');
-            $end_date_query = (new \DateTime())->modify('+1 day')->format('Y-m-d H:i:s');
-
-            $track_links_result_query = "
-                SELECT
-                    COUNT(`id`) AS `pageviews`,
-                    SUM(`is_unique`) AS `visitors`,
-                    DATE_FORMAT(`datetime`, '%Y-%m-%d') AS `formatted_date`
-                FROM
-                    `track_links`
-                WHERE   
-                    `user_id` = {$this->user->user_id} 
-                    AND (`datetime` BETWEEN '{$start_date_query}' AND '{$end_date_query}')
-                GROUP BY
-                    `formatted_date`
-                ORDER BY
-                    `formatted_date`
-            ";
-
-            $links_chart = \Altum\Cache::cache_function_result('track_links?user_id=' . $this->user->user_id, null, function() use ($track_links_result_query) {
-                $links_chart = [];
-
-                $track_links_result = database()->query($track_links_result_query);
-
-                /* Generate the raw chart data and save logs for later usage */
-                while($row = $track_links_result->fetch_object()) {
-                    $label = \Altum\Date::get($row->formatted_date, 5);
-
-                    $links_chart[$label] = [
-                        'pageviews' => $row->pageviews,
-                        'visitors' => $row->visitors
-                    ];
-                }
-
-                return $links_chart;
-            }, 60 * 60 * 12);
-
-            $links_chart = get_chart_data($links_chart);
-        }
-
-        /* Some statistics for the widgets */
-        if(settings()->links->shortener_is_enabled) {
-            $link_links_total = \Altum\Cache::cache_function_result('link_links_total?user_id=' . $this->user->user_id, null, function() {
-                return db()->where('user_id', $this->user->user_id)->where('type', 'link')->getValue('links', 'count(*)');
-            });
-        }
-
-        if(settings()->links->files_is_enabled) {
-            $file_links_total = \Altum\Cache::cache_function_result('file_links_total?user_id=' . $this->user->user_id, null, function() {
-                return db()->where('user_id', $this->user->user_id)->where('type', 'file')->getValue('links', 'count(*)');
-            });
-        }
-
-        if(settings()->links->vcards_is_enabled) {
-            $vcard_links_total = \Altum\Cache::cache_function_result('vcard_links_total?user_id=' . $this->user->user_id, null, function() {
-                return db()->where('user_id', $this->user->user_id)->where('type', 'vcard')->getValue('links', 'count(*)');
-            });
-        }
-
-        if(settings()->links->biolinks_is_enabled) {
-            $biolink_links_total = \Altum\Cache::cache_function_result('biolink_links_total?user_id=' . $this->user->user_id, null, function() {
-                return db()->where('user_id', $this->user->user_id)->where('type', 'biolink')->getValue('links', 'count(*)');
-            });
-        }
-
-        if(settings()->links->events_is_enabled) {
-            $event_links_total = \Altum\Cache::cache_function_result('event_links_total?user_id=' . $this->user->user_id, null, function() {
-                return db()->where('user_id', $this->user->user_id)->where('type', 'event')->getValue('links', 'count(*)');
-            });
-        }
-
-        if(settings()->links->qr_codes_is_enabled) {
-            $qr_codes_total = \Altum\Cache::cache_function_result('qr_codes_total?user_id=' . $this->user->user_id, null, function() {
-                return db()->where('user_id', $this->user->user_id)->getValue('qr_codes', 'count(`qr_code_id`)');
-            });
-        }
 
         /* Delete Modal */
         $view = new \Altum\View('links/link_delete_modal', (array) $this);
@@ -167,22 +99,120 @@ class Dashboard extends Controller {
         $view = new \Altum\View('links/links_content', (array) $this);
         $this->add_view_content('links_content', $view->run($data));
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
-            'links_chart'       => $links_chart ?? false,
-
-            /* Widgets stats */
-            'event_links_total'         => $event_links_total ?? null,
-            'qr_codes_total'            => $qr_codes_total ?? null,
-            'vcard_links_total'         => $vcard_links_total ?? null,
-            'link_links_total'          => $link_links_total ?? null,
-            'file_links_total'          => $file_links_total ?? null,
-            'biolink_links_total'       => $biolink_links_total ?? null,
+            'has_links' => count($links)
         ];
 
         $view = new \Altum\View('dashboard/index', (array) $this);
 
         $this->add_view_content('content', $view->run($data));
+
+    }
+
+    public function get_stats_ajax() {
+
+        session_write_close();
+
+        \Altum\Authentication::guard();
+
+        if(!empty($_POST)) {
+            redirect();
+        }
+
+        $start_date_query = (new \DateTime())->modify('-' . (settings()->main->chart_days ?? 30) . ' day')->format('Y-m-d');
+        $end_date_query = (new \DateTime())->modify('+1 day')->format('Y-m-d');
+
+        $convert_tz_sql = get_convert_tz_sql('`datetime`', $this->user->timezone);
+
+        $track_links_result_query = "
+                SELECT
+                    COUNT(`id`) AS `pageviews`,
+                    SUM(`is_unique`) AS `visitors`,
+                    DATE_FORMAT({$convert_tz_sql}, '%Y-%m-%d') AS `formatted_date`
+                FROM
+                    `track_links`
+                WHERE   
+                    `user_id` = {$this->user->user_id} 
+                    AND ({$convert_tz_sql} BETWEEN '{$start_date_query}' AND '{$end_date_query}')
+                GROUP BY
+                    `formatted_date`
+                ORDER BY
+                    `formatted_date`
+            ";
+
+        $links_chart = \Altum\Cache::cache_function_result('track_links?user_id=' . $this->user->user_id, 'user_id=' . $this->user->user_id, function() use ($track_links_result_query) {
+            $links_chart = [];
+
+            $track_links_result = database()->query($track_links_result_query);
+
+            /* Generate the raw chart data and save logs for later usage */
+            while($row = $track_links_result->fetch_object()) {
+                $label = \Altum\Date::get($row->formatted_date, 5, \Altum\Date::$default_timezone);
+
+                $links_chart[$label] = [
+                    'pageviews' => $row->pageviews,
+                    'visitors' => $row->visitors
+                ];
+            }
+
+            return $links_chart;
+        }, 60 * 60 * settings()->main->chart_cache ?? 12);
+
+        $links_chart = get_chart_data($links_chart);
+
+        /* Widgets stats */
+        if(settings()->links->shortener_is_enabled) {
+            $link_links_total = \Altum\Cache::cache_function_result('link_links_total?user_id=' . $this->user->user_id, 'user_id=' . $this->user->user_id, function() {
+                return db()->where('user_id', $this->user->user_id)->where('type', 'link')->getValue('links', 'count(*)');
+            });
+        }
+
+        if(settings()->links->files_is_enabled) {
+            $file_links_total = \Altum\Cache::cache_function_result('file_links_total?user_id=' . $this->user->user_id, 'user_id=' . $this->user->user_id, function() {
+                return db()->where('user_id', $this->user->user_id)->where('type', 'file')->getValue('links', 'count(*)');
+            });
+        }
+
+        if(settings()->links->vcards_is_enabled) {
+            $vcard_links_total = \Altum\Cache::cache_function_result('vcard_links_total?user_id=' . $this->user->user_id, 'user_id=' . $this->user->user_id, function() {
+                return db()->where('user_id', $this->user->user_id)->where('type', 'vcard')->getValue('links', 'count(*)');
+            });
+        }
+
+        if(settings()->links->biolinks_is_enabled) {
+            $biolink_links_total = \Altum\Cache::cache_function_result('biolink_links_total?user_id=' . $this->user->user_id, 'user_id=' . $this->user->user_id, function() {
+                return db()->where('user_id', $this->user->user_id)->where('type', 'biolink')->getValue('links', 'count(*)');
+            });
+        }
+
+        if(settings()->links->events_is_enabled) {
+            $event_links_total = \Altum\Cache::cache_function_result('event_links_total?user_id=' . $this->user->user_id, null, function() {
+                return db()->where('user_id', $this->user->user_id)->where('type', 'event')->getValue('links', 'count(*)');
+            });
+        }
+
+        if(settings()->links->static_is_enabled) {
+            $static_links_total = \Altum\Cache::cache_function_result('static_links_total?user_id=' . $this->user->user_id, null, function() {
+                return db()->where('user_id', $this->user->user_id)->where('type', 'static')->getValue('links', 'count(*)');
+            });
+        }
+
+        /* Prepare the data */
+        $data = [
+            'links_chart' => $links_chart,
+
+            /* Widgets */
+            'link_links_total' => $link_links_total ?? null,
+            'file_links_total' => $file_links_total ?? null,
+            'vcard_links_total' => $vcard_links_total ?? null,
+            'biolink_links_total' => $biolink_links_total ?? null,
+            'event_links_total' => $event_links_total ?? null,
+            'static_links_total' => $static_links_total ?? null,
+        ];
+
+        /* Set a nice success message */
+        Response::json('', 'success', $data);
 
     }
 

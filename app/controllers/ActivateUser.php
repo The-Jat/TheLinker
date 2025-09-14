@@ -1,16 +1,25 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 use Altum\Logger;
+
+defined('ALTUMCODE') || die();
 
 class ActivateUser extends Controller {
 
@@ -27,7 +36,7 @@ class ActivateUser extends Controller {
         switch($type) {
             case 'user_activation':
 
-                if(!$user = db()->where('email_activation_code', $email_activation_code)->getOne('users', ['user_id', 'email', 'name', 'password', 'source', 'is_newsletter_subscribed'])) {
+                if(!$user = db()->where('email_activation_code', $email_activation_code)->getOne('users')) {
                     redirect();
                 }
 
@@ -50,6 +59,7 @@ class ActivateUser extends Controller {
                         [
                             '{{NAME}}' => $user->name,
                             '{{URL}}' => url(),
+                                '{{DASHBOARD_LINK}}' => url('dashboard'),
                         ],
                         l('global.emails.user_welcome.body')
                     );
@@ -66,6 +76,14 @@ class ActivateUser extends Controller {
                         [
                             '{{NAME}}' => str_replace('.', '. ', $user->name),
                             '{{EMAIL}}' => $user->email,
+                            '{{SOURCE}}' => $user->source,
+                            '{{IP}}' => $user->ip,
+                            '{{COUNTRY_NAME}}' => $user->country ? get_country_from_country_code($user->country) : l('global.unknown'),
+                            '{{CITY_NAME}}' => $user->city_name ?? l('global.unknown'),
+                            '{{DEVICE_TYPE}}' => l('global.device.' . $user->device_type),
+                            '{{OS_NAME}}' => $user->os_name,
+                            '{{BROWSER_NAME}}' => $user->browser_name,
+                            '{{USER_LINK}}' => url('admin/user-view/' . $user->user_id),
                         ],
                         l('global.emails.admin_new_user_notification.body')
                     );
@@ -75,12 +93,13 @@ class ActivateUser extends Controller {
 
                 /* Send webhook notification if needed */
                 if(settings()->webhooks->user_new) {
-                    \Unirest\Request::post(settings()->webhooks->user_new, [], [
+                    fire_and_forget('post', settings()->webhooks->user_new, [
                         'user_id' => $user->user_id,
                         'email' => $user->email,
                         'name' => $user->name,
                         'source' => $user->source,
                         'is_newsletter_subscribed' => $user->is_newsletter_subscribed,
+                        'datetime' => get_date(),
                     ]);
                 }
 
@@ -93,7 +112,7 @@ class ActivateUser extends Controller {
                         'title' => l('global.notifications.new_user.title'),
                         'description' => sprintf(l('global.notifications.new_user.description'), $user->name, $user->email),
                         'url' => 'admin/user-view/' . $user->user_id,
-                        'datetime' => \Altum\Date::$date,
+                        'datetime' => get_date(),
                     ]);
                 }
 
@@ -109,7 +128,7 @@ class ActivateUser extends Controller {
                 Logger::users($user->user_id, 'login.success');
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $user->user_id);
+                cache()->deleteItemsByTag('user_id=' . $user->user_id);
 
                 redirect($redirect . '&welcome=' . $user->user_id);
 
@@ -152,7 +171,7 @@ class ActivateUser extends Controller {
                 Alerts::add_success(l('activate_user.user_pending_email'));
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $user->user_id);
+                cache()->deleteItemsByTag('user_id=' . $user->user_id);
 
                 redirect('account');
 

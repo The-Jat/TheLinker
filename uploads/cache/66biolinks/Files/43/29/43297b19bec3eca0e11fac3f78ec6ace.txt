@@ -1,1 +1,103 @@
-a:6:{s:1:"k";s:15:"biolinks_themes";s:1:"d";a:0:{}s:1:"g";a:0:{}s:1:"e";O:8:"DateTime":3:{s:4:"date";s:26:"2024-03-31 02:08:14.681021";s:13:"timezone_type";i:3;s:8:"timezone";s:3:"UTC";}s:1:"m";N;s:1:"c";N;}
+a:6:{s:1:"k";s:15:"biolinks_themes";s:1:"d";a:9:{i:9;O:8:"stdClass":7:{s:16:"biolink_theme_id";s:1:"9";s:4:"name";s:9:"Barcelona";s:8:"settings";O:8:"stdClass":6:{s:10:"additional";O:8:"stdClass":2:{s:10:"custom_css";s:0:"";s:9:"custom_js";s:0:"";}s:7:"biolink";O:8:"stdClass":11:{s:15:"background_type";s:5:"image";s:10:"background";s:36:"b634495133c9091655dab3c3c916722e.svg";s:20:"background_color_one";N;s:20:"background_color_two";N;s:4:"font";s:5:"inter";s:9:"font_size";s:2:"16";s:15:"background_blur";i:0;s:21:"background_brightness";i:100;s:5:"width";i:8;s:13:"block_spacing";i:2;s:15:"hover_animation";s:6:"smooth";}s:13:"biolink_block";O:8:"stdClass":13:{s:10:"text_color";s:7:"#ffffff";s:11:"title_color";s:7:"#ffffff";s:17:"description_color";s:7:"#D5D5D5";s:16:"background_color";s:9:"#0C0127D1";s:12:"border_width";s:1:"0";s:12:"border_color";s:0:"";s:13:"border_radius";s:7:"rounded";s:12:"border_style";s:5:"solid";s:22:"border_shadow_offset_x";s:1:"0";s:22:"border_shadow_offset_y";s:1:"0";s:18:"border_shadow_blur";s:2:"20";s:20:"border_shadow_spread";s:1:"0";s:19:"border_shadow_color";s:9:"#FFFFFF00";}s:21:"biolink_block_socials";O:8:"stdClass":3:{s:5:"color";s:7:"#2B006C";s:16:"background_color";s:9:"#FFFFFF45";s:13:"border_radius";s:5:"round";}s:23:"biolink_block_paragraph";O:8:"stdClass":3:{s:10:"text_color";s:7:"#ffffff";s:16:"background_color";s:9:"#0C0127D1";s:13:"border_radius";s:7:"rounded";}s:21:"biolink_block_heading";O:8:"stdClass":1:{s:10:"text_color";s:7:"#FFFFFF";}}s:10:"is_enabled";s:1:"1";s:5:"order";s:1:"0";s:13:"last_datetime";s:19:"2025-05-20 03:22:54";s:8:"datetime";s:19:"2025-05-20 03:12:38";}i:1;O:8:"stdClass":7:{s:16:"biolink_theme_id";s:1:"1";s:4:"name";s:5:"Paris";s:8:"settings";O:8:"stdClass":6:{s:10:"additional";O:8:"stdClass":2:{s:10:"custom_css";s:0:"";s:9:"custom_js";s:0:"";}s:7:"biolink";O:8:"stdClass":11:{s:15:"background_type";s:6:"preset";s:10:"background";s:4:"zero";s:20:"background_color_one";N;s:20:"background_color_two";N;s:4:"font";s:7:"default";s:9:"font_size";s:2:"16";s:15:"background_blur";i:0;s:21:"background_brightness";i:100;s:5:"width";i:8;s:13:"block_spacing";i:2;s:15:"hover_animation";s:6:"smooth";}s:13:"biolink_block";O:8:"stdClass":13:{s:10:"text_color";s:7:"#FFFFFF";s:11:"title_color";s:7:"#FFFFFF";s:17:"description_color";s:9:"#FFFFFFC9";s:16:"background_color";s:9:"#0000004A";s:12:"border_width";s:1:"0";s:12:"border_color";s:0:"";s:13:"border_radius";s:7:"rounded";s:12:"border_style";s:5:"solid";s:22:"border_shadow_offset_x";s:1:"0";s:22:"border_shadow_offset_y";s:1:"0";s:18:"border_shadow_blur";s:2:"20";s:20:"border_shadow_spread";s:1:"0";s:19:"border_shadow_color";s:9:"#00000010";}s:21:"biolink_block_socials";O:8:"stdClass":3:{s:5:"color";s:7:"#FFFFFF";s:16:"background_color";s:9:"#FFFFFF00";s:13:"border_radius";s:8:"straight";}s:23:"biolink_block_paragraph";O:8:"stdClass":3:{s:10:"text_color";s:9:"#FFFFFFD4";s:16:"background_color";s:9:"#0000004A";s:13:"border_radius";s:7:"rounded";}s:21:"biolink_block_heading";O:8:"stdClass":1:{s:10:"text_color";s:7:"#FFFFFF";}}s:10:"is_enabled";s:1:"1";s:5:"order";s:1:"1";s:13:"last_datetime";s:19:"2025-05-20 02:33:10";s:8:"datetime";s:19:"2024-09-07 16:36:29";}i:2;O:8:"stdClass":7:{s:16:"biolink_theme_id";s:1:"2";s:4:"name";s:5:"Tokyo";s:8:"settings";O:8:"stdClass":6:{s:10:"additional";O:8:"stdClass":2:{s:10:"custom_css";s:0:"";s:9:"custom_js";s:179:"<script>
+
+document.body.style.backgroundImage = `url('${site_url}themes/altum/assets/images/biolinks/leaves.svg'), linear-gradient(0deg, #FFDEE9 0%, #B5FFFC 100%)`;
+
+</script>";}s:7:"biolink";O:8:"stdClass":11:{s:15:"background_type";s:6:"preset";s:10:"background";s:3:"ten";s:20:"background_color_one";N;s:20:"background_color_two";N;s:4:"font";s:7:"default";s:9:"font_size";s:2:"16";s:15:"background_blur";i:0;s:21:"background_brightness";i:100;s:5:"width";i:8;s:13:"block_spacing";i:2;s:15:"hover_animation";s:6:"smooth";}s:13:"biolink_block";O:8:"stdClass":13:{s:10:"text_color";s:7:"#000000";s:11:"title_color";s:7:"#000000";s:17:"description_color";s:7:"#383838";s:16:"background_color";s:7:"#FFFFFF";s:12:"border_width";s:1:"0";s:12:"border_color";s:0:"";s:13:"border_radius";s:5:"round";s:12:"border_style";s:5:"solid";s:22:"border_shadow_offset_x";s:1:"0";s:22:"border_shadow_offset_y";s:1:"0";s:18:"border_shadow_blur";s:2:"20";s:20:"border_shadow_spread";s:1:"0";s:19:"border_shadow_color";s:9:"#00000010";}s:21:"biolink_block_socials";O:8:"stdClass":3:{s:5:"color";s:7:"#131313";s:16:"background_color";s:9:"#FFFFFF99";s:13:"border_radius";s:5:"round";}s:23:"biolink_block_paragraph";O:8:"stdClass":3:{s:10:"text_color";s:7:"#40455B";s:16:"background_color";s:7:"#FFFFFF";s:13:"border_radius";s:5:"round";}s:21:"biolink_block_heading";O:8:"stdClass":1:{s:10:"text_color";s:7:"#000000";}}s:10:"is_enabled";s:1:"1";s:5:"order";s:1:"2";s:13:"last_datetime";s:19:"2025-05-20 02:33:08";s:8:"datetime";s:19:"2024-09-07 16:36:29";}i:3;O:8:"stdClass":7:{s:16:"biolink_theme_id";s:1:"3";s:4:"name";s:6:"Sydney";s:8:"settings";O:8:"stdClass":6:{s:10:"additional";O:8:"stdClass":2:{s:10:"custom_css";s:0:"";s:9:"custom_js";s:0:"";}s:7:"biolink";O:8:"stdClass":11:{s:15:"background_type";s:6:"preset";s:10:"background";s:8:"thirteen";s:20:"background_color_one";N;s:20:"background_color_two";N;s:4:"font";s:7:"default";s:9:"font_size";s:2:"16";s:15:"background_blur";i:0;s:21:"background_brightness";i:100;s:5:"width";i:8;s:13:"block_spacing";i:2;s:15:"hover_animation";s:6:"smooth";}s:13:"biolink_block";O:8:"stdClass":13:{s:10:"text_color";s:7:"#ffffff";s:11:"title_color";s:7:"#ffffff";s:17:"description_color";s:7:"#ffffff";s:16:"background_color";s:9:"#21007ABD";s:12:"border_width";s:1:"0";s:12:"border_color";s:0:"";s:13:"border_radius";s:8:"straight";s:12:"border_style";s:5:"solid";s:22:"border_shadow_offset_x";s:1:"0";s:22:"border_shadow_offset_y";s:1:"0";s:18:"border_shadow_blur";s:2:"20";s:20:"border_shadow_spread";s:1:"0";s:19:"border_shadow_color";s:9:"#00000010";}s:21:"biolink_block_socials";O:8:"stdClass":3:{s:5:"color";s:7:"#FFFFFF";s:16:"background_color";s:9:"#FFFFFF45";s:13:"border_radius";s:8:"straight";}s:23:"biolink_block_paragraph";O:8:"stdClass":3:{s:10:"text_color";s:9:"#FFFFFFCF";s:16:"background_color";s:9:"#21007ABD";s:13:"border_radius";s:8:"straight";}s:21:"biolink_block_heading";O:8:"stdClass":1:{s:10:"text_color";s:7:"#FFFFFF";}}s:10:"is_enabled";s:1:"1";s:5:"order";s:1:"3";s:13:"last_datetime";s:19:"2025-05-20 02:33:07";s:8:"datetime";s:19:"2024-09-07 16:36:29";}i:4;O:8:"stdClass":7:{s:16:"biolink_theme_id";s:1:"4";s:4:"name";s:6:"London";s:8:"settings";O:8:"stdClass":6:{s:10:"additional";O:8:"stdClass":2:{s:10:"custom_css";s:0:"";s:9:"custom_js";s:0:"";}s:7:"biolink";O:8:"stdClass":11:{s:15:"background_type";s:6:"preset";s:10:"background";s:4:"four";s:20:"background_color_one";N;s:20:"background_color_two";N;s:4:"font";s:12:"trebuchet-ms";s:9:"font_size";s:2:"16";s:15:"background_blur";i:1;s:21:"background_brightness";i:100;s:5:"width";i:8;s:13:"block_spacing";i:2;s:15:"hover_animation";s:6:"smooth";}s:13:"biolink_block";O:8:"stdClass":13:{s:10:"text_color";s:7:"#FFFFFF";s:11:"title_color";s:7:"#FFFFFF";s:17:"description_color";s:7:"#F2F2F2";s:16:"background_color";s:9:"#94008B30";s:12:"border_width";s:1:"2";s:12:"border_color";s:9:"#6700601C";s:13:"border_radius";s:7:"rounded";s:12:"border_style";s:5:"solid";s:22:"border_shadow_offset_x";s:1:"3";s:22:"border_shadow_offset_y";s:1:"3";s:18:"border_shadow_blur";s:2:"15";s:20:"border_shadow_spread";s:1:"2";s:19:"border_shadow_color";s:9:"#88888800";}s:21:"biolink_block_socials";O:8:"stdClass":3:{s:5:"color";s:7:"#FFFFFF";s:16:"background_color";s:7:"#E95FA1";s:13:"border_radius";s:5:"round";}s:23:"biolink_block_paragraph";O:8:"stdClass":3:{s:10:"text_color";s:7:"#FFFFFF";s:16:"background_color";s:9:"#94008B30";s:13:"border_radius";s:7:"rounded";}s:21:"biolink_block_heading";O:8:"stdClass":1:{s:10:"text_color";s:7:"#FFFFFF";}}s:10:"is_enabled";s:1:"1";s:5:"order";s:1:"4";s:13:"last_datetime";s:19:"2025-05-20 02:33:05";s:8:"datetime";s:19:"2024-09-07 16:36:29";}i:5;O:8:"stdClass":7:{s:16:"biolink_theme_id";s:1:"5";s:4:"name";s:7:"Antalya";s:8:"settings";O:8:"stdClass":6:{s:10:"additional";O:8:"stdClass":2:{s:10:"custom_css";s:0:"";s:9:"custom_js";s:0:"";}s:7:"biolink";O:8:"stdClass":11:{s:15:"background_type";s:15:"preset_abstract";s:10:"background";s:5:"seven";s:20:"background_color_one";N;s:20:"background_color_two";N;s:4:"font";s:10:"montserrat";s:9:"font_size";s:2:"16";s:15:"background_blur";i:5;s:21:"background_brightness";i:100;s:5:"width";i:8;s:13:"block_spacing";i:2;s:15:"hover_animation";s:6:"smooth";}s:13:"biolink_block";O:8:"stdClass":13:{s:10:"text_color";s:7:"#00644B";s:11:"title_color";s:7:"#00644B";s:17:"description_color";s:7:"#00AC8B";s:16:"background_color";s:7:"#2CFFD5";s:12:"border_width";s:1:"0";s:12:"border_color";s:9:"#67006000";s:13:"border_radius";s:7:"rounded";s:12:"border_style";s:5:"solid";s:22:"border_shadow_offset_x";s:1:"0";s:22:"border_shadow_offset_y";s:1:"0";s:18:"border_shadow_blur";s:2:"10";s:20:"border_shadow_spread";s:1:"0";s:19:"border_shadow_color";s:9:"#3DFFB359";}s:21:"biolink_block_socials";O:8:"stdClass":3:{s:5:"color";s:7:"#217361";s:16:"background_color";s:7:"#89FFE5";s:13:"border_radius";s:7:"rounded";}s:23:"biolink_block_paragraph";O:8:"stdClass":3:{s:10:"text_color";s:7:"#FFFFFF";s:16:"background_color";s:7:"#2CFFD5";s:13:"border_radius";s:7:"rounded";}s:21:"biolink_block_heading";O:8:"stdClass":1:{s:10:"text_color";s:7:"#FFFFFF";}}s:10:"is_enabled";s:1:"1";s:5:"order";s:1:"5";s:13:"last_datetime";s:19:"2025-05-20 02:33:03";s:8:"datetime";s:19:"2024-09-07 16:36:29";}i:6;O:8:"stdClass":7:{s:16:"biolink_theme_id";s:1:"6";s:4:"name";s:7:"Zermatt";s:8:"settings";O:8:"stdClass":6:{s:10:"additional";O:8:"stdClass":2:{s:10:"custom_css";s:193:"#snowfall-element {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	pointer-events: none;
+	z-index: 0; /* Not too negative this time */
+	background: transparent;
+}";s:9:"custom_js";s:1977:"<script>
+const snowfall = {};
+
+// Automatically create and insert the canvas element just after <body>
+snowfall.canvas = document.createElement("canvas");
+snowfall.canvas.id = "snowfall-element";
+document.documentElement.appendChild(snowfall.canvas); // Append to <html>
+
+// Continue as before
+snowfall.context = snowfall.canvas.getContext("2d");
+
+// Snowflake constructor
+snowfall.snowflake = function () {
+	this.size = Math.random() * 2 + 2;
+	this.x = (Math.random() * snowfall.canvas.width - this.size - 1) + this.size + 1;
+	this.baseX = this.x;
+	this.distance = Math.random() * 50 + 1;
+	this.opacity = Math.random();
+	this.radians = Math.random() * Math.PI * 2;
+	this.fall_speed = Math.random() * 1.5 + 0.5;
+	this.y = (Math.random() * snowfall.canvas.height - this.size - 1) + this.size + 1;
+	this.draw = () => {
+		if (this.y > snowfall.canvas.height + this.size) {
+			this.y = -this.size;
+		} else {
+			this.y += this.fall_speed;
+		}
+		this.radians += 0.02;
+		this.x = this.baseX + this.distance * Math.sin(this.radians);
+		snowfall.context.fillStyle = `rgba(255,255,255,${this.opacity})`;
+		snowfall.context.fillRect(this.x, this.y, this.size, this.size);
+	};
+};
+
+// Initial setup function
+snowfall.setup = () => {
+	snowfall.canvas.width = snowfall.context.canvas.clientWidth;
+	snowfall.canvas.height = snowfall.context.canvas.clientHeight;
+	snowfall.flakes = [];
+	const flake_count = Math.ceil((snowfall.canvas.width * snowfall.canvas.height) / 12000);
+	for (let i = 0; i < flake_count; i++) {
+		snowfall.flakes.push(new snowfall.snowflake());
+	}
+};
+
+window.addEventListener("resize", snowfall.setup);
+
+// Animation loop function
+snowfall.animate = () => {
+	requestAnimationFrame(snowfall.animate);
+	snowfall.context.clearRect(0, 0, snowfall.canvas.width, snowfall.canvas.height);
+	for (let snowflake of snowfall.flakes) {
+		snowflake.draw();
+	}
+};
+
+// Let it snow!
+snowfall.setup();
+snowfall.animate();</script>";}s:7:"biolink";O:8:"stdClass":11:{s:15:"background_type";s:5:"image";s:10:"background";s:37:"78564ffadd816470639d7f68149ee338.webp";s:20:"background_color_one";N;s:20:"background_color_two";N;s:4:"font";s:5:"karla";s:9:"font_size";s:2:"16";s:15:"background_blur";i:2;s:21:"background_brightness";i:100;s:5:"width";i:8;s:13:"block_spacing";i:2;s:15:"hover_animation";s:6:"smooth";}s:13:"biolink_block";O:8:"stdClass":13:{s:10:"text_color";s:7:"#ffffff";s:11:"title_color";s:7:"#ffffff";s:17:"description_color";s:7:"#FFF0F0";s:16:"background_color";s:7:"#02343B";s:12:"border_width";s:1:"1";s:12:"border_color";s:9:"#FFFFFF4A";s:13:"border_radius";s:7:"rounded";s:12:"border_style";s:5:"solid";s:22:"border_shadow_offset_x";s:1:"0";s:22:"border_shadow_offset_y";s:1:"0";s:18:"border_shadow_blur";s:2:"20";s:20:"border_shadow_spread";s:1:"0";s:19:"border_shadow_color";s:9:"#00000010";}s:21:"biolink_block_socials";O:8:"stdClass":3:{s:5:"color";s:9:"#FFFFFFBA";s:16:"background_color";s:9:"#228694A1";s:13:"border_radius";s:7:"rounded";}s:23:"biolink_block_paragraph";O:8:"stdClass":3:{s:10:"text_color";s:9:"#FFFFFFD9";s:16:"background_color";s:7:"#02343B";s:13:"border_radius";s:7:"rounded";}s:21:"biolink_block_heading";O:8:"stdClass":1:{s:10:"text_color";s:7:"#FFFFFF";}}s:10:"is_enabled";s:1:"1";s:5:"order";s:1:"6";s:13:"last_datetime";s:19:"2025-05-20 02:33:01";s:8:"datetime";s:19:"2025-03-23 04:31:05";}i:7;O:8:"stdClass":7:{s:16:"biolink_theme_id";s:1:"7";s:4:"name";s:7:"Seattle";s:8:"settings";O:8:"stdClass":6:{s:10:"additional";O:8:"stdClass":2:{s:10:"custom_css";s:0:"";s:9:"custom_js";s:1481:"<script>
+    const computed_styles = getComputedStyle(document.body);
+
+    const original_background_image = computed_styles.backgroundImage;
+    const original_background_size = computed_styles.backgroundSize;
+    const original_background_position = computed_styles.backgroundPosition;
+    const original_background_repeat = computed_styles.backgroundRepeat;
+
+    const rain_images = [
+        `url('${site_url}themes/altum/assets/images/biolinks/rain.svg')`,
+        `url('${site_url}themes/altum/assets/images/biolinks/rain.svg')`,
+        `url('${site_url}themes/altum/assets/images/biolinks/rain.svg')`
+    ];
+
+    const rain_sizes = ['60%', '45%', '30%'];
+    const rain_positions = ['left top', 'center top', 'center top'];
+    const rain_repeats = ['repeat', 'repeat', 'repeat'];
+
+    const all_images = rain_images.concat(original_background_image);
+    const all_sizes = rain_sizes.concat(original_background_size);
+    const all_positions = rain_positions.concat(original_background_position);
+    const all_repeats = rain_repeats.concat(original_background_repeat);
+
+    document.body.style.setProperty('background-image', all_images.join(', '));
+    document.body.style.setProperty('background-size', all_sizes.join(', '), 'important');
+    document.body.style.setProperty('background-position', all_positions.join(', '), 'important');
+    document.body.style.setProperty('background-repeat', all_repeats.join(', '), 'important');
+</script>";}s:7:"biolink";O:8:"stdClass":11:{s:15:"background_type";s:5:"image";s:10:"background";s:37:"25b10743f5d934e70250ffd557cee0a6.webp";s:20:"background_color_one";N;s:20:"background_color_two";N;s:4:"font";s:11:"inconsolata";s:9:"font_size";s:2:"16";s:15:"background_blur";i:2;s:21:"background_brightness";i:100;s:5:"width";i:8;s:13:"block_spacing";i:2;s:15:"hover_animation";s:6:"smooth";}s:13:"biolink_block";O:8:"stdClass":13:{s:10:"text_color";s:7:"#ffffff";s:11:"title_color";s:7:"#ffffff";s:17:"description_color";s:7:"#ffffff";s:16:"background_color";s:9:"#000000B5";s:12:"border_width";s:1:"0";s:12:"border_color";s:0:"";s:13:"border_radius";s:8:"straight";s:12:"border_style";s:5:"solid";s:22:"border_shadow_offset_x";s:1:"0";s:22:"border_shadow_offset_y";s:1:"0";s:18:"border_shadow_blur";s:2:"20";s:20:"border_shadow_spread";s:1:"0";s:19:"border_shadow_color";s:9:"#00000010";}s:21:"biolink_block_socials";O:8:"stdClass":3:{s:5:"color";s:7:"#ffffff";s:16:"background_color";s:9:"#00000000";s:13:"border_radius";s:7:"rounded";}s:23:"biolink_block_paragraph";O:8:"stdClass":3:{s:10:"text_color";s:7:"#5DC5D5";s:16:"background_color";s:9:"#000000B5";s:13:"border_radius";s:8:"straight";}s:21:"biolink_block_heading";O:8:"stdClass":1:{s:10:"text_color";s:7:"#FFFFFF";}}s:10:"is_enabled";s:1:"1";s:5:"order";s:1:"7";s:13:"last_datetime";s:19:"2025-05-20 02:33:00";s:8:"datetime";s:19:"2025-03-25 04:39:59";}i:8;O:8:"stdClass":7:{s:16:"biolink_theme_id";s:1:"8";s:4:"name";s:5:"Kyoto";s:8:"settings";O:8:"stdClass":6:{s:10:"additional";O:8:"stdClass":2:{s:10:"custom_css";s:0:"";s:9:"custom_js";s:177:"<script>
+
+document.body.style.backgroundImage = `url('${site_url}themes/altum/assets/images/biolinks/autumn_leaves.svg'), ${document.body.style.backgroundImage}`;
+
+</script>";}s:7:"biolink";O:8:"stdClass":11:{s:15:"background_type";s:5:"image";s:10:"background";s:37:"0fc5e5a6b52b9d58ffc6ecfb112c76df.webp";s:20:"background_color_one";N;s:20:"background_color_two";N;s:4:"font";s:7:"default";s:9:"font_size";s:2:"16";s:15:"background_blur";i:3;s:21:"background_brightness";i:100;s:5:"width";i:8;s:13:"block_spacing";i:2;s:15:"hover_animation";s:6:"smooth";}s:13:"biolink_block";O:8:"stdClass":13:{s:10:"text_color";s:7:"#ffffff";s:11:"title_color";s:7:"#ffffff";s:17:"description_color";s:7:"#ffffff";s:16:"background_color";s:9:"#BC5101ED";s:12:"border_width";s:1:"1";s:12:"border_color";s:0:"";s:13:"border_radius";s:7:"rounded";s:12:"border_style";s:5:"solid";s:22:"border_shadow_offset_x";s:1:"0";s:22:"border_shadow_offset_y";s:1:"0";s:18:"border_shadow_blur";s:2:"20";s:20:"border_shadow_spread";s:1:"0";s:19:"border_shadow_color";s:9:"#00000010";}s:21:"biolink_block_socials";O:8:"stdClass":3:{s:5:"color";s:7:"#FFE8C0";s:16:"background_color";s:9:"#0000007D";s:13:"border_radius";s:5:"round";}s:23:"biolink_block_paragraph";O:8:"stdClass":3:{s:10:"text_color";s:7:"#FFFFFF";s:16:"background_color";s:9:"#BC5101ED";s:13:"border_radius";s:7:"rounded";}s:21:"biolink_block_heading";O:8:"stdClass":1:{s:10:"text_color";s:7:"#FFFFFF";}}s:10:"is_enabled";s:1:"1";s:5:"order";s:1:"8";s:13:"last_datetime";s:19:"2025-05-20 02:32:48";s:8:"datetime";s:19:"2025-03-26 02:20:40";}}s:1:"g";a:0:{}s:1:"e";O:8:"DateTime":3:{s:4:"date";s:26:"2025-10-14 10:44:32.003219";s:13:"timezone_type";i:3;s:8:"timezone";s:3:"UTC";}s:1:"m";N;s:1:"c";N;}

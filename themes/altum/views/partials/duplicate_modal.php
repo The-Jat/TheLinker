@@ -34,8 +34,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* On modal show load new data */
+    
+/* On modal show load new data */
     $('<?= '#' . $data->modal_id ?>').on('show.bs.modal', event => {
         let id = $(event.relatedTarget).data('<?= str_replace('_', '-', $data->resource_id) ?>');
 

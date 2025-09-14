@@ -1,20 +1,47 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
+
+defined('ALTUMCODE') || die();
 
 function url($append = '') {
     return SITE_URL . (\Altum\Language::$default_name != \Altum\Language::$name ? \Altum\Language::$code . '/' : null)  . $append;
 }
 
 function redirect($append = '', $no_language_code = false, $response_code = 0) {
+    $where_to = $append;
     $language_code = $no_language_code ? null : (\Altum\Language::$default_name != \Altum\Language::$name ? \Altum\Language::$code . '/' : null);
 
-    header('Location: ' . SITE_URL . $language_code . $append, true, $response_code);
+    //if(!empty($_GET['original_request'])) {
+    if(!empty($_GET['original_request']) && !empty($_GET['original_request_query'])) {
+        $where_to = base64_decode($_GET['original_request']);
+        if(!empty($_GET['original_request_query'])) {
+            $where_to .= '?' . base64_decode($_GET['original_request_query']);
+        }
+    }
+
+    //if(!empty($_POST['original_request'])) {
+    if(!empty($_POST['original_request']) && !empty($_POST['original_request_query'])) {
+        $where_to = base64_decode($_POST['original_request']);
+
+        if(!empty($_POST['original_request_query'])) {
+            $where_to .= '?' .base64_decode($_POST['original_request_query']);
+        }
+    }
+
+    header('Location: ' . SITE_URL . $language_code . $where_to, true, $response_code);
 
     die();
 }
@@ -23,8 +50,65 @@ function remove_url_protocol_from_url($url) {
     return preg_replace("(^https?://)", '', $url ?? '');
 }
 
-function get_url($string) {
-    return mb_substr(preg_replace("/\s+/", '', $string ?? ''), 0, 2048);
+function get_url($string, $max_characters = 2048, $allow_special_schemes = true) {
+    $string = preg_replace("/\s+/", '', $string ?? '');
+    $string = input_clean($string, $max_characters);
+    $original_string = $string;
+
+    // Parse the URL
+    $parsed_url = parse_url($string);
+
+    if($parsed_url === false) {
+        return '';
+    }
+
+    // Handle Internationalized Domain Names (IDN) if supported
+    if(isset($parsed_url['host']) && function_exists('idn_to_ascii')) {
+        $ascii_host = idn_to_ascii($parsed_url['host'], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
+        if($ascii_host !== false) {
+            $parsed_url['host'] = $ascii_host;
+        }
+        // If idn_to_ascii fails, proceed without changing the host
+    }
+
+    // Encode the path, query, and fragment to handle non-ASCII characters
+    if(isset($parsed_url['path'])) {
+        $parsed_url['path'] = implode('/', array_map('rawurlencode', explode('/', $parsed_url['path'])));
+    }
+
+    if(isset($parsed_url['query'])) {
+        // Parse and rebuild the query string
+        parse_str($parsed_url['query'], $query_params);
+        $parsed_url['query'] = http_build_query($query_params, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    if(isset($parsed_url['fragment'])) {
+        $parsed_url['fragment'] = rawurlencode($parsed_url['fragment']);
+    }
+
+    // Reconstruct the URL
+    $ascii_url = (isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '') .
+        (isset($parsed_url['user']) ? rawurlencode($parsed_url['user']) . (isset($parsed_url['pass']) ? ':' . rawurlencode($parsed_url['pass']) : '') . '@' : '') .
+        ($parsed_url['host'] ?? '') .
+        (isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '') .
+        ($parsed_url['path'] ?? '') .
+        (isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '') .
+        (isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '');
+
+    // Validate the reconstructed URL
+    if(filter_var($ascii_url, FILTER_VALIDATE_URL)) {
+        return $original_string;
+    }
+
+    // Update regex pattern to include Unicode letters
+    $allowed_schemes = ['tel', 'sms', 'mailto', 'facetime'];
+    $pattern = '/^(' . implode('|', $allowed_schemes) . '):[\p{L}0-9\-.\@_+]*$/u';
+
+    if($allow_special_schemes && preg_match($pattern, $original_string)) {
+        return $original_string;
+    }
+
+    return '';
 }
 
 function get_slug($string, $delimiter = '-', $lowercase = true) {
@@ -58,13 +142,15 @@ function get_slug($string, $delimiter = '-', $lowercase = true) {
 function google_safe_browsing_check($url, $api_key = '') {
     $api_url = 'https://safebrowsing.googleapis.com/v4/threatMatches:find?key=' . $api_key;
 
+    \Unirest\Request::timeout(5);
+
     $body = Unirest\Request\Body::json([
         'client' => [
             'clientId' => settings()->main->title,
             'clientVersion' => '1.5.2'
         ],
         'threatInfo' => [
-            'threatTypes' => ['MALWARE', 'SOCIAL_ENGINEERING','THREAT_TYPE_UNSPECIFIED'],
+            'threatTypes' => ['MALWARE', 'SOCIAL_ENGINEERING','THREAT_TYPE_UNSPECIFIED', 'UNWANTED_SOFTWARE', 'POTENTIALLY_HARMFUL_APPLICATION'],
             'platformTypes' => ['ANY_PLATFORM'],
             'threatEntryTypes' => ['URL'],
             'threatEntries' => [
@@ -79,7 +165,11 @@ function google_safe_browsing_check($url, $api_key = '') {
         'Authorization' => 'Token :)'
     ];
 
-    $response = Unirest\Request::post($api_url, $headers, $body);
+    try {
+        $response = Unirest\Request::post($api_url, $headers, $body);
+    } catch (\Exception $exception) {
+        return true;
+    }
 
     if(isset($response->body->matches[0]->threatType) && $response->body->matches[0]->threatType) return true;
 
@@ -102,7 +192,7 @@ function get_domain_from_email($email) {
 }
 
 function get_domain_from_host($host){
-    $myhost = mb_strtolower(trim($host));
+    $myhost = mb_strtolower(trim($host ?? ''));
     $count = substr_count($myhost, '.');
     if($count === 2){
         if(mb_strlen(explode('.', $myhost)[1]) > 3) $myhost = explode('.', $myhost, 2)[1];

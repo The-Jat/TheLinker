@@ -3,11 +3,11 @@
 <?php if(count(\Altum\Language::$languages)): ?>
 
     <div class="d-flex flex-column flex-md-row justify-content-between mb-4">
-        <h1 class="h3 mb-3 mb-md-0"><i class="fas fa-fw fa-xs fa-language text-primary-900 mr-2"></i> <?= l('admin_languages.header') ?></h1>
+        <h1 class="h3 mb-3 mb-md-0 text-truncate"><i class="fas fa-fw fa-xs fa-language text-primary-900 mr-2"></i> <?= l('admin_languages.header') ?></h1>
 
         <div class="d-flex position-relative">
-            <div class="">
-                <a href="<?= url('admin/language-create') ?>" class="btn btn-primary"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_language_create.menu') ?></a>
+            <div>
+                <a href="<?= url('admin/language-create') ?>" class="btn btn-primary text-nowrap"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_language_create.menu') ?></a>
             </div>
         </div>
     </div>
@@ -18,10 +18,12 @@
         <table class="table table-custom">
             <thead>
             <tr>
-                <th><?= l('admin_languages.main.language_name') ?></th>
-                <th><?= l('admin_languages.main.language_code') ?></th>
-                <th><?= l('global.order') ?></th>
+                <th><?= l('admin_languages.language_name') ?></th>
+                <th><?= l('admin_languages.language_code') ?></th>
+                <th><?= l('admin_plans.table.users') ?></th>
                 <th><?= l('global.status') ?></th>
+                <th></th>
+                <th></th>
                 <th></th>
             </tr>
             </thead>
@@ -34,31 +36,48 @@
                             <span class="mr-2"><?= $language['language_flag'] ?></span>
                         <?php endif ?>
 
-                        <a href="<?= url('admin/language-update/' . $language['name']) ?>"><?= $language['name'] ?></a>
-
-                        <?php if($language['name'] == settings()->main->default_language): ?>
-                            <span class="mx-1 badge badge-success"><?= l('admin_languages.main.default_language') ?></span>
-                        <?php endif ?>
-
-                        <?php if($language['name'] == \Altum\Language::$main_name): ?>
-                            <span class="mx-1 badge badge-info"><?= l('admin_languages.main.main') ?></span>
-                        <?php endif ?>
+                        <a href="<?= url('admin/language-update/' . replace_space_with_plus($language['name'])) ?>"><?= $language['name'] ?></a>
                     </td>
 
                     <td>
                         <span class="badge badge-light"><i class="fas fa-fw fa-sm fa-language mr-1"></i> <?= $language['code'] ?></span>
                     </td>
 
-                    <td>
-                        <?= nr($language['order']) ?>
+                    <td class="text-nowrap">
+                        <a href="<?= url('admin/users?language=' . $language['name']) ?>" class="badge badge-light">
+                            <i class="fas fa-fw fa-sm fa-users mr-1"></i>
+                            <?= nr($data->users_languages[$language['name']] ?? 0) ?>
+                            &#x2022;
+                            <?= nr(get_percentage_between_two_numbers($data->users_languages[$language['name']] ?? 0, $data->total_users)) . '%' ?>
+                        </a>
                     </td>
 
                     <td>
-                        <?php if((settings()->languages->{$language['name']}->status ?? $language['status']) == 'disabled'): ?>
-                            <span class="badge badge-warning"><i class="fas fa-fw fa-sm fa-eye-slash mr-1"></i> <?= l('global.disabled') ?></span>
-                        <?php elseif((settings()->languages->{$language['name']}->status ?? $language['status']) == 'active'): ?>
-                            <span class="badge badge-success"><i class="fas fa-fw fa-sm fa-check mr-1"></i> <?= l('global.active') ?></span>
-                        <?php endif ?>
+                        <div class="d-flex flex-column">
+                            <?php if((settings()->languages->{$language['name']}->status ?? $language['status'])): ?>
+                                <span class="badge badge-success"><i class="fas fa-fw fa-sm fa-check mr-1"></i> <?= l('global.active') ?></span>
+                            <?php else: ?>
+                                <span class="badge badge-warning"><i class="fas fa-fw fa-sm fa-eye-slash mr-1"></i> <?= l('global.disabled') ?></span>
+                            <?php endif ?>
+
+                    </td>
+
+                    <td class="text-nowrap">
+                        <div class="d-flex flex-column">
+                            <?php if($language['name'] == settings()->main->default_language): ?>
+                                <div class="mb-1 badge badge-primary"><?= l('admin_languages.default_language') ?></div>
+                            <?php endif ?>
+
+                            <?php if($language['name'] == \Altum\Language::$main_name): ?>
+                                <div class="badge badge-info"><?= l('admin_languages.main') ?></div>
+                            <?php endif ?>
+                        </div>
+                    </td>
+
+                    <td class="text-nowrap">
+                        <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= l('global.order') . '<br />' . nr($language['order']) ?>">
+                            <i class="fas fa-fw fa-sort text-muted"></i>
+                        </span>
                     </td>
 
                     <td>

@@ -1,24 +1,37 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div class="d-flex flex-column flex-md-row justify-content-between mb-4">
-    <h1 class="h3 mb-3 mb-md-0"><i class="fas fa-fw fa-xs fa-wallet text-primary-900 mr-2"></i> <?= l('admin_affiliates_withdrawals.header') ?></h1>
+<?php if(!settings()->affiliate->is_enabled): ?>
+    <div class="alert alert-info">
+        <i class="fas fa-fw fa-info-circle mr-1"></i>
+        <?= sprintf(l('global.info_message.admin_feature_disabled'), url('admin/settings/affiliate')) ?>
+    </div>
+<?php endif ?>
 
-    <div class="d-flex position-relative">
-        <div class="">
+<div class="d-flex flex-column flex-md-row justify-content-between mb-4">
+    <h1 class="h3 mb-3 mb-md-0 text-truncate"><i class="fas fa-fw fa-xs fa-wallet text-primary-900 mr-2"></i> <?= l('admin_affiliates_withdrawals.header') ?></h1>
+
+    <div class="d-flex position-relative d-print-none">
+        <div class="ml-3">
+            <a href="<?= url('admin/statistics/affiliates_withdrawals') ?>" class="btn btn-gray-300" data-tooltip title="<?= l('global.statistics') ?>">
+                <i class="fas fa-fw fa-sm fa-chart-bar"></i>
+            </a>
+        </div>
+
+        <div class="ml-3">
             <div class="dropdown">
-                <button type="button" class="btn btn-gray-300 dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>">
+                <button type="button" class="btn btn-gray-300 dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                     <i class="fas fa-fw fa-sm fa-download"></i>
                 </button>
 
                 <div class="dropdown-menu dropdown-menu-right d-print-none">
-                    <a href="<?= url('admin/payments?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item">
-                        <i class="fas fa-fw fa-sm fa-file-csv mr-1"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
+                    <a href="<?= url('admin/payments?' . $data->filters->get_get() . '&export=csv') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->csv ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->csv ? null : get_plan_feature_disabled_info() ?>>
+                        <i class="fas fa-fw fa-sm fa-file-csv mr-2"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
                     </a>
-                    <a href="<?= url('admin/payments?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item">
-                        <i class="fas fa-fw fa-sm fa-file-code mr-1"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
+                    <a href="<?= url('admin/payments?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
+                        <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                     </a>
-                    <a href="#" onclick="window.print();return false;" class="dropdown-item">
-                        <i class="fas fa-fw fa-sm fa-file-pdf mr-1"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
+                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                        <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                     </a>
                 </div>
             </div>
@@ -26,7 +39,7 @@
 
         <div class="ml-3">
             <div class="dropdown">
-                <button type="button" class="btn <?= count($data->filters->get) ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.filters.header') ?>">
+                <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-secondary' : 'btn-gray-300' ?> filters-button dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                     <i class="fas fa-fw fa-sm fa-filter"></i>
                 </button>
 
@@ -34,8 +47,8 @@
                     <div class="dropdown-header d-flex justify-content-between">
                         <span class="h6 m-0"><?= l('global.filters.header') ?></span>
 
-                        <?php if(count($data->filters->get)): ?>
-                            <a href="<?= url('admin/payments') ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
+                        <?php if($data->filters->has_applied_filters): ?>
+                            <a href="<?= url(\Altum\Router::$original_request) ?>" class="text-muted"><?= l('global.filters.reset') ?></a>
                         <?php endif ?>
                     </div>
 
@@ -43,19 +56,20 @@
 
                     <form action="" method="get" role="form">
                         <div class="form-group px-4">
-                            <label for="is_paid" class="small"><?= l('admin_affiliates_withdrawals.table.is_paid') ?></label>
+                            <label for="is_paid" class="small"><?= l('admin_affiliates_withdrawals.is_paid') ?></label>
                             <select name="is_paid" id="is_paid" class="custom-select custom-select-sm">
                                 <option value=""><?= l('global.all') ?></option>
-                                <option value="1" <?= isset($data->filters->filters['is_paid']) && $data->filters->filters['is_paid'] == '1' ? 'selected="selected"' : null ?>><?= l('admin_affiliates_withdrawals.table.is_paid_paid') ?></option>
-                                <option value="0" <?= isset($data->filters->filters['is_paid']) && $data->filters->filters['is_paid'] == '0' ? 'selected="selected"' : null ?>><?= l('admin_affiliates_withdrawals.table.is_paid_pending') ?></option>
+                                <option value="1" <?= isset($data->filters->filters['is_paid']) && $data->filters->filters['is_paid'] == '1' ? 'selected="selected"' : null ?>><?= l('admin_affiliates_withdrawals.is_paid_paid') ?></option>
+                                <option value="0" <?= isset($data->filters->filters['is_paid']) && $data->filters->filters['is_paid'] == '0' ? 'selected="selected"' : null ?>><?= l('admin_affiliates_withdrawals.is_paid_pending') ?></option>
                             </select>
                         </div>
 
                         <div class="form-group px-4">
                             <label for="filters_order_by" class="small"><?= l('global.filters.order_by') ?></label>
                             <select name="order_by" id="filters_order_by" class="custom-select custom-select-sm">
+                                <option value="affiliate_withdrawal_id" <?= $data->filters->order_by == 'affiliate_withdrawal_id' ? 'selected="selected"' : null ?>><?= l('global.id') ?></option>
                                 <option value="datetime" <?= $data->filters->order_by == 'datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_datetime') ?></option>
-                                <option value="amount" <?= $data->filters->order_by == 'amount' ? 'selected="selected"' : null ?>><?= l('admin_affiliates_withdrawals.table.amount') ?></option>
+                                <option value="amount" <?= $data->filters->order_by == 'amount' ? 'selected="selected"' : null ?>><?= l('admin_affiliates_withdrawals.amount') ?></option>
                             </select>
                         </div>
 
@@ -94,8 +108,8 @@
         <thead>
         <tr>
             <th><?= l('global.user') ?></th>
-            <th><?= l('admin_affiliates_withdrawals.table.amount') ?></th>
-            <th><?= l('admin_affiliates_withdrawals.table.is_paid') ?></th>
+            <th><?= l('admin_affiliates_withdrawals.amount') ?></th>
+            <th><?= l('admin_affiliates_withdrawals.is_paid') ?></th>
             <th></th>
             <th></th>
         </tr>
@@ -106,7 +120,7 @@
                 <td class="text-nowrap">
                     <div class="d-flex">
                         <a href="<?= url('admin/user-view/' . $row->user_id) ?>">
-                            <img src="<?= get_gravatar($row->user_email) ?>" class="user-avatar rounded-circle mr-3" alt="" />
+                            <img src="<?= get_user_avatar($row->user_avatar, $row->user_email) ?>" referrerpolicy="no-referrer" loading="lazy" class="user-avatar rounded-circle mr-3" alt="" />
                         </a>
 
                         <div class="d-flex flex-column">
@@ -114,7 +128,7 @@
                                 <a href="<?= url('admin/user-view/' . $row->user_id) ?>"><?= $row->user_name ?></a>
                             </div>
 
-                            <span class="text-muted"><?= $row->user_email ?></span>
+                            <span class="text-muted small"><?= $row->user_email ?></span>
                         </div>
                     </div>
                 </td>
@@ -126,13 +140,13 @@
                 </td>
                 <td class="text-nowrap">
                     <?php if($row->is_paid): ?>
-                        <span class="badge badge-success"><i class="fas fa-fw fa-sm fa-check mr-1"></i> <?= l('admin_affiliates_withdrawals.table.is_paid_paid') ?></span>
+                        <span class="badge badge-success"><i class="fas fa-fw fa-sm fa-check mr-1"></i> <?= l('admin_affiliates_withdrawals.is_paid_paid') ?></span>
                     <?php else: ?>
-                        <span class="badge badge-warning"><i class="fas fa-fw fa-sm fa-eye-slash mr-1"></i> <?= l('admin_affiliates_withdrawals.table.is_paid_pending') ?></span>
+                        <span class="badge badge-warning"><i class="fas fa-fw fa-sm fa-eye-slash mr-1"></i> <?= l('admin_affiliates_withdrawals.is_paid_pending') ?></span>
                     <?php endif ?>
                 </td>
                 <td class="text-nowrap text-muted">
-                    <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>') ?>">
+                    <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
                         <i class="fas fa-fw fa-calendar text-muted"></i>
                     </span>
                 </td>

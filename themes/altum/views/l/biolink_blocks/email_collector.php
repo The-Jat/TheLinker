@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div id="<?= 'biolink_block_id_' . $data->link->biolink_block_id ?>" data-biolink-block-id="<?= $data->link->biolink_block_id ?>" class="col-12 my-<?= $data->biolink->settings->block_spacing ?? '2' ?>">
+<div id="<?= 'biolink_block_id_' . $data->link->biolink_block_id ?>" data-biolink-block-id="<?= $data->link->biolink_block_id ?>" data-biolink-block-type="<?= $data->link->type ?>" class="col-12 col-lg-<?= ($data->link->settings->columns ?? 1) == 1 ? '12' : '6' ?> my-<?= $data->biolink->settings->block_spacing ?? '2' ?>">
     <a href="#" data-toggle="modal" data-target="<?= '#email_collector_' . $data->link->biolink_block_id ?>" class="btn btn-block btn-primary link-btn <?= ($data->biolink->settings->hover_animation ?? 'smooth') != 'false' ? 'link-hover-animation-' . ($data->biolink->settings->hover_animation ?? 'smooth') : null ?> <?= 'link-btn-' . $data->link->settings->border_radius ?> <?= $data->link->design->link_class ?>" style="<?= $data->link->design->link_style ?>" data-text-color data-border-width data-border-radius data-border-style data-border-color data-border-shadow data-animation data-background-color data-text-alignment>
         <div class="link-btn-image-wrapper <?= 'link-btn-' . $data->link->settings->border_radius ?>" <?= $data->link->settings->image ? null : 'style="display: none;"' ?>>
             <img src="<?= $data->link->settings->image ? \Altum\Uploads::get_full_url('block_thumbnail_images') . $data->link->settings->image : null ?>" class="link-btn-image" loading="lazy" />
@@ -36,20 +36,32 @@
                     <div class="notification-container"></div>
 
                     <div class="form-group">
-                        <input type="email" class="form-control form-control-lg" name="email" maxlength="320" required="required" placeholder="<?= $data->link->settings->email_placeholder ?>" aria-label="<?= $data->link->settings->email_placeholder ?>" />
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text bg-gray-50"><i class="fas fa-fw fa-envelope"></i></div>
+                            </div>
+                            <input type="email" class="form-control" name="email" maxlength="320" required="required" placeholder="<?= $data->link->settings->email_placeholder ?>" aria-label="<?= $data->link->settings->email_placeholder ?>" />
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <input type="text" class="form-control form-control-lg" name="name" maxlength="64" required="required" placeholder="<?= $data->link->settings->name_placeholder ?>" aria-label="<?= $data->link->settings->name_placeholder ?>" />
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text bg-gray-50"><i class="fas fa-fw fa-signature"></i></div>
+                            </div>
+                            <input type="text" class="form-control" name="name" maxlength="64" required="required" placeholder="<?= $data->link->settings->name_placeholder ?>" aria-label="<?= $data->link->settings->name_placeholder ?>" />
+                        </div>
                     </div>
 
                     <?php if($data->link->settings->show_agreement): ?>
-                        <div class="d-flex align-items-center">
-                            <input type="checkbox" id="agreement" name="agreement" class="mr-3" required="required" />
-                            <label for="agreement" class="text-muted mb-0">
-                                <a href="<?= $data->link->settings->agreement_url ?>">
-                                    <?= $data->link->settings->agreement_text ?>
-                                </a>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" id="<?= 'email_collector_agreement_' . $data->link->biolink_block_id ?>" name="agreement" class="custom-control-input" required="required" />
+                            <label class="custom-control-label font-weight-normal" for="<?= 'email_collector_agreement_' . $data->link->biolink_block_id ?>">
+                                <?= $data->link->settings->agreement_text ?>
+
+                                <?php if($data->link->settings->show_agreement): ?>
+                                    <a href="<?= $data->link->settings->agreement_url ?>" target="_blank"><i class="fas fa-fw fa-sm fa-external-link-alt"></i></a>
+                                <?php endif ?>
                             </label>
                         </div>
                     <?php endif ?>
@@ -80,7 +92,7 @@
         /* Go over all mail buttons to make sure the user can still submit mail */
         $('form[id^="email_collector_"]').each((index, element) => {
             let biolink_block_id = $(element).find('input[name="biolink_block_id"]').val();
-            let is_converted = localStorage.getItem(`email_collector_${biolink_block_id}`);
+            let is_converted = sessionStorage.getItem(`email_collector_${biolink_block_id}`);
 
             if(is_converted) {
                 /* Set the submit button to disabled */
@@ -90,7 +102,7 @@
         /* Form handling for mail submissions if any */
         $('form[id^="email_collector_"]').on('submit', event => {
             let biolink_block_id = $(event.currentTarget).find('input[name="biolink_block_id"]').val();
-            let is_converted = localStorage.getItem(`email_collector_${biolink_block_id}`);
+            let is_converted = sessionStorage.getItem(`email_collector_${biolink_block_id}`);
 
             let notification_container = event.currentTarget.querySelector('.notification-container');
             notification_container.innerHTML = '';
@@ -110,6 +122,9 @@
                         } else if(data.status == 'success') {
                             display_notifications(data.message, 'success', notification_container);
 
+                            /* Set the submit button to disabled */
+                            $(event.currentTarget).find('button[type="submit"]').attr('disabled', 'disabled');
+
                             setTimeout(() => {
 
                                 /* Hide modal */
@@ -119,16 +134,13 @@
                                 notification_container.innerHTML = '';
 
                                 /* Set the localstorage to mention that the user was converted */
-                                localStorage.setItem(`email_collector_${biolink_block_id}`, true);
-
-                                /* Set the submit button to disabled */
-                                $(event.currentTarget).find('button[type="submit"]').attr('disabled', 'disabled');
+                                sessionStorage.setItem(`email_collector_${biolink_block_id}`, true);
 
                                 if(data.details.thank_you_url) {
                                     window.location.replace(data.details.thank_you_url);
                                 }
 
-                            }, 1500);
+                            }, 750);
                         }
 
                         /* Reset captcha */

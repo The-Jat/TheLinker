@@ -1,15 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+
+defined('ALTUMCODE') || die();
 
 class AdminRedeemedCodes extends Controller {
 
@@ -28,7 +37,7 @@ class AdminRedeemedCodes extends Controller {
         $redeemed_codes = [];
         $redeemed_codes_result = database()->query("
             SELECT
-                `redeemed_codes`.*, `users`.`name` AS `user_name`, `users`.`email` AS `user_email`,
+                `redeemed_codes`.*, `users`.`name` AS `user_name`, `users`.`email` AS `user_email`, `users`.`avatar` AS `user_avatar`,
                 `codes`.`code` AS `code_code`
             FROM
                 `redeemed_codes`
@@ -49,8 +58,8 @@ class AdminRedeemedCodes extends Controller {
         }
 
         /* Export handler */
-        process_export_json($redeemed_codes, 'include', ['user_id', 'code_id', 'datetime']);
-        process_export_csv($redeemed_codes, 'include', ['user_id', 'code_id', 'datetime']);
+        process_export_json($redeemed_codes, ['user_id', 'code_id', 'datetime']);
+        process_export_csv($redeemed_codes, ['user_id', 'code_id', 'datetime']);
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/admin_pagination', (array) $this))->run(['paginator' => $paginator]);
@@ -80,7 +89,7 @@ class AdminRedeemedCodes extends Controller {
             redirect('admin/redeemed-codes');
         }
 
-        if(!isset($_POST['type']) || (isset($_POST['type']) && !in_array($_POST['type'], ['delete']))) {
+        if(!isset($_POST['type'])) {
             redirect('admin/redeemed-codes');
         }
 
@@ -92,6 +101,10 @@ class AdminRedeemedCodes extends Controller {
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
+            set_time_limit(0);
+
+            session_write_close();
+
             switch($_POST['type']) {
                 case 'delete':
 
@@ -101,8 +114,10 @@ class AdminRedeemedCodes extends Controller {
                     break;
             }
 
+            session_start();
+            
             /* Set a nice success message */
-            Alerts::add_success(l('admin_bulk_delete_modal.success_message'));
+            Alerts::add_success(l('bulk_delete_modal.success_message'));
 
         }
 

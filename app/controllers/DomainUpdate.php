@@ -1,19 +1,32 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class DomainUpdate extends Controller {
 
     public function index() {
+
+        if(!settings()->links->domains_is_enabled) {
+            redirect('not-found');
+        }
 
         \Altum\Authentication::guard();
 
@@ -31,10 +44,10 @@ class DomainUpdate extends Controller {
 
         if(!empty($_POST)) {
             $_POST['scheme'] = isset($_POST['scheme']) && in_array($_POST['scheme'], ['http://', 'https://']) ? query_clean($_POST['scheme']) : 'https://';
-            $_POST['host'] = mb_strtolower(trim($_POST['host']));
+            $_POST['host'] = str_replace(' ', '', mb_strtolower(input_clean($_POST['host'], 128)));
             $_POST['host'] = string_starts_with('http://', $_POST['host']) || string_starts_with('https://', $_POST['host']) ? parse_url($_POST['host'], PHP_URL_HOST) : $_POST['host'];
-            $_POST['custom_index_url'] = trim(filter_var($_POST['custom_index_url'], FILTER_SANITIZE_URL));
-            $_POST['custom_not_found_url'] = trim(filter_var($_POST['custom_not_found_url'], FILTER_SANITIZE_URL));
+            $_POST['custom_index_url'] = get_url($_POST['custom_index_url'], 256);
+            $_POST['custom_not_found_url'] = get_url($_POST['custom_not_found_url'], 256);
             $is_enabled = $domain->is_enabled;
 
             /* Set the domain to pending if domain has changed */
@@ -56,15 +69,15 @@ class DomainUpdate extends Controller {
                 Alerts::add_error(l('global.error_message.invalid_csrf_token'));
             }
 
-            if(in_array($_POST['host'], explode(',', settings()->links->blacklisted_domains))) {
+            if(in_array($_POST['host'], settings()->links->blacklisted_domains)) {
                 Alerts::add_field_error('host', l('link.error_message.blacklisted_domain'));
             }
 
-            if(!empty($_POST['custom_index_url']) && in_array(get_domain_from_url($_POST['custom_index_url']), explode(',', settings()->links->blacklisted_domains))) {
+            if(!empty($_POST['custom_index_url']) && in_array(get_domain_from_url($_POST['custom_index_url']), settings()->links->blacklisted_domains)) {
                 Alerts::add_field_error('custom_index_url', l('link.error_message.blacklisted_domain'));
             }
 
-            if(!empty($_POST['custom_not_found_url']) && in_array(get_domain_from_url($_POST['custom_not_found_url']), explode(',', settings()->links->blacklisted_domains))) {
+            if(!empty($_POST['custom_not_found_url']) && in_array(get_domain_from_url($_POST['custom_not_found_url']), settings()->links->blacklisted_domains)) {
                 Alerts::add_field_error('custom_not_found_url', l('link.error_message.blacklisted_domain'));
             }
 
@@ -81,12 +94,15 @@ class DomainUpdate extends Controller {
                     'custom_index_url' => $_POST['custom_index_url'],
                     'custom_not_found_url' => $_POST['custom_not_found_url'],
                     'is_enabled' => $is_enabled,
-                    'last_datetime' => \Altum\Date::$date,
+                    'last_datetime' => get_date(),
                 ]);
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItem('domains?user_id=' . $domain->user_id);
-                \Altum\Cache::$adapter->deleteItemsByTag('domain_id=' . $domain->domain_id);
+                cache()->deleteItems([
+                    'domains?user_id=' . $domain->user_id,
+                    'domain?domain_id=' . $domain->domain_id,
+                    'domain?host=' . md5($domain->host)
+                ]);
 
                 /* Send notification to admin if needed */
                 if($domain->host != $_POST['host'] && settings()->email_notifications->new_domain && !empty(settings()->email_notifications->emails)) {
@@ -108,11 +124,12 @@ class DomainUpdate extends Controller {
 
                 /* Send webhook notification if needed */
                 if($domain->host != $_POST['host'] && settings()->webhooks->domain_update) {
-                    \Unirest\Request::post(settings()->webhooks->domain_update, [], [
+                    fire_and_forget('post', settings()->webhooks->domain_update, [
                         'user_id' => $this->user->user_id,
                         'domain_id' => $domain->domain_id,
                         'old_host' => $domain->host,
                         'new_host' => $_POST['host'],
+                        'datetime' => get_date(),
                     ]);
                 }
 
@@ -123,7 +140,7 @@ class DomainUpdate extends Controller {
             }
         }
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'domain' => $domain
         ];

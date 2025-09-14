@@ -1,15 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Models\Plan;
+
+defined('ALTUMCODE') || die();
 
 class AdminUserView extends Controller {
 
@@ -25,6 +34,10 @@ class AdminUserView extends Controller {
         /* Get widget stats */
         $biolink_links = db()->where('user_id', $user_id)->where('type', 'biolink')->getValue('links', 'count(`link_id`)');
         $shortened_links = db()->where('user_id', $user_id)->where('type', 'link')->getValue('links', 'count(`link_id`)');
+        $file_links = db()->where('user_id', $user_id)->where('type', 'file')->getValue('links', 'count(`link_id`)');
+        $vcard_links = db()->where('user_id', $user_id)->where('type', 'vcard')->getValue('links', 'count(`link_id`)');
+        $event_links = db()->where('user_id', $user_id)->where('type', 'event')->getValue('links', 'count(`link_id`)');
+        $static_links = db()->where('user_id', $user_id)->where('type', 'static')->getValue('links', 'count(`link_id`)');
         $projects = db()->where('user_id', $user_id)->getValue('projects', 'count(`project_id`)');
         $pixels = db()->where('user_id', $user_id)->getValue('pixels', 'count(`pixel_id`)');
         $splash_pages = db()->where('user_id', $user_id)->getValue('splash_pages', 'count(`splash_page_id`)');
@@ -52,13 +65,17 @@ class AdminUserView extends Controller {
             $user->plan->settings = $user->plan_settings;
         }
 
-        $user->billing = json_decode($user->billing);
+        $user->billing = json_decode($user->billing ?? '');
 
         /* Main View */
         $data = [
             'user' => $user,
             'biolink_links' => $biolink_links,
             'shortened_links' => $shortened_links,
+            'file_links' => $file_links,
+            'vcard_links' => $vcard_links,
+            'event_links' => $event_links,
+            'static_links' => $static_links,
             'projects' => $projects,
             'splash_pages' => $splash_pages,
             'pixels' => $pixels,

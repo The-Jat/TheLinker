@@ -1,13 +1,22 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum;
+
+defined('ALTUMCODE') || die();
 
 class Date {
     public static $date;
@@ -15,7 +24,7 @@ class Date {
     public static $default_timezone = 'UTC';
 
     public static function validate($date, $format = 'Y-m-d') {
-        $d = \DateTime::createFromFormat($format, $date);
+        $d = \DateTime::createFromFormat($format, $date ?? '');
 
         return $d && $d->format($format) === $date;
     }
@@ -103,6 +112,17 @@ class Date {
 
                 break;
 
+            case $format_type === 6:
+
+                return sprintf(
+                    l('global.date.datetime_small_format'),
+                    $datetime->format('j'),
+                    l('global.date.short_months.' . $datetime->format('n')),
+                    $datetime->format('Y'),
+                );
+
+                break;
+
 
             /* No specific format type */
             default:
@@ -124,8 +144,8 @@ class Date {
 
         $query_format = 'Y-m-d H:i:s';
 
-        if($start_date && $end_date) {
-
+        if($start_date && $end_date && (self::validate($start_date) || self::validate($start_date, 'Y-m-d H:i:s')) && (self::validate($end_date) || self::validate($end_date, 'Y-m-d H:i:s'))) {
+            
             $return->start_date = $start_date;
             $return->end_date = $end_date;
 
@@ -164,12 +184,17 @@ class Date {
         $return = [];
 
         /* Display hours on chart */
-        if($start_date == $end_date) {
+        if($start_date->format('d') == $end_date->format('d')) {
             $return['query_date_format'] = '%Y-%m-%d %H';
 
-            $return['process'] = function($date) {
+            $return['process'] = function($date, $ignore_timezone = false) {
                 $date = explode(' ', $date);
-                return ((new \DateTime($date[0]))->setTime($date[1], 0)->setTimezone(new \DateTimeZone(\Altum\Date::$timezone))->format('H A'));
+
+                if($ignore_timezone) {
+                    return ((new \DateTime($date[0]))->setTime($date[1], 0)->format('H A'));
+                } else {
+                    return ((new \DateTime($date[0]))->setTime($date[1], 0)->setTimezone(new \DateTimeZone(\Altum\Date::$timezone))->format('H A'));
+                }
             };
         }
 
@@ -178,8 +203,12 @@ class Date {
         if($days_difference >= 1) {
             $return['query_date_format'] = '%Y-%m-%d';
 
-            $return['process'] = function($date) {
-                return \Altum\Date::get($date, 5);
+            $return['process'] = function($date, $ignore_timezone = false) {
+                if($ignore_timezone) {
+                    return \Altum\Date::get($date, 5, \Altum\Date::$default_timezone);
+                } else {
+                    return \Altum\Date::get($date, 5);
+                }
             };
         }
 
@@ -188,8 +217,12 @@ class Date {
         if($months_difference >= 2) {
             $return['query_date_format'] = '%Y-%m';
 
-            $return['process'] = function($date) {
-                return \Altum\Date::get($date, 'Y-m');
+            $return['process'] = function($date, $ignore_timezone = false) {
+                if($ignore_timezone) {
+                    return \Altum\Date::get($date, 'Y-m', \Altum\Date::$default_timezone);
+                } else {
+                    return \Altum\Date::get($date, 'Y-m');
+                }
             };
         }
 
@@ -198,8 +231,12 @@ class Date {
         if($years_difference >= 2) {
             $return['query_date_format'] = '%Y';
 
-            $return['process'] = function($date) {
-                return ((new \DateTime())->setDate($date, 6, 1)->setTimezone(new \DateTimeZone(\Altum\Date::$timezone))->format('Y'));
+            $return['process'] = function($date, $ignore_timezone = false) {
+                if($ignore_timezone) {
+                    return ((new \DateTime())->setDate($date, 6, 1)->format('Y'));
+                } else {
+                    return ((new \DateTime())->setDate($date, 6, 1)->setTimezone(new \DateTimeZone(\Altum\Date::$timezone))->format('Y'));
+                }
             };
         }
 
@@ -225,6 +262,44 @@ class Date {
             $minutes,
             $seconds
         );
+    }
+
+    public static function seconds_to_his($seconds) {
+        // Handle edge case of negative or invalid input
+        if(!is_numeric($seconds) || $seconds < 0) {
+            return null;
+        }
+
+        // Handle zero seconds
+        if($seconds == 0) {
+            return '0 ' . l('global.date.seconds');
+        }
+
+        $seconds = (int) $seconds;
+
+        // Calculate hours, minutes, and remaining seconds
+        $hours = floor($seconds / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+        $remaining_seconds = $seconds % 60;
+
+        // Handle specific edge case of exactly 60 seconds = "1 minute"
+        if($seconds == 60) {
+            return '1 ' . l('global.date.minute');
+        }
+
+        // Format based on hours, minutes, and seconds
+        if($hours > 0) {
+            // Hours, minutes, and seconds
+            return sprintf('%d:%02d:%02d ' . l('global.date.hours'), $hours, $minutes, $remaining_seconds);
+        } elseif($minutes > 0) {
+            // Only minutes and seconds (handling 1 or more minutes)
+            return $remaining_seconds == 0
+                ? sprintf('%d ' . ($minutes > 1 ? l('global.date.minutes') : l('global.date.minute')), $minutes)
+                : sprintf('%d:%02d ' . l('global.date.minutes'), $minutes, $remaining_seconds);
+        } else {
+            // Only seconds
+            return sprintf('%d ' . l('global.date.seconds'), $remaining_seconds);
+        }
     }
 
     public static function get_elapsed_time($date, $end_date = null, $timings_to_display = 3) {
@@ -269,7 +344,7 @@ class Date {
             }
         }
 
-        return $result;
+        return trim($result);
     }
 
     /* Helper to have the timeago from one point to now */
@@ -343,4 +418,41 @@ class Date {
             }
         }
     }
+
+    public static function get_timezone_difference($timezone1, $timezone2, $date = 'now') {
+        // Create DateTimeZone objects for both timezones
+        $tz1 = new \DateTimeZone($timezone1);
+        $tz2 = new \DateTimeZone($timezone2);
+
+        // Create DateTime objects for the specified date in each timezone
+        $date_time1 = new \DateTime($date, $tz1);
+        $date_time2 = new \DateTime($date, $tz2);
+
+        // Calculate the offset in seconds for each timezone
+        $offset1 = $tz1->getOffset($date_time1);
+        $offset2 = $tz2->getOffset($date_time2);
+
+        // Calculate the difference in seconds (switched the order of offsets)
+        $difference_in_seconds = $offset2 - $offset1;
+
+        // Convert seconds to hours and minutes
+        $hours = (int)($difference_in_seconds / 3600);
+        $minutes = abs(($difference_in_seconds % 3600) / 60);
+
+        // Format the result (e.g., '+02:00', '-05:30')
+        return sprintf('%+03d:%02d', $hours, $minutes);
+    }
+
+    public static function days_format($days) {
+        if($days < 30) {
+            return nr($days) . " " . ($days == 1 ? l('global.date.day') : l('global.date.days'));
+        } elseif($days < 365) {
+            $months = floor($days / 30);
+            return nr($months) . " " . ($months == 1 ? l('global.date.month') : l('global.date.months'));
+        } else {
+            $years = floor($days / 365);
+            return nr($years) . " " . ($years == 1 ? l('global.date.year') : l('global.date.years'));
+        }
+    }
+
 }

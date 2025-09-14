@@ -1,14 +1,14 @@
 <?php defined('ALTUMCODE') || die() ?>
 
 <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-    <ol class="custom-breadcrumbs small">
-        <li>
-            <a href="<?= url('admin/broadcasts') ?>"><?= l('admin_broadcasts.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
-        </li>
-        <li class="active" aria-current="page"><?= l('admin_broadcast_update.breadcrumb') ?></li>
-    </ol>
-</nav>
+    <nav aria-label="breadcrumb">
+        <ol class="custom-breadcrumbs small">
+            <li>
+                <a href="<?= url('admin/broadcasts') ?>"><?= l('admin_broadcasts.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
+            </li>
+            <li class="active" aria-current="page"><?= l('admin_broadcast_update.breadcrumb') ?></li>
+        </ol>
+    </nav>
 <?php endif ?>
 
 <div class="d-flex justify-content-between mb-4">
@@ -22,57 +22,57 @@
 <div class="card <?= \Altum\Alerts::has_field_errors() ? 'border-danger' : null ?>">
     <div class="card-body">
 
-        <form id="form" action="" method="post" role="form">
+        <form id="broadcast_update_form" action="" method="post" role="form">
             <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
 
             <div class="form-group">
                 <label for="name"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('global.name') ?></label>
                 <input type="text" id="name" name="name" value="<?= $data->broadcast->name ?>" class="form-control <?= \Altum\Alerts::has_field_errors('name') ? 'is-invalid' : null ?>" maxlength="64" required="required" />
                 <?= \Altum\Alerts::output_field_error('name') ?>
-                <small class="form-text text-muted"><?= l('admin_broadcasts.main.name_help') ?></small>
+                <small class="form-text text-muted"><?= l('admin_broadcasts.name_help') ?></small>
             </div>
 
             <div class="form-group">
-                <label for="subject"><i class="fas fa-fw fa-sm fa-heading text-muted mr-1"></i> <?= l('admin_broadcasts.main.subject') ?></label>
+                <label for="subject"><i class="fas fa-fw fa-sm fa-heading text-muted mr-1"></i> <?= l('admin_broadcasts.subject') ?></label>
                 <input type="text" id="subject" name="subject" value="<?= $data->broadcast->subject ?>" class="form-control <?= \Altum\Alerts::has_field_errors('subject') ? 'is-invalid' : null ?>" maxlength="128" required="required" <?= $data->broadcast->status == 'sent' ? 'readonly="readonly"' : null ?> />
                 <?= \Altum\Alerts::output_field_error('subject') ?>
-                <small class="form-text text-muted"><?= l('admin_broadcasts.main.subject_help') ?></small>
-                <small class="form-text text-muted"><?= l('admin_broadcasts.main.variables') ?></small>
+                <small class="form-text text-muted"><?= l('admin_broadcasts.subject_help') ?></small>
+                <small class="form-text text-muted"><?= sprintf(l('global.variables'), '<code data-copy>' . implode('</code> , <code data-copy>',  ['{{WEBSITE_TITLE}}', '{{USER:NAME}}', '{{USER:EMAIL}}', '{{USER:CONTINENT_NAME}}', '{{USER:COUNTRY_NAME}}', '{{USER:CITY_NAME}}', '{{USER:DEVICE_TYPE}}', '{{USER:OS_NAME}}', '{{USER:BROWSER_NAME}}', '{{USER:BROWSER_LANGUAGE}}']) . '</code>') ?></small>
             </div>
 
             <div class="form-group custom-control custom-switch" data-type="external">
                 <input id="is_system_email" name="is_system_email" type="checkbox" class="custom-control-input" <?= $data->broadcast->settings->is_system_email ? 'checked="checked"' : null ?> <?= $data->broadcast->status == 'sent' ? 'disabled="disabled"' : null ?>>
-                <label class="custom-control-label" for="is_system_email"><i class="fas fa-fw fa-sm fa-at text-muted mr-1"></i> <?= l('admin_broadcasts.main.is_system_email') ?></label>
-                <small class="form-text text-muted"><?= l('admin_broadcasts.main.is_system_email_help') ?></small>
+                <label class="custom-control-label" for="is_system_email"><i class="fas fa-fw fa-sm fa-at text-muted mr-1"></i> <?= l('admin_broadcasts.is_system_email') ?></label>
+                <small class="form-text text-muted"><?= l('admin_broadcasts.is_system_email_help') ?></small>
             </div>
 
             <div class="form-group">
-                <label for="segment"><i class="fas fa-fw fa-sm fa-layer-group text-muted mr-1"></i> <?= l('admin_broadcasts.main.segment') ?> <?= $data->broadcast->status == 'sent' ? '<span>(' . $data->broadcast->total_emails .')</span>' : '<span id="segment_count"></span>' ?></label>
+                <label for="segment"><i class="fas fa-fw fa-sm fa-layer-group text-muted mr-1"></i> <?= l('admin_broadcasts.segment') ?> <?= $data->broadcast->status == 'sent' ? '<span>(' . $data->broadcast->total_emails .')</span>' : '<span id="segment_count"></span>' ?></label>
                 <select id="segment" name="segment" class="form-control <?= \Altum\Alerts::has_field_errors('segment') ? 'is-invalid' : null ?>" required="required" <?= $data->broadcast->status == 'sent' ? 'disabled="disabled"' : null ?>>
-                    <option value="all" <?= $data->broadcast->segment == 'all' ? 'selected="selected"' : null ?>><?= l('admin_broadcasts.main.segment.all') ?></option>
-                    <option value="subscribers" <?= $data->broadcast->segment == 'subscribers' ? 'selected="selected"' : null ?>><?= l('admin_broadcasts.main.segment.subscribers') ?></option>
-                    <option value="custom" <?= $data->broadcast->segment == 'custom' ? 'selected="selected"' : null ?>><?= l('admin_broadcasts.main.segment.custom') ?></option>
-                    <option value="filter" <?= $data->broadcast->segment == 'filter' ? 'selected="selected"' : null ?>><?= l('admin_broadcasts.main.segment.filter') ?></option>
+                    <option value="all" <?= $data->broadcast->segment == 'all' ? 'selected="selected"' : null ?>><?= l('admin_broadcasts.segment.all') ?></option>
+                    <option value="subscribers" <?= $data->broadcast->segment == 'subscribers' ? 'selected="selected"' : null ?>><?= l('admin_broadcasts.segment.subscribers') ?></option>
+                    <option value="custom" <?= $data->broadcast->segment == 'custom' ? 'selected="selected"' : null ?>><?= l('admin_broadcasts.segment.custom') ?></option>
+                    <option value="filter" <?= $data->broadcast->segment == 'filter' ? 'selected="selected"' : null ?>><?= l('admin_broadcasts.segment.filter') ?></option>
                 </select>
                 <?= \Altum\Alerts::output_field_error('segment') ?>
-                <small class="form-text text-muted"><?= l('admin_broadcasts.main.segment_help') ?></small>
-                <small class="form-text text-muted"><?= l('admin_broadcasts.main.segment_help2') ?></small>
+                <small class="form-text text-muted"><?= l('admin_broadcasts.segment_help') ?></small>
+                <small class="form-text text-muted"><?= l('admin_broadcasts.segment_help2') ?></small>
             </div>
 
             <div class="form-group" data-segment="custom">
-                <label for="users_ids"><i class="fas fa-fw fa-sm fa-users text-muted mr-1"></i> <?= l('admin_broadcasts.main.users_ids') ?></label>
-                <input type="text" id="users_ids" name="users_ids" value="<?= $data->broadcast->users_ids ?>" class="form-control <?= \Altum\Alerts::has_field_errors('users_ids') ? 'is-invalid' : null ?>" placeholder="<?= l('admin_broadcasts.main.users_ids_placeholder') ?>" required="required" <?= $data->broadcast->status == 'sent' ? 'readonly="readonly"' : null ?> />
+                <label for="users_ids"><i class="fas fa-fw fa-sm fa-users text-muted mr-1"></i> <?= l('admin_broadcasts.users_ids') ?></label>
+                <input type="text" id="users_ids" name="users_ids" value="<?= $data->broadcast->users_ids ?>" class="form-control <?= \Altum\Alerts::has_field_errors('users_ids') ? 'is-invalid' : null ?>" placeholder="<?= l('admin_broadcasts.users_ids_placeholder') ?>" required="required" <?= $data->broadcast->status == 'sent' ? 'readonly="readonly"' : null ?> />
                 <?= \Altum\Alerts::output_field_error('users_ids') ?>
-                <small class="form-text text-muted"><?= l('admin_broadcasts.main.users_ids_help') ?></small>
+                <small class="form-text text-muted"><?= l('admin_broadcasts.users_ids_help') ?></small>
             </div>
 
             <div class="form-group custom-control custom-switch" data-segment="filter">
                 <input id="<?= 'filters_is_newsletter_subscribed' ?>" name="filters_is_newsletter_subscribed" type="checkbox" class="custom-control-input" <?= isset($data->broadcast->settings->filters_is_newsletter_subscribed) ? 'checked="checked"' : null ?>>
-                <label class="custom-control-label" for="<?= 'filters_is_newsletter_subscribed' ?>"><?= l('admin_broadcasts.main.segment.filter.is_newsletter_subscribed') ?></label>
+                <label class="custom-control-label" for="<?= 'filters_is_newsletter_subscribed' ?>"><?= l('admin_broadcasts.segment.filter.is_newsletter_subscribed') ?></label>
             </div>
 
             <div class="form-group" data-segment="filter">
-                <label for="plans"><i class="fas fa-fw fa-sm fa-box-open text-muted mr-1"></i> <?= l('admin_broadcasts.main.segment.filter.plans') ?></label>
+                <label for="plans"><i class="fas fa-fw fa-sm fa-box-open text-muted mr-1"></i> <?= l('admin_broadcasts.segment.filter.plans') ?></label>
                 <div class="row">
                     <div class="col-6 mb-3">
                         <div class="custom-control custom-switch">
@@ -100,39 +100,39 @@
             </div>
 
             <div class="form-group" data-segment="filter">
-                <label for="status"><i class="fas fa-fw fa-sm fa-toggle-on text-muted mr-1"></i> <?= l('global.status') ?></label>
+                <label for="status"><i class="fas fa-fw fa-sm fa-circle-dot text-muted mr-1"></i> <?= l('global.status') ?></label>
                 <div class="row">
                     <div class="col-6 mb-3">
                         <div class="custom-control custom-switch">
                             <input id="<?= 'filters_status###active' ?>" name="filters_status[]" value="1" type="checkbox" class="custom-control-input" <?= isset($data->broadcast->settings->filters_status['1']) ? 'checked="checked"' : null ?>>
-                            <label class="custom-control-label" for="<?= 'filters_status###active' ?>"><?= l('admin_users.main.status_active') ?></label>
+                            <label class="custom-control-label" for="<?= 'filters_status###active' ?>"><?= l('admin_users.status_active') ?></label>
                         </div>
                     </div>
 
                     <div class="col-6 mb-3">
                         <div class="custom-control custom-switch">
                             <input id="<?= 'filters_status###unconfirmed' ?>" name="filters_status[]" value="0" type="checkbox" class="custom-control-input" <?= isset($data->broadcast->settings->filters_status['0']) ? 'checked="checked"' : null ?>>
-                            <label class="custom-control-label" for="<?= 'filters_status###unconfirmed' ?>"><?= l('admin_users.main.status_unconfirmed') ?></label>
+                            <label class="custom-control-label" for="<?= 'filters_status###unconfirmed' ?>"><?= l('admin_users.status_unconfirmed') ?></label>
                         </div>
                     </div>
 
                     <div class="col-6 mb-3">
                         <div class="custom-control custom-switch">
                             <input id="<?= 'filters_status###disabled' ?>" name="filters_status[]" value="2" type="checkbox" class="custom-control-input" <?= isset($data->broadcast->settings->filters_status['2']) ? 'checked="checked"' : null ?>>
-                            <label class="custom-control-label" for="<?= 'filters_status###disabled' ?>"><?= l('admin_users.main.status_disabled') ?></label>
+                            <label class="custom-control-label" for="<?= 'filters_status###disabled' ?>"><?= l('admin_users.status_disabled') ?></label>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="form-group" data-segment="filter">
-                <label for="source"><i class="fas fa-fw fa-sm fa-right-to-bracket text-muted mr-1"></i> <?= l('admin_users.main.source') ?></label>
+                <label for="source"><i class="fas fa-fw fa-sm fa-right-to-bracket text-muted mr-1"></i> <?= l('admin_users.source') ?></label>
                 <div class="row">
                     <?php foreach(['direct', 'admin_create', 'admin_api_create', 'facebook', 'twitter', 'discord', 'google', 'linkedin', 'microsoft'] as $source): ?>
                         <div class="col-6 mb-3">
                             <div class="custom-control custom-switch">
                                 <input id="<?= 'filters_source###' . $source ?>" name="filters_source[]" value="<?= $source ?>" type="checkbox" class="custom-control-input" <?= isset($data->broadcast->settings->filters_source) && in_array($source, $data->broadcast->settings->filters_source) ? 'checked="checked"' : null ?>>
-                                <label class="custom-control-label" for="<?= 'filters_source###' . $source ?>"><?= l('admin_users.main.source.' . $source) ?></label>
+                                <label class="custom-control-label" for="<?= 'filters_source###' . $source ?>"><?= l('admin_users.source.' . $source) ?></label>
                             </div>
                         </div>
                     <?php endforeach ?>
@@ -144,9 +144,23 @@
                 <div class="row">
                     <?php foreach(['desktop', 'tablet', 'mobile'] as $device_type): ?>
                         <div class="col-6 mb-3">
-                            <div class="custom-control custom-switch">
+                            <div class="custom-control custom-checkbox">
                                 <input id="<?= 'filters_device_type###' . $device_type ?>" name="filters_device_type[]" value="<?= $device_type ?>" type="checkbox" class="custom-control-input" <?= isset($data->broadcast->settings->filters_device_type) && in_array($device_type, $data->broadcast->settings->filters_device_type) ? 'checked="checked"' : null ?>>
                                 <label class="custom-control-label" for="<?= 'filters_device_type###' . $device_type ?>"><?= l('global.device.' . $device_type) ?></label>
+                            </div>
+                        </div>
+                    <?php endforeach ?>
+                </div>
+            </div>
+
+            <div class="form-group" data-segment="filter">
+                <label for="languages"><i class="fas fa-fw fa-sm fa-language text-muted mr-1"></i> <?= l('admin_broadcasts.languages') ?></label>
+                <div class="row">
+                    <?php foreach(\Altum\Language::$active_languages as $language_name => $language_code): ?>
+                        <div class="col-6 mb-3">
+                            <div class="custom-control custom-switch">
+                                <input id="<?= 'filters_languages###' . $language_code ?>" name="filters_languages[]" value="<?= $language_name ?>" type="checkbox" class="custom-control-input" <?= isset($data->broadcast->settings->filters_languages) && in_array($language_name, $data->broadcast->settings->filters_languages) ? 'checked="checked"' : null ?>>
+                                <label class="custom-control-label" for="<?= 'filters_languages###' . $language_code ?>"><?= $language_name ?></label>
                             </div>
                         </div>
                     <?php endforeach ?>
@@ -175,8 +189,42 @@
                 </div>
             </div>
 
+            <div class="form-group" data-segment="filter">
+                <label for="filters_cities"><i class="fas fa-fw fa-sm fa-city text-muted mr-1"></i> <?= l('global.cities') ?></label>
+                <input type="text" id="filters_cities" name="filters_cities" value="<?= implode(',', $data->broadcast->settings->filters_cities ?? []) ?>" class="form-control" placeholder="<?= l('admin_broadcasts.cities_placeholder') ?>" />
+                <?= \Altum\Alerts::output_field_error('filters_cities') ?>
+                <small class="form-text text-muted"><?= l('admin_broadcasts.cities_help') ?></small>
+            </div>
+
+            <div class="form-group" data-segment="filter">
+                <label for="filters_operating_systems"><i class="fas fa-fw fa-server fa-sm text-muted mr-1"></i> <?= l('admin_broadcasts.operating_systems') ?></label>
+                <select id="filters_operating_systems" name="filters_operating_systems[]" class="custom-select" multiple="multiple">
+                    <?php foreach(['iOS', 'Android', 'Windows', 'OS X', 'Linux', 'Ubuntu', 'Chrome OS'] as $os_name): ?>
+                        <option value="<?= $os_name ?>" <?= in_array($os_name, $data->broadcast->settings->filters_operating_systems ?? []) ? 'selected="selected"' : null ?>><?= $os_name ?></option>
+                    <?php endforeach ?>
+                </select>
+            </div>
+
+            <div class="form-group" data-segment="filter">
+                <label for="filters_browsers"><i class="fas fa-fw fa-window-restore fa-sm text-muted mr-1"></i> <?= l('admin_broadcasts.browsers') ?></label>
+                <select id="filters_browsers" name="filters_browsers[]" class="custom-select" multiple="multiple">
+                    <?php foreach(['Chrome', 'Firefox', 'Safari', 'Edge', 'Opera', 'Samsung Internet'] as $browser_name): ?>
+                        <option value="<?= $browser_name ?>" <?= in_array($browser_name, $data->broadcast->settings->filters_browsers ?? []) ? 'selected="selected"' : null ?>><?= $browser_name ?></option>
+                    <?php endforeach ?>
+                </select>
+            </div>
+
+            <div class="form-group" data-segment="filter">
+                <label for="filters_browser_languages"><i class="fas fa-fw fa-language fa-sm text-muted mr-1"></i> <?= l('admin_broadcasts.browser_languages') ?></label>
+                <select id="filters_browser_languages" name="filters_browser_languages[]" class="custom-select" multiple="multiple">
+                    <?php foreach(get_locale_languages_array() as $locale => $language): ?>
+                        <option value="<?= $locale ?>" <?= in_array($locale, $data->broadcast->settings->filters_browser_languages ?? []) ? 'selected="selected"' : null ?>><?= $language ?></option>
+                    <?php endforeach ?>
+                </select>
+            </div>
+
             <div class="form-group">
-                <label for="content"><i class="fas fa-fw fa-sm fa-paragraph text-muted mr-1"></i> <?= l('admin_broadcasts.main.content') ?></label>
+                <label for="content"><i class="fas fa-fw fa-sm fa-paragraph text-muted mr-1"></i> <?= l('admin_broadcasts.content') ?></label>
                 <div class="bg-gray-100 rounded p-3 <?= $data->broadcast->status == 'sent' ? 'container-disabled' : null ?>" id="editorjs">
                     <?php if(!json_decode($data->broadcast->content)): ?>
                         <div class="row justify-content-center">
@@ -186,10 +234,10 @@
                         </div>
                     <?php endif ?>
                 </div>
-                <textarea name="content" id="content" class="form-control d-none <?= \Altum\Alerts::has_field_errors('content') ? 'is-invalid' : null ?>"></textarea>
+                <textarea name="content" id="content" class="form-control d-none <?= \Altum\Alerts::has_field_errors('content') ? 'is-invalid' : null ?>"><?= e($data->broadcast->content) ?></textarea>
                 <?= \Altum\Alerts::output_field_error('content') ?>
-                <small class="form-text text-muted"><?= l('admin_broadcasts.main.variables') ?></small>
-                <small class="form-text text-muted"><?= l('global.admin_spintax_help') ?></small>
+                <small class="form-text text-muted"><?= sprintf(l('global.variables'), '<code data-copy>' . implode('</code> , <code data-copy>',  ['{{WEBSITE_TITLE}}', '{{USER:NAME}}', '{{USER:EMAIL}}', '{{USER:CONTINENT_NAME}}', '{{USER:COUNTRY_NAME}}', '{{USER:CITY_NAME}}', '{{USER:DEVICE_TYPE}}', '{{USER:OS_NAME}}', '{{USER:BROWSER_NAME}}', '{{USER:BROWSER_LANGUAGE}}']) . '</code>') ?></small>
+                <small class="form-text text-muted"><?= l('global.spintax_help') ?></small>
             </div>
 
             <div class="alert alert-info" role="alert"><?= l('admin_broadcast_create.info1') ?></div>
@@ -227,18 +275,26 @@
 
 <?php if(json_decode($data->broadcast->content)): ?>
     <?php ob_start() ?>
-    <script src="https://cdn.jsdelivr.net/npm/@editorjs/header@latest"></script><!-- Header -->
-    <script src="https://cdn.jsdelivr.net/npm/@editorjs/simple-image@latest"></script><!-- Image -->
-    <script src="https://cdn.jsdelivr.net/npm/@editorjs/list@latest"></script><!-- List -->
-    <script src="https://cdn.jsdelivr.net/npm/@editorjs/link@latest"></script><!-- Link -->
-    <script src="https://cdn.jsdelivr.net/npm/@editorjs/code@latest"></script><!-- Code -->
-    <script src="https://cdn.jsdelivr.net/npm/@editorjs/raw@latest"></script><!-- Raw HTML -->
-
-    <!-- Load Editor.js's Core -->
-    <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
+    <script src="<?= ASSETS_FULL_URL . 'js/libraries/editorjs/colorpicker.js?v=' . PRODUCT_CODE ?>"></script>
+    <script src="<?= ASSETS_FULL_URL . 'js/libraries/editorjs/header.js?v=' . PRODUCT_CODE ?>"></script>
+    <script src="<?= ASSETS_FULL_URL . 'js/libraries/editorjs/simple-image.js?v=' . PRODUCT_CODE ?>"></script>
+    <script src="<?= ASSETS_FULL_URL . 'js/libraries/editorjs/list.js?v=' . PRODUCT_CODE ?>"></script>
+    <script src="<?= ASSETS_FULL_URL . 'js/libraries/editorjs/link.js?v=' . PRODUCT_CODE ?>"></script>
+    <script src="<?= ASSETS_FULL_URL . 'js/libraries/editorjs/code.js?v=' . PRODUCT_CODE ?>"></script>
+    <script src="<?= ASSETS_FULL_URL . 'js/libraries/editorjs/raw.js?v=' . PRODUCT_CODE ?>"></script>
+    <script src="<?= ASSETS_FULL_URL . 'js/libraries/editorjs/editorjs.js?v=' . PRODUCT_CODE ?>"></script>
 
     <script>
         'use strict';
+
+        const is_valid_json = (str) => {
+            try {
+                JSON.parse(str);
+                return true;
+            } catch {
+                return false;
+            }
+        };
 
         /* EditorJS initiatilization */
         let editorjs = new EditorJS({
@@ -246,10 +302,14 @@
             holder: 'editorjs',
 
             /* Data */
-            data: <?= $data->broadcast->content ?>,
+            data: is_valid_json(document.querySelector('#content').value) ? JSON.parse(document.querySelector('#content').value) : {},
 
             /* Tolls */
             tools: {
+                ColorPicker: {
+                    class: ColorPicker.default,
+                },
+
                 header: {
                     class: Header,
                     inlineToolbar: true,
@@ -277,7 +337,7 @@
         })();
 
         /* Handle form submission with the editor */
-        document.querySelector('form').addEventListener('submit', async event => {
+        document.querySelector('#broadcast_update_form').addEventListener('submit', async event => {
             let data = await editorjs.save();
             document.querySelector('textarea[name="content"]').innerHTML = JSON.stringify(data);
         });
@@ -288,8 +348,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    type_handler('[name="segment"]', 'data-segment');
+    
+type_handler('[name="segment"]', 'data-segment');
     document.querySelector('[name="segment"]') && document.querySelectorAll('[name="segment"]').forEach(element => element.addEventListener('change', () => { type_handler('[name="segment"]', 'data-segment'); }));
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
@@ -297,12 +357,12 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    document.querySelector('#segment').addEventListener('change', async event => {
+    
+document.querySelector('#segment').addEventListener('change', async event => {
         await get_segment_count();
     });
 
-    document.querySelectorAll('#filters_is_newsletter_subscribed,[name="filters_plans[]"],[name="filters_status[]"],[name="filters_countries[]"],[name="filters_continents[]"],[name="filters_device_type[]"],[name="filters_source[]"]').forEach(element => element.addEventListener('change', async event => {
+    document.querySelectorAll('#filters_is_newsletter_subscribed,[name^="filters_"]').forEach(element => element.addEventListener('change', async event => {
         await get_segment_count();
     }));
 
@@ -323,7 +383,7 @@
 
         /* Filter preparing on query string */
         if(segment == 'filter') {
-            query = new URLSearchParams(new FormData(document.querySelector('#form')));
+            query = new URLSearchParams(new FormData(document.querySelector('#broadcast_update_form')));
         }
 
         /* Send request to server */
@@ -352,3 +412,5 @@
     get_segment_count();
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+
+<?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>

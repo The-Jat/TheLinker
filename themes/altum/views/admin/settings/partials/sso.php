@@ -18,43 +18,57 @@
 
     <label><?= l('admin_settings.sso.websites') ?></label>
     <div id="websites">
-        <?php foreach(settings()->sso->websites ?? [] as $website): ?>
-        <div class="website p-3 bg-gray-50 rounded mb-4">
-            <div class="form-group">
-                <label for="<?= 'id[' . $website->id . ']' ?>"><i class="fas fa-fw fa-sm fa-fingerprint text-muted mr-1"></i> <?= l('admin_settings.sso.id') ?></label>
-                <input id="<?= 'id[' . $website->id . ']' ?>" type="text" name="id[<?= $website->id ?>]" class="form-control" value="<?= $website->id ?>" required="required" />
-                <small class="form-text text-muted"><?= l('admin_settings.sso.id_help') ?></small>
-            </div>
+        <?php foreach(settings()->sso->websites ?? [] as $key => $website): ?>
+            <div class="website p-3 bg-gray-50 rounded mb-4">
+                <div class="form-group">
+                    <div class="d-flex justify-content-between">
+                        <label for="<?= 'id[' . $website->id . ']' ?>"><i class="fas fa-fw fa-sm fa-fingerprint text-muted mr-1"></i> <?= l('admin_settings.sso.id') ?></label>
 
-            <div class="form-group">
-                <label for="<?= 'name[' . $website->id . ']' ?>"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('global.name') ?></label>
-                <input id="<?= 'name[' . $website->id . ']' ?>" type="text" name="name[<?= $website->id ?>]" class="form-control" value="<?= $website->name ?>" required="required" />
-            </div>
+                        <span class="cursor-grab drag" data-toggle="tooltip" title="<?= l('global.drag_and_drop') ?>">
+                            <i class="fas fa-fw fa-sm fa-bars text-muted"></i>
+                        </span>
+                    </div>
+                    <input id="<?= 'id[' . $website->id . ']' ?>" type="text" name="id[<?= $website->id ?>]" class="form-control" value="<?= $website->id ?>" required="required" />
+                    <small class="form-text text-muted"><?= l('admin_settings.sso.id_help') ?></small>
+                </div>
 
-            <div class="form-group">
-                <label for="<?= 'url[' . $website->id . ']' ?>"><i class="fas fa-fw fa-sm fa-link text-muted mr-1"></i> <?= l('global.url') ?></label>
-                <input id="<?= 'url[' . $website->id . ']' ?>" type="url" name="url[<?= $website->id ?>]" class="form-control" value="<?= $website->url ?>" placeholder="<?= SITE_URL ?>" required="required" />
-                <small class="form-text text-muted"><?= l('admin_settings.sso.url_help') ?></small>
-            </div>
+                <button type="button" class="btn btn-block btn-sm btn-outline-primary mb-3" data-toggle="collapse" data-target="<?= '#' . 'container_' . md5($website->id) ?>" aria-expanded="false" aria-controls="<?= 'container_' . md5($website->id) ?>">
+                    <i class="fas fa-fw fa-pencil fa-sm mr-1"></i> <?= l('global.update') ?>
+                </button>
 
-            <div class="form-group">
-                <label for="<?= 'api_key[' . $website->id . ']' ?>"><i class="fas fa-fw fa-sm fa-code text-muted mr-1"></i> <?= l('admin_settings.sso.api_key') ?></label>
-                <input id="<?= 'api_key[' . $website->id . ']' ?>" type="text" name="api_key[<?= $website->id ?>]" class="form-control" value="<?= $website->api_key ?>" required="required" />
-                <small class="form-text text-muted"><?= l('admin_settings.sso.api_key_help') ?></small>
-            </div>
+                <div class="collapse" id="<?= 'container_' . md5($website->id) ?>">
+                    <div class="form-group">
+                        <label for="<?= 'name[' . $website->id . ']' ?>"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('global.name') ?></label>
+                        <input id="<?= 'name[' . $website->id . ']' ?>" type="text" name="name[<?= $website->id ?>]" class="form-control" value="<?= $website->name ?>" required="required" />
+                    </div>
 
-            <div class="form-group">
-                <label for="<?= 'icon[' . $website->id . ']' ?>"><i class="fas fa-fw fa-sm fa-icons text-muted mr-1"></i> <?= l('global.icon') ?></label>
-                <input id="<?= 'icon[' . $website->id . ']' ?>" type="text" name="icon[<?= $website->id ?>]" class="form-control" value="<?= $website->icon ?>" placeholder="<?= l('global.icon_placeholder') ?>" maxlength="32" required="required" />
-                <small class="form-text text-muted"><?= l('global.icon_help') ?></small>
-            </div>
+                    <div class="form-group">
+                        <label for="<?= 'url[' . $website->id . ']' ?>"><i class="fas fa-fw fa-sm fa-link text-muted mr-1"></i> <?= l('global.url') ?></label>
+                        <input id="<?= 'url[' . $website->id . ']' ?>" type="url" name="url[<?= $website->id ?>]" class="form-control" value="<?= $website->url ?>" placeholder="<?= SITE_URL ?>" required="required" />
+                        <small class="form-text text-muted"><?= l('admin_settings.sso.url_help') ?></small>
+                    </div>
 
-            <button type="button" data-remove="websites" class="mb-3 btn btn-block btn-outline-danger"><i class="fas fa-fw fa-times fa-sm mr-1"></i> <?= l('global.delete') ?></button>
-        </div>
+                    <div class="form-group">
+                        <label for="<?= 'api_key[' . $website->id . ']' ?>"><i class="fas fa-fw fa-sm fa-code text-muted mr-1"></i> <?= l('admin_settings.sso.api_key') ?></label>
+                        <input id="<?= 'api_key[' . $website->id . ']' ?>" type="text" name="api_key[<?= $website->id ?>]" class="form-control" value="<?= $website->api_key ?>" required="required" />
+                        <small class="form-text text-muted"><?= l('admin_settings.sso.api_key_help') ?></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="<?= 'icon[' . $website->id . ']' ?>"><i class="fas fa-fw fa-sm fa-icons text-muted mr-1"></i> <?= l('global.icon') ?></label>
+                        <input id="<?= 'icon[' . $website->id . ']' ?>" type="text" name="icon[<?= $website->id ?>]" class="form-control" value="<?= $website->icon ?>" placeholder="<?= l('global.icon_placeholder') ?>" maxlength="32" required="required" />
+                        <small class="form-text text-muted"><?= l('global.icon_help') ?></small>
+                    </div>
+                </div>
+
+
+
+                <button type="button" data-remove="websites" class="btn btn-block btn-outline-danger"><i class="fas fa-fw fa-times fa-sm mr-1"></i> <?= l('global.delete') ?></button>
+            </div>
         <?php endforeach ?>
     </div>
 
-    <div class="mb-3">
+    <div class="mb-4">
         <button data-add="websites" type="button" class="btn btn-block btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
     </div>
 </div>
@@ -92,15 +106,15 @@
             <small class="form-text text-muted"><?= l('global.icon_help') ?></small>
         </div>
 
-        <button type="button" data-remove="request" class="mb-3 btn btn-block btn-outline-danger"><i class="fas fa-fw fa-times"></i> <?= l('global.delete') ?></button>
+        <button type="button" data-remove="request" class="btn btn-block btn-outline-danger"><i class="fas fa-fw fa-times"></i> <?= l('global.delete') ?></button>
     </div>
 </template>
 
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* add new request header */
+    
+/* add new request header */
     let add = event => {
         let type = event.currentTarget.getAttribute('data-add');
         let clone = document.querySelector(`#template_${type}`).content.cloneNode(true);
@@ -151,5 +165,23 @@
     }
 
     id_initiator();
+</script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+
+
+<?php ob_start() ?>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/sortable.js?v=' . PRODUCT_CODE ?>"></script>
+<script>
+    'use strict';
+    
+    let sortable = Sortable.create(document.getElementById('websites'), {
+        animation: 150,
+        handle: '.drag',
+        onUpdate: event => {
+
+            /* :) */
+
+        }
+    });
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

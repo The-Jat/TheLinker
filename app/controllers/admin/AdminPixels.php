@@ -1,23 +1,32 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class AdminPixels extends Controller {
 
     public function index() {
 
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['user_id', 'type'], ['name'], ['last_datetime', 'name', 'datetime']));
-        $filters->set_default_order_by('pixel_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
+        $filters = (new \Altum\Filters(['user_id', 'type'], ['name', 'pixel'], ['pixel_id', 'last_datetime', 'name', 'datetime']));
+        $filters->set_default_order_by($this->user->preferences->pixels_default_order_by, $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
         /* Prepare the paginator */
@@ -28,7 +37,7 @@ class AdminPixels extends Controller {
         $pixels = [];
         $pixels_result = database()->query("
             SELECT
-                `pixels`.*, `users`.`name` AS `user_name`, `users`.`email` AS `user_email`
+                `pixels`.*, `users`.`name` AS `user_name`, `users`.`email` AS `user_email`, `users`.`avatar` AS `user_avatar`
             FROM
                 `pixels`
             LEFT JOIN
@@ -45,8 +54,8 @@ class AdminPixels extends Controller {
         }
 
         /* Export handler */
-        process_export_csv($pixels, 'include', ['pixel_id', 'user_id', 'type', 'name', 'pixel', 'last_datetime', 'datetime'], sprintf(l('admin_pixels.title')));
-        process_export_json($pixels, 'include', ['pixel_id', 'user_id', 'type', 'name', 'pixel', 'last_datetime', 'datetime'], sprintf(l('admin_pixels.title')));
+        process_export_csv($pixels, ['pixel_id', 'user_id', 'type', 'name', 'pixel', 'last_datetime', 'datetime'], sprintf(l('admin_pixels.title')));
+        process_export_json($pixels, ['pixel_id', 'user_id', 'type', 'name', 'pixel', 'last_datetime', 'datetime'], sprintf(l('admin_pixels.title')));
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/admin_pagination', (array) $this))->run(['paginator' => $paginator]);
@@ -77,7 +86,7 @@ class AdminPixels extends Controller {
             redirect('admin/pixels');
         }
 
-        if(!isset($_POST['type']) || (isset($_POST['type']) && !in_array($_POST['type'], ['delete']))) {
+        if(!isset($_POST['type'])) {
             redirect('admin/pixels');
         }
 
@@ -87,6 +96,10 @@ class AdminPixels extends Controller {
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
+            set_time_limit(0);
+
+            session_write_close();
+
             switch($_POST['type']) {
                 case 'delete':
 
@@ -95,14 +108,16 @@ class AdminPixels extends Controller {
                         db()->where('pixel_id', $pixel_id)->delete('pixels');
 
                         /* Clear the cache */
-                        \Altum\Cache::$adapter->deleteItemsByTag('pixel_id=' . $pixel_id);
+                        cache()->deleteItemsByTag('pixel_id=' . $pixel_id);
                     }
 
                     break;
             }
 
+            session_start();
+            
             /* Set a nice success message */
-            Alerts::add_success(l('admin_bulk_delete_modal.success_message'));
+            Alerts::add_success(l('bulk_delete_modal.success_message'));
 
         }
 
@@ -129,7 +144,7 @@ class AdminPixels extends Controller {
             db()->where('pixel_id', $pixel->pixel_id)->delete('pixels');
 
             /* Clear the cache */
-            \Altum\Cache::$adapter->deleteItemsByTag('pixel_id=' . $pixel->pixel_id);
+            cache()->deleteItemsByTag('pixel_id=' . $pixel->pixel_id);
 
             /* Set a nice success message */
             Alerts::add_success(sprintf(l('global.success_message.delete1'), '<strong>' . $pixel->name . '</strong>'));

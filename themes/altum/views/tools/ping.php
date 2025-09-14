@@ -4,17 +4,17 @@
     <?= \Altum\Alerts::output_alerts() ?>
 
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url('tools') ?>"><?= l('tools.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li class="active" aria-current="page"><?= l('tools.ping.name') ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url('tools') ?>"><?= l('tools.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li class="active" aria-current="page"><?= l('tools.ping.name') ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
     <div class="row mb-4">
-        <div class="col-12 col-xl d-flex align-items-center mb-3 mb-xl-0">
-            <h1 class="h4 m-0"><?= l('tools.ping.name') ?></h1>
+        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0 text-truncate">
+            <h1 class="h4 m-0 text-truncate"><?= l('tools.ping.name') ?></h1>
 
             <div class="ml-2">
                 <span data-toggle="tooltip" title="<?= l('tools.ping.description') ?>">
@@ -22,6 +22,8 @@
                 </span>
             </div>
         </div>
+
+        <?= $this->views['ratings'] ?>
     </div>
 
     <div class="card">
@@ -43,8 +45,8 @@
                 </div>
 
                 <div class="form-group" data-type="website">
-                    <label for="target_website_url"><i class="fas fa-fw fa-sm fa-globe text-muted mr-1"></i> <?= l('tools.ping.target_url') ?></label>
-                    <input type="text" id="target_website_url" name="target" class="form-control <?= \Altum\Alerts::has_field_errors('target') ? 'is-invalid' : null ?>" value="<?= $data->values['target'] ?>" required="required" />
+                    <label for="target_website_url"><i class="fas fa-fw fa-sm fa-link text-muted mr-1"></i> <?= l('tools.ping.target_url') ?></label>
+                    <input type="url" id="target_website_url" name="target" class="form-control <?= \Altum\Alerts::has_field_errors('target') ? 'is-invalid' : null ?>" value="<?= $data->values['target'] ?>" placeholder="<?= l('global.url_placeholder') ?>" required="required" />
                     <?= \Altum\Alerts::output_field_error('target') ?>
                 </div>
 
@@ -81,6 +83,17 @@
                 <table class="table table-custom">
                     <tbody>
 
+                    <?php if($data->values['type'] == 'website'): ?>
+                        <tr>
+                            <td class="font-weight-bold">
+                                <?= l('global.url') ?>
+                            </td>
+                            <td class="text-nowrap">
+                                <img referrerpolicy="no-referrer" src="<?= get_favicon_url_from_domain(parse_url($data->values['target'], PHP_URL_HOST)) ?>" class="img-fluid icon-favicon mr-1" /> <?= remove_url_protocol_from_url($data->values['target']) ?>
+                            </td>
+                        </tr>
+                    <?php endif ?>
+
                     <?php if(isset($data->result['ping_server_id'])): ?>
                         <tr>
                             <td class="font-weight-bold">
@@ -95,7 +108,7 @@
                     <?php if(isset($data->result['is_ok'])): ?>
                         <tr>
                             <td class="font-weight-bold">
-                                <?= l('tools.ping.result.status') ?>
+                                <?= l('global.status') ?>
                             </td>
                             <td class="text-nowrap">
                                 <?php if($data->result['is_ok']): ?>
@@ -107,39 +120,37 @@
                         </tr>
                     <?php endif ?>
 
-                    <?php if($data->result['is_ok']): ?>
-                        <?php if(isset($data->result['response_time'])): ?>
-                            <tr>
-                                <td class="font-weight-bold">
-                                    <?= l('tools.ping.result.response_time') ?>
-                                </td>
-                                <td class="text-nowrap">
-                                    <?= display_response_time($data->result['response_time']) ?>
-                                </td>
-                            </tr>
-                        <?php endif ?>
+                    <?php if(isset($data->result['response_time'])): ?>
+                        <tr>
+                            <td class="font-weight-bold">
+                                <?= l('tools.ping.result.response_time') ?>
+                            </td>
+                            <td class="text-nowrap">
+                                <?= display_response_time($data->result['response_time']) ?>
+                            </td>
+                        </tr>
+                    <?php endif ?>
 
-                        <?php if(isset($data->result['response_status_code'])): ?>
-                            <tr>
-                                <td class="font-weight-bold">
-                                    <?= l('tools.ping.result.response_status_code') ?>
-                                </td>
-                                <td class="text-nowrap">
-                                    <?= $data->result['response_status_code'] ?>
-                                </td>
-                            </tr>
-                        <?php endif ?>
-                    <?php else: ?>
-                        <?php if(isset($data->result['error'])): ?>
-                            <tr>
-                                <td class="font-weight-bold">
-                                    <?= l('tools.ping.result.error') ?>
-                                </td>
-                                <td class="text-nowrap">
-                                    <?= $data->result['error']['message'] ?>
-                                </td>
-                            </tr>
-                        <?php endif ?>
+                    <?php if(isset($data->result['response_status_code'])): ?>
+                        <tr>
+                            <td class="font-weight-bold">
+                                <?= l('tools.ping.result.response_status_code') ?>
+                            </td>
+                            <td class="text-nowrap">
+                                <?= $data->result['response_status_code'] ?>
+                            </td>
+                        </tr>
+                    <?php endif ?>
+
+                    <?php if(isset($data->result['error'])): ?>
+                        <tr>
+                            <td class="font-weight-bold">
+                                <?= l('tools.ping.result.error') ?>
+                            </td>
+                            <td class="text-nowrap">
+                                <?= $data->result['error']['message'] ?? l('global.none') ?>
+                            </td>
+                        </tr>
                     <?php endif ?>
 
                     </tbody>
@@ -151,6 +162,8 @@
     <?= $this->views['extra_content'] ?>
 
     <?= $this->views['similar_tools'] ?>
+
+    <?= $this->views['popular_tools'] ?>
 </div>
 
 <?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>
@@ -158,8 +171,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    type_handler('select[name="type"]', 'data-type');
+    
+type_handler('select[name="type"]', 'data-type');
     document.querySelector('select[name="type"]') && document.querySelectorAll('select[name="type"]').forEach(element => element.addEventListener('change', () => { type_handler('select[name="type"]', 'data-type'); }));
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

@@ -5,10 +5,10 @@
 
     <?= $this->views['account_header_menu'] ?>
 
-    <form action="" method="post" role="form">
+    <form action="" method="post" role="form" enctype="multipart/form-data">
         <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
 
-        <div class="">
+        <div>
             <div class="d-flex align-items-center mb-3">
                 <h1 class="h4 m-0"><?= l('account.settings.header') ?></h1>
 
@@ -21,6 +21,12 @@
 
             <div class="card">
                 <div class="card-body">
+                    <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= settings()->main->avatar_size_limit ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), settings()->main->avatar_size_limit) ?>">
+                        <label for="avatar"><i class="fas fa-fw fa-sm fa-image text-muted mr-1"></i> <?= l('account.settings.avatar') ?></label>
+                        <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'users', 'file_key' => 'avatar', 'already_existing_image' => $this->user->avatar, 'input_data' => 'data-crop data-aspect-ratio="1"']) ?>
+                        <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('users')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->main->avatar_size_limit) ?></small>
+                    </div>
+
                     <div class="form-group">
                         <label for="name"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('global.name') ?></label>
                         <input type="text" id="name" name="name" class="form-control <?= \Altum\Alerts::has_field_errors('name') ? 'is-invalid' : null ?>" value="<?= $this->user->name ?>" maxlength="32" />
@@ -61,11 +67,13 @@
                         </div>
                     <?php endif ?>
 
+                    <?php if(settings()->users->account_display_newsletter_checkbox): ?>
                     <div class="form-group custom-control custom-switch">
                         <input id="is_newsletter_subscribed" name="is_newsletter_subscribed" type="checkbox" class="custom-control-input" <?= $this->user->is_newsletter_subscribed ? 'checked="checked"' : null ?>>
                         <label class="custom-control-label" for="is_newsletter_subscribed"><i class="fas fa-fw fa-sm fa-newspaper text-muted mr-1"></i> <?= l('account.settings.is_newsletter_subscribed') ?></label>
                         <small class="form-text text-muted"><?= l('account.settings.is_newsletter_subscribed_help') ?></small>
                     </div>
+                    <?php endif ?>
                 </div>
             </div>
         </div>
@@ -98,14 +106,14 @@
                                 <label for="billing_type"><i class="fas fa-fw fa-sm fa-briefcase text-muted mr-1"></i> <?= l('account.billing.type') ?></label>
                                 <div class="row btn-group-toggle" data-toggle="buttons">
                                     <div class="col-6">
-                                        <label class="btn btn-light btn-block <?= $this->user->billing->type == 'personal' ? 'active"' : null?>">
+                                        <label class="btn btn-light btn-block text-truncate <?= $this->user->billing->type == 'personal' ? 'active"' : null?>">
                                             <input type="radio" name="billing_type" value="personal" class="custom-control-input" <?= $this->user->billing->type == 'personal' ? 'checked="checked"' : null?> />
                                             <i class="fas fa-user fa-fw fa-sm mr-1"></i> <?= l('account.billing.type_personal') ?>
                                         </label>
                                     </div>
 
                                     <div class="col-6">
-                                        <label class="btn btn-light btn-block <?= $this->user->billing->type == 'business' ? 'active"' : null?>">
+                                        <label class="btn btn-light btn-block text-truncate <?= $this->user->billing->type == 'business' ? 'active"' : null?>">
                                             <input type="radio" name="billing_type" value="business" class="custom-control-input" <?= $this->user->billing->type == 'business' ? 'checked="checked"' : null?> />
                                             <i class="fas fa-user-tag fa-fw fa-sm mr-1"></i> <?= l('account.billing.type_business') ?>
                                         </label>
@@ -207,7 +215,7 @@
 
         <hr class="border-gray-50 my-4" />
 
-        <div class="">
+        <div>
             <div class="d-flex align-items-center mb-3">
                 <h1 class="h4 m-0"><?= l('account.twofa.header') ?></h1>
 
@@ -223,35 +231,49 @@
                     <div class="form-group">
                         <label for="twofa_is_enabled"><i class="fas fa-fw fa-sm fa-passport text-muted mr-1"></i> <?= l('account.twofa.is_enabled') ?></label>
                         <select id="twofa_is_enabled" name="twofa_is_enabled" class="custom-select <?= \Altum\Alerts::has_field_errors('twofa_token') ? 'is-invalid' : null ?>">
-                            <option value="1" <?= $this->user->twofa_secret ? 'selected="selected"' : null ?>><?= l('global.yes') ?></option>
-                            <option value="0" <?= !$this->user->twofa_secret ? 'selected="selected"' : null ?>><?= l('global.no') ?></option>
+                            <option value="1" <?= $this->user->twofa_secret || $_POST['twofa_is_enabled'] ? 'selected="selected"' : null ?>><?= l('global.yes') ?></option>
+                            <option value="0" <?= !$this->user->twofa_secret && !$_POST['twofa_is_enabled'] ? 'selected="selected"' : null ?>><?= l('global.no') ?></option>
                         </select>
                     </div>
 
                     <div data-twofa-is-enabled="1">
                         <?php if(!$this->user->twofa_secret): ?>
                             <div class="form-group">
-                                <label><?= l('account.twofa.qr') ?></label>
-                                <p class="text-muted"><?= l('account.twofa.qr_help') ?></p>
+                                <span class="h6"><?= l('account.twofa.qr') ?></span>
+                                <p class="small text-muted"><?= l('account.twofa.qr_help') ?></p>
 
-                                <div class="d-flex flex-column flex-md-row align-items-center">
-                                    <div class="mb-3 mb-md-0 mr-md-5">
-                                        <img src="<?= $data->twofa_image ?>" alt="<?= l('account.twofa.qr') ?>" />
+                                <div class="row">
+                                    <div class="col-md-4 d-flex justify-content-center mb-3 mb-lg-0">
+                                        <img src="<?= $data->twofa_image ?>" class="img-fluid" alt="<?= l('account.twofa.qr') ?>" />
                                     </div>
 
-                                    <div>
-                                        <label><?= l('account.twofa.secret') ?></label>
-                                        <p class="text-muted"><?= l('account.twofa.secret_help') ?></p>
+                                    <div class="col-md-8 d-flex flex-column justify-content-center">
+                                        <span class="h6 m-0"><?= l('account.twofa.secret') ?></span>
+                                        <p class="small text-muted mb-4"><?= l('account.twofa.secret_help') ?></p>
 
-                                        <p class="h5"><?= $data->twofa_secret ?></p>
+                                        <p class="h5">
+                                            <?= $data->twofa_secret ?>
+                                            <button
+                                                    type="button"
+                                                    class="btn btn-sm btn-light ml-2"
+                                                    data-toggle="tooltip"
+                                                    title="<?= l('global.clipboard_copy') ?>"
+                                                    aria-label="<?= l('global.clipboard_copy') ?>"
+                                                    data-copy="<?= l('global.clipboard_copy') ?>"
+                                                    data-copied="<?= l('global.clipboard_copied') ?>"
+                                                    data-clipboard-text="<?= $data->twofa_secret ?>"
+                                            >
+                                                <i class="fas fa-fw fa-sm fa-copy"></i>
+                                            </button>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label for="twofa_token"><?= l('account.twofa.verify') ?></label>
-                                <p class="text-muted"><?= l('account.twofa.verify_help') ?></p>
-                                <input type="text" id="twofa_token" name="twofa_token" class="form-control <?= \Altum\Alerts::has_field_errors('twofa_token') ? 'is-invalid' : null ?>" value="" autocomplete="off" />
+                                <span class="h6"><?= l('account.twofa.verify') ?></span>
+                                <p class="small text-muted"><?= l('account.twofa.verify_help') ?></p>
+                                <input type="text" id="twofa_token" name="twofa_token" class="form-control <?= \Altum\Alerts::has_field_errors('twofa_token') ? 'is-invalid' : null ?>" value="" autocomplete="off" placeholder="123 456" maxlength="6" />
                                 <?= \Altum\Alerts::output_field_error('twofa_token') ?>
                             </div>
                         <?php endif ?>
@@ -262,7 +284,7 @@
 
         <hr class="border-gray-50 my-4" />
 
-        <div class="">
+        <div>
             <div class="d-flex align-items-center mb-3">
                 <h1 class="h4 m-0"><?= l('account.change_password.header') ?></h1>
 
@@ -275,20 +297,20 @@
 
             <div class="card">
                 <div class="card-body">
-                    <div class="form-group">
+                    <div class="form-group" data-password-toggle-view data-password-toggle-view-show="<?= l('global.show') ?>" data-password-toggle-view-hide="<?= l('global.hide') ?>">
                         <label for="old_password"><i class="fas fa-fw fa-sm fa-unlock text-muted mr-1"></i> <?= l('account.change_password.current_password') ?></label>
                         <input type="password" id="old_password" name="old_password" class="form-control <?= \Altum\Alerts::has_field_errors('old_password') ? 'is-invalid' : null ?>" />
                         <small class="form-text text-muted"><?= l('account.change_password.current_password_help') ?></small>
                         <?= \Altum\Alerts::output_field_error('old_password') ?>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group" data-password-toggle-view data-password-toggle-view-show="<?= l('global.show') ?>" data-password-toggle-view-hide="<?= l('global.hide') ?>">
                         <label for="new_password"><i class="fas fa-fw fa-sm fa-lock text-muted mr-1"></i> <?= l('account.change_password.new_password') ?></label>
                         <input type="password" id="new_password" name="new_password" class="form-control <?= \Altum\Alerts::has_field_errors('new_password') ? 'is-invalid' : null ?>" />
                         <?= \Altum\Alerts::output_field_error('new_password') ?>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group" data-password-toggle-view data-password-toggle-view-show="<?= l('global.show') ?>" data-password-toggle-view-hide="<?= l('global.hide') ?>">
                         <label for="repeat_password"><i class="fas fa-fw fa-sm fa-lock text-muted mr-1"></i> <?= l('account.change_password.repeat_password') ?></label>
                         <input type="password" id="repeat_password" name="repeat_password" class="form-control <?= \Altum\Alerts::has_field_errors('repeat_password') ? 'is-invalid' : null ?>" />
                         <?= \Altum\Alerts::output_field_error('repeat_password') ?>
@@ -301,6 +323,8 @@
     </form>
 </div>
 
+<?php include_view(THEME_PATH . 'views/partials/js_cropper.php') ?>
+
 <?php if(!$this->user->twofa_secret): ?>
     <?php ob_start() ?>
     <script>
@@ -311,3 +335,5 @@
     </script>
     <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
 <?php endif ?>
+
+<?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>

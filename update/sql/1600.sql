@@ -4,7 +4,7 @@ UPDATE `settings` SET `value` = '{\"version\":\"16.0.0\", \"code\":\"1600\"}' WH
 
 CREATE TABLE `biolinks_themes` (
 `biolink_theme_id` int NOT NULL AUTO_INCREMENT,
-`name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+`name` varchar(64) NOT NULL,
 `image` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
 `settings` text COLLATE utf8mb4_unicode_ci,
 `is_enabled` tinyint NOT NULL DEFAULT '1',

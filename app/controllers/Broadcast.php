@@ -1,14 +1,23 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
-namespace Altum\controllers;
+namespace Altum\Controllers;
 
+
+defined('ALTUMCODE') || die();
 
 class Broadcast extends Controller {
 
@@ -37,15 +46,15 @@ class Broadcast extends Controller {
 
         $parameters['broadcast_id'] = (int) $parameters['broadcast_id'];
         $parameters['user_id'] = (int) $parameters['user_id'];
-        $url = isset($_GET['url']) ? filter_var($_GET['url'], FILTER_SANITIZE_URL) : null;
+        $url = isset($_GET['url']) ? get_url($_GET['url']) : null;
 
         /* Make sure the broadcast & user exists properly */
         if(!$broadcast = db()->where('broadcast_id', $parameters['broadcast_id'])->getOne('broadcasts')) {
             redirect();
         }
 
-        if($broadcast->status != 'sent') {
-            //redirect();
+        if(!in_array($broadcast->status, ['sent', 'processing'])) {
+            redirect();
         }
 
         $broadcast->users_ids = json_decode($broadcast->users_ids);
@@ -89,7 +98,7 @@ class Broadcast extends Controller {
             'user_id' => $parameters['user_id'],
             'type' => $type,
             'target' => $target,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         switch($type) {

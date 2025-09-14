@@ -19,36 +19,29 @@
             <meta name="keywords" content="<?= \Altum\Meta::$keywords ?>" />
         <?php endif ?>
 
-        <?php if(\Altum\Meta::$open_graph['url']): ?>
-            <!-- Open Graph / Facebook / Twitter -->
-            <?php foreach(\Altum\Meta::$open_graph as $key => $value): ?>
-                <?php if($value): ?>
-                    <meta property="og:<?= $key ?>" content="<?= $value ?>" />
-                    <meta property="twitter:<?= $key ?>" content="<?= $value ?>" />
-                <?php endif ?>
-            <?php endforeach ?>
-        <?php endif ?>
+        <?php \Altum\Meta::output() ?>
 
         <?php if(\Altum\Meta::$canonical): ?>
             <link rel="canonical" href="<?= \Altum\Meta::$canonical ?>" />
         <?php endif ?>
 
-        <?php if(!settings()->main->se_indexing || \Altum\Meta::$robots): ?>
-            <?php if(!settings()->main->se_indexing) \Altum\Meta::set_robots('noindex'); ?>
-            <meta name="robots" content="<?= \Altum\Meta::$robots ?>">
+        <?php if(\Altum\Meta::$robots): ?>
+        <meta name="robots" content="<?= \Altum\Meta::$robots ?>">
         <?php endif ?>
 
-        <link rel="alternate" href="<?= SITE_URL . \Altum\Router::$original_request ?>" hreflang="x-default" />
-        <?php if(count(\Altum\Language::$active_languages) > 1): ?>
-            <?php foreach(\Altum\Language::$active_languages as $language_name => $language_code): ?>
-                <?php if(settings()->main->default_language != $language_name): ?>
-                    <link rel="alternate" href="<?= SITE_URL . $language_code . '/' . \Altum\Router::$original_request ?>" hreflang="<?= $language_code ?>" />
-                <?php endif ?>
-            <?php endforeach ?>
+        <?php if(\Altum\Meta::$link_alternate): ?>
+            <link rel="alternate" href="<?= SITE_URL . \Altum\Router::$original_request ?>" hreflang="x-default" />
+            <?php if(count(\Altum\Language::$active_languages) > 1): ?>
+                <?php foreach(\Altum\Language::$active_languages as $language_name => $language_code): ?>
+                    <?php if(settings()->main->default_language != $language_name): ?>
+                        <link rel="alternate" href="<?= SITE_URL . $language_code . '/' . \Altum\Router::$original_request ?>" hreflang="<?= $language_code ?>" />
+                    <?php endif ?>
+                <?php endforeach ?>
+            <?php endif ?>
         <?php endif ?>
 
         <?php if(!empty(settings()->main->favicon)): ?>
-            <link href="<?= \Altum\Uploads::get_full_url('favicon') . settings()->main->favicon ?>" rel="shortcut icon" />
+            <link href="<?= settings()->main->favicon_full_url ?>" rel="icon" />
         <?php endif ?>
 
         <link href="<?= ASSETS_FULL_URL . 'css/' . \Altum\ThemeStyle::get_file() . '?v=' . PRODUCT_CODE ?>" id="css_theme_style" rel="stylesheet" media="screen,print">
@@ -58,8 +51,12 @@
 
         <?= \Altum\Event::get_content('head') ?>
 
+        <?php if(is_logged_in() && !user()->plan_settings->export->pdf): ?>
+            <style>@media print { body { display: none; } }</style>
+        <?php endif ?>
+
         <?php if(!empty(settings()->custom->head_js)): ?>
-            <?= settings()->custom->head_js ?>
+            <?= get_settings_custom_head_js() ?>
         <?php endif ?>
 
         <?php if(!empty(settings()->custom->head_css)): ?>
@@ -68,16 +65,22 @@
     </head>
 
     <body class="index <?= l('direction') == 'rtl' ? 'rtl' : null ?> <?= \Altum\ThemeStyle::get() == 'dark' ? 'cc--darkmode' : null ?>" data-theme-style="<?= \Altum\ThemeStyle::get() ?>">
-        <?php //ALTUMCODE:DEMO if(DEMO) echo include_view(THEME_PATH . 'views/partials/ac_banner.php', ['demo_url' => 'https://66biolinks.com/demo/', 'product_name' => PRODUCT_NAME, 'product_url' => PRODUCT_URL]) ?>
+        <?php if(!empty(settings()->custom->body_content)): ?>
+            <?= settings()->custom->body_content ?>
+        <?php endif ?>
+
+        <?php //ALTUMCODE:DEMO if(DEMO) echo include_view(THEME_PATH . 'views/partials/ac_banner.php', ['demo_url' => 'https://66biolinks.com/demo/', 'product_name' => PRODUCT_NAME, 'product_url' => PRODUCT_URL, 'product_buy_url' => PRODUCT_BUY_URL]) ?>
+        <?php require THEME_PATH . 'views/partials/js_welcome.php' ?>
         <?php require THEME_PATH . 'views/partials/admin_impersonate_user.php' ?>
         <?php require THEME_PATH . 'views/partials/team_delegate_access.php' ?>
         <?php require THEME_PATH . 'views/partials/announcements.php' ?>
         <?php require THEME_PATH . 'views/partials/cookie_consent.php' ?>
         <?php require THEME_PATH . 'views/partials/ad_blocker_detector.php' ?>
+        <?php if(settings()->main->admin_spotlight_is_enabled || settings()->main->user_spotlight_is_enabled) require THEME_PATH . 'views/partials/spotlight.php' ?>
         <?php if(\Altum\Plugin::is_active('pwa') && settings()->pwa->is_enabled && settings()->pwa->display_install_bar) require \Altum\Plugin::get('pwa')->path . 'views/partials/pwa.php' ?>
         <?php if(\Altum\Plugin::is_active('push-notifications') && settings()->push_notifications->is_enabled) require \Altum\Plugin::get('push-notifications')->path . 'views/partials/push_notifications_js.php' ?>
 
-        <div class="container">
+        <div class="container pt-4">
             <?= $this->views['menu'] ?>
         </div>
 
@@ -89,7 +92,6 @@
 
         <?php require THEME_PATH . 'views/partials/ads_footer.php' ?>
 
-
         <div class="container d-print-none">
             <footer class="footer app-footer">
                 <?= $this->views['footer'] ?>
@@ -100,8 +102,12 @@
 
         <?php require THEME_PATH . 'views/partials/js_global_variables.php' ?>
 
-        <?php foreach(['libraries/jquery.min.js', 'libraries/popper.min.js', 'libraries/bootstrap.min.js', 'custom.js', 'libraries/fontawesome.min.js', 'libraries/fontawesome-solid.min.js', 'libraries/fontawesome-brands.min.js',] as $file): ?>
+        <?php foreach(['libraries/jquery.min.js', 'libraries/popper.min.js', 'libraries/bootstrap.min.js', 'custom.js'] as $file): ?>
             <script src="<?= ASSETS_FULL_URL ?>js/<?= $file ?>?v=<?= PRODUCT_CODE ?>"></script>
+        <?php endforeach ?>
+
+        <?php foreach(['libraries/fontawesome.min.js', 'libraries/fontawesome-solid.min.js', 'libraries/fontawesome-brands.modified.js'] as $file): ?>
+            <script src="<?= ASSETS_FULL_URL ?>js/<?= $file ?>?v=<?= PRODUCT_CODE ?>" defer></script>
         <?php endforeach ?>
 
         <?= \Altum\Event::get_content('javascript') ?>

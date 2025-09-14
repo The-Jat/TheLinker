@@ -1,8 +1,7 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div class="container">
-    <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
+<?php if(settings()->main->breadcrumbs_is_enabled): ?>
+    <nav aria-label="breadcrumb">
         <ol class="custom-breadcrumbs small">
             <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
             <li class="active" aria-current="page"><?= l('pages.index.breadcrumb') ?></li>
@@ -32,7 +31,7 @@
                                 <div class="card bg-gray-50 border-0 h-100 p-3">
                                     <div class="card-body d-flex flex-column align-items-center justify-content-center">
                                         <?php if(!empty($row->icon)): ?>
-                                            <span class="round-circle-lg bg-primary-100 text-primary p-3 mb-4"><i class="<?= $row->icon ?> fa-2x"></i></span>
+                                            <span class="round-circle-lg bg-primary-100 text-primary p-3 mb-4"><i class="<?= $row->icon ?> fa-fw fa-2x"></i></span>
                                         <?php endif ?>
 
                                         <div class="h5"><?= $row->title ?></div>
@@ -71,17 +70,36 @@
         <?php endif ?>
 
     <?php else: ?>
-        <div class="card mt-4">
-            <div class="card-body">
-                <div class="d-flex flex-column align-items-center justify-content-center py-3">
-                    <img src="<?= ASSETS_FULL_URL . 'images/no_rows.svg' ?>" class="col-10 col-md-7 col-lg-4 mb-3" alt="<?= l('pages.no_data') ?>" />
-                    <h2 class="h4 text-muted"><?= l('pages.no_data') ?></h2>
-                    <p class="text-muted"><?= l('pages.no_data_help') ?></p>
-                </div>
-            </div>
+        <div class="mt-4">
+            <?= include_view(THEME_PATH . 'views/partials/no_data.php', [
+                'filters_get' => $data->filters->get ?? [],
+                'name' => 'pages',
+                'has_secondary_text' => true,
+            ]); ?>
         </div>
     <?php endif ?>
 </div>
 
-
+<?php ob_start() ?>
+<script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "<?= l('index.title') ?>",
+                    "item": "<?= url() ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "<?= l('pages.title') ?>",
+                    "item": "<?= url('pages') ?>"
+                }
+            ]
+        }
+</script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
 

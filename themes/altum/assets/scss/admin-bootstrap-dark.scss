@@ -72,6 +72,8 @@ $code-color: $primary;
 
 /* Border */
 $border-radius: .4rem;
+$border-radius-lg: $border-radius;
+$border-radius-sm: $border-radius;
 
 /* Dropdown */
 $dropdown-padding-x: .5rem;
@@ -122,6 +124,19 @@ $blockquote-small-color: $gray-800;
 /* Small font size */
 $small-font-size: 80%;
 
+/* Tooltips */
+$tooltip-padding-y: .6rem;
+$tooltip-padding-x: .9rem;
+
+/* Navbar color contrast compliance fixes */
+$navbar-dark-color:                 $gray-600;
+$navbar-dark-hover-color:           $gray-700;
+$navbar-light-color:                $gray-600;
+$navbar-light-hover-color:          $gray-700;
+
+/* Improve green color */
+$green: #5ec269;
+
 @import "./bootstrap/bootstrap";
 
 /* Forms */
@@ -135,6 +150,14 @@ label {
 .dropdown-toggle-simple::after {
     display:none;
 }
+
+/* Gap utilities */
+.gap-0 { gap: 0 !important; }
+.gap-1 { gap: 0.25rem !important; }
+.gap-2 { gap: 0.5rem !important; }
+.gap-3 { gap: 1rem !important; }
+.gap-4 { gap: 1.5rem !important; }
+.gap-5 { gap: 3rem !important; }
 
 .dropdown-item > svg {
     color: $gray-700;
@@ -166,12 +189,15 @@ label {
 code {
     background: $primary-100;
     border-radius: $border-radius;
-    padding: .15rem;
+    padding: .15rem .4rem;
 }
 
 /* Buttons */
 .btn {
     border-style: solid;
+}
+.btn:not([class*="outline"]) {
+    border-color: transparent;
 }
 
 /* D flex text truncate fix */
@@ -181,6 +207,91 @@ code {
 
 /* Tooltip fix */
 .tooltip { top: 0; }
+
+/* Custom switches */
+.custom-control-label::before {
+    border: 0;
+    background: #{$gray-200};
+}
+.custom-control-input[disabled]~.custom-control-label::before, .custom-control-input:disabled~.custom-control-label::before {
+    background: #{$gray-300};
+}
+
+/* Badges */
+.badge {
+    padding: 0.45em 0.9em;
+}
+[data-theme-style="dark"] .badge-primary {
+    background: var(--primary-800);
+    color: var(--primary-100);
+}
+[data-theme-style="dark"] .badge-secondary {
+    background-color: hsl(208, 7%, 35%);
+    color: hsl(208, 7%, 85%);
+}
+[data-theme-style="dark"] .badge-success {
+    background-color: hsla(134, 50%, 30%, 1);
+    color: hsla(134, 50%, 85%, 1);
+}
+[data-theme-style="dark"] .badge-danger {
+    background-color: hsla(354, 70%, 35%, 1);
+    color: hsla(354, 70%, 85%, 1);
+}
+[data-theme-style="dark"] .badge-warning {
+    background-color: hsla(50, 10%, 20%, 1);
+    color: hsla(45, 100%, 85%, 1);
+}
+[data-theme-style="dark"] .badge-info {
+    background-color: hsla(188, 60%, 30%, 1);
+    color: hsla(188, 78%, 85%, 1);
+}
+[data-theme-style="dark"] .badge-light {
+    background-color: hsla(210, 15%, 20%, 1);
+    color: hsl(210, 17%, 95%);
+}
+[data-theme-style="dark"] .badge-dark {
+    background-color: hsla(210, 10%, 90%, 1);
+    color: hsla(210, 10%, 20%, 1);
+}
+
+/* Badges */
+.badge {
+    padding: 0.45em 0.9em;
+}
+[data-theme-style="dark"] .badge-primary {
+    background: var(--primary-800);
+    color: var(--primary-100);
+}
+[data-theme-style="dark"] .badge-secondary {
+    background-color: hsl(208, 7%, 35%);
+    color: hsl(208, 7%, 85%);
+}
+[data-theme-style="dark"] .badge-success {
+    background-color: hsla(134, 50%, 30%, 1);
+    color: hsla(134, 50%, 85%, 1);
+}
+[data-theme-style="dark"] .badge-danger {
+    background-color: hsla(354, 70%, 35%, 1);
+    color: hsla(354, 70%, 85%, 1);
+}
+[data-theme-style="dark"] .badge-warning {
+    background-color: hsla(50, 10%, 20%, 1);
+    color: hsla(45, 100%, 85%, 1);
+}
+[data-theme-style="dark"] .badge-info {
+    background-color: hsla(188, 60%, 30%, 1);
+    color: hsla(188, 78%, 85%, 1);
+}
+[data-theme-style="dark"] .badge-light {
+    background-color: hsla(210, 15%, 20%, 1);
+    color: hsl(210, 17%, 95%);
+}
+[data-theme-style="dark"] .badge-dark {
+    background-color: hsla(210, 10%, 90%, 1);
+    color: hsla(210, 10%, 20%, 1);
+}
+
+// DARK //
 
 /* Extra variables */
 :root {
@@ -194,4 +305,6 @@ code {
     --input-placeholder-color: #{$input-placeholder-color};
     --input-padding-y: #{$input-btn-padding-y};
     --input-padding-x: #{$input-btn-padding-x};
+    --input-font-size: #{$input-font-size};
+    --card-padding: #{$card-spacer-x};
 }

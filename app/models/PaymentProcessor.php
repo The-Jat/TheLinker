@@ -1,13 +1,22 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Models;
+
+defined('ALTUMCODE') || die();
 
 class PaymentProcessor extends Model {
 
@@ -17,7 +26,7 @@ class PaymentProcessor extends Model {
         $payment_processors = [];
 
         /* Try to check if the user exists via the cache */
-        $cache_instance = \Altum\Cache::$adapter->getItem('payment_processors?user_id=' . $user_id);
+        $cache_instance = cache()->getItem('payment_processors?user_id=' . $user_id);
 
         /* Set cache if not existing */
         if(is_null($cache_instance->get())) {
@@ -39,7 +48,7 @@ class PaymentProcessor extends Model {
                 $cache_instance->addTag('payment_processor_id=' . $payment_processor->payment_processor_id);
             }
 
-            \Altum\Cache::$adapter->save($cache_instance);
+            cache()->save($cache_instance);
 
         } else {
 
@@ -58,7 +67,7 @@ class PaymentProcessor extends Model {
         $payment_processor = null;
 
         /* Try to check if the payment_processor exists via the cache */
-        $cache_instance = \Altum\Cache::$adapter->getItem('payment_processor?payment_processor_id=' . $payment_processor_id);
+        $cache_instance = cache()->getItem('payment_processor?payment_processor_id=' . $payment_processor_id);
 
         /* Set cache if not existing */
         if(is_null($cache_instance->get())) {
@@ -69,7 +78,7 @@ class PaymentProcessor extends Model {
             if($payment_processor) {
                 $payment_processor->settings = json_decode($payment_processor->settings ?? '');
 
-                \Altum\Cache::$adapter->save(
+                cache()->save(
                     $cache_instance->set($payment_processor)->expiresAfter(CACHE_DEFAULT_SECONDS)->addTag('payment_processors?user_id=' . $payment_processor->user_id)->addTag('payment_processor_id=' . $payment_processor->payment_processor_id)->addTag('user_id=' . $payment_processor->user_id)
                 );
             }

@@ -1,15 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+
+defined('ALTUMCODE') || die();
 
 class AdminDomainCreate extends Controller {
 
@@ -25,10 +34,10 @@ class AdminDomainCreate extends Controller {
 
             /* Clean some posted variables */
             $_POST['scheme'] = isset($_POST['scheme']) && in_array($_POST['scheme'], ['http://', 'https://']) ? input_clean($_POST['scheme']) : 'https://';
-            $_POST['host'] = mb_strtolower(trim($_POST['host']));
+            $_POST['host'] = str_replace(' ', '', mb_strtolower(input_clean($_POST['host'], 128)));
             $_POST['host'] = string_starts_with('http://', $_POST['host']) || string_starts_with('https://', $_POST['host']) ? parse_url($_POST['host'], PHP_URL_HOST) : $_POST['host'];
-            $_POST['custom_index_url'] = trim(filter_var($_POST['custom_index_url'], FILTER_SANITIZE_URL));
-            $_POST['custom_not_found_url'] = trim(filter_var($_POST['custom_not_found_url'], FILTER_SANITIZE_URL));
+            $_POST['custom_index_url'] = get_url($_POST['custom_index_url'], 256);
+            $_POST['custom_not_found_url'] = get_url($_POST['custom_not_found_url'], 256);
             $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
 
             /* Default variables */
@@ -64,13 +73,16 @@ class AdminDomainCreate extends Controller {
                     'custom_not_found_url' => $_POST['custom_not_found_url'],
                     'type' => $type,
                     'is_enabled' => $_POST['is_enabled'],
-                    'datetime' => \Altum\Date::$date,
+                    'datetime' => get_date(),
                 ]);
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItems(['domains?user_id=' . $this->user->user_id, 'domains_total?user_id=' . $this->user->user_id]);
-                \Altum\Cache::$adapter->deleteItemsByTag('domains?user_id=' . $this->user->user_id);
-                \Altum\Cache::$adapter->deleteItem('available_additional_domains');
+                cache()->deleteItems([
+                    'domains?user_id=' . $this->user->user_id,
+                    'domains_total?user_id=' . $this->user->user_id
+                ]);
+
+                cache()->deleteItem('available_additional_domains');
 
                 /* Set a nice success message */
                 Alerts::add_success(sprintf(l('global.success_message.create1'), '<strong>' . $_POST['host'] . '</strong>'));

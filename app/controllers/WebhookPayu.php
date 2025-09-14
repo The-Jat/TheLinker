@@ -1,16 +1,25 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Date;
 use Altum\Models\Payments;
+
+defined('ALTUMCODE') || die();
 
 class WebhookPayu extends Controller {
 
@@ -72,26 +81,21 @@ class WebhookPayu extends Controller {
                             db()->insert('redeemed_codes', [
                                 'code_id'   => $codes_code->code_id,
                                 'user_id'   => $user->user_id,
-                                'datetime'  => \Altum\Date::$date
+                                'datetime'  => get_date()
                             ]);
                         }
                     }
 
                     /* Give the plan to the user */
                     $current_plan_expiration_date = $payment->plan_id == $user->plan_id ? $user->plan_expiration_date : '';
-                    switch($payment->frequency) {
-                        case 'monthly':
-                            $plan_expiration_date = (new \DateTime($current_plan_expiration_date))->modify('+30 days')->format('Y-m-d H:i:s');
-                            break;
-
-                        case 'annual':
-                            $plan_expiration_date = (new \DateTime($current_plan_expiration_date))->modify('+12 months')->format('Y-m-d H:i:s');
-                            break;
-
-                        case 'lifetime':
-                            $plan_expiration_date = (new \DateTime($current_plan_expiration_date))->modify('+100 years')->format('Y-m-d H:i:s');
-                            break;
-                    }
+                    $modifier = match ($payment->frequency) {
+                        'monthly' => '+30 days +12 hours',
+                        'quarterly' => '+3 months +12 hours',
+                        'biannual' => '+6 months +12 hours',
+                        'annual' => '+12 months +12 hours',
+                        'lifetime' => '+100 years +12 hours',
+                    };
+                    $plan_expiration_date = (new \DateTime($current_plan_expiration_date))->modify($modifier)->format('Y-m-d H:i:s');
 
                     /* Database query */
                     db()->where('user_id', $user->user_id)->update('users', [
@@ -105,7 +109,7 @@ class WebhookPayu extends Controller {
                     ]);
 
                     /* Clear the cache */
-                    \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $user->user_id);
+                    cache()->deleteItemsByTag('user_id=' . $user->user_id);
 
                     /* Send notification to the user */
                     $email_template = get_email_template(
@@ -113,6 +117,7 @@ class WebhookPayu extends Controller {
                         l('global.emails.user_payment.subject'),
                         [
                             '{{NAME}}' => $user->name,
+                            '{{PLAN_NAME}}' => $plan->name,
                             '{{PLAN_EXPIRATION_DATE}}' => Date::get($plan_expiration_date, 2),
                             '{{USER_PLAN_LINK}}' => url('account-plan'),
                             '{{USER_PAYMENTS_LINK}}' => url('account-payments'),

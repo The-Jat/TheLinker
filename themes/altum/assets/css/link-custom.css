@@ -1,5 +1,5 @@
 .link-html {
-    min-height: 100%;
+    height: 100%;
 }
 
 .link-body {
@@ -11,11 +11,43 @@
 
 .link-video-background {
     object-fit: cover;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     position: fixed;
     top: 0;
     left: 0;
+}
+
+.link-body-backdrop {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+.link-info {
+    position: fixed;
+    z-index: 1;
+    bottom: 1rem;
+    left: 1rem;
+}
+
+.link-info a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    min-width: 30px;
+    min-height: 30px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    background-color: #0003;
+    color: white;
+}
+
+.link-info a:hover {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: white;
 }
 
 .link-content {
@@ -120,24 +152,28 @@
 
 .link-big-btn-image-wrapper {
     overflow: hidden;
-    width: 25%;
+    width: 15%;
     height: auto;
-    max-height: 7rem;
+    max-height: calc(100% - 2rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
 }
 
 .link-big-btn-image {
     width: 100%;
     height: auto;
-    max-height: 7rem;
-    object-fit: contain;
 }
 
 .link-big-content-wrapper {
-    width: 100%;
+    margin-left: 15%;
+    width: 70%;
+    padding: 0 1rem;
 }
 
 .link-big-icon-wrapper {
-    width: 10%;
+    width: 15%;
 }
 
 
@@ -145,7 +181,7 @@
     position: relative;
     width: 100%;
     background: transparent;
-    border-radius: .25rem;
+    border-radius: .3rem;
     overflow: hidden;
     background-position: center;
     background-size: cover;
@@ -156,7 +192,7 @@
 }
 
 .link-grid-image-wrapper-columns-3 {
-    height: 7.5rem;
+    height: 6rem;
 }
 
 @media (min-width: 992px) {
@@ -173,8 +209,8 @@
     position: absolute;
     bottom: 0;
     width: 100%;
-    height: 2.5rem;
-    background: rgba(0, 0, 0, .25);
+    height: 3rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
     display: flex;
     justify-content: center;
     align-items: center;
@@ -183,7 +219,9 @@
 
 .link-grid-image-overlay-text {
     color: white;
-    font-size: 1.1rem;
+    text-shadow: 1px 1px 3px #00000038;
+    width: 100%;
+    font-weight: bold;
 }
 
 .link-btn-image {
@@ -204,6 +242,10 @@
     position:relative;
 }
 
+.link-iframe-child-round iframe {
+    border-radius: .3rem;
+}
+
 .link-round {
     border-radius: .3rem;
 }
@@ -218,6 +260,12 @@
     height: 2.5rem;
     border-radius: 50rem;
     object-fit: cover;
+    background: hsla(0, 0%, 0%, .1);
+    color: hsla(0, 0%, 0%, 1);
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Image slider */
@@ -281,4 +329,80 @@ form .btn-primary:active {
     box-shadow: none !important;
 }
 
+/* Modal changes */
+.modal-backdrop {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 1 !important;
+}
 
+/* Share button */
+.share-button-wrapper {
+    z-index: 2;
+    top: 1rem;
+    right: 1rem;
+}
+
+.share-button {
+    border-radius: 50%;
+    min-width: 45px;
+    min-height: 45px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    background-color: #0003;
+    color: white;
+}
+
+.share-button:hover {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: white;
+}
+
+/* Preview highlight */
+[data-biolink-block-id] {
+    transition: .3s all;
+    border: 2px solid transparent;
+}
+
+[data-biolink-block-id].preview-highlight {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 2px solid rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+    border-radius: .3rem;
+}
+
+/* Header block */
+.link-header-avatar {
+    position: absolute;
+}
+
+/* smaller rounded buttons for some links */
+[data-biolink-block-type="review"] .link-btn-round,
+[data-biolink-block-type="paragraph"] .link-btn-round,
+[data-biolink-block-type="business_hours"] .link-btn-round {
+    border-radius: 25px;
+}
+
+/* paragraph no margin on last one */
+[data-biolink-block-type="paragraph"] p:last-child {
+    margin-bottom: 0;
+}
+
+/* Business hours */
+.link-business-hours-icon-wrapper {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50rem;
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: .2;
+}
+
+/* Quill editor */
+.ql-content p {
+    margin-bottom: 0 !important;
+}

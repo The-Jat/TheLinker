@@ -15,7 +15,7 @@
                     </button>
                 </div>
 
-                <p class="text-muted" id="<?= $data->name . '_delete_modal_subheader' ?>"></p>
+                <p class="text-muted text-break" id="<?= $data->name . '_delete_modal_subheader' ?>"></p>
 
                 <span class="d-none" id="<?= $data->name . '_delete_modal_subheader_hidden' ?>">
                     <?= $data->has_dynamic_resource_name ? l('delete_modal.subheader1') : l('delete_modal.subheader2') ?>
@@ -33,14 +33,14 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* On modal show load new data */
+    
+/* On modal show load new data */
     $('<?= '#' . $data->name . '_delete_modal' ?>').on('show.bs.modal', event => {
         let related_target = event.relatedTarget;
         let current_target = event.currentTarget;
 
         let <?= $data->resource_id ?> = related_target.getAttribute('data-<?= str_replace('_', '-', $data->resource_id) ?>');
-        current_target.querySelector('<?= '#' . $data->name . '_delete_modal_url' ?>').setAttribute('href', `${url}<?= $data->path ?>${<?= $data->resource_id ?>}&global_token=${global_token}`);
+        current_target.querySelector('<?= '#' . $data->name . '_delete_modal_url' ?>').setAttribute('href', `${url}<?= $data->path ?>${<?= $data->resource_id ?>}&global_token=${global_token}&original_request=<?= base64_encode(\Altum\Router::$original_request) ?>&original_request_query=<?= base64_encode(\Altum\Router::$original_request_query) ?>`);
 
         <?php if($data->has_dynamic_resource_name): ?>
         current_target.querySelector('<?= '#' . $data->name . '_delete_modal_subheader' ?>').innerHTML = current_target.querySelector('<?= '#' . $data->name . '_delete_modal_subheader_hidden' ?>').innerHTML.replace('%s', related_target.getAttribute('data-resource-name'));
@@ -49,4 +49,4 @@
         <?php endif ?>
     });
 </script>
-<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript', $data->name . '_delete_js') ?>

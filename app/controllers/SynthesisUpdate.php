@@ -1,24 +1,33 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
-namespace Altum\controllers;
+namespace Altum\Controllers;
 
 use Altum\Alerts;
 use Altum\Title;
+
+defined('ALTUMCODE') || die();
 
 class SynthesisUpdate extends Controller {
 
     public function index() {
         \Altum\Authentication::guard();
 
-        if(!settings()->aix->syntheses_is_enabled) {
-            redirect('dashboard');
+        if(!\Altum\Plugin::is_active('aix') || !settings()->aix->syntheses_is_enabled) {
+            redirect('not-found');
         }
 
         /* Team checks */
@@ -79,7 +88,7 @@ class SynthesisUpdate extends Controller {
                 db()->where('synthesis_id', $synthesis->synthesis_id)->update('syntheses', [
                     'project_id' => $_POST['project_id'],
                     'name' => $_POST['name'],
-                    'last_datetime' => \Altum\Date::$date,
+                    'last_datetime' => get_date(),
                 ]);
 
                 /* Set a nice success message */

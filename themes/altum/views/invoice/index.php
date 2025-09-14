@@ -4,7 +4,7 @@
     <div class="col-lg-10">
         <div class="d-print-none d-flex justify-content-between mb-5">
             <div></div>
-            <button type="button" class="btn btn-primary" onclick="window.print()"><i class="fas fa-fw fa-sm fa-print"></i> <?= l('invoice.print') ?></button>
+            <button type="button" class="btn btn-primary" onclick="window.print();return false;"><i class="fas fa-fw fa-sm fa-print mr-1"></i> <?= l('invoice.print') ?></button>
         </div>
 
         <div class="card bg-gray-50 border-0">
@@ -217,16 +217,16 @@
                     <table class="table invoice-table">
                         <thead>
                         <tr>
-                            <th><?= l('invoice.table.item') ?></th>
-                            <th class="text-right"><?= l('invoice.table.amount') ?></th>
+                            <th><?= l('invoice.item') ?></th>
+                            <th class="text-right"><?= l('invoice.amount') ?></th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr>
                             <td>
                                 <div class="d-flex flex-column">
-                                    <span><?= sprintf(l('invoice.table.plan'), $data->payment->plan->name ?? $data->payment->plan_db->name) ?></span>
-                                    <span class="text-muted"><?= sprintf(l('invoice.table.frequency'), l('invoice.table.frequency_' . $data->payment->frequency)) ?></span>
+                                    <span><?= sprintf(l('invoice.plan'), $data->payment->plan->name ?? $data->payment->plan_db->name) ?></span>
+                                    <span class="text-muted"><?= sprintf(l('invoice.frequency'), l('invoice.frequency.' . $data->payment->frequency)) ?></span>
                                 </div>
                             </td>
                             <td class="text-right"><?= nr($data->payment->base_amount ? $data->payment->base_amount : $data->payment->total_amount, 2) . ' ' . $data->payment->currency ?></td>
@@ -236,8 +236,8 @@
                             <tr>
                                 <td>
                                     <div class="d-flex flex-column">
-                                        <span><?= l('invoice.table.code') ?></span>
-                                        <span class="text-muted"><?= sprintf(l('invoice.table.code_help'), $data->payment->code) ?></span>
+                                        <span><?= l('invoice.code') ?></span>
+                                        <span class="text-muted"><?= sprintf(l('invoice.code_help'), $data->payment->code) ?></span>
                                     </div>
                                 </td>
                                 <td class="text-right"><?= '-' . nr($data->payment->discount_amount, 2) . ' ' . $data->payment->currency ?></td>
@@ -273,8 +273,8 @@
                         <tfoot>
                         <tr>
                             <td class="d-flex flex-column">
-                                <span class="font-weight-bold"><?= l('invoice.table.total') ?></span>
-                                <small><?= sprintf(l('invoice.table.paid_via'), l('pay.custom_plan.' . $data->payment->processor)) ?></small>
+                                <span class="font-weight-bold"><?= l('invoice.total') ?></span>
+                                <small><?= sprintf(l('invoice.paid_via'), l('pay.custom_plan.' . $data->payment->processor)) ?></small>
                             </td>
                             <td class="text-right font-weight-bold"><?= nr($data->payment->total_amount, 2) . ' ' . $data->payment->currency ?></td>
                         </tr>
@@ -283,22 +283,22 @@
                 </div>
 
                 <?php if($this->user->billing->notes): ?>
-                <div class="mt-6">
-                    <table class="table invoice-table">
-                        <thead>
-                        <tr>
-                            <th><?= l('invoice.notes') ?></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td>
-                                <?= nl2br($this->user->billing->notes) ?>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
+                    <div class="mt-6">
+                        <table class="table invoice-table">
+                            <thead>
+                            <tr>
+                                <th><?= l('invoice.notes') ?></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>
+                                    <?= nl2br($this->user->billing->notes) ?>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 <?php endif ?>
 
             </div>

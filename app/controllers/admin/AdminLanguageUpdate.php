@@ -1,16 +1,25 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 use Altum\Language;
+
+defined('ALTUMCODE') || die();
 
 class AdminLanguageUpdate extends Controller {
 
@@ -30,17 +39,30 @@ class AdminLanguageUpdate extends Controller {
 
         $language = Language::$languages[$language_name];
 
+        /* count placeholders: numbered -> unique indexes; unnumbered -> exact occurrences */
         function count_matched_translation_variables($string) {
-            $re = '/(%\d+\$s|%s)+/';
-            return preg_match_all($re, $string, $matches);
+            /* ensure string */
+            $safe_string = (string) ($string ?? '');
+
+            /* numbered placeholders like %1$s, %2$s... */
+            preg_match_all('/%(\d+)\$s/', $safe_string, $numbered_matches);
+            if (!empty($numbered_matches[1])) {
+                /* allow repeats of the same index -> count unique indexes only */
+                $unique_indexes = array_unique(array_map('intval', $numbered_matches[1]));
+                return count($unique_indexes);
+            }
+
+            /* unnumbered placeholders like %s (ignore %%s) */
+            preg_match_all('/(?<!%)%s/', $safe_string, $unnumbered_matches);
+            return count($unnumbered_matches[0] ?? []);
         }
 
         if(!empty($_POST)) {
             /* Clean some posted variables */
-            $_POST['language_name'] = input_clean($_POST['language_name']);
-            $_POST['language_code'] = mb_strtolower(input_clean($_POST['language_code']));
-            $_POST['language_flag'] = input_clean($_POST['language_flag']);
-            $_POST['status'] = isset($_POST['status']) && in_array($_POST['status'], ['active', 'disabled']) ? $_POST['status'] : 'active';
+            $_POST['language_name'] = input_clean(preg_replace('/\s{2,}/', ' ', trim($_POST['language_name']), 64));
+            $_POST['language_code'] = mb_strtolower(input_clean(preg_replace("/\s+/", '', $_POST['language_code'], 16)));
+            $_POST['language_flag'] = mb_substr(trim(input_clean($_POST['language_flag'])), 0, 4, 'UTF-8');
+            $_POST['status'] = (int) isset($_POST['status']);
             $_POST['order'] = (int) $_POST['order'];
 
             /* New language strings content for the translation files */
@@ -54,7 +76,7 @@ class AdminLanguageUpdate extends Controller {
                 /* Check for already existing original translation value */
 
                 /* Check if new translation for the field is submitted */
-                if(isset($_POST[$form_key]) && !empty($_POST[$form_key])) {
+                if(!empty($_POST[$form_key])) {
                     $values[$form_key] = $_POST[$form_key];
                     $_POST[$form_key] = addcslashes($_POST[$form_key], "'");
 
@@ -78,7 +100,8 @@ class AdminLanguageUpdate extends Controller {
                 else {
                     $translation_exists = array_key_exists($key, $language['content']);
 
-                    if($translation_exists) {
+                    /* Do not allow removing of translations for the main default one */
+                    if($translation_exists && $_POST['language_name'] == Language::$main_name) {
                         $potential_already_existing_value = addcslashes($language['content'][$key], "'");
 
                         if(string_starts_with('admin_', $key)) {
@@ -87,7 +110,18 @@ class AdminLanguageUpdate extends Controller {
                             $language_strings .= "\t'{$key}' => '{$potential_already_existing_value}',\n";
                         }
                     }
+                }
+            }
 
+            /* Check for custom submitted keys */
+            if(!empty($_POST['translation_key']) && !empty($_POST['translation_value'])) {
+                foreach($_POST['translation_key'] as $key => $value) {
+                    if(empty($value)) continue;
+                    if(empty($_POST['translation_value'][$key])) continue;
+                    if(array_key_exists($value, \Altum\Language::$languages[\Altum\Language::$main_name]['content'])) continue;
+
+                    $translation_value = addcslashes($_POST['translation_value'][$key], "'");
+                    $language_strings .= "\t'{$value}' => '{$translation_value}',\n";
                 }
             }
 
@@ -134,18 +168,33 @@ ALTUM;
 
             /* If there are no errors, continue */
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+                function safe_direct_file_write($file_path, $file_content, $file_permissions = 0777) {
+                    /* attempt to write content directly to file */
+                    file_put_contents($file_path, $file_content);
+
+                    /* clear PHP's file status cache */
+                    clearstatcache(true, $file_path);
+
+                    /* invalidate opcache if enabled */
+                    if(function_exists('opcache_invalidate')) {
+                        opcache_invalidate($file_path, true);
+                    }
+
+                    /* set file permissions */
+                    chmod($file_path, $file_permissions);
+
+                    return true;
+                }
 
                 switch($type) {
                     case 'app':
-                        file_put_contents(Language::$path . $_POST['language_name'] . '#' . $_POST['language_code'] . '.php', $language_content($language_strings));
-                        chmod(Language::$path . $_POST['language_name'] . '#' . $_POST['language_code'] . '.php', 0777);
-                        sleep(3);
+                        $language_file_path = Language::$path . $_POST['language_name'] . '#' . $_POST['language_code'] . '.php';
+                        safe_direct_file_write($language_file_path, $language_content($language_strings));
                         break;
 
                     case 'admin':
-                        file_put_contents(Language::$path . 'admin/' . $_POST['language_name'] . '#' . $_POST['language_code'] . '.php', $language_content($admin_language_strings));
-                        chmod(Language::$path . 'admin/' . $_POST['language_name'] . '#' . $_POST['language_code'] . '.php', 0777);
-                        sleep(3);
+                        $admin_language_file_path = Language::$path . 'admin/' . $_POST['language_name'] . '#' . $_POST['language_code'] . '.php';
+                        safe_direct_file_write($admin_language_file_path, $language_content($admin_language_strings));
                         break;
 
                     default:
@@ -162,7 +211,7 @@ ALTUM;
                         $settings_languages = [];
                         foreach(Language::$languages as $lang) {
                             $settings_languages[$lang['name']] = [
-                                'status' => $lang['name'] == $_POST['language_name'] ? $_POST['status'] : (settings()->languages->{$lang['name']}->status ?? 'active'),
+                                'status' => $lang['name'] == $_POST['language_name'] ? $_POST['status'] : (settings()->languages->{$lang['name']}->status ?? true),
                                 'order' => $lang['name'] == $_POST['language_name'] ? $_POST['order'] : (settings()->languages->{$lang['name']}->order ?? 1),
                                 'language_flag' => $lang['name'] == $_POST['language_name'] ? $_POST['language_flag'] : (settings()->languages->{$lang['name']}->language_flag ?? ''),
                             ];
@@ -171,17 +220,53 @@ ALTUM;
                         /* Update the database */
                         db()->where('`key`', 'languages')->update('settings', ['value' => json_encode($settings_languages)]);
 
+                        /* Auto update the used language across other resources if needed */
+                        if($_POST['language_name'] != $language['name']) {
+                            db()->where('language', $_POST['language_name'])->update('pages_categories', [
+                                'language' => $_POST['language_name'],
+                            ]);
+
+                            db()->where('language', $_POST['language_name'])->update('pages', [
+                                'language' => $_POST['language_name'],
+                            ]);
+
+                            db()->where('language', $_POST['language_name'])->update('blog_posts_categories', [
+                                'language' => $_POST['language_name'],
+                            ]);
+
+                            db()->where('language', $_POST['language_name'])->update('blog_posts', [
+                                'language' => $_POST['language_name'],
+                            ]);
+
+                            db()->where('language', $_POST['language_name'])->update('users', [
+                                'language' => $_POST['language_name'],
+                            ]);
+
+                            if($language['name'] == settings()->main->default_language) {
+                                settings()->main->default_language = $_POST['language_name'];
+
+                                /* Update the database */
+                                db()->where('`key`', 'main')->update('settings', ['value' => json_encode(settings()->main)]);
+                            }
+
+                            /* Clear the cache */
+                            cache()->clear();
+                        }
+
                         /* Clear the cache */
-                        \Altum\Cache::$adapter->deleteItem('settings');
+                        cache()->deleteItem('settings');
 
                         break;
                 }
+
+                /* Clear the language cache */
+                \Altum\Language::clear_cache();
 
                 /* Set a nice success message */
                 Alerts::add_success(sprintf(l('global.success_message.update1'), '<strong>' . $_POST['language_name'] . '</strong>'));
 
                 /* Redirect */
-                redirect('admin/language-update/' . $_POST['language_name'] . '/' . $type);
+                redirect('admin/language-update/' . replace_space_with_plus($_POST['language_name']) . '/' . $type);
             }
 
         }

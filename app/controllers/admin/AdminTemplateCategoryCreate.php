@@ -1,31 +1,40 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class AdminTemplateCategoryCreate extends Controller {
 
     public function index() {
 
         if(!\Altum\Plugin::is_active('aix')) {
-            redirect('dashboard');
+            redirect('not-found');
         }
 
         if(!empty($_POST)) {
-            /* Filter some the variables */
+            /* Filter some of the variables */
             $_POST['name'] = input_clean($_POST['name'], 64);
             $_POST['icon'] = input_clean($_POST['icon'], 64);
             $_POST['emoji'] = input_clean($_POST['emoji'], 64);
-            $_POST['color'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['color']) ? '#ffffff' : $_POST['color'];
-            $_POST['background'] = !preg_match('/#([A-Fa-f0-9]{3,4}){1,2}\b/i', $_POST['background']) ? '#000000' : $_POST['background'];
+            $_POST['color'] = !verify_hex_color($_POST['color']) ? '#ffffff' : $_POST['color'];
+            $_POST['background'] = !verify_hex_color($_POST['background']) ? '#000000' : $_POST['background'];
             $_POST['order'] = (int) $_POST['order'] ?? 0;
             $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
 
@@ -58,11 +67,11 @@ class AdminTemplateCategoryCreate extends Controller {
                     'background' => $_POST['background'],
                     'order' => $_POST['order'],
                     'is_enabled' => $_POST['is_enabled'],
-                    'datetime' => \Altum\Date::$date,
+                    'datetime' => get_date(),
                 ]);
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItem('templates_categories');
+                cache()->deleteItem('templates_categories');
 
                 /* Set a nice success message */
                 Alerts::add_success(sprintf(l('global.success_message.create1'), '<strong>' . $_POST['name'] . '</strong>'));

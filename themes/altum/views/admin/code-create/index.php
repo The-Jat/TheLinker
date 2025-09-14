@@ -32,46 +32,46 @@
                 <label for="type"><i class="fas fa-fw fa-sm fa-fingerprint text-muted mr-1"></i> <?= l('global.type') ?></label>
                 <div class="row btn-group-toggle" data-toggle="buttons">
                     <div class="col-12 col-lg-6">
-                        <label class="btn btn-light btn-block <?= $data->values['type'] == 'discount' ? 'active"' : null?>">
+                        <label class="btn btn-light btn-block text-truncate <?= $data->values['type'] == 'discount' ? 'active"' : null?>">
                             <input type="radio" name="type" value="discount" class="custom-control-input" <?= $data->values['type'] == 'discount' ? 'checked="checked"' : null?> required="required" />
-                            <i class="fas fa-percent fa-fw fa-sm mr-1"></i> <?= l('admin_codes.main.type_discount') ?>
+                            <i class="fas fa-percent fa-fw fa-sm mr-1"></i> <?= l('admin_codes.type_discount') ?>
                         </label>
                     </div>
 
                     <div class="col-12 col-lg-6">
-                        <label class="btn btn-light btn-block <?= $data->values['type'] == 'redeemable' ? 'active"' : null?>">
+                        <label class="btn btn-light btn-block text-truncate <?= $data->values['type'] == 'redeemable' ? 'active"' : null?>">
                             <input type="radio" name="type" value="redeemable" class="custom-control-input" <?= $data->values['type'] == 'redeemable' ? 'checked="checked"' : null?> required="required" />
-                            <i class="fas fa-parachute-box fa-fw fa-sm mr-1"></i> <?= l('admin_codes.main.type_redeemable') ?>
+                            <i class="fas fa-parachute-box fa-fw fa-sm mr-1"></i> <?= l('admin_codes.type_redeemable') ?>
                         </label>
                     </div>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="code"><i class="fas fa-fw fa-sm fa-tags text-muted mr-1"></i> <?= l('admin_codes.main.code') ?></label>
+                <label for="code"><i class="fas fa-fw fa-sm fa-tags text-muted mr-1"></i> <?= l('admin_codes.code') ?></label>
                 <input type="text" id="code" name="code" class="form-control" maxlength="32" required="required" />
             </div>
 
             <div class="form-group" data-type="discount">
-                <label for="discount"><i class="fas fa-fw fa-sm fa-percentage text-muted mr-1"></i> <?= l('admin_codes.main.discount') ?></label>
+                <label for="discount"><i class="fas fa-fw fa-sm fa-percentage text-muted mr-1"></i> <?= l('admin_codes.discount') ?></label>
                 <input id="discount" type="number" min="1" max="99" name="discount" class="form-control" value="1" required="required" />
-                <small class="form-text text-muted"><?= l('admin_codes.main.discount_help') ?></small>
+                <small class="form-text text-muted"><?= l('admin_codes.discount_help') ?></small>
             </div>
 
             <div class="form-group" data-type="redeemable">
-                <label for="days"><i class="fas fa-fw fa-sm fa-calendar-day text-muted mr-1"></i> <?= l('admin_codes.main.days') ?></label>
+                <label for="days"><i class="fas fa-fw fa-sm fa-calendar-day text-muted mr-1"></i> <?= l('admin_codes.days') ?></label>
                 <input id="days" type="number" min="1" max="999999" name="days" class="form-control" value="1" required="required" />
-                <small class="form-text text-muted"><?= l('admin_codes.main.days_help') ?></small>
+                <small class="form-text text-muted"><?= l('admin_codes.days_help') ?></small>
             </div>
 
             <div class="form-group">
-                <label for="quantity"><i class="fas fa-fw fa-sm fa-sort-numeric-up-alt text-muted mr-1"></i> <?= l('admin_codes.main.quantity') ?></label>
+                <label for="quantity"><i class="fas fa-fw fa-sm fa-sort-numeric-up-alt text-muted mr-1"></i> <?= l('admin_codes.quantity') ?></label>
                 <input type="number" min="1" id="quantity" name="quantity" class="form-control" value="1" required="required" />
-                <small class="form-text text-muted"><?= l('admin_codes.main.quantity_help') ?></small>
+                <small class="form-text text-muted"><?= l('admin_codes.quantity_help') ?></small>
             </div>
 
             <div class="form-group">
-                <label for="plans_ids"><i class="fas fa-fw fa-sm fa-box-open text-muted mr-1"></i> <?= l('admin_codes.main.plans_ids') ?></label>
+                <label for="plans_ids"><i class="fas fa-fw fa-sm fa-box-open text-muted mr-1"></i> <?= l('admin_codes.plans_ids') ?></label>
                 <div class="row">
                     <?php foreach($data->plans as $plan_id => $plan): ?>
                         <div class="col-12 col-lg-4">
@@ -88,17 +88,17 @@
 
             <div class="form-group custom-control custom-switch">
                 <input id="is_bulk" name="is_bulk" type="checkbox" class="custom-control-input">
-                <label class="custom-control-label" for="is_bulk"><?= l('admin_codes.main.is_bulk') ?></label>
+                <label class="custom-control-label" for="is_bulk"><?= l('admin_codes.is_bulk') ?></label>
             </div>
 
             <div id="bulk_container">
                 <div class="form-group">
-                    <label for="amount"><i class="fas fa-fw fa-sm fa-sort-amount-up-alt text-muted mr-1"></i> <?= l('admin_codes.main.amount') ?></label>
+                    <label for="amount"><i class="fas fa-fw fa-sm fa-sort-amount-up-alt text-muted mr-1"></i> <?= l('admin_codes.amount') ?></label>
                     <input id="amount" type="number" min="1" max="50000" name="amount" class="form-control" value="1" />
                 </div>
 
                 <div class="form-group">
-                    <label for="prefix"><i class="fas fa-fw fa-sm fa-quote-right text-muted mr-1"></i> <?= l('admin_codes.main.prefix') ?></label>
+                    <label for="prefix"><i class="fas fa-fw fa-sm fa-quote-right text-muted mr-1"></i> <?= l('admin_codes.prefix') ?></label>
                     <input type="text" id="prefix" name="prefix" class="form-control" />
                 </div>
             </div>
@@ -111,6 +111,8 @@
 
 <?php ob_start() ?>
 <script>
+    'use strict';
+    
     /* Bulk */
     let bulk_checker = () => {
         let is_bulk = document.querySelector('#is_bulk').checked;

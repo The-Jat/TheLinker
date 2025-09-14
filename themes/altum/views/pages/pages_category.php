@@ -1,8 +1,7 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div class="container">
-    <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
+<?php if(settings()->main->breadcrumbs_is_enabled): ?>
+    <nav aria-label="breadcrumb">
         <ol class="custom-breadcrumbs small">
             <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
             <li><a href="<?= url('pages') ?>"><?= l('pages.index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
@@ -35,14 +34,41 @@
         </div>
 
     <?php else: ?>
-    <div class="card mt-4">
-        <div class="card-body">
-            <div class="d-flex flex-column align-items-center justify-content-center py-3">
-                <img src="<?= ASSETS_FULL_URL . 'images/no_rows.svg' ?>" class="col-10 col-md-7 col-lg-4 mb-3" alt="<?= l('pages.no_data') ?>" />
-                <h2 class="h4 text-muted"><?= l('pages.no_data') ?></h2>
-                <p class="text-muted"><?= l('pages.no_data_help') ?></p>
-            </div>
+    <div class="mt-4">
+            <?= include_view(THEME_PATH . 'views/partials/no_data.php', [
+                'filters_get' => $data->filters->get ?? [],
+                'name' => 'pages',
+                'has_secondary_text' => true,
+            ]); ?>
         </div>
-    </div>
     <?php endif ?>
 </div>
+
+<?php ob_start() ?>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "<?= l('index.title') ?>",
+                    "item": "<?= url() ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "<?= l('pages.title') ?>",
+                    "item": "<?= url('pages') ?>"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 3,
+                    "name": "<?= $data->pages_category->title ?>",
+                    "item": "<?= SITE_URL . ($data->pages_category->language ? \Altum\Language::$active_languages[$data->pages_category->language] . '/' : null) . 'pages/' . $data->pages_category->url ?>"
+                }
+            ]
+        }
+    </script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

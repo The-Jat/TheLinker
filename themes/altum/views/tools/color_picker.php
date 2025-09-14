@@ -13,8 +13,8 @@
 <?php endif ?>
 
     <div class="row mb-4">
-        <div class="col-12 col-xl d-flex align-items-center mb-3 mb-xl-0">
-            <h1 class="h4 m-0"><?= l('tools.color_picker.name') ?></h1>
+        <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0 text-truncate">
+            <h1 class="h4 m-0 text-truncate"><?= l('tools.color_picker.name') ?></h1>
 
             <div class="ml-2">
                 <span data-toggle="tooltip" title="<?= l('tools.color_picker.description') ?>">
@@ -22,6 +22,8 @@
                 </span>
             </div>
         </div>
+
+        <?= $this->views['ratings'] ?>
     </div>
 
     <div class="card">
@@ -166,15 +168,19 @@
     <?= $this->views['extra_content'] ?>
 
     <?= $this->views['similar_tools'] ?>
+
+    <?= $this->views['popular_tools'] ?>
 </div>
 
 <?php ob_start() ?>
-<link href="<?= ASSETS_FULL_URL . 'css/libraries/pickr.min.css' ?>" rel="stylesheet" media="screen">
+<link href="<?= ASSETS_FULL_URL . 'css/libraries/pickr.min.css?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen">
 <?php \Altum\Event::add_content(ob_get_clean(), 'head') ?>
 
 <?php ob_start() ?>
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/pickr.min.js' ?>"></script>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/pickr.min.js?v=' . PRODUCT_CODE ?>"></script>
 <script>
+    'use strict';
+    
     /* Initiate the color picker */
     let pickr_options = {
         comparison: false,
@@ -216,7 +222,7 @@
         document.querySelector('#rgba_button').setAttribute('data-clipboard-text', hsva.toRGBA().toString(0));
     });
 
-    document.querySelector('form').addEventListener('submit', event => {
+    document.querySelector('#tool_form').addEventListener('submit', event => {
         event.preventDefault();
     });
 </script>

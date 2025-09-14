@@ -1,23 +1,31 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
-use Altum\Response;
+
+defined('ALTUMCODE') || die();
 
 class AdminPushSubscribers extends Controller {
 
     public function index() {
 
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['user_id', 'device_type', 'country_code', 'continent_code'], ['ip', 'city_name', 'os_name', 'browser_name', 'browser_language'], ['datetime']));
+        $filters = (new \Altum\Filters(['user_id', 'device_type', 'country_code', 'continent_code'], ['ip', 'city_name', 'os_name', 'browser_name', 'browser_language'], ['push_subscriber_id', 'datetime']));
         $filters->set_default_order_by('push_subscriber_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
@@ -29,7 +37,7 @@ class AdminPushSubscribers extends Controller {
         $push_subscribers = [];
         $push_subscribers_result = database()->query("
             SELECT
-                `push_subscribers`.*, `users`.`name` AS `user_name`, `users`.`email` AS `user_email`
+                `push_subscribers`.*, `users`.`name` AS `user_name`, `users`.`email` AS `user_email`, `users`.`avatar` AS `user_avatar`
             FROM
                 `push_subscribers`
             LEFT JOIN
@@ -46,8 +54,8 @@ class AdminPushSubscribers extends Controller {
         }
 
         /* Export handler */
-        process_export_json($push_subscribers, 'include', ['push_subscriber_id', 'user_id', 'subscriber_id', 'endpoint', 'keys', 'ip', 'city_name', 'country_code', 'continent_code', 'os_name', 'browser_name', 'browser_language', 'device_type', 'datetime']);
-        process_export_csv($push_subscribers, 'include', ['push_subscriber_id', 'user_id', 'subscriber_id', 'endpoint', 'ip', 'city_name', 'country_code', 'continent_code', 'os_name', 'browser_name', 'browser_language', 'device_type', 'datetime']);
+        process_export_json($push_subscribers, ['push_subscriber_id', 'user_id', 'subscriber_id', 'endpoint', 'keys', 'ip', 'city_name', 'country_code', 'continent_code', 'os_name', 'browser_name', 'browser_language', 'device_type', 'datetime']);
+        process_export_csv($push_subscribers, ['push_subscriber_id', 'user_id', 'subscriber_id', 'endpoint', 'ip', 'city_name', 'country_code', 'continent_code', 'os_name', 'browser_name', 'browser_language', 'device_type', 'datetime']);
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/admin_pagination', (array) $this))->run(['paginator' => $paginator]);
@@ -77,7 +85,7 @@ class AdminPushSubscribers extends Controller {
             redirect('admin/push-subscribers');
         }
 
-        if(!isset($_POST['type']) || (isset($_POST['type']) && !in_array($_POST['type'], ['delete']))) {
+        if(!isset($_POST['type'])) {
             redirect('admin/push-subscribers');
         }
 
@@ -89,6 +97,10 @@ class AdminPushSubscribers extends Controller {
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
+            set_time_limit(0);
+
+            session_write_close();
+
             switch($_POST['type']) {
                 case 'delete':
 
@@ -98,8 +110,10 @@ class AdminPushSubscribers extends Controller {
                     break;
             }
 
+            session_start();
+            
             /* Set a nice success message */
-            Alerts::add_success(l('admin_bulk_delete_modal.success_message'));
+            Alerts::add_success(l('bulk_delete_modal.success_message'));
 
         }
 

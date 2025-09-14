@@ -1,15 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+
+defined('ALTUMCODE') || die();
 
 class PayBilling extends Controller {
 
@@ -20,7 +29,7 @@ class PayBilling extends Controller {
         $plan_id = isset($this->params[0]) ? $this->params[0] : null;
 
         if(!settings()->payment->is_enabled) {
-            redirect();
+            redirect('not-found');
         }
 
         if(!settings()->payment->taxes_and_billing_is_enabled) {
@@ -81,7 +90,7 @@ class PayBilling extends Controller {
                 db()->where('user_id', $this->user->user_id)->update('users', ['billing' => $_POST['billing']]);
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $this->user->user_id);
+                cache()->deleteItemsByTag('user_id=' . $this->user->user_id);
 
                 /* Redirect to the checkout page */
                 redirect('pay/' . $plan_id . '?' . (isset($_GET['trial_skip']) ? '&trial_skip=true' : null) . (isset($_GET['code']) ? '&code=' . $_GET['code'] : null));
@@ -89,7 +98,7 @@ class PayBilling extends Controller {
             }
         }
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'plan_id' > $plan_id,
             'plan' => $plan,

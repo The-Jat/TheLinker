@@ -4,9 +4,9 @@ defined('ALTUMCODE') || die();
 return (object) [
     'plugin_id' => 'ultimate-blocks',
     'name' => 'Ultimate Blocks',
-    'description' => 'The Ultimate Blocks plugin is meant to give you +21 extra new biolink blocks.',
-    'version' => '5.0.0',
-    'url' => 'https://altumco.de/phpbiolinks-ultimate-blocks',
+    'description' => 'The Ultimate Blocks plugin is meant to give you +26 extra new biolink blocks.',
+    'version' => '7.0.0',
+    'url' => 'https://altumco.de/66biolinks-ultimate-blocks',
     'author' => 'AltumCode',
     'author_url' => 'https://altumcode.com/',
     'status' => 'inexistent',

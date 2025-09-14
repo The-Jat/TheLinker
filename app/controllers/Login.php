@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -15,6 +22,8 @@ use Altum\Logger;
 use Altum\Models\User;
 use Google\Client;
 use Google\Service\Oauth2;
+
+defined('ALTUMCODE') || die();
 
 class Login extends Controller {
 
@@ -30,7 +39,7 @@ class Login extends Controller {
 
         /* Default values */
         $values = [
-            'email' => isset($_GET['email']) ? query_clean($_GET['email']) : '',
+            'email' => isset($_GET['email']) && is_string($_GET['email']) ? query_clean($_GET['email']) : '',
             'password' => '',
             'rememberme' => isset($_POST['rememberme']) || settings()->users->login_rememberme_checkbox_is_checked,
         ];
@@ -92,6 +101,8 @@ class Login extends Controller {
             ];
 
             if($method == 'facebook-initiate') {
+                $_SESSION['register_language'] = \Altum\Language::$name;
+
                 try {
                     $facebook = new \Hybridauth\Provider\Facebook($facebook_config);
                     $facebook->disconnect();
@@ -135,6 +146,8 @@ class Login extends Controller {
             ];
 
             if($method == 'google-initiate') {
+                $_SESSION['register_language'] = \Altum\Language::$name;
+
                 try {
                     $google = new \Hybridauth\Provider\Google($google_config);
                     $google->disconnect();
@@ -178,6 +191,8 @@ class Login extends Controller {
             ];
 
             if($method == 'twitter-initiate') {
+                $_SESSION['register_language'] = \Altum\Language::$name;
+
                 try {
                     $twitter = new \Hybridauth\Provider\Twitter($twitter_config);
                     $twitter->disconnect();
@@ -221,6 +236,8 @@ class Login extends Controller {
             ];
 
             if($method == 'discord-initiate') {
+                $_SESSION['register_language'] = \Altum\Language::$name;
+
                 try {
                     $discord = new \Hybridauth\Provider\Discord($discord_config);
                     $discord->disconnect();
@@ -264,6 +281,8 @@ class Login extends Controller {
             ];
 
             if($method == 'linkedin-initiate') {
+                $_SESSION['register_language'] = \Altum\Language::$name;
+
                 try {
                     $linkedin = new \Hybridauth\Provider\LinkedInOpenID($linkedin_config);
                     $linkedin->disconnect();
@@ -308,6 +327,8 @@ class Login extends Controller {
             ];
 
             if($method == 'microsoft-initiate') {
+                $_SESSION['register_language'] = \Altum\Language::$name;
+
                 try {
                     $microsoft = new \Hybridauth\Provider\MicrosoftGraph($microsoft_config);
                     $microsoft->disconnect();
@@ -325,13 +346,14 @@ class Login extends Controller {
                     $microsoft_account_info = $microsoft->getUserProfile();
                     $name = $microsoft_account_info->displayName;
                     $email = $microsoft_account_info->email;
+                    $id = $microsoft_account_info->identifier;
 
                     if(is_null($email)) {
                         Alerts::add_error(l('login.error_message.email_is_null'));
                         redirect('login' . $redirect_append);
                     }
 
-                    $this->process_social_login($email, $name, $redirect, $method);
+                    $this->process_social_login($email, $name, $redirect, $method, $id);
                 } catch (\Exception $exception) {
                     Alerts::add_error($exception->getMessage());
                     redirect('login' . $redirect_append);
@@ -341,8 +363,8 @@ class Login extends Controller {
 
         if(!empty($_POST)) {
             /* Clean email and encrypt the password */
-            $_POST['email'] = query_clean($_POST['email']);
-            $_POST['twofa_token'] = isset($_POST['twofa_token']) ? query_clean($_POST['twofa_token']) : null;
+            $_POST['email'] = input_clean_email($_POST['email'] ?? '');
+            $_POST['twofa_token'] = isset($_POST['twofa_token']) ? query_clean(str_replace(' ', '', $_POST['twofa_token'] ?? '')) : null;
             $values['email'] = $_POST['email'];
             $values['password'] = $_POST['password'];
 
@@ -398,7 +420,7 @@ class Login extends Controller {
                     $_SESSION['twofa_required'] = 1;
 
                     if($_POST['twofa_token']) {
-                        $twofa = new \RobThree\Auth\TwoFactorAuth(settings()->main->title, 6, 30);
+                        $twofa = new \RobThree\Auth\TwoFactorAuth(new \RobThree\Auth\Providers\Qr\BaconQrCodeProvider(format: 'svg'), settings()->main->title, 6, 30);
                         $twofa_check = $twofa->verifyCode($user->twofa_secret, $_POST['twofa_token']);
 
                         if(!$twofa_check) {
@@ -412,7 +434,7 @@ class Login extends Controller {
 
             if(!Alerts::has_field_errors() && !Alerts::has_errors() && !Alerts::has_infos()) {
 
-                /* If remember me is checked, log the user with cookies for 30 days else, remember just with a session */
+                /* If remember me is checked, log the user with cookies for X days else, remember just with a session */
                 if(isset($_POST['rememberme'])) {
                     $token_code = $user->token_code;
 
@@ -423,9 +445,9 @@ class Login extends Controller {
                         db()->where('user_id', $user->user_id)->update('users', ['token_code' => $token_code]);
                     }
 
-                    setcookie('user_id', $user->user_id, time()+60*60*24*30, COOKIE_PATH);
-                    setcookie('token_code', $token_code, time()+60*60*24*30, COOKIE_PATH);
-                    setcookie('user_password_hash', md5($user->password), time()+60*60*24*30, COOKIE_PATH);
+                    setcookie('user_id', $user->user_id, time()+60*60*24* (settings()->users->login_rememberme_cookie_days ?? 30), COOKIE_PATH);
+setcookie('token_code', $token_code, time()+60*60*24* (settings()->users->login_rememberme_cookie_days ?? 30), COOKIE_PATH);
+setcookie('user_password_hash', md5($user->password), time()+60*60*24* (settings()->users->login_rememberme_cookie_days ?? 30), COOKIE_PATH);
 
                 } else {
                     $_SESSION['user_id'] = $user->user_id;
@@ -451,7 +473,7 @@ class Login extends Controller {
             unset($_SESSION['twofa_required']);
         }
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'captcha' => $captcha,
             'values' => $values,
@@ -466,10 +488,24 @@ class Login extends Controller {
     }
 
     /* After a successful social login auth, register or login the user */
-    private function process_social_login($email, $name, $redirect, $method) {
+    private function process_social_login($email, $name, $redirect, $method, $id = null) {
+
+        /* Clear session variable */
+        if(isset($_SESSION['register_language'])) {
+            \Altum\Language::set_by_name($_SESSION['register_language']);
+            unset($_SESSION['register_language']);
+        }
 
         /* If the user is already in the system, log him in */
-        if($user = db()->where('email', $email)->getOne('users', ['user_id', 'email', 'password', 'lost_password_code', 'language', 'name'])) {
+        if($user = db()->where('email', $email)->getOne('users', ['user_id', 'email', 'password', 'lost_password_code', 'language', 'name', 'extra'])) {
+
+            /* Make sure the account has the id matching in case its required */
+            if($id && $method == 'microsoft') {
+                $user->extra = json_decode($user->extra ?? '');
+                if($id != $user->extra->initial_social_id) {
+                    throw new \Exception(l('login.error_message.email_is_null'));
+                }
+            }
 
             /* Make sure the user has a password set before letting the user login */
             (new User())->verify_null_password($user->user_id, $user->email, $user->password);
@@ -497,7 +533,7 @@ class Login extends Controller {
                 /* Determine what plan is set by default */
                 $plan_id                    = 'free';
                 $plan_settings              = json_encode(settings()->plan_free->settings ?? '');
-                $plan_expiration_date       = \Altum\Date::$date;
+                $plan_expiration_date       = get_date();
                 $lost_password_code         = md5($email . microtime());
                 $password                   = settings()->users->register_social_login_require_password ? null : md5($email . microtime() . rand());
 
@@ -513,7 +549,11 @@ class Login extends Controller {
                     $plan_id,
                     $plan_settings,
                     $plan_expiration_date,
-                    settings()->main->default_timezone
+                    settings()->main->default_timezone,
+                    [
+                        'initial_social_method' => $method,
+                        'initial_social_id' => $id,
+                    ]
                 );
 
                 /* Log the action */
@@ -528,6 +568,7 @@ class Login extends Controller {
                         [
                             '{{NAME}}' => $name,
                             '{{URL}}' => url(),
+                                '{{DASHBOARD_LINK}}' => url('dashboard'),
                         ],
                         l('global.emails.user_welcome.body')
                     );
@@ -545,6 +586,14 @@ class Login extends Controller {
                         [
                             '{{NAME}}' => $name,
                             '{{EMAIL}}' => $email,
+                            '{{SOURCE}}' => $registered_user['source'],
+                            '{{IP}}' => $registered_user['ip'],
+                            '{{COUNTRY_NAME}}' => $registered_user['country'] ? get_country_from_country_code($registered_user['country']) : l('global.unknown'),
+                            '{{CITY_NAME}}' => $registered_user['city_name'] ?? l('global.unknown'),
+                            '{{DEVICE_TYPE}}' => l('global.device.' . $registered_user['device_type']),
+                            '{{OS_NAME}}' => $registered_user['os_name'],
+                            '{{BROWSER_NAME}}' => $registered_user['browser_name'],
+                            '{{USER_LINK}}' => url('admin/user-view/' . $registered_user['user_id']),
                         ],
                         l('global.emails.admin_new_user_notification.body')
                     );
@@ -555,12 +604,13 @@ class Login extends Controller {
 
                 /* Send webhook notification if needed */
                 if(settings()->webhooks->user_new) {
-                    \Unirest\Request::post(settings()->webhooks->user_new, [], [
+                    fire_and_forget('post', settings()->webhooks->user_new, [
                         'user_id' => $registered_user['user_id'],
                         'email' => $email,
                         'name' => $name,
                         'source' => $method,
                         'is_newsletter_subscribed' => false,
+                        'datetime' => get_date()
                     ]);
                 }
 
@@ -573,7 +623,7 @@ class Login extends Controller {
                         'title' => l('global.notifications.new_user.title'),
                         'description' => sprintf(l('global.notifications.new_user.description'), $name, $email),
                         'url' => 'admin/user-view/' . $registered_user['user_id'],
-                        'datetime' => \Altum\Date::$date,
+                        'datetime' => get_date(),
                     ]);
                 }
 

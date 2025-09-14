@@ -6,15 +6,15 @@
     <?= \Altum\Alerts::output_alerts() ?>
 
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url('links') ?>"><?= l('links.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li class="active" aria-current="page">
-                <?= l('link.breadcrumb.' . $data->link->type) . ' ' . l('link.' . $data->method . '.breadcrumb') ?>
-            </li>
-        </ol>
-    </nav>
-<?php endif ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url('links') ?>"><?= l('links.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li class="active" aria-current="page">
+                    <?= l('link.breadcrumb.' . $data->link->type) . ' ' . l('link.' . $data->method . '.breadcrumb') ?>
+                </li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
     <div class="row">
         <div class="col text-truncate">
@@ -32,7 +32,7 @@
                             onchange="ajax_call_helper(event, 'link-ajax', 'is_enabled_toggle')"
                         <?= $data->link->is_enabled ? 'checked="checked"' : null ?>
                     >
-                    <label class="custom-control-label clickable" for="link_is_enabled_<?= $data->link->link_id ?>"></label>
+                    <label class="custom-control-label" for="link_is_enabled_<?= $data->link->link_id ?>"></label>
                 </div>
 
                 <button
@@ -65,10 +65,16 @@
                     <div class="dropdown-menu dropdown-menu-right">
                         <a href="<?= url('link/' . $data->link->link_id) ?>" class="dropdown-item"><i class="fas fa-fw fa-sm fa-pencil-alt mr-2"></i> <?= l('global.edit') ?></a>
                         <a href="<?= url('link/' . $data->link->link_id . '/statistics') ?>" class="dropdown-item"><i class="fas fa-fw fa-sm fa-chart-bar mr-2"></i> <?= l('link.statistics.link') ?></a>
-                        <?php if(settings()->links->qr_codes_is_enabled): ?>
-                        <a href="<?= url('qr-code-create?name=' . $data->link->url . '&project_id=' . $data->link->project_id . '&type=url&url=' . $data->link->full_url) ?>" class="dropdown-item" rel="noreferrer"><i class="fas fa-fw fa-sm fa-qrcode mr-2"></i> <?= l('qr_codes.create') ?></a>
+                        <?php if(settings()->codes->qr_codes_is_enabled): ?>
+                            <a href="<?= url('qr-code-create?name=' . $data->link->url . '&project_id=' . $data->link->project_id . '&type=url&url=' . $data->link->full_url . '&link_id=' . $data->link->link_id . '&url_dynamic=1') ?>" class="dropdown-item" rel="noreferrer"><i class="fas fa-fw fa-sm fa-qrcode mr-2"></i> <?= l('qr_codes.create') ?></a>
                         <?php endif ?>
+
+                        <?php if($data->link->type == 'static'): ?>
+                            <a href="<?= url('link/' . $data->link->link_id . '/download') ?>" class="dropdown-item"><i class="fas fa-fw fa-sm fa-download mr-2"></i> <?= l('global.download') ?></a>
+                        <?php endif ?>
+
                         <a href="#" data-toggle="modal" data-target="#link_duplicate_modal" class="dropdown-item" data-link-id="<?= $data->link->link_id ?>"><i class="fas fa-fw fa-sm fa-clone mr-2"></i> <?= l('global.duplicate') ?></a>
+                        <a href="#" data-toggle="modal" data-target="#link_reset_modal" class="dropdown-item" data-link-id="<?= $data->link->link_id ?>"><i class="fas fa-fw fa-sm fa-redo mr-2"></i> <?= l('global.reset') ?></a>
                         <a href="#" data-toggle="modal" data-target="#link_delete_modal" class="dropdown-item" data-link-id="<?= $data->link->link_id ?>"><i class="fas fa-fw fa-sm fa-trash-alt mr-2"></i> <?= l('global.delete') ?></a>
                     </div>
                 </div>
@@ -86,13 +92,15 @@
         </div>
     </div>
 
+    <div id="links_auto_copy_link"></div>
+
     <?= $this->views['method'] ?>
 </div>
 
 
 <?php ob_start() ?>
-<link href="<?= ASSETS_FULL_URL . 'css/libraries/daterangepicker.min.css' ?>" rel="stylesheet" media="screen,print">
-<link href="<?= ASSETS_FULL_URL . 'css/libraries/fontawesome-iconpicker.css' ?>" rel="stylesheet" media="screen,print">
+<link href="<?= ASSETS_FULL_URL . 'css/libraries/daterangepicker.min.css?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
+<link href="<?= ASSETS_FULL_URL . 'css/libraries/fontawesome-iconpicker.css?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
 <?php \Altum\Event::add_content(ob_get_clean(), 'head') ?>
 
 <?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>
@@ -100,3 +108,23 @@
 
 <?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/duplicate_modal.php', ['modal_id' => 'link_duplicate_modal', 'resource_id' => 'link_id', 'path' => 'link-ajax/duplicate']), 'modals'); ?>
 <?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/duplicate_modal.php', ['modal_id' => 'biolink_block_duplicate_modal', 'resource_id' => 'biolink_block_id', 'path' => 'biolink-block-ajax/duplicate']), 'modals'); ?>
+<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/x_reset_modal.php', ['modal_id' => 'link_reset_modal', 'resource_id' => 'link_id', 'path' => 'links/reset']), 'modals'); ?>
+
+<?php ob_start() ?>
+<script>
+    'use strict';
+    
+    const query_parameters = new URLSearchParams(window.location.search);
+
+    if (query_parameters.has('auto_copy_link')) {
+        let text = document.querySelector('#link_full_url_copy').getAttribute('data-clipboard-text');
+        let notification_container = document.querySelector('#links_auto_copy_link');
+
+        navigator.clipboard.writeText(text).then(() => {
+            display_notifications(<?= json_encode(l('links.auto_copy_link.success')) ?>, 'success', notification_container);
+        }).catch((error) => {
+            display_notifications(<?= json_encode(l('links.auto_copy_link.error')) ?>, 'error', notification_container);
+        });
+    }
+</script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

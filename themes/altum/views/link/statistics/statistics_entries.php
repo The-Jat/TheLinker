@@ -13,16 +13,19 @@
 
     <div class="d-flex align-items-center col-auto p-0">
         <div class="dropdown">
-            <button type="button" class="btn btn-light dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>">
+            <button type="button" class="btn btn-light dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                 <i class="fas fa-fw fa-sm fa-download"></i>
             </button>
 
             <div class="dropdown-menu dropdown-menu-right d-print-none">
-                <a href="<?= url($data->url . '/statistics?type=' . $data->type . '&start_date=' . $data->datetime['start_date'] . '&end_date=' . $data->datetime['end_date'] . '&export=csv') ?>" target="_blank" class="dropdown-item">
-                    <i class="fas fa-fw fa-sm fa-file-csv mr-1"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
+                <a href="<?= url($data->url . '/statistics?' . \Altum\Router::$original_request_query . '&export=csv') ?>" target="_blank" class="dropdown-item">
+                    <i class="fas fa-fw fa-sm fa-file-csv mr-2"></i> <?= sprintf(l('global.export_to'), 'CSV') ?>
                 </a>
-                <a href="<?= url($data->url . '/statistics?type=' . $data->type . '&start_date=' . $data->datetime['start_date'] . '&end_date=' . $data->datetime['end_date'] . '&export=json') ?>" target="_blank" class="dropdown-item">
-                    <i class="fas fa-fw fa-sm fa-file-code mr-1"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
+                <a href="<?= url($data->url . '/statistics?' . \Altum\Router::$original_request_query . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
+                    <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
+                </a>
+                <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                    <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                 </a>
             </div>
         </div>
@@ -32,10 +35,12 @@
 <?php if(!count($data->rows)): ?>
     <div class="card my-3">
         <div class="card-body">
-            <div class="d-flex flex-column align-items-center justify-content-center py-3">
-                <img src="<?= ASSETS_FULL_URL . 'images/no_rows.svg' ?>" class="col-10 col-md-7 col-lg-4 mb-3" alt="<?= l('global.no_data') ?>" />
-                <h2 class="h4 text-muted"><?= l('global.no_data') ?></h2>
-            </div>
+            <?= include_view(THEME_PATH . 'views/partials/no_data.php', [
+                'filters_get' => $data->filters->get ?? [],
+                'name' => 'global',
+                'has_secondary_text' => false,
+                'has_wrapper' => false,
+            ]); ?>
         </div>
     </div>
 <?php else: ?>
@@ -44,17 +49,17 @@
         <table class="table table-custom">
             <thead>
             <tr>
-                <th class="align-middle">
+                <th class="">
                     <div><?= l('global.country') ?></div>
                     <div><?= l('global.city') ?></div>
                 </th>
-                <th class="align-middle"><?= l('link.table.device') ?></th>
-                <th class="align-middle">
+                <th class=""><?= l('link.table.device') ?></th>
+                <th class="">
                     <div><?= l('link.table.os') ?></div>
                     <div><?= l('link.table.browser') ?></div>
                 </th>
-                <th class="align-middle"><?= l('link.table.referrer') ?></th>
-                <th class="align-middle"><?= l('global.datetime') ?></th>
+                <th class=""><?= l('link.table.referrer') ?></th>
+                <th class=""><?= l('global.datetime') ?></th>
             </tr>
             </thead>
 
@@ -62,29 +67,32 @@
             <?php foreach($data->rows as $row): ?>
                 <tr>
                     <td class="text-nowrap">
-                        <div>
-                            <img src="<?= ASSETS_FULL_URL . 'images/countries/' . ($row->country_code ? mb_strtolower($row->country_code) : 'unknown') . '.svg' ?>" class="img-fluid icon-favicon mr-1" />
-                            <span class="align-middle"><?= $row->country_code ? get_country_from_country_code($row->country_code) : l('global.unknown') ?></span>
-                        </div>
-                        <div>
-                            <span class="text-muted"><?= $row->city_name ?? l('global.unknown') ?></span>
+                        <div class="d-flex align-items-center">
+                            <div class="table-image-wrapper mr-3">
+                                <img src="<?= ASSETS_FULL_URL . 'images/countries/' . ($row->country_code ? mb_strtolower($row->country_code) : 'unknown') . '.svg' ?>" class="img-fluid icon-favicon" />
+                            </div>
+
+                            <div class="d-flex flex-column">
+                                <span class=""><?= $row->country_code ? get_country_from_country_code($row->country_code) : l('global.unknown') ?></span>
+                                <span class="text-muted small"><?= $row->city_name ?? l('global.unknown') ?></span>
+                            </div>
                         </div>
                     </td>
 
                     <td class="text-nowrap">
                         <span class="badge badge-light">
-                            <?= $row->device_type ? '<i class="fas fa-fw fa-sm fa-' . $row->device_type . ' text-muted mr-1"></i>' . l('global.device.' . $row->device_type) : l('global.unknown') ?>
+                            <?= $row->device_type ? '<i class="fas fa-fw fa-sm fa-' . $row->device_type . ' mr-1"></i>' . l('global.device.' . $row->device_type) : l('global.unknown') ?>
                         </span>
                     </td>
 
                     <td class="text-nowrap">
                         <div>
-                            <img src="<?= ASSETS_FULL_URL . 'images/os/' . os_name_to_os_key($row->os_name) . '.svg' ?>" class="img-fluid icon-favicon mr-1" />
-                            <span class="align-middle"><?= $row->os_name ?: l('global.unknown') ?></span>
+                            <img src="<?= ASSETS_FULL_URL . 'images/os/' . os_name_to_os_key($row->os_name) . '.svg' ?>" class="img-fluid icon-favicon-small mr-1" />
+                            <span class="font-size-small"><?= $row->os_name ?: l('global.unknown') ?></span>
                         </div>
                         <div>
-                            <img src="<?= ASSETS_FULL_URL . 'images/browsers/' . browser_name_to_browser_key($row->browser_name) . '.svg' ?>" class="img-fluid icon-favicon mr-1" />
-                            <span class="align-middle"><?= $row->browser_name ?: l('global.unknown') ?></span>
+                            <img src="<?= ASSETS_FULL_URL . 'images/browsers/' . browser_name_to_browser_key($row->browser_name) . '.svg' ?>" class="img-fluid icon-favicon-small mr-1" />
+                            <span class="font-size-small"><?= $row->browser_name ?: l('global.unknown') ?></span>
                         </div>
                     </td>
 
@@ -94,8 +102,8 @@
                         <?php elseif($row->referrer_host == 'qr'): ?>
                             <span><?= l('link.statistics.referrer_qr') ?></span>
                         <?php else: ?>
-                            <img src="<?= get_favicon_url_from_domain($row->referrer_host) ?>" class="img-fluid icon-favicon mr-1" loading="lazy" />
-                            <a href="<?= url($data->url . '/statistics?type=referrer_path&referrer_host=' . $row->referrer_host . '&start_date=' . $data->datetime['start_date'] . '&end_date=' . $data->datetime['end_date']) ?>" title="<?= $row->referrer_host ?>" class="align-middle"><?= $row->referrer_host ?></a>
+                            <img referrerpolicy="no-referrer" src="<?= get_favicon_url_from_domain($row->referrer_host) ?>" class="img-fluid icon-favicon mr-1" loading="lazy" />
+                            <a href="<?= url($data->url . '/statistics?type=referrer_path&referrer_host=' . $row->referrer_host . '&start_date=' . $data->datetime['start_date'] . '&end_date=' . $data->datetime['end_date']) ?>" title="<?= $row->referrer_host ?>" class=""><?= $row->referrer_host ?></a>
                             <a href="<?= 'https://' . $row->referrer_host ?>" target="_blank" rel="nofollow noopener" class="text-muted ml-1"><i class="fas fa-fw fa-xs fa-external-link-alt"></i></a>
                         <?php endif ?>
                     </td>

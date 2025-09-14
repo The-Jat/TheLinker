@@ -1,25 +1,34 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class Referrals extends Controller {
 
     public function index() {
 
-        \Altum\Authentication::guard();
-
         if(!\Altum\Plugin::is_active('affiliate') || (\Altum\Plugin::is_active('affiliate') && !settings()->affiliate->is_enabled)) {
-            redirect();
+            redirect('not-found');
         }
+
+        \Altum\Authentication::guard();
 
         /* Get details for statistics */
         $referrals_statistics = database()->query("SELECT COUNT(`user_id`) AS `referrals`, SUM(`referred_by_has_converted`) AS `converted_referrals` FROM `users` WHERE `referred_by` = {$this->user->user_id}")->fetch_object() ?? null;
@@ -87,14 +96,14 @@ class Referrals extends Controller {
                 $affiliate_commissions_ids = json_encode($affiliate_commissions_ids);
                 $amount = number_format($amount, 2, '.', '');
 
-                /* Prepare the statement and execute query */
+                /* Database query */
                 db()->insert('affiliates_withdrawals', [
                     'user_id' => $this->user->user_id,
                     'amount' => $amount,
                     'currency' => settings()->payment->default_currency,
                     'note' => $_POST['note'],
                     'affiliate_commissions_ids' => $affiliate_commissions_ids,
-                    'datetime' => \Altum\Date::$date,
+                    'datetime' => get_date(),
                 ]);
 
                 /* Send notification to admin if needed */
@@ -128,7 +137,7 @@ class Referrals extends Controller {
                         'title' => l('global.notifications.new_affiliate_withdrawal.title'),
                         'description' => sprintf(l('global.notifications.new_affiliate_withdrawal.description'), $this->user->name, $this->user->email, $amount, settings()->payment->default_currency),
                         'url' => 'admin/affiliates-withdrawals',
-                        'datetime' => \Altum\Date::$date,
+                        'datetime' => get_date(),
                     ]);
                 }
 
@@ -144,7 +153,7 @@ class Referrals extends Controller {
         $menu = new \Altum\View('partials/account_header_menu', (array) $this);
         $this->add_view_content('account_header_menu', $menu->run());
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'referrals_statistics' => $referrals_statistics,
             'pending_affiliate_commissions' => $pending_affiliate_commissions,

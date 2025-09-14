@@ -34,8 +34,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* On modal show load new data */
+    
+/* On modal show load new data */
     $('#teams_member_login_modal').on('show.bs.modal', event => {
         let team_member_id = $(event.relatedTarget).data('team-member-id');
 

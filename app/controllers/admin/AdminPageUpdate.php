@@ -1,15 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+
+defined('ALTUMCODE') || die();
 
 class AdminPageUpdate extends Controller {
 
@@ -22,8 +31,13 @@ class AdminPageUpdate extends Controller {
             redirect('admin/pages');
         }
 
+        $page->plans_ids = json_decode($page->plans_ids ?? '');
+
+        /* Get all plans */
+        $plans = (new \Altum\Models\Plan())->get_plans();
+
         if(!empty($_POST)) {
-            /* Filter some the variables */
+            /* Filter some of the variables */
             $_POST['title'] = input_clean($_POST['title'], 256);
             $_POST['description'] = input_clean($_POST['description'], 256);
             $_POST['icon'] = input_clean($_POST['icon']);
@@ -36,6 +50,21 @@ class AdminPageUpdate extends Controller {
             $_POST['order'] = (int) $_POST['order'];
             $_POST['open_in_new_tab'] = (int) isset($_POST['open_in_new_tab']);
             $_POST['is_published'] = (int) isset($_POST['is_published']);
+            $_POST['content'] = $_POST['editor'] == 'wysiwyg' ? quilljs_to_bootstrap($_POST['content']) : $_POST['content'];
+
+            $_POST['plans_ids'] = array_map(
+                function($plan_id) {
+                    return (int) $plan_id;
+                },
+                array_filter($_POST['plans_ids'] ?? [], function($plan_id) use($plans) {
+                    return array_key_exists($plan_id, $plans);
+                })
+            );
+            if(empty($_POST['plans_ids'])) {
+                $_POST['plans_ids'] = null;
+            } else {
+                $_POST['plans_ids'] = json_encode($_POST['plans_ids']);
+            }
 
             switch($_POST['type']) {
                 case 'internal':
@@ -71,6 +100,7 @@ class AdminPageUpdate extends Controller {
                 /* Database query */
                 db()->where('page_id', $page->page_id)->update('pages', [
                     'pages_category_id' => $_POST['pages_category_id'],
+                    'plans_ids' => $_POST['plans_ids'],
                     'url' => $_POST['url'],
                     'title' => $_POST['title'],
                     'description' => $_POST['description'],
@@ -84,12 +114,12 @@ class AdminPageUpdate extends Controller {
                     'open_in_new_tab' => $_POST['open_in_new_tab'],
                     'is_published' => $_POST['is_published'],
                     'order' => $_POST['order'],
-                    'last_datetime' => \Altum\Date::$date,
+                    'last_datetime' => get_date(),
                 ]);
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItems(['pages_hidden', 'pages_top', 'pages_bottom']);
-                \Altum\Cache::$adapter->deleteItemsByTag('pages');
+                cache()->deleteItems(['pages_hidden', 'pages_top', 'pages_bottom']);
+                cache()->deleteItemsByTag('pages');
 
                 /* Set a nice success message */
                 Alerts::add_success(sprintf(l('global.success_message.update1'), '<strong>' . $_POST['title'] . '</strong>'));
@@ -104,7 +134,8 @@ class AdminPageUpdate extends Controller {
         /* Main View */
         $data = [
             'pages_categories' => $pages_categories,
-            'page' => $page
+            'page' => $page,
+            'plans' => $plans,
         ];
 
         $view = new \Altum\View('admin/page-update/index', (array) $this);

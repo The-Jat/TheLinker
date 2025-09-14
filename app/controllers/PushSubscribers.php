@@ -1,33 +1,40 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
-namespace Altum\controllers;
+namespace Altum\Controllers;
 
-use MaxMind\Db\Reader;
+defined('ALTUMCODE') || die();
 
 class PushSubscribers extends Controller {
 
     public function index() {
-        redirect();
+        redirect('not-found');
     }
 
     public function create_ajax() {
 
         if(!\Altum\Plugin::is_active('push-notifications') || !settings()->push_notifications->is_enabled) {
-            redirect();
+            redirect('not-found');
+        }
+
+        if(!is_logged_in() && !settings()->push_notifications->guests_is_enabled) {
+            redirect('not-found');
         }
 
         if(empty($_POST)) {
-            redirect();
-        }
-
-        if(!\Altum\Authentication::check() && !settings()->push_notifications->guests_is_enabled) {
             redirect();
         }
 
@@ -40,7 +47,7 @@ class PushSubscribers extends Controller {
         }
 
         /* Parse the data */
-        $_POST['endpoint'] = trim(filter_var($_POST['endpoint'], FILTER_SANITIZE_URL));
+        $_POST['endpoint'] = get_url($_POST['endpoint']);
         $subscriber_id = md5($_POST['endpoint']);
         $keys = json_encode([
             'p256dh' => $_POST['p256dh'],
@@ -57,6 +64,7 @@ class PushSubscribers extends Controller {
             'updates-autopush.dev.mozaws.net',
             'notify.windows.com',
             'push.apple.com',
+            'in-vcm-api.vivoglobal.com',
         ];
 
         $accepted = false;
@@ -74,7 +82,7 @@ class PushSubscribers extends Controller {
 
         /* Detect the location */
         try {
-            $maxmind = (new Reader(APP_PATH . 'includes/GeoLite2-City.mmdb'))->get($ip);
+            $maxmind = (get_maxmind_reader_city())->get($ip);
         } catch(\Exception $exception) {
             /* :) */
         }
@@ -87,14 +95,14 @@ class PushSubscribers extends Controller {
         $browser_name = $whichbrowser->browser->name ?? null;
         $os_name = $whichbrowser->os->name ?? null;
         $browser_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? mb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
-        $device_type = get_device_type($_SERVER['HTTP_USER_AGENT']);
+        $device_type = get_this_device_type();
 
         /* Insert / update */
         db()->onDuplicate([
             'user_id', 'endpoint', 'keys',
         ])->insert('push_subscribers', [
             'subscriber_id' => $subscriber_id,
-            'user_id' => \Altum\Authentication::check() ? $this->user->user_id : null,
+            'user_id' => is_logged_in() ? $this->user->user_id : null,
             'endpoint' => $_POST['endpoint'],
             'keys' => $keys,
             'ip' => $ip,
@@ -105,7 +113,7 @@ class PushSubscribers extends Controller {
             'browser_name' => $browser_name,
             'browser_language' => $browser_language,
             'device_type' => $device_type,
-            'datetime' => \Altum\Date::$date,
+            'datetime' => get_date(),
         ]);
 
         die();
@@ -114,14 +122,14 @@ class PushSubscribers extends Controller {
     public function delete_ajax() {
 
         if(!\Altum\Plugin::is_active('push-notifications') || !settings()->push_notifications->is_enabled) {
-            redirect();
+            redirect('not-found');
+        }
+
+        if(!is_logged_in() && !settings()->push_notifications->guests_is_enabled) {
+            redirect('not-found');
         }
 
         if(empty($_POST)) {
-            redirect();
-        }
-
-        if(!\Altum\Authentication::check() && !settings()->push_notifications->guests_is_enabled) {
             redirect();
         }
 
@@ -134,7 +142,7 @@ class PushSubscribers extends Controller {
         }
 
         /* Parse the data */
-        $_POST['endpoint'] = trim(filter_var($_POST['endpoint'], FILTER_SANITIZE_URL));
+        $_POST['endpoint'] = get_url($_POST['endpoint']);
         $subscriber_id = md5($_POST['endpoint']);
 
         /* Make sure only whitelisted endpoints are accepted */
@@ -147,6 +155,7 @@ class PushSubscribers extends Controller {
             'updates-autopush.dev.mozaws.net',
             'notify.windows.com',
             'push.apple.com',
+            'in-vcm-api.vivoglobal.com',
         ];
 
         $accepted = false;

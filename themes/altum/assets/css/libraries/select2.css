@@ -2,6 +2,10 @@
   width:100%!important;
 }
 
+.input-group .select2 {
+  width: 12.5rem !important;
+}
+
 .select2-container {
   box-sizing: border-box;
   display: inline-block;
@@ -390,7 +394,7 @@
 /*}*/
 
 .select2-container--default .select2-results > .select2-results__options {
-  max-height: 20rem;
+  max-height: 15rem;
   overflow-y: auto;
   scrollbar-color: var(--gray-200) var(--white) !important;
   scrollbar-width: thin !important;
@@ -446,7 +450,7 @@
 }
 
 .select2-container--default .select2-results__option--disabled {
-  color: var(--gray-200);
+  color: var(--gray-400);
 }
 
 .select2-container--default .select2-results__option--selected {

@@ -6,7 +6,7 @@
 
             <div class="modal-header">
                 <button type="button" data-toggle="modal" data-target="#biolink_link_create_modal" data-dismiss="modal" class="btn btn-sm btn-link"><i class="fas fa-fw fa-chevron-circle-left text-muted"></i></button>
-                <h5 class="modal-title"><?= l('create_biolink_image_grid_modal.header') ?></h5>
+                <h5 class="modal-title"><?= l('biolink_image_grid.header') ?></h5>
                 <button type="button" class="close" data-dismiss="modal" title="<?= l('global.close') ?>">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -22,29 +22,23 @@
                     <div class="notification-container"></div>
 
                     <div class="form-group">
-                        <label for="image_grid_name"><i class="fas fa-fw fa-signature fa-sm text-muted mr-1"></i> <?= l('create_biolink_link_modal.input.name') ?></label>
+                        <label for="image_grid_name"><i class="fas fa-fw fa-signature fa-sm text-muted mr-1"></i> <?= l('biolink_link.name') ?></label>
                         <input id="image_grid_name" type="text" name="name" class="form-control" />
                     </div>
 
                     <div class="form-group">
-                        <label for="image_grid_image"><i class="fas fa-fw fa-image fa-sm text-muted mr-1"></i> <?= l('create_biolink_image_grid_modal.image') ?></label>
-                        <input id="image_grid_image" type="file" name="image" accept="<?= \Altum\Uploads::array_to_list_format($data->biolink_blocks['image_grid']['whitelisted_image_extensions']) ?>" class="form-control-file altum-file-input" required="required" />
+                        <label for="image_grid_image"><i class="fas fa-fw fa-image fa-sm text-muted mr-1"></i> <?= l('global.image') ?></label>
+                        <input id="image_grid_image" type="file" name="image" accept="<?= \Altum\Uploads::array_to_list_format($data->biolink_blocks['image_grid']['whitelisted_image_extensions']) ?>" class="form-control-file altum-file-input" required="required" data-crop />
                         <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::array_to_list_format($data->biolink_blocks['image_grid']['whitelisted_image_extensions'])) . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->links->image_size_limit) ?></small>
                     </div>
 
                     <div class="form-group">
-                        <label for="image_grid_image_alt"><i class="fas fa-fw fa-comment-dots fa-sm text-muted mr-1"></i> <?= l('create_biolink_link_modal.input.image_alt') ?></label>
-                        <input id="image_grid_image_alt" type="text" class="form-control" name="image_alt" value="" maxlength="100" />
-                        <small class="form-text text-muted"><?= l('create_biolink_link_modal.input.image_alt_help') ?></small>
+                        <label for="image_grid_location_url"><i class="fas fa-fw fa-link fa-sm text-muted mr-1"></i> <?= l('biolink_link.location_url') ?></label>
+                        <input id="image_grid_location_url" type="url" class="form-control" name="location_url" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
                     </div>
 
                     <div class="form-group">
-                        <label for="image_grid_location_url"><i class="fas fa-fw fa-link fa-sm text-muted mr-1"></i> <?= l('create_biolink_link_modal.input.location_url') ?></label>
-                        <input id="image_grid_location_url" type="text" class="form-control" name="location_url" maxlength="2048" />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="image_grid_columns"><i class="fas fa-fw fa-grip fa-sm text-muted mr-1"></i> <?= l('create_biolink_image_grid_modal.columns') ?></label>
+                        <label for="image_grid_columns"><i class="fas fa-fw fa-grip fa-sm text-muted mr-1"></i> <?= l('biolink_image_grid.columns') ?></label>
                         <div class="row btn-group-toggle" data-toggle="buttons">
                             <div class="col-12 col-lg-6 h-100">
                                 <label class="btn btn-light btn-block text-truncate active">
@@ -62,8 +56,10 @@
                         </div>
                     </div>
 
+                    <p class="small text-muted"><i class="fas fa-fw fa-sm fa-circle-info mr-1"></i> <?= l('link.create_info') ?></p>
+                    
                     <div class="text-center mt-4">
-                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('global.submit') ?></button>
+                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('link.biolink.create_block') ?></button>
                     </div>
                 </form>
             </div>

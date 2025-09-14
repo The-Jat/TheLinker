@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum;
@@ -12,6 +19,8 @@ namespace Altum;
 use Altum\Models\Plan;
 use Altum\Models\User;
 
+
+defined('ALTUMCODE') || die();
 
 class App {
 
@@ -49,6 +58,24 @@ class App {
         /* Get the remaining params */
         $params = \Altum\Router::get_params();
 
+        if(!\Altum\Router::$controller_settings['allow_indexing']) {
+            header('X-Robots-Tag: noindex');
+        }
+
+        /* Iframe embedding */
+        settings()->main->iframe_embedding = settings()->main->iframe_embedding ?? 'all';
+        $iframe_embedding = match(settings()->main->iframe_embedding) {
+            'all' => '*',
+            'none' => "'none'",
+            default => implode(' ', explode(',', settings()->main->iframe_embedding))
+        };
+        header("Content-Security-Policy: frame-ancestors $iframe_embedding;");
+
+        /* HSTS */
+        if(string_starts_with('https://', SITE_URL)) {
+            header("Strict-Transport-Security: max-age=31536000; preload");
+        }
+
         /* Check for Preflight requests for the tracking of submissions from biolink pages */
         if(in_array(\Altum\Router::$controller, ['Link'])) {
             header('Access-Control-Allow-Origin: *');
@@ -65,10 +92,6 @@ class App {
 
         /* Set the default theme style */
         ThemeStyle::set_default(settings()->main->default_theme_style);
-
-        /* Initiate the Title system */
-        Title::initialize(settings()->main->title);
-        Meta::initialize();
 
         /* Set the date timezone */
         date_default_timezone_set(Date::$default_timezone);
@@ -88,8 +111,13 @@ class App {
         /* Affiliate check */
         Affiliate::initiate();
 
+        /* Full URL for ease of use */
+        settings()->main->logo_light_full_url = \Altum\Uploads::get_full_url('logo_light') . settings()->main->logo_light;
+        settings()->main->logo_dark_full_url = \Altum\Uploads::get_full_url('logo_dark') . settings()->main->logo_dark;
+        settings()->main->favicon_full_url = \Altum\Uploads::get_full_url('favicon') . settings()->main->favicon;
+
         /* Check for a potential logged in account and do some extra checks */
-        if(\Altum\Authentication::check()) {
+        if(is_logged_in()) {
 
             $user = \Altum\Authentication::$user;
 
@@ -122,16 +150,17 @@ class App {
                 ]);
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItemsByTag('user_id=' .  \Altum\Authentication::$user_id);
+                cache()->deleteItemsByTag('user_id=' .  \Altum\Authentication::$user_id);
 
                 /* Make sure to redirect the person to the payment page and only let the person access the following pages */
-                if(!in_array(\Altum\Router::$controller_key, ['index', 'blog', 'affiliate', 'contact', 'page', 'pages', 'plan', 'pay', 'pay-billing', 'pay-thank-you', 'account', 'account-plan', 'account-payments', 'invoice', 'account-logs', 'account-delete', 'referrals', 'account-api', 'account-redeem-code', 'logout', 'register', 'teams-system', 'teams-member', 'teams-members']) && \Altum\Router::$path != 'admin') {
+                if(!in_array(\Altum\Router::$controller_key, ['index', 'blog', 'affiliate', 'contact', 'page', 'pages', 'plan', 'pay', 'pay-billing', 'pay-thank-you', 'account', 'account-plan', 'account-payments', 'invoice', 'account-logs', 'account-preferences',  'account-delete', 'referrals', 'account-api', 'account-redeem-code', 'logout', 'register', 'teams-system', 'teams-member', 'teams-members']) && \Altum\Router::$path != 'admin') {
                     redirect('plan/new');
                 }
             }
 
             /* Update last activity */
-            if(!$user->last_activity || (new \DateTime($user->last_activity))->modify('+15 minutes') < (new \DateTime())) {
+            /* Do not update if user is impersonated by an admin */
+            if(!$user->last_activity || (new \DateTime($user->last_activity))->modify('+15 minutes') < (new \DateTime()) && !isset($_SESSION['admin_user_id'])) {
                 (new User())->update_last_activity(\Altum\Authentication::$user_id);
             }
 
@@ -140,12 +169,12 @@ class App {
                 if(Language::$name != $user->language) {
                     /* Make sure the language of the user still exists & is active */
                     if(array_key_exists($user->language, Language::$active_languages)) {
-                        Language::set_by_name($user->language);
+                        //Language::set_by_name($user->language);
                     } else {
                         db()->where('user_id', \Altum\Authentication::$user_id)->update('users', ['language' => Language::$default_name]);
 
                         /* Clear the cache */
-                        \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . \Altum\Authentication::$user_id);
+                        cache()->deleteItemsByTag('user_id=' . \Altum\Authentication::$user_id);
                     }
                 }
             }
@@ -155,7 +184,7 @@ class App {
                 db()->where('user_id', \Altum\Authentication::$user_id)->update('users', ['language' => $_COOKIE['set_language']]);
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . \Altum\Authentication::$user_id);
+                cache()->deleteItemsByTag('user_id=' . \Altum\Authentication::$user_id);
 
                 /* Remove cookie */
                 setcookie('set_language', '', time()-30, COOKIE_PATH);
@@ -169,7 +198,7 @@ class App {
                 db()->where('user_id', \Altum\Authentication::$user_id)->update('users', ['currency' => $_COOKIE['set_currency']]);
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . \Altum\Authentication::$user_id);
+                cache()->deleteItemsByTag('user_id=' . \Altum\Authentication::$user_id);
 
                 /* Remove cookie */
                 setcookie('set_currency', '', time()-30, COOKIE_PATH);
@@ -183,7 +212,39 @@ class App {
 
             /* Store all the details of the user in the Authentication static class as well */
             \Altum\Authentication::$user = $user;
+
+            /* White label */
+            if(settings()->main->white_labeling_is_enabled && $user->plan_settings->white_labeling_is_enabled && \Altum\Router::$controller_key != 'invoice' && \Altum\Router::$path != 'admin') {
+                if($user->preferences->white_label_title) settings()->main->title = $user->preferences->white_label_title;
+
+                if($user->preferences->white_label_logo_light) {
+                    settings()->main->logo_light = $user->preferences->white_label_logo_light;
+                    settings()->main->logo_light_full_url = \Altum\Uploads::get_full_url('users') . settings()->main->logo_light;
+                }
+
+                if($user->preferences->white_label_logo_dark) {
+                    settings()->main->logo_dark = $user->preferences->white_label_logo_dark;
+                    settings()->main->logo_dark_full_url = \Altum\Uploads::get_full_url('users') . settings()->main->logo_dark;
+                }
+
+                if($user->preferences->white_label_favicon) {
+                    settings()->main->favicon = $user->preferences->white_label_favicon;
+                    settings()->main->favicon_full_url = \Altum\Uploads::get_full_url('users') . settings()->main->favicon;
+                }
+            }
         }
+
+        /* Maintenance mode */
+        if(settings()->main->maintenance_is_enabled && (!is_logged_in() || $user->type != 1) && !in_array(\Altum\Router::$controller_key, ['maintenance', 'login', 'lost-password', 'reset-password'])) {
+            header('HTTP/1.1 503 Service Unavailable');
+            header('Retry-After: 3600');
+            header('Location: ' . url('maintenance'));
+            exit();
+        }
+
+        /* Initiate the Title system */
+        Title::initialize(settings()->main->title, settings()->main->title_separator ?? '-');
+        Meta::initialize();
 
         /* Set a CSRF Token */
         \Altum\Csrf::set('token');
@@ -196,14 +257,14 @@ class App {
 
         /* Redirect based on browser language if needed */
         $browser_language_code = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? mb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
-        if(settings()->main->auto_language_detection_is_enabled && \Altum\Router::$controller_settings['no_browser_language_detection'] == false && !\Altum\Router::$language_code && !\Altum\Authentication::check() && $browser_language_code && Language::$default_code != $browser_language_code && array_search($browser_language_code, Language::$active_languages)) {
-            if(!isset($_SERVER['HTTP_REFERER']) || (isset($_SERVER['HTTP_REFERER']) && parse_url($_SERVER['HTTP_REFERER'])['host'] != parse_url(SITE_URL)['host'])) {
+        if(settings()->main->auto_language_detection_is_enabled && \Altum\Router::$controller_settings['no_browser_language_detection'] == false && !\Altum\Router::$language_code && !is_logged_in() && $browser_language_code && Language::$default_code != $browser_language_code && array_search($browser_language_code, Language::$active_languages)) {
+            if(!isset($_SERVER['HTTP_REFERER']) || (isset($_SERVER['HTTP_REFERER']) && parse_url($_SERVER['HTTP_REFERER'])['host'] != parse_url(SITE_URL, PHP_URL_HOST))) {
                 header('Location: ' . SITE_URL . $browser_language_code . '/' . \Altum\Router::$original_request . (\Altum\Router::$original_request_query ? '?' . \Altum\Router::$original_request_query : null));
             }
         }
 
         /* Force HTTPS is needed */
-        if(settings()->main->force_https_is_enabled && ($_SERVER['HTTPS'] ?? '') != 'on' && php_sapi_name() != 'cli' && string_starts_with('https://', SITE_URL)) {
+        if(settings()->main->force_https_is_enabled && !is_https_request() && php_sapi_name() != 'cli' && string_starts_with('https://', SITE_URL)) {
             header('Location: https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'], true, 301); die();
         }
 

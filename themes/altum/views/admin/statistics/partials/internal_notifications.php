@@ -16,9 +16,10 @@
             </div>
         </div>
 
-        <div class="chart-container">
+        <div class="chart-container <?= $data->total['internal_notifications'] ? null : 'd-none' ?>">
             <canvas id="internal_notifications"></canvas>
         </div>
+        <?= $data->total['internal_notifications'] ? null : include_view(THEME_PATH . 'views/partials/no_chart_data.php', ['has_wrapper' => false]); ?>
     </div>
 </div>
 <?php $html = ob_get_clean() ?>
@@ -34,12 +35,12 @@
         let internal_notifications_chart = document.getElementById('internal_notifications').getContext('2d');
 
         let read_notifications_color_gradient = internal_notifications_chart.createLinearGradient(0, 0, 0, 250);
-        read_notifications_color_gradient.addColorStop(0, 'rgba(63, 136, 253, .1)');
-        read_notifications_color_gradient.addColorStop(1, 'rgba(63, 136, 253, 0.025)')
+        read_notifications_color_gradient.addColorStop(0, set_hex_opacity(read_notifications_color, 0.1));
+        read_notifications_color_gradient.addColorStop(1, set_hex_opacity(read_notifications_color, 0.025));
 
         let internal_notifications_color_gradient = internal_notifications_chart.createLinearGradient(0, 0, 0, 250);
-        internal_notifications_color_gradient.addColorStop(0, 'rgba(160, 174, 192, .1)');
-        internal_notifications_color_gradient.addColorStop(1, 'rgba(160, 174, 192, 0.025)')
+        internal_notifications_color_gradient.addColorStop(0, set_hex_opacity(internal_notifications_color, 0.1));
+        internal_notifications_color_gradient.addColorStop(1, set_hex_opacity(internal_notifications_color, 0.025));
 
         new Chart(internal_notifications_chart, {
             type: 'line',

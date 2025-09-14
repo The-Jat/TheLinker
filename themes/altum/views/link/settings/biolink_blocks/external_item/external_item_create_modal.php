@@ -6,7 +6,7 @@
 
             <div class="modal-header">
                 <button type="button" data-toggle="modal" data-target="#biolink_link_create_modal" data-dismiss="modal" class="btn btn-sm btn-link"><i class="fas fa-fw fa-chevron-circle-left text-muted"></i></button>
-                <h5 class="modal-title"><?= l('create_biolink_external_item_modal.header') ?></h5>
+                <h5 class="modal-title"><?= l('biolink_external_item.header') ?></h5>
                 <button type="button" class="close" data-dismiss="modal" title="<?= l('global.close') ?>">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -22,27 +22,29 @@
                     <div class="notification-container"></div>
 
                     <div class="form-group">
-                        <label for="external_item_name"><i class="fas fa-fw fa-signature fa-sm text-muted mr-1"></i> <?= l('create_biolink_link_modal.input.name') ?></label>
+                        <label for="external_item_name"><i class="fas fa-fw fa-signature fa-sm text-muted mr-1"></i> <?= l('biolink_link.name') ?></label>
                         <input id="external_item_name" type="text" name="name" maxlength="128" class="form-control" required="required" />
                     </div>
 
                     <div class="form-group">
-                        <label for="external_item_description"><i class="fas fa-fw fa-paragraph fa-sm text-muted mr-1"></i> <?= l('create_biolink_external_item_modal.description') ?></label>
+                        <label for="external_item_description"><i class="fas fa-fw fa-paragraph fa-sm text-muted mr-1"></i> <?= l('biolink_link.description') ?></label>
                         <input id="external_item_description" type="text" name="description" maxlength="256" class="form-control" value="" required="required" />
                     </div>
 
                     <div class="form-group">
-                        <label for="external_item_price"><i class="fas fa-fw fa-dollar-sign fa-sm text-muted mr-1"></i> <?= l('create_biolink_external_item_modal.price') ?></label>
-                        <input id="external_item_price" type="text" name="price" maxlength="32" class="form-control" value="" placeholder="<?= l('create_biolink_external_item_modal.price_placeholder') ?>" required="required" />
+                        <label for="external_item_price"><i class="fas fa-fw fa-dollar-sign fa-sm text-muted mr-1"></i> <?= l('biolink_external_item.price') ?></label>
+                        <input id="external_item_price" type="text" name="price" maxlength="32" class="form-control" value="" placeholder="<?= l('biolink_external_item.price_placeholder') ?>" required="required" />
                     </div>
 
                     <div class="form-group">
-                        <label for="external_item_location_url"><i class="fas fa-fw fa-link fa-sm text-muted mr-1"></i> <?= l('create_biolink_external_item_modal.location_url') ?></label>
-                        <input id="external_item_location_url" type="text" class="form-control" name="location_url" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+                        <label for="external_item_location_url"><i class="fas fa-fw fa-link fa-sm text-muted mr-1"></i> <?= l('biolink_external_item.location_url') ?></label>
+                        <input id="external_item_location_url" type="url" class="form-control" name="location_url" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
                     </div>
 
+                    <p class="small text-muted"><i class="fas fa-fw fa-sm fa-circle-info mr-1"></i> <?= l('link.create_info') ?></p>
+                    
                     <div class="text-center mt-4">
-                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('global.submit') ?></button>
+                        <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('link.biolink.create_block') ?></button>
                     </div>
                 </form>
             </div>

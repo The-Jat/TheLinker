@@ -1,25 +1,34 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class TeamCreate extends Controller {
 
     public function index() {
 
-        \Altum\Authentication::guard();
-
         if(!\Altum\Plugin::is_active('teams')) {
-            redirect('dashboard');
+            redirect('not-found');
         }
+
+        \Altum\Authentication::guard();
 
         /* Check for the plan limit */
         $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `teams` WHERE `user_id` = {$this->user->user_id}")->fetch_object()->total ?? 0;
@@ -48,11 +57,11 @@ class TeamCreate extends Controller {
 
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
-                /* Prepare the statement and execute query */
+                /* Database query */
                 $team_id = db()->insert('teams', [
                     'user_id' => $this->user->user_id,
                     'name' => $_POST['name'],
-                    'datetime' => \Altum\Date::$date,
+                    'datetime' => get_date(),
                 ]);
 
                 /* Set a nice success message */
@@ -67,7 +76,7 @@ class TeamCreate extends Controller {
             'name' => $_POST['name'] ?? '',
         ];
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'values' => $values
         ];

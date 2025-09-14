@@ -1,14 +1,14 @@
 <?php defined('ALTUMCODE') || die() ?>
 
 <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-    <ol class="custom-breadcrumbs small">
-        <li>
-            <a href="<?= url('admin/push-notifications') ?>"><?= l('admin_push_notifications.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
-        </li>
-        <li class="active" aria-current="page"><?= l('admin_push_notification_create.breadcrumb') ?></li>
-    </ol>
-</nav>
+    <nav aria-label="breadcrumb">
+        <ol class="custom-breadcrumbs small">
+            <li>
+                <a href="<?= url('admin/push-notifications') ?>"><?= l('admin_push_notifications.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
+            </li>
+            <li class="active" aria-current="page"><?= l('admin_push_notification_create.breadcrumb') ?></li>
+        </ol>
+    </nav>
 <?php endif ?>
 
 <div class="d-flex justify-content-between mb-4">
@@ -27,14 +27,16 @@
                 <label for="title"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('admin_push_notifications.main.title') ?></label>
                 <input type="text" id="title" name="title" value="<?= $data->values['title'] ?>" class="form-control <?= \Altum\Alerts::has_field_errors('title') ? 'is-invalid' : null ?>" maxlength="64" required="required" />
                 <?= \Altum\Alerts::output_field_error('title') ?>
-                <small class="form-text text-muted"><?= l('global.admin_spintax_help') ?></small>
+                <small class="form-text text-muted"><?= sprintf(l('global.variables'), '<code data-copy>' . implode('</code> , <code data-copy>',  ['{{WEBSITE_TITLE}}', '{{SUBSCRIBER:CONTINENT_NAME}}', '{{SUBSCRIBER:COUNTRY_NAME}}', '{{SUBSCRIBER:CITY_NAME}}', '{{SUBSCRIBER:DEVICE_TYPE}}', '{{SUBSCRIBER:OS_NAME}}', '{{SUBSCRIBER:BROWSER_NAME}}', '{{SUBSCRIBER:BROWSER_LANGUAGE}}']) . '</code>') ?></small>
+                <small class="form-text text-muted"><?= l('global.spintax_help') ?></small>
             </div>
 
             <div class="form-group">
                 <label for="description"><i class="fas fa-fw fa-sm fa-paragraph text-muted mr-1"></i> <?= l('global.description') ?></label>
                 <input type="text" id="description" name="description" value="<?= $data->values['description'] ?>" class="form-control <?= \Altum\Alerts::has_field_errors('description') ? 'is-invalid' : null ?>" maxlength="64" required="required" />
                 <?= \Altum\Alerts::output_field_error('description') ?>
-                <small class="form-text text-muted"><?= l('global.admin_spintax_help') ?></small>
+                <small class="form-text text-muted"><?= sprintf(l('global.variables'), '<code data-copy>' . implode('</code> , <code data-copy>',  ['{{WEBSITE_TITLE}}', '{{SUBSCRIBER:CONTINENT_NAME}}', '{{SUBSCRIBER:COUNTRY_NAME}}', '{{SUBSCRIBER:CITY_NAME}}', '{{SUBSCRIBER:DEVICE_TYPE}}', '{{SUBSCRIBER:OS_NAME}}', '{{SUBSCRIBER:BROWSER_NAME}}', '{{SUBSCRIBER:BROWSER_LANGUAGE}}']) . '</code>') ?></small>
+                <small class="form-text text-muted"><?= l('global.spintax_help') ?></small>
             </div>
 
             <div class="form-group">
@@ -63,14 +65,14 @@
             <div class="form-group" data-segment="filter">
                 <label for="is_registered"><i class="fas fa-fw fa-sm fa-user text-muted mr-1"></i> <?= l('admin_push_notifications.main.segment.filter.is_registered') ?></label>
                 <div class="row">
-                    <div class="col-6 mb-3">
+                    <div class="col-6">
                         <div class="custom-control custom-switch">
                             <input id="<?= 'filters_is_registered###yes' ?>" name="filters_is_registered[yes]" value="1" type="checkbox" class="custom-control-input" <?= isset($data->values['filters_is_registered']['1']) ? 'checked="checked"' : null ?>>
                             <label class="custom-control-label" for="<?= 'filters_is_registered###yes' ?>"><?= l('global.yes') ?></label>
                         </div>
                     </div>
 
-                    <div class="col-6 mb-3">
+                    <div class="col-6">
                         <div class="custom-control custom-switch">
                             <input id="<?= 'filters_is_registered###no' ?>" name="filters_is_registered[no]" value="0" type="checkbox" class="custom-control-input" <?= isset($data->values['filters_is_registered']['0']) ? 'checked="checked"' : null ?>>
                             <label class="custom-control-label" for="<?= 'filters_is_registered###no' ?>"><?= l('global.no') ?></label>
@@ -106,7 +108,7 @@
                 <div class="row">
                     <?php foreach(['desktop', 'tablet', 'mobile'] as $device_type): ?>
                         <div class="col-6 mb-3">
-                            <div class="custom-control custom-switch">
+                            <div class="custom-control custom-checkbox">
                                 <input id="<?= 'filters_device_type###' . $device_type ?>" name="filters_device_type[]" value="<?= $device_type ?>" type="checkbox" class="custom-control-input" <?= isset($data->values['filters_device_type'][$device_type]) ? 'checked="checked"' : null ?>>
                                 <label class="custom-control-label" for="<?= 'filters_device_type###' . $device_type ?>"><?= l('global.device.' . $device_type) ?></label>
                             </div>
@@ -125,8 +127,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    type_handler('[name="segment"]', 'data-segment');
+    
+type_handler('[name="segment"]', 'data-segment');
     document.querySelector('[name="segment"]') && document.querySelectorAll('[name="segment"]').forEach(element => element.addEventListener('change', () => { type_handler('[name="segment"]', 'data-segment'); }));
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
@@ -134,12 +136,12 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    document.querySelector('#segment').addEventListener('change', async event => {
+    
+document.querySelector('#segment').addEventListener('change', async event => {
         await get_segment_count();
     });
 
-    document.querySelectorAll('[name*="filters_is_registered"],[name="filters_countries[]"],[name="filters_continents[]"]').forEach(element => element.addEventListener('change', async event => {
+    document.querySelectorAll('[name*="filters_is_registered"],[name="filters_countries[]"],[name="filters_continents[]"],[name="filters_device_type[]"]').forEach(element => element.addEventListener('change', async event => {
         await get_segment_count();
     }));
 
@@ -189,3 +191,5 @@
     get_segment_count();
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+
+<?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>

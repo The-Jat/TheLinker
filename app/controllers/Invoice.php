@@ -1,16 +1,25 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Models\Plan;
 use Altum\Title;
+
+defined('ALTUMCODE') || die();
 
 class Invoice extends Controller {
 
@@ -22,17 +31,17 @@ class Invoice extends Controller {
 
         /* Make sure the campaign exists and is accessible to the user */
         if(!$payment = db()->where('id', $id)->getOne('payments')) {
-            redirect('dashboard');
+            redirect();
         }
 
-        if($payment->user_id != $this->user->user_id && !\Altum\Authentication::is_admin()) {
-            redirect('dashboard');
+        if($payment->user_id != $this->user->user_id) {
+            redirect();
         }
 
         /* Try to see if we get details from the billing */
-        $payment->billing = json_decode($payment->billing);
-        $payment->business = json_decode($payment->business);
-        $payment->plan = json_decode($payment->plan);
+        $payment->billing = json_decode($payment->billing ?? '');
+        $payment->business = json_decode($payment->business ?? '');
+        $payment->plan = json_decode($payment->plan ?? '');
 
         /* Get the plan details */
         $payment->plan_db = (new Plan())->get_plan_by_id($payment->plan_id);
@@ -87,7 +96,7 @@ class Invoice extends Controller {
         /* Set a custom title */
         Title::set(sprintf(l('invoice.title'), $payment->business->invoice_nr_prefix . $payment->id));
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'payment' => $payment,
             'payment_taxes' => $payment_taxes

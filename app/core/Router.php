@@ -1,13 +1,22 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum;
+
+defined('ALTUMCODE') || die();
 
 class Router {
     public static $params = [];
@@ -24,8 +33,14 @@ class Router {
         /* Enable / disable browser language detection & redirection */
         'no_browser_language_detection' => false,
 
+        /* Enable / disable browser language detection & redirection */
+        'allow_indexing' => true,
+
         /* Should we see a view for the controller? */
         'has_view' => true,
+
+        /* Footer currency display */
+        'currency_switcher' => false,
 
         /* If set on yes, ads won't show on these pages at all */
         'ads' => false,
@@ -70,17 +85,17 @@ class Router {
         ],
 
         '' => [
-            'directory' => [
-                'controller' => 'Directory',
-                'settings' => [
-                    'ads' => true,
-                ]
-            ],
-
             'dashboard' => [
                 'controller' => 'Dashboard',
                 'settings' => [
                     'wrapper' => 'app_wrapper',
+                    'ads' => true,
+                ]
+            ],
+
+            'directory' => [
+                'controller' => 'Directory',
+                'settings' => [
                     'ads' => true,
                 ]
             ],
@@ -95,6 +110,14 @@ class Router {
 
             'links' => [
                 'controller' => 'Links',
+                'settings' => [
+                    'wrapper' => 'app_wrapper',
+                    'ads' => true,
+                ]
+            ],
+
+            'link-create' => [
+                'controller' => 'LinkCreate',
                 'settings' => [
                     'wrapper' => 'app_wrapper',
                     'ads' => true,
@@ -254,11 +277,27 @@ class Router {
                 ]
             ],
 
+            'links-statistics' => [
+                'controller' => 'LinksStatistics',
+                'settings' => [
+                    'wrapper' => 'app_wrapper',
+                    'ads' => true,
+                ]
+            ],
+
             'link' => [
                 'controller' => 'Link',
                 'settings' => [
                     'wrapper' => 'app_wrapper',
                     'ads' => true,
+                ]
+            ],
+
+            'link-redirect' => [
+                'controller' => 'LinkRedirect',
+                'settings' => [
+                    'has_view' => false,
+                    'no_browser_language_detection' => true,
                 ]
             ],
 
@@ -299,6 +338,15 @@ class Router {
                 'settings' => [
                     'wrapper' => 'app_wrapper',
                     'ads' => true,
+                ]
+            ],
+
+            'tools-rating' => [
+                'controller' => 'ToolsRating',
+                'settings' => [
+                    'has_view' => false,
+                    'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -464,9 +512,45 @@ class Router {
                 ]
             ],
 
+            'notification-handlers' => [
+                'controller' => 'NotificationHandlers',
+                'settings' => [
+                    'ads' => true,
+                    'wrapper' => 'app_wrapper',
+                ]
+            ],
+
+            'notification-handler-create' => [
+                'controller' => 'NotificationHandlerCreate',
+                'settings' => [
+                    'ads' => true,
+                    'wrapper' => 'app_wrapper',
+                ]
+            ],
+
+            'notification-handler-update' => [
+                'controller' => 'NotificationHandlerUpdate',
+                'settings' => [
+                    'ads' => true,
+                    'wrapper' => 'app_wrapper',
+                ]
+            ],
+
+            'twiml' => [
+                'controller' => 'Twiml',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'has_view' => false,
+                    'no_browser_language_detection' => true,
+                ]
+            ],
+
             /* Common routes */
             'index' => [
-                'controller' => 'Index',
+               'controller' => 'Index',
+                'settings' => [
+                    'currency_switcher' => true,
+                ],
             ],
 
             'login' => [
@@ -541,8 +625,15 @@ class Router {
                 'controller' => 'Logout'
             ],
 
-            'notfound' => [
+            'not-found' => [
                 'controller' => 'NotFound',
+            ],
+
+            'maintenance' => [
+                'controller' => 'Maintenance',
+                'settings' => [
+                    'wrapper' => 'basic_wrapper',
+                ]
             ],
 
             'account' => [
@@ -626,9 +717,10 @@ class Router {
             ],
 
             'plan' => [
-                'controller' => 'Plan',
+               'controller' => 'Plan',
                 'settings' => [
-                ]
+                    'currency_switcher' => true,
+                ],
             ],
 
             'pay' => [
@@ -636,6 +728,7 @@ class Router {
                 'settings' => [
                     'wrapper' => 'app_wrapper',
                     'allow_team_access' => false,
+                    'currency_switcher' => true,
                 ]
             ],
 
@@ -644,6 +737,7 @@ class Router {
                 'settings' => [
                     'wrapper' => 'app_wrapper',
                     'allow_team_access' => false,
+                    'currency_switcher' => true,
                 ]
             ],
 
@@ -652,6 +746,7 @@ class Router {
                 'settings' => [
                     'wrapper' => 'app_wrapper',
                     'allow_team_access' => false,
+                    'currency_switcher' => true,
                 ]
             ],
 
@@ -745,17 +840,28 @@ class Router {
                 ]
             ],
 
+            'spotlight' => [
+                'controller' => 'Spotlight',
+                'settings' => [
+                    'has_view' => false,
+                    'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
+                ]
+            ],
+
             'push-subscribers' => [
                 'controller' => 'PushSubscribers',
                 'settings' => [
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
             'sso' => [
                 'controller' => 'SSO',
                 'settings' => [
+                    'allow_team_access' => false,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                 ]
@@ -768,6 +874,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -777,6 +884,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -786,6 +894,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -795,6 +904,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -804,6 +914,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -813,6 +924,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -822,6 +934,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -831,6 +944,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -840,6 +954,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -849,6 +964,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -858,6 +974,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -867,6 +984,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -876,6 +994,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -885,6 +1004,27 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
+                ]
+            ],
+
+            'webhook-lemonsqueezy' => [
+                'controller' => 'WebhookLemonsqueezy',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'has_view' => false,
+                    'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
+                ]
+            ],
+
+            'webhook-myfatoorah' => [
+                'controller' => 'WebhookMyfatoorah',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'has_view' => false,
+                    'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -902,6 +1042,7 @@ class Router {
                 'settings' => [
                     'no_authentication_check' => true,
                     'no_browser_language_detection' => true,
+                    'has_view' => false,
                 ]
             ],
 
@@ -911,6 +1052,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -925,11 +1067,21 @@ class Router {
         ],
 
         'api' => [
+            'notification-handlers' => [
+                'controller' => 'ApiNotificationHandlers',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'has_view' => false,
+                    'allow_indexing' => false,
+                ]
+            ],
+
             'links' => [
                 'controller' => 'ApiLinks',
                 'settings' => [
                     'no_authentication_check' => true,
                     'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
             'statistics' => [
@@ -937,6 +1089,7 @@ class Router {
                 'settings' => [
                     'no_authentication_check' => true,
                     'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
             'projects' => [
@@ -944,34 +1097,39 @@ class Router {
                 'settings' => [
                     'no_authentication_check' => true,
                     'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
             'pixels' => [
                 'controller' => 'ApiPixels',
                 'settings' => [
                     'no_authentication_check' => true,
-                    'has_view' => false
+                    'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
             'splash-pages' => [
                 'controller' => 'ApiSplashPages',
                 'settings' => [
                     'no_authentication_check' => true,
-                    'has_view' => false
+                    'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
             'qr-codes' => [
                 'controller' => 'ApiQrCodes',
                 'settings' => [
                     'no_authentication_check' => true,
-                    'has_view' => false
+                    'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
             'data' => [
                 'controller' => 'ApiData',
                 'settings' => [
                     'no_authentication_check' => true,
-                    'has_view' => false
+                    'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
             'domains' => [
@@ -979,6 +1137,7 @@ class Router {
                 'settings' => [
                     'no_authentication_check' => true,
                     'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
             'signatures' => [
@@ -986,6 +1145,7 @@ class Router {
                 'settings' => [
                     'no_authentication_check' => true,
                     'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -995,6 +1155,7 @@ class Router {
                 'settings' => [
                     'no_authentication_check' => true,
                     'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
             'teams-member' => [
@@ -1002,6 +1163,7 @@ class Router {
                 'settings' => [
                     'no_authentication_check' => true,
                     'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
             'team-members' => [
@@ -1009,6 +1171,7 @@ class Router {
                 'settings' => [
                     'no_authentication_check' => true,
                     'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
             'user' => [
@@ -1016,6 +1179,7 @@ class Router {
                 'settings' => [
                     'no_authentication_check' => true,
                     'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
             'payments' => [
@@ -1023,6 +1187,7 @@ class Router {
                 'settings' => [
                     'no_authentication_check' => true,
                     'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
             'logs' => [
@@ -1030,6 +1195,7 @@ class Router {
                 'settings' => [
                     'no_authentication_check' => true,
                     'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
         ],
@@ -1038,6 +1204,10 @@ class Router {
         'admin' => [
             'links' => [
                 'controller' => 'AdminLinks'
+            ],
+
+            'biolinks-blocks' => [
+                'controller' => 'AdminBiolinksBlocks'
             ],
 
             'biolinks-themes' => [
@@ -1132,12 +1302,28 @@ class Router {
                 'controller' => 'AdminSplashPages'
             ],
 
+            'data' => [
+                'controller' => 'AdminData'
+            ],
+
+            'payment-processors' => [
+                'controller' => 'AdminPaymentProcessors'
+            ],
+
+            'guests-payments' => [
+                'controller' => 'AdminGuestsPayments'
+            ],
+
             'pixels' => [
                 'controller' => 'AdminPixels'
             ],
 
             'qr-codes' => [
                 'controller' => 'AdminQrCodes'
+            ],
+
+            'notification-handlers' => [
+                'controller' => 'AdminNotificationHandlers',
             ],
 
             'domains' => [
@@ -1203,10 +1389,6 @@ class Router {
 
             'blog-posts-category-update' => [
                 'controller' => 'AdminBlogPostsCategoryUpdate'
-            ],
-
-            'resources' => [
-                'controller' => 'AdminResources'
             ],
 
             'pages' => [
@@ -1309,12 +1491,23 @@ class Router {
                 'controller' => 'AdminTeams',
             ],
 
+            'team-members' => [
+                'controller' => 'AdminTeamMembers',
+            ],
+
             'logs' => [
                 'controller' => 'AdminLogs',
             ],
 
             'log' => [
                 'controller' => 'AdminLog',
+            ],
+
+            'log-download' => [
+                'controller' => 'AdminLogDownload',
+                'settings' => [
+                    'has_view' => false,
+                ]
             ],
 
             'broadcasts' => [
@@ -1356,6 +1549,18 @@ class Router {
             'push-notification-update' => [
                 'controller' => 'AdminPushNotificationUpdate',
             ],
+
+            'invoice' => [
+                'controller' => 'AdminInvoice',
+            ],
+
+            'dynamic-og-images' => [
+                'controller' => 'AdminDynamicOgImages',
+            ],
+
+            'image-optimizer' => [
+                'controller' => 'AdminImageOptimizer',
+            ],
         ],
 
         'admin-api' => [
@@ -1363,7 +1568,17 @@ class Router {
                 'controller' => 'AdminApiUsers',
                 'settings' => [
                     'no_authentication_check' => true,
-                    'has_view' => false
+                    'has_view' => false,
+                    'allow_indexing' => false,
+                ]
+            ],
+
+            'payments' => [
+                'controller' => 'AdminApiPayments',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -1371,7 +1586,8 @@ class Router {
                 'controller' => 'AdminApiPlans',
                 'settings' => [
                     'no_authentication_check' => true,
-                    'has_view' => false
+                    'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -1379,7 +1595,17 @@ class Router {
                 'controller' => 'AdminApiSSO',
                 'settings' => [
                     'no_authentication_check' => true,
-                    'has_view' => false
+                    'has_view' => false,
+                    'allow_indexing' => false,
+                ]
+            ],
+
+            'dynamic-og-images' => [
+                'controller' => 'AdminApiDynamicOgImages',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
 
@@ -1388,6 +1614,7 @@ class Router {
                 'settings' => [
                     'no_authentication_check' => true,
                     'has_view' => false,
+                    'allow_indexing' => false,
                 ]
             ],
         ],
@@ -1445,7 +1672,7 @@ class Router {
         $original_url_host = parse_url(url(), PHP_URL_HOST);
         $request_url_host = input_clean($_SERVER['HTTP_HOST']);
 
-        if($original_url_host != $request_url_host) {
+        if(!empty($request_url_host) && $original_url_host != $request_url_host) {
             if(function_exists('idn_to_utf8')) {
                 $request_url_host = idn_to_utf8($request_url_host);
             }
@@ -1488,23 +1715,39 @@ class Router {
             } else {
 
                 /* Try to check if the link exists via the cache */
-                $cache_instance = \Altum\Cache::$adapter->getItem('link?url=' . md5(self::$params[0]) . (isset(self::$data['domain']) ? '&domain_id=' . self::$data['domain']->domain_id : null));
+                $cache_instance = cache()->getItem('link?url=' . md5(self::$params[0]) . (isset(self::$data['domain']) ? '&domain_id=' . self::$data['domain']->domain_id : null));
 
                 /* Set cache if not existing */
                 if(!$cache_instance->get()) {
 
                     /* Get data from the database */
                     if(isset(self::$data['domain'])) {
-                        $link = db()->where('url', self::$params[0])->where('domain_id', self::$data['domain']->domain_id)->getOne('links');
+                        if(self::$data['domain']->link_id) {
+                            $link = db()->where('link_id', self::$data['domain']->link_id)->getOne('links');
+                        } else {
+                            $link = db()->where('url', self::$params[0])->where('domain_id', self::$data['domain']->domain_id)->getOne('links');
+                        }
                     } else {
                         $link = db()->where('url', self::$params[0])->where('domain_id', 0)->getOne('links');
                     }
 
                     if($link) {
-                        \Altum\Cache::$adapter->save($cache_instance->set($link)->expiresAfter(CACHE_DEFAULT_SECONDS)->addTag('link_id=' . $link->link_id));
+                        cache()->save($cache_instance->set($link)->expiresAfter(CACHE_DEFAULT_SECONDS)->addTag('link_id=' . $link->link_id));
 
                         /* Set some route data */
                         self::$data['link'] = $link;
+
+                        /* Check for 66pusher service worker integration */
+                        // To do add support for custom domains with exclusive links
+                        if(settings()->links->sixsixpusher_is_enabled && isset(self::$params[1]) && self::$params[1] == settings()->links->sixsixpusher_service_worker_file_name . '.js') {
+                            $link->settings = json_decode($link->settings);
+
+                            header('Content-Type: application/javascript');
+                            header('Service-Worker-Allowed: /');
+
+                            include \Altum\Uploads::get_full_path('service_workers') . $link->settings->service_worker;
+                            die();
+                        }
                     }
 
                 } else {
@@ -1516,7 +1759,6 @@ class Router {
                     self::$data['link'] = $link;
 
                 }
-
 
                 /* Check if there is any link available in the database */
                 if($link) {
@@ -1536,7 +1778,7 @@ class Router {
                     else {
                         /* Not found controller */
                         self::$path = '';
-                        self::$controller_key = 'notfound';
+                        self::$controller_key = 'not-found';
                     }
 
                 }
@@ -1545,8 +1787,52 @@ class Router {
 
         }
 
+        /* Check for a potential exclusive domain name link */
+        if(empty(self::$params[0]) && isset(self::$data['domain']) && self::$data['domain']->link_id) {
+
+            /* Try to check if the link exists via the cache */
+            $cache_instance = cache()->getItem('link?link_id=' . self::$data['domain']->link_id);
+
+            /* Set cache if not existing */
+            if(!$cache_instance->get()) {
+
+                /* Get data from the database */
+                $link = db()->where('link_id', self::$data['domain']->link_id)->getOne('links');
+
+                if($link) {
+                    cache()->save($cache_instance->set($link)->expiresAfter(CACHE_DEFAULT_SECONDS)->addTag('link_id=' . $link->link_id));
+
+                    /* Set some route data */
+                    self::$data['link'] = $link;
+                }
+
+            } else {
+
+                /* Get cache */
+                $link = $cache_instance->get();
+
+                /* Set some route data */
+                self::$data['link'] = $link;
+
+            }
+
+            /* Check if there is any link available in the database */
+            if($link) {
+
+                self::$controller_key = 'link';
+                self::$controller = 'Link';
+                self::$path = 'l';
+
+            }
+
+        }
+
         /* Check for a custom index url redirect in case there is no link requested  */
-        if(!isset(self::$params[0]) && !isset(self::$params[1]) && self::$path == 'l' && $original_url_host != $request_url_host && isset(self::$data['domain']) && self::$data['domain']->custom_index_url) {
+        if(isset(self::$data['domain']) && !self::$data['domain']->custom_index_url) {
+            self::$data['domain']->custom_index_url = url();
+        }
+
+        if(!isset(self::$params[0]) && !isset(self::$params[1]) && self::$path == 'l' && $original_url_host != $request_url_host && isset(self::$data['domain']) && !self::$data['domain']->link_id) {
             header('Location: ' . self::$data['domain']->custom_index_url);
             die();
         }
@@ -1555,7 +1841,7 @@ class Router {
         if(!isset(self::$routes[self::$path][self::$controller_key])) {
             /* Not found controller */
             self::$path = '';
-            self::$controller_key = 'notfound';
+            self::$controller_key = 'not-found';
         }
         self::$controller = self::$routes[self::$path][self::$controller_key]['controller'];
 
@@ -1596,6 +1882,8 @@ class Router {
         /* Start the checks for existing potential methods */
         if(isset(self::get_params()[0])) {
 
+            $original_first_param = self::$params[0];
+
             /* Try to check the methods with prettier URLs */
             self::$params[0] = str_replace('-', '_', self::$params[0]);
 
@@ -1613,7 +1901,7 @@ class Router {
 
             /* Restore pretty URL if not used */
             else {
-                self::$params[0] = str_replace('_', '-', self::$params[0]);
+                self::$params[0] = $original_first_param;
             }
         }
 

@@ -16,9 +16,10 @@
             </div>
         </div>
 
-        <div class="chart-container">
+        <div class="chart-container <?= $data->total['broadcasts'] + $data->total['sent_emails'] ? null : 'd-none' ?>">
             <canvas id="broadcasts"></canvas>
         </div>
+        <?= $data->total['broadcasts'] + $data->total['sent_emails'] ? null : include_view(THEME_PATH . 'views/partials/no_chart_data.php', ['has_wrapper' => false]); ?>
     </div>
 </div>
 <?php $html = ob_get_clean() ?>
@@ -34,12 +35,12 @@
         let broadcasts_chart = document.getElementById('broadcasts').getContext('2d');
 
         let sent_emails_color_gradient = broadcasts_chart.createLinearGradient(0, 0, 0, 250);
-        sent_emails_color_gradient.addColorStop(0, 'rgba(63, 136, 253, .1)');
-        sent_emails_color_gradient.addColorStop(1, 'rgba(63, 136, 253, 0.025)')
+        sent_emails_color_gradient.addColorStop(0, set_hex_opacity(sent_emails_color, 0.1));
+        sent_emails_color_gradient.addColorStop(1, set_hex_opacity(sent_emails_color, 0.025));
 
         let broadcasts_color_gradient = broadcasts_chart.createLinearGradient(0, 0, 0, 250);
-        broadcasts_color_gradient.addColorStop(0, 'rgba(160, 174, 192, .1)');
-        broadcasts_color_gradient.addColorStop(1, 'rgba(160, 174, 192, 0.025)')
+        broadcasts_color_gradient.addColorStop(0, set_hex_opacity(broadcasts_color, 0.1));
+        broadcasts_color_gradient.addColorStop(1, set_hex_opacity(broadcasts_color, 0.025));
 
         new Chart(broadcasts_chart, {
             type: 'line',

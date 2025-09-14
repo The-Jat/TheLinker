@@ -1,20 +1,32 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
-use Altum\Date;
+
+defined('ALTUMCODE') || die();
 
 class PixelUpdate extends Controller {
 
     public function index() {
+
+        if(!settings()->links->pixels_is_enabled) {
+            redirect('not-found');
+        }
 
         \Altum\Authentication::guard();
 
@@ -56,20 +68,20 @@ class PixelUpdate extends Controller {
                     'type' => $_POST['type'],
                     'name' => $_POST['name'],
                     'pixel' => $_POST['pixel'],
-                    'last_datetime' => Date::$date,
+                    'last_datetime' => get_date(),
                 ]);
 
                 /* Set a nice success message */
                 Alerts::add_success(sprintf(l('global.success_message.update1'), '<strong>' . $_POST['name'] . '</strong>'));
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItemsByTag('pixels?user_id=' . $this->user->user_id);
+                cache()->deleteItemsByTag('pixels?user_id=' . $this->user->user_id);
 
                 redirect('pixel-update/' . $pixel_id);
             }
         }
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'pixel' => $pixel
         ];

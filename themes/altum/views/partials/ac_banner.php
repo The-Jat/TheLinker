@@ -4,7 +4,9 @@ defined('ALTUMCODE') || die();
 ?>
 
 <?php if(isset($data->demo_url)): ?>
-    <script> if(window.location !== window.parent.location){ window.top.location.href = <?= json_encode($data->demo_url) ?>; } </script>
+    <script>
+    'use strict';
+     if(window.location !== window.parent.location){ window.top.location.href = <?= json_encode($data->demo_url) ?>; } </script>
 <?php endif ?>
 
 <style>
@@ -77,9 +79,8 @@ defined('ALTUMCODE') || die();
     }
     .ac-primary:hover {
         text-decoration: none;
-        background: #3370d2;
         color: white;
-        transform: scale(1.05);
+        transform: scale(1.025);
     }
     .ac-primary:active {
         background: #295aa9;
@@ -117,6 +118,24 @@ defined('ALTUMCODE') || die();
             transform: translate3d(0, 0, 0);
         }
     }
+    /* Gradient background */
+    .ac-bg-gradient {
+        animation: ac-bg-gradient-animation 3s ease infinite alternate;
+        background: linear-gradient(60deg, #e88d2a, #e3624c, #e33e72, #944e94, #46639e, #008b94, #009c86, #5ea773);
+        background-size: 300% 300%;
+    }
+
+    @keyframes ac-bg-gradient-animation {
+        0% {
+            background-position: 0 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+        100% {
+            background-position: 0 50%;
+        }
+    }
 </style>
 <div class="ac-wrapper">
     <a href="https://altumcode.com/" target="_blank" class="ac-altumcode-link">
@@ -125,7 +144,7 @@ defined('ALTUMCODE') || die();
     </a>
 
     <div class="ac-cta-wrapper">
-        <a href="https://altumcode.com/contact?subject=<?= 'Questions about ' . $data->product_name ?>" target="_blank" class="ac-secondary"><span class="d-none d-lg-inline">Any questions? ✉️</span><span class="d-lg-none">Support</span></a>
-        <a href="<?= $data->product_url ?>" class="ac-primary"><span class="d-none d-lg-inline"><?= 'Buy ' . $data->product_name ?> 🎁</span><span class="d-lg-none">Buy 🎁</span></a>
+        <a href="https://altumcode.com/contact" target="_blank" class="ac-secondary"><span class="d-none d-lg-inline">Any questions? ✉️</span><span class="d-lg-none">Support</span></a>
+        <a href="<?= $data->product_buy_url ?>" class="ac-primary ac-bg-gradient" target="_blank"><span class="d-none d-lg-inline"><?= 'Buy ' . $data->product_name ?> 🎁</span><span class="d-lg-none">Buy 🎁</span></a>
     </div>
 </div>

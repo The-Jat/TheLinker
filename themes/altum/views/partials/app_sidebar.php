@@ -4,16 +4,17 @@
     <div class="app-sidebar-title text-truncate">
         <a
                 href="<?= url() ?>"
+                class="text-truncate"
                 data-logo
-                data-light-value="<?= settings()->main->logo_light != '' ? \Altum\Uploads::get_full_url('logo_light') . settings()->main->logo_light : settings()->main->title ?>"
+                data-light-value="<?= settings()->main->logo_light != '' ? settings()->main->logo_light_full_url : settings()->main->title ?>"
                 data-light-class="<?= settings()->main->logo_light != '' ? 'img-fluid navbar-logo' : '' ?>"
                 data-light-tag="<?= settings()->main->logo_light != '' ? 'img' : 'span' ?>"
-                data-dark-value="<?= settings()->main->logo_dark != '' ? \Altum\Uploads::get_full_url('logo_dark') . settings()->main->logo_dark : settings()->main->title ?>"
+                data-dark-value="<?= settings()->main->logo_dark != '' ? settings()->main->logo_dark_full_url : settings()->main->title ?>"
                 data-dark-class="<?= settings()->main->logo_dark != '' ? 'img-fluid navbar-logo' : '' ?>"
                 data-dark-tag="<?= settings()->main->logo_dark != '' ? 'img' : 'span' ?>"
         >
             <?php if(settings()->main->{'logo_' . \Altum\ThemeStyle::get()} != ''): ?>
-                <img src="<?= \Altum\Uploads::get_full_url('logo_' . \Altum\ThemeStyle::get()) . settings()->main->{'logo_' . \Altum\ThemeStyle::get()} ?>" class="img-fluid navbar-logo" alt="<?= l('global.accessibility.logo_alt') ?>" />
+                <img src="<?= settings()->main->{'logo_' . \Altum\ThemeStyle::get() . '_full_url'} ?>" class="img-fluid navbar-logo" alt="<?= l('global.accessibility.logo_alt') ?>" />
             <?php else: ?>
                 <?= settings()->main->title ?>
             <?php endif ?>
@@ -22,7 +23,7 @@
 
     <div class="app-sidebar-links-wrapper flex-grow-1">
         <ul class="app-sidebar-links">
-            <?php if(\Altum\Authentication::check()): ?>
+            <?php if(is_logged_in()): ?>
                 <li class="<?= \Altum\Router::$controller == 'Dashboard' ? 'active' : null ?> d-flex dropdown" id="internal_notifications">
                     <a href="<?= url('dashboard') ?>"><i class="fas fa-fw fa-sm fa-th mr-2"></i> <?= l('dashboard.menu') ?></a>
 
@@ -49,7 +50,7 @@
                 <?php endif ?>
 
                 <?php if(settings()->links->shortener_is_enabled): ?>
-                    <li class="<?= (\Altum\Router::$controller == 'Links' && ($_GET['type'] ?? null) == 'link') || (\Altum\Router::$controller == 'Link' && $this->link->type == 'link') ? 'active' : null ?>">
+                    <li class="<?= (\Altum\Router::$controller == 'Links' && ($_GET['type'] ?? null) == 'link') || (\Altum\Router::$controller == 'Link' && $this->link->type == 'link') || \Altum\Router::$controller == 'LinkCreate' ? 'active' : null ?>">
                         <a href="<?= url('links?type=link') ?>"><i class="fas fa-fw fa-sm fa-link mr-2"></i> <?= l('links.menu.link') ?></a>
                     </li>
                 <?php endif ?>
@@ -74,11 +75,17 @@
 
                 <?php if(settings()->links->static_is_enabled): ?>
                     <li class="<?= (\Altum\Router::$controller == 'Links' && ($_GET['type'] ?? null) == 'static') || (\Altum\Router::$controller == 'Link' && $this->link->type == 'static') ? 'active' : null ?>">
-                        <a href="<?= url('links?type=static') ?>"><i class="fas fa-fw fa-sm fa-code mr-2"></i> <?= l('links.menu.static') ?></a>
+                        <a href="<?= url('links?type=static') ?>"><i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= l('links.menu.static') ?></a>
                     </li>
                 <?php endif ?>
 
-                <?php if(settings()->links->qr_codes_is_enabled): ?>
+                <?php if(settings()->links->biolinks_is_enabled || settings()->links->shortener_is_enabled || settings()->links->files_is_enabled || settings()->links->vcards_is_enabled || settings()->links->events_is_enabled || settings()->links->static_is_enabled): ?>
+                    <li class="<?= in_array(\Altum\Router::$controller, ['LinksStatistics']) ? 'active' : null ?>">
+                        <a href="<?= url('links-statistics') ?>"><i class="fas fa-fw fa-sm fa-chart-bar mr-2"></i> <?= l('links_statistics.menu') ?></a>
+                    </li>
+                <?php endif ?>
+
+                <?php if(settings()->codes->qr_codes_is_enabled): ?>
                     <li class="<?= in_array(\Altum\Router::$controller, ['QrCodes', 'QrCodeUpdate', 'QrCodeCreate']) ? 'active' : null ?>">
                         <a href="<?= url('qr-codes') ?>"><i class="fas fa-fw fa-sm fa-qrcode mr-2"></i> <?= l('qr_codes.menu') ?></a>
                     </li>
@@ -127,7 +134,7 @@
                 <?php endif ?>
             <?php endif ?>
 
-            <?php if(settings()->tools->is_enabled && (settings()->tools->access == 'everyone' || (settings()->tools->access == 'users' && \Altum\Authentication::check()))): ?>
+            <?php if(settings()->tools->is_enabled && (settings()->tools->access == 'everyone' || (settings()->tools->access == 'users' && is_logged_in()))): ?>
                 <li class="<?= \Altum\Router::$controller == 'Tools' ? 'active' : null ?>">
                     <a href="<?= url('tools') ?>"><i class="fas fa-fw fa-sm fa-tools mr-2"></i> <?= l('tools.menu') ?></a>
                 </li>
@@ -137,7 +144,7 @@
                 <div class="divider"></div>
             </div>
 
-            <?php if(\Altum\Authentication::check()): ?>
+            <?php if(is_logged_in()): ?>
 
                 <?php if(settings()->links->domains_is_enabled): ?>
                     <li class="<?= in_array(\Altum\Router::$controller, ['Domains', 'DomainUpdate', 'DomainCreate']) ? 'active' : null ?>">
@@ -145,18 +152,28 @@
                     </li>
                 <?php endif ?>
 
-                <li class="<?= in_array(\Altum\Router::$controller, ['Pixels', 'PixelUpdate', 'PixelCreate']) ? 'active' : null ?>">
-                    <a href="<?= url('pixels') ?>"><i class="fas fa-fw fa-sm fa-adjust mr-2"></i> <?= l('pixels.menu') ?></a>
+                <?php if(settings()->links->biolinks_is_enabled || settings()->links->shortener_is_enabled || settings()->links->files_is_enabled || settings()->links->vcards_is_enabled || settings()->links->events_is_enabled || settings()->links->static_is_enabled): ?>
+                <li class="<?= in_array(\Altum\Router::$controller, ['NotificationHandlers', 'NotificationHandlerUpdate', 'NotificationHandlerCreate']) ? 'active' : null ?>">
+                    <a href="<?= url('notification-handlers') ?>"><i class="fas fa-fw fa-sm fa-bell mr-2"></i> <?= l('notification_handlers.menu') ?></a>
                 </li>
+                <?php endif ?>
 
+                <?php if(settings()->links->pixels_is_enabled): ?>
+                    <li class="<?= in_array(\Altum\Router::$controller, ['Pixels', 'PixelUpdate', 'PixelCreate']) ? 'active' : null ?>">
+                        <a href="<?= url('pixels') ?>"><i class="fas fa-fw fa-sm fa-adjust mr-2"></i> <?= l('pixels.menu') ?></a>
+                    </li>
+                <?php endif ?>
+
+                <?php if(settings()->links->projects_is_enabled): ?>
                 <li class="<?= in_array(\Altum\Router::$controller, ['Projects', 'ProjectUpdate', 'ProjectCreate']) ? 'active' : null ?>">
                     <a href="<?= url('projects') ?>"><i class="fas fa-fw fa-sm fa-project-diagram mr-2"></i> <?= l('projects.menu') ?></a>
                 </li>
+                <?php endif ?>
 
                 <?php if(settings()->links->splash_page_is_enabled): ?>
-                <li class="<?= in_array(\Altum\Router::$controller, ['SplashPages', 'SplashPageUpdate', 'SplashPageCreate']) ? 'active' : null ?>">
-                    <a href="<?= url('splash-pages') ?>"><i class="fas fa-fw fa-sm fa-droplet mr-2"></i> <?= l('splash_pages.menu') ?></a>
-                </li>
+                    <li class="<?= in_array(\Altum\Router::$controller, ['SplashPages', 'SplashPageUpdate', 'SplashPageCreate']) ? 'active' : null ?>">
+                        <a href="<?= url('splash-pages') ?>"><i class="fas fa-fw fa-sm fa-droplet mr-2"></i> <?= l('splash_pages.menu') ?></a>
+                    </li>
                 <?php endif ?>
 
                 <?php if(settings()->links->biolinks_is_enabled): ?>
@@ -175,7 +192,7 @@
                 <?php endif ?>
             <?php endif ?>
 
-            <?php if(settings()->links->biolinks_is_enabled && settings()->links->directory_is_enabled && (settings()->links->directory_access == 'everyone' || (settings()->links->directory_access == 'users' && \Altum\Authentication::check()))): ?>
+            <?php if(settings()->links->biolinks_is_enabled && settings()->links->directory_is_enabled && (settings()->links->directory_access == 'everyone' || (settings()->links->directory_access == 'users' && is_logged_in()))): ?>
                 <li class="<?= \Altum\Router::$controller == 'Directory' ? 'active' : null ?>">
                     <a href="<?= url('directory') ?>"><i class="fas fa-fw fa-sm fa-sitemap mr-2"></i> <?= l('directory.menu') ?></a>
                 </li>
@@ -195,12 +212,12 @@
         </ul>
     </div>
 
-    <?php if(\Altum\Authentication::check()): ?>
+    <?php if(is_logged_in()): ?>
 
         <div class="app-sidebar-footer dropdown">
             <a href="#" class="dropdown-toggle dropdown-toggle-simple" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <div class="d-flex align-items-center app-sidebar-footer-block">
-                    <img src="<?= get_gravatar($this->user->email) ?>" class="app-sidebar-avatar mr-3" loading="lazy" />
+                    <img src="<?= get_user_avatar($this->user->avatar, $this->user->email) ?>" class="app-sidebar-avatar mr-3" loading="lazy" />
 
                     <div class="app-sidebar-footer-text d-flex flex-column text-truncate">
                         <span class="text-truncate"><?= $this->user->name ?></span>
@@ -212,7 +229,7 @@
             <div class="dropdown-menu dropdown-menu-right">
                 <?php if(!\Altum\Teams::is_delegated()): ?>
                     <?php if(\Altum\Authentication::is_admin()): ?>
-                        <a class="dropdown-item" href="<?= url('admin') ?>"><i class="fas fa-fw fa-sm fa-fingerprint mr-2"></i> <?= l('global.menu.admin') ?></a>
+                        <a class="dropdown-item" href="<?= url('admin') ?>"><i class="fas fa-fw fa-sm fa-fingerprint text-primary mr-2"></i> <?= l('global.menu.admin') ?></a>
                         <div class="dropdown-divider"></div>
                     <?php endif ?>
 
@@ -270,6 +287,8 @@
 
 <?php ob_start() ?>
 <script>
+    'use strict';
+    
     document.querySelector('ul[class="app-sidebar-links"] li.active') && document.querySelector('ul[class="app-sidebar-links"] li.active').scrollIntoView({ behavior: 'smooth', block: 'center' });
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

@@ -36,8 +36,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* On modal show load new data */
+    
+/* On modal show load new data */
     $('#settings_send_test_email_modal').on('show.bs.modal', event => {
         let user_id = $(event.relatedTarget).data('user-id');
 

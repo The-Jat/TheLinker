@@ -49,8 +49,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    let link_unlock_seconds = <?= $data->splash_page->link_unlock_seconds ?? settings()->links->splash_page_link_unlock_seconds ?>;
+    
+let link_unlock_seconds = <?= $data->splash_page->link_unlock_seconds ?? settings()->links->splash_page_link_unlock_seconds ?>;
     let splash_page_auto_redirect = <?= json_encode((bool) ($data->splash_page->auto_redirect ?? settings()->links->splash_page_auto_redirect)) ?>;
 
     let link_unlock_seconds_remaining = link_unlock_seconds;

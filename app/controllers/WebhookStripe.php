@@ -1,15 +1,24 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Models\Payments;
+
+defined('ALTUMCODE') || die();
 
 class WebhookStripe extends Controller {
 
@@ -29,7 +38,7 @@ class WebhookStripe extends Controller {
             echo $exception->getMessage(); http_response_code(400); die();
         }
 
-        if(!in_array($event->type, ['invoice.paid', 'checkout.session.completed'])) {
+        if(!in_array($event->type, ['invoice.paid', 'checkout.session.completed', 'customer.subscription.created'])) {
             die('Event type not needed to be handled, returning ok.');
         }
 
@@ -37,6 +46,35 @@ class WebhookStripe extends Controller {
         $external_payment_id = $session->id;
 
         switch($event->type) {
+            /* Handle trial start */
+            case 'customer.subscription.created':
+
+                /* Only run when the subscription starts with a trial */
+                if($session->status === 'trialing') {
+
+                    $metadata = $session->metadata;
+
+                    $user_id = (int) $metadata->user_id;
+                    $plan_id = (int) $metadata->plan_id;
+                    $payment_frequency = $metadata->payment_frequency;
+                    $code = isset($metadata->code) ? $metadata->code : '';
+                    $discount_amount = isset($metadata->discount_amount) ? $metadata->discount_amount : 0;
+                    $base_amount = isset($metadata->base_amount) ? $metadata->base_amount : 0;
+                    $taxes_ids = isset($metadata->taxes_ids) ? $metadata->taxes_ids : null;
+
+                    $payment_type = 'recurring';
+                    $payment_subscription_id = $session->id;
+
+                    /* Set to 0 since no payment yet */
+                    $payer_email = null;
+                    $payer_name = null;
+                    $payment_currency = settings()->payment->default_currency;
+                    $payment_total = 0;
+
+                }
+
+                break;
+
             /* Handling recurring payments */
             case 'invoice.paid':
 

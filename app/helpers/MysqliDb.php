@@ -1,13 +1,22 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Helpers;
+
+defined('ALTUMCODE') || die();
 
 class MysqliDb
 {
@@ -263,7 +272,7 @@ class MysqliDb
 
         // if params were passed as array
         if(is_array($host)) {
-            foreach ($host as $key => $val) {
+            foreach($host as $key => $val) {
                 $$key = $val;
             }
         }
@@ -333,7 +342,7 @@ class MysqliDb
      */
     public function disconnectAll()
     {
-        foreach (array_keys($this->_mysqli) as $k) {
+        foreach(array_keys($this->_mysqli) as $k) {
             $this->disconnect($k);
         }
     }
@@ -384,7 +393,7 @@ class MysqliDb
     public function addConnection($name, array $params)
     {
         $this->connectionsSettings[$name] = array();
-        foreach (array('host', 'username', 'password', 'db', 'port', 'socket', 'charset') as $k) {
+        foreach(array('host', 'username', 'password', 'db', 'port', 'socket', 'charset') as $k) {
             $prm = isset($params[$k]) ? $params[$k] : null;
 
             if($k == 'host') {
@@ -432,7 +441,7 @@ class MysqliDb
      *
      * @return MysqliDb Returns the current instance.
      */
-    protected function reset()
+    public function reset()
     {
         if($this->traceEnabled) {
             $this->trace[] = array($this->_lastQuery, (microtime(true) - $this->traceStartQ), $this->_traceGetCaller());
@@ -546,13 +555,18 @@ class MysqliDb
      * @param string $query      User-provided query to execute.
      * @return string Contains the returned rows from the query.
      */
-    public function rawAddPrefix($query){
-        $query = str_replace(PHP_EOL, null, $query);
+    public function rawAddPrefix($query) {
+        $query = str_replace(PHP_EOL, '', $query);
         $query = preg_replace('/\s+/', ' ', $query);
-        preg_match_all("/(from|into|update|join) [\\'\\´]?([a-zA-Z0-9_-]+)[\\'\\´]?/i", $query, $matches);
-        list($from_table, $from, $table) = $matches;
 
-        return str_replace($table[0], self::$prefix.$table[0], $query);
+        preg_match_all("/(from|into|update|join) [\\'\\´]?([a-zA-Z0-9_-]+)[\\'\\´]?/i", $query, $matches);
+
+        if(!empty($matches[2][0])) {
+            $tableName = $matches[2][0];
+            return str_replace($tableName, self::$prefix . $tableName, $query);
+        }
+
+        return $query;
     }
 
     /**
@@ -572,7 +586,7 @@ class MysqliDb
         $stmt = $this->_prepareQuery();
 
         if(is_array($bindParams) === true) {
-            foreach ($bindParams as $prop => $val) {
+            foreach($bindParams as $prop => $val) {
                 $params[0] .= $this->_determineType($val);
                 array_push($params, $bindParams[$prop]);
             }
@@ -584,6 +598,14 @@ class MysqliDb
         $this->count = $stmt->affected_rows;
         $this->_stmtError = $stmt->error;
         $this->_stmtErrno = $stmt->errno;
+
+        /* ALTUMCODE CUSTOM */
+        if($this->getLastErrno()) {
+            if(DEBUG) { echo $this->getLastError(); }
+            error_log('Database Query Error: ' . $this->getLastError());
+        }
+        /* ALTUMCODE CUSTOM */
+
         $this->_lastQuery = $this->replacePlaceHolders($this->_query, $params);
         $res = $this->_dynamicBindResults($stmt);
         $this->reset();
@@ -659,6 +681,14 @@ class MysqliDb
         $stmt->execute();
         $this->_stmtError = $stmt->error;
         $this->_stmtErrno = $stmt->errno;
+
+        /* ALTUMCODE CUSTOM */
+        if($this->getLastErrno()) {
+            if(DEBUG) { echo $this->getLastError(); }
+            error_log('Database Query Error: ' . $this->getLastError());
+        }
+        /* ALTUMCODE CUSTOM */
+
         $res = $this->_dynamicBindResults($stmt);
         $this->reset();
 
@@ -685,7 +715,7 @@ class MysqliDb
             $options = Array($options);
         }
 
-        foreach ($options as $option) {
+        foreach($options as $option) {
             $option = strtoupper($option);
             if(!in_array($option, $allowedOptions)) {
                 throw new \Exception('Wrong query option: ' . $option);
@@ -753,6 +783,14 @@ class MysqliDb
         $stmt->execute();
         $this->_stmtError = $stmt->error;
         $this->_stmtErrno = $stmt->errno;
+
+        /* ALTUMCODE CUSTOM */
+        if($this->getLastErrno()) {
+            if(DEBUG) { echo $this->getLastError(); }
+            error_log('Database Query Error: ' . $this->getLastError());
+        }
+        /* ALTUMCODE CUSTOM */
+
         $res = $this->_dynamicBindResults($stmt);
         $this->reset();
 
@@ -829,6 +867,13 @@ class MysqliDb
         return $this->_buildInsert($tableName, $insertData, 'INSERT');
     }
 
+    public function insertInChunks($tableName, $insertData, $split = 5000) {
+        $chunks = array_chunk($insertData, $split);
+        foreach($chunks as $chunk) {
+            $this->insertMulti($tableName, $chunk);
+        }
+    }
+
     /**
      * Insert method to add several rows at once
      *
@@ -839,7 +884,7 @@ class MysqliDb
      * @return bool|array Boolean indicating the insertion failed (false), else return id-array ([int])
      * @throws Exception
      */
-    public function insertMulti($tableName, array $multiInsertData, array $dataKeys = null)
+    public function insertMulti(string $tableName, array $multiInsertData, ?array $dataKeys = null)
     {
         // only auto-commit our inserts, if no transaction is currently running
         $autoCommit = (isset($this->_transaction_in_progress) ? !$this->_transaction_in_progress : true);
@@ -849,7 +894,7 @@ class MysqliDb
             $this->startTransaction();
         }
 
-        foreach ($multiInsertData as $insertData) {
+        foreach($multiInsertData as $insertData) {
             if($dataKeys !== null) {
                 // apply column-names if given, else assume they're already given in the data
                 $insertData = array_combine($dataKeys, $insertData);
@@ -924,6 +969,14 @@ class MysqliDb
         $this->reset();
         $this->_stmtError = $stmt->error;
         $this->_stmtErrno = $stmt->errno;
+
+        /* ALTUMCODE CUSTOM */
+        if($this->getLastErrno()) {
+            if(DEBUG) { echo $this->getLastError(); }
+            error_log('Database Query Error: ' . $this->getLastError());
+        }
+        /* ALTUMCODE CUSTOM */
+
         $this->count = $stmt->affected_rows;
 
         return $status;
@@ -957,6 +1010,14 @@ class MysqliDb
         $stmt->execute();
         $this->_stmtError = $stmt->error;
         $this->_stmtErrno = $stmt->errno;
+
+        /* ALTUMCODE CUSTOM */
+        if($this->getLastErrno()) {
+            if(DEBUG) { echo $this->getLastError(); }
+            error_log('Database Query Error: ' . $this->getLastError());
+        }
+        /* ALTUMCODE CUSTOM */
+
         $this->count = $stmt->affected_rows;
         $this->reset();
 
@@ -1246,7 +1307,7 @@ class MysqliDb
         }
 
         if(is_array($customFieldsOrRegExp)) {
-            foreach ($customFieldsOrRegExp as $key => $value) {
+            foreach($customFieldsOrRegExp as $key => $value) {
                 $customFieldsOrRegExp[$key] = preg_replace("/[^\x80-\xff-a-z0-9\.\(\),_` ]+/i", '', $value);
             }
             $orderByField = 'FIELD (' . $orderByField . ', "' . implode('","', $customFieldsOrRegExp) . '")';
@@ -1419,7 +1480,7 @@ class MysqliDb
      */
     public function escape($str)
     {
-        return $this->mysqli()->real_escape_string($str);
+        return $str ? $this->mysqli()->real_escape_string($str) : null;
     }
 
     /**
@@ -1489,7 +1550,7 @@ class MysqliDb
      */
     protected function _bindParams($values)
     {
-        foreach ($values as $value) {
+        foreach($values as $value) {
             $this->_bindParam($value);
         }
     }
@@ -1538,6 +1599,14 @@ class MysqliDb
         $status = $stmt->execute();
         $this->_stmtError = $stmt->error;
         $this->_stmtErrno = $stmt->errno;
+
+        /* ALTUMCODE CUSTOM */
+        if($this->getLastErrno()) {
+            if(DEBUG) { echo $this->getLastError(); }
+            error_log('Database Query Error: ' . $this->getLastError());
+        }
+        /* ALTUMCODE CUSTOM */
+
         $haveOnDuplicate = !empty ($this->_updateColumns);
         $this->reset();
         $this->count = $stmt->affected_rows;
@@ -1662,10 +1731,10 @@ class MysqliDb
         while ($stmt->fetch()) {
             if($this->returnType == 'object') {
                 $result = new \stdClass ();
-                foreach ($row as $key => $val) {
+                foreach($row as $key => $val) {
                     if(is_array($val)) {
                         $result->$key = new \stdClass ();
-                        foreach ($val as $k => $v) {
+                        foreach($val as $k => $v) {
                             $result->$key->$k = $v;
                         }
                     } else {
@@ -1674,9 +1743,9 @@ class MysqliDb
                 }
             } else {
                 $result = array();
-                foreach ($row as $key => $val) {
+                foreach($row as $key => $val) {
                     if(is_array($val)) {
-                        foreach ($val as $k => $v) {
+                        foreach($val as $k => $v) {
                             $result[$key][$k] = $v;
                         }
                     } else {
@@ -1727,7 +1796,7 @@ class MysqliDb
             return;
         }
 
-        foreach ($this->_join as $data) {
+        foreach($this->_join as $data) {
             list ($joinType, $joinTable, $joinCondition) = $data;
 
             if(is_object($joinTable)) {
@@ -1753,7 +1822,7 @@ class MysqliDb
      */
     public function _buildDataPairs($tableData, $tableColumns, $isInsert)
     {
-        foreach ($tableColumns as $column) {
+        foreach($tableColumns as $column) {
             $value = $tableData[$column];
 
             if(!$isInsert) {
@@ -1819,7 +1888,7 @@ class MysqliDb
                 $this->_query .= $this->_lastInsertId . "=LAST_INSERT_ID (" . $this->_lastInsertId . "), ";
             }
 
-            foreach ($this->_updateColumns as $key => $val) {
+            foreach($this->_updateColumns as $key => $val) {
                 // skip all params without a value
                 if(is_numeric($key)) {
                     $this->_updateColumns[$val] = '';
@@ -1877,7 +1946,7 @@ class MysqliDb
         //Prepare the where portion of the query
         $this->_query .= ' ' . $operator;
 
-        foreach ($conditions as $cond) {
+        foreach($conditions as $cond) {
             list ($concat, $varName, $operator, $val) = $cond;
             $this->_query .= " " . $concat . " " . $varName;
 
@@ -1888,7 +1957,7 @@ class MysqliDb
                     if(is_object($val)) {
                         $comparison .= $this->_buildPair("", $val);
                     } else {
-                        foreach ($val as $v) {
+                        foreach($val as $v) {
                             $comparison .= ' ?,';
                             $this->_bindParam($v);
                         }
@@ -1929,7 +1998,7 @@ class MysqliDb
 
         $this->_query .= " GROUP BY ";
 
-        foreach ($this->_groupBy as $key => $value) {
+        foreach($this->_groupBy as $key => $value) {
             $this->_query .= $value . ", ";
         }
 
@@ -1948,7 +2017,7 @@ class MysqliDb
         }
 
         $this->_query .= " ORDER BY ";
-        foreach ($this->_orderBy as $prop => $value) {
+        foreach($this->_orderBy as $prop => $value) {
             if(strtolower(str_replace(" ", "", $prop)) == 'rand()') {
                 $this->_query .= "rand(), ";
             } else {
@@ -2024,7 +2093,7 @@ class MysqliDb
         //Referenced data array is required by mysqli since PHP 5.3+
         if(strnatcmp(phpversion(), '5.3') >= 0) {
             $refs = array();
-            foreach ($arr as $key => $value) {
+            foreach($arr as $key => $value) {
                 $refs[$key] = & $arr[$key];
             }
             return $refs;
@@ -2366,7 +2435,7 @@ class MysqliDb
             return false;
         }
 
-        foreach ($tables as $i => $value)
+        foreach($tables as $i => $value)
             $tables[$i] = self::$prefix . $value;
         $db = isset($this->connectionsSettings[$this->defConnectionName]) ? $this->connectionsSettings[$this->defConnectionName]['db'] : null;
         $this->where('table_schema', $db);
@@ -2453,7 +2522,7 @@ class MysqliDb
         if(empty ($this->_join))
             return;
 
-        foreach ($this->_join as $data) {
+        foreach($this->_join as $data) {
             list ($joinType,  $joinTable, $joinCondition) = $data;
 
             if(is_object ($joinTable))
@@ -2490,7 +2559,7 @@ class MysqliDb
                 if(is_object ($val)) {
                     $comparison .= $this->_buildPair ("", $val);
                 } else {
-                    foreach ($val as $v) {
+                    foreach($val as $v) {
                         $comparison .= ' ?,';
                         $this->_bindParam ($v);
                     }

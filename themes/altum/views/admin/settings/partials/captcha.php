@@ -1,8 +1,10 @@
 <?php defined('ALTUMCODE') || die() ?>
 
 <div>
+    <div class="alert alert-info mb-3"><?= sprintf(l('admin_settings.documentation'), '<a href="' . PRODUCT_DOCUMENTATION_URL . '#captchas" target="_blank">', '</a>') ?></div>
+
     <div class="form-group">
-        <label for="type"><?= l('admin_settings.captcha.type') ?></label>
+        <label for="type"><i class="fas fa-fw fa-sm fa-fingerprint text-muted mr-1"></i> <?= l('admin_settings.captcha.type') ?></label>
         <select id="type" name="type" class="custom-select">
             <option value="basic" <?= settings()->captcha->type == 'basic' ? 'selected="selected"' : null ?>><?= l('admin_settings.captcha.type.basic') ?></option>
             <option value="recaptcha" <?= settings()->captcha->type == 'recaptcha' ? 'selected="selected"' : null ?>><?= l('admin_settings.captcha.type.recaptcha') ?></option>
@@ -13,36 +15,36 @@
 
     <div id="recaptcha">
         <div class="form-group">
-            <label for="recaptcha_public_key"><?= l('admin_settings.captcha.recaptcha_public_key') ?></label>
+            <label for="recaptcha_public_key"><i class="fas fa-fw fa-sm fa-key text-muted mr-1"></i> <?= l('admin_settings.captcha.recaptcha_public_key') ?></label>
             <input id="recaptcha_public_key" type="text" name="recaptcha_public_key" class="form-control" value="<?= settings()->captcha->recaptcha_public_key ?>" />
         </div>
 
         <div class="form-group">
-            <label for="recaptcha_private_key"><?= l('admin_settings.captcha.recaptcha_private_key') ?></label>
+            <label for="recaptcha_private_key"><i class="fas fa-fw fa-sm fa-lock text-muted mr-1"></i> <?= l('admin_settings.captcha.recaptcha_private_key') ?></label>
             <input id="recaptcha_private_key" type="text" name="recaptcha_private_key" class="form-control" value="<?= settings()->captcha->recaptcha_private_key ?>" />
         </div>
     </div>
 
     <div id="hcaptcha">
         <div class="form-group">
-            <label for="hcaptcha_site_key"><?= l('admin_settings.captcha.hcaptcha_site_key') ?></label>
+            <label for="hcaptcha_site_key"><i class="fas fa-fw fa-sm fa-key text-muted mr-1"></i> <?= l('admin_settings.captcha.hcaptcha_site_key') ?></label>
             <input id="hcaptcha_site_key" type="text" name="hcaptcha_site_key" class="form-control" value="<?= settings()->captcha->hcaptcha_site_key ?>" />
         </div>
 
         <div class="form-group">
-            <label for="hcaptcha_secret_key"><?= l('admin_settings.captcha.hcaptcha_secret_key') ?></label>
+            <label for="hcaptcha_secret_key"><i class="fas fa-fw fa-sm fa-lock text-muted mr-1"></i> <?= l('admin_settings.captcha.hcaptcha_secret_key') ?></label>
             <input id="hcaptcha_secret_key" type="text" name="hcaptcha_secret_key" class="form-control" value="<?= settings()->captcha->hcaptcha_secret_key ?>" />
         </div>
     </div>
 
     <div id="turnstile">
         <div class="form-group">
-            <label for="turnstile_site_key"><?= l('admin_settings.captcha.turnstile_site_key') ?></label>
+            <label for="turnstile_site_key"><i class="fas fa-fw fa-sm fa-key text-muted mr-1"></i> <?= l('admin_settings.captcha.turnstile_site_key') ?></label>
             <input id="turnstile_site_key" type="text" name="turnstile_site_key" class="form-control" value="<?= settings()->captcha->turnstile_site_key ?>" />
         </div>
 
         <div class="form-group">
-            <label for="turnstile_secret_key"><?= l('admin_settings.captcha.turnstile_secret_key') ?></label>
+            <label for="turnstile_secret_key"><i class="fas fa-fw fa-sm fa-lock text-muted mr-1"></i> <?= l('admin_settings.captcha.turnstile_secret_key') ?></label>
             <input id="turnstile_secret_key" type="text" name="turnstile_secret_key" class="form-control" value="<?= settings()->captcha->turnstile_secret_key ?>" />
         </div>
     </div>
@@ -60,8 +62,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* Captcha */
+    
+/* Captcha */
     let initiate_captcha_type = () => {
         switch(document.querySelector('select[name="type"]').value) {
             case 'basic':

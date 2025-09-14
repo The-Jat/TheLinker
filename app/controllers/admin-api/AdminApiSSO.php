@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -13,6 +20,8 @@ use Altum\Logger;
 use Altum\Models\User;
 use Altum\Response;
 use Altum\Traits\Apiable;
+
+defined('ALTUMCODE') || die();
 
 class AdminApiSSO extends Controller {
     use Apiable;
@@ -57,7 +66,7 @@ class AdminApiSSO extends Controller {
             }
         }
 
-        $_POST['email'] = mb_substr(filter_var($_POST['email'], FILTER_SANITIZE_EMAIL), 0, 320);
+        $_POST['email'] = input_clean_email($_POST['email'] ?? '');
         $redirect = isset($_POST['redirect']) ? query_clean($_POST['redirect']) : 'dashboard';
 
         /* Login the user */
@@ -70,7 +79,7 @@ class AdminApiSSO extends Controller {
             db()->where('user_id', $user->user_id)->update('users', ['one_time_login_code' => $one_time_login_code]);
 
             /* Clear the cache */
-            \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $user->user_id);
+            cache()->deleteItemsByTag('user_id=' . $user->user_id);
 
             /* Prepare the data */
             $data = [
@@ -84,8 +93,8 @@ class AdminApiSSO extends Controller {
 
         /* Create the user */
         else {
-            $_POST['name'] = mb_substr(trim(input_clean($_POST['name'])), 0, 64);
-            $_POST['email'] = mb_substr(filter_var($_POST['email'], FILTER_SANITIZE_EMAIL), 0, 320);
+            $_POST['name'] = input_clean_name($_POST['name'], 64);
+            $_POST['email'] = input_clean_email($_POST['email'] ?? '');
 
             $registered_user = (new User())->create(
                 $_POST['email'],
@@ -100,17 +109,17 @@ class AdminApiSSO extends Controller {
                 json_encode(settings()->plan_free->settings),
                 null,
                 settings()->main->default_timezone,
-                false
             );
 
             /* Send webhook notification if needed */
             if(settings()->webhooks->user_new) {
-                \Unirest\Request::post(settings()->webhooks->user_new, [], [
+                fire_and_forget('post', settings()->webhooks->user_new, [
                     'user_id' => $registered_user['user_id'],
                     'email' => $_POST['email'],
                     'name' => $_POST['name'],
                     'source' => 'direct',
                     'is_newsletter_subscribed' => false,
+                    'datetime' => get_date(),
                 ]);
             }
 
@@ -134,7 +143,7 @@ class AdminApiSSO extends Controller {
 
     private function update() {
 
-        $_POST['email'] = mb_substr(filter_var($_POST['email'], FILTER_SANITIZE_EMAIL), 0, 320);
+        $_POST['email'] = input_clean_email($_POST['email'] ?? '');
 
         /* Try to get details about the resource id */
         $user = db()->where('email', $_POST['email'])->getOne('users', ['user_id']);
@@ -153,7 +162,7 @@ class AdminApiSSO extends Controller {
         }
 
         if(isset($_POST['name'])) {
-            $_POST['name'] = input_clean($_POST['name'], 64);
+            $_POST['name'] = input_clean_name($_POST['name'], 64);
             $to_update['name'] = $_POST['name'];
         }
 
@@ -169,7 +178,7 @@ class AdminApiSSO extends Controller {
 
     private function delete() {
 
-        $_POST['email'] = mb_substr(filter_var($_POST['email'], FILTER_SANITIZE_EMAIL), 0, 320);
+        $_POST['email'] = input_clean_email($_POST['email'] ?? '');
 
         /* Try to get details about the resource id */
         $user = db()->where('email', $_POST['email'])->getOne('users', ['user_id']);

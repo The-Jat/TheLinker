@@ -7,16 +7,6 @@
         <label for="openai_api_key"><?= l('admin_settings.aix.openai_api_key') ?></label>
         <textarea id="openai_api_key" name="openai_api_key" class="form-control"><?= settings()->aix->openai_api_key ?></textarea>
         <small class="form-text text-muted"><?= l('admin_settings.aix.openai_api_key_help') ?></small>
-        <small class="form-text text-muted"><?= l('admin_settings.aix.openai_api_key_help') ?></small>
-    </div>
-
-    <h2 class="h5">ClipDrop</h2>
-    <p class="text-muted">Used for <code>AI Images</code>.</p>
-
-    <div class="form-group">
-        <label for="clipdrop_api_key"><?= l('admin_settings.aix.clipdrop_api_key') ?></label>
-        <textarea id="clipdrop_api_key" name="clipdrop_api_key" class="form-control"><?= settings()->aix->clipdrop_api_key ?></textarea>
-        <small class="form-text text-muted"><?= l('admin_settings.aix.clipdrop_api_key_help') ?></small>
     </div>
 
     <div class="form-group custom-control custom-switch">

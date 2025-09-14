@@ -15,7 +15,7 @@
                     </button>
                 </div>
 
-                <p class="text-muted" id="<?= $data->name . '_delete_modal_subheader' ?>"></p>
+                <p class="text-muted text-break" id="<?= $data->name . '_delete_modal_subheader' ?>"></p>
 
                 <span class="d-none" id="<?= $data->name . '_delete_modal_subheader_hidden' ?>">
                     <?= $data->has_dynamic_resource_name ? l('delete_modal.subheader1') : l('delete_modal.subheader2') ?>
@@ -24,6 +24,8 @@
                 <form name="<?= $data->name . '_delete_modal_form' ?>" method="post" action="" role="form">
                     <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" required="required" />
                     <input type="hidden" name="id" value="" />
+                    <input type="hidden" name="original_request" value="<?= base64_encode(\Altum\Router::$original_request) ?>" />
+                    <input type="hidden" name="original_request_query" value="<?= base64_encode(\Altum\Router::$original_request_query) ?>" />
 
                     <div class="mt-4">
                         <button type="submit" name="submit" class="btn btn-block btn-danger"><?= l('global.delete') ?></button>
@@ -38,8 +40,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* On modal show load new data */
+    
+/* On modal show load new data */
     $('<?= '#' . $data->name . '_delete_modal' ?>').on('show.bs.modal', event => {
         let related_target = event.relatedTarget;
         let current_target = event.currentTarget;
@@ -56,4 +58,4 @@
         <?php endif ?>
     });
 </script>
-<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript', $data->name . '_delete_js') ?>

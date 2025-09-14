@@ -19,17 +19,17 @@
             </div>
 
             <div class="form-group">
-                <label><i class="fas fa-fw fa-bolt fa-sm text-muted mr-1"></i> <?= l('link.settings.url') ?></label>
+                <label for="url"><i class="fas fa-fw fa-bolt fa-sm text-muted mr-1"></i> <?= l('link.settings.url') ?></label>
                 <div class="input-group">
                     <div class="input-group-prepend">
                         <?php if(count($data->domains)): ?>
                             <select name="domain_id" class="appearance-none custom-select form-control input-group-text">
                                 <?php if(settings()->links->main_domain_is_enabled || \Altum\Authentication::is_admin()): ?>
-                                    <option value="" <?= $data->link->domain ? 'selected="selected"' : null ?> data-full-url="<?= SITE_URL ?>"><?= remove_url_protocol_from_url(SITE_URL) ?></option>
+                                    <option value=" " <?= $data->link->domain ? 'selected="selected"' : null ?> data-full-url="<?= SITE_URL ?>"><?= remove_url_protocol_from_url(SITE_URL) ?></option>
                                 <?php endif ?>
 
                                 <?php foreach($data->domains as $row): ?>
-                                    <option value="<?= $row->domain_id ?>" <?= $data->link->domain && $row->domain_id == $data->link->domain->domain_id ? 'selected="selected"' : null ?>  data-full-url="<?= $row->url ?>"><?= remove_url_protocol_from_url($row->url) ?></option>
+                                    <option value="<?= $row->domain_id ?>" <?= $data->link->domain && $row->domain_id == $data->link->domain->domain_id ? 'selected="selected"' : null ?>  data-full-url="<?= $row->url ?>" data-type="<?= $row->type ?>"><?= remove_url_protocol_from_url($row->url) ?></option>
                                 <?php endforeach ?>
                             </select>
                         <?php else: ?>
@@ -38,6 +38,7 @@
                     </div>
 
                     <input
+                            id="url"
                             type="text"
                             class="form-control"
                             name="url"
@@ -47,18 +48,26 @@
                             onchange="update_this_value(this, get_slug)"
                             onkeyup="update_this_value(this, get_slug)"
                         <?= !$this->user->plan_settings->custom_url ? 'readonly="readonly"' : null ?>
-                        <?= $this->user->plan_settings->custom_url ? null : 'data-toggle="tooltip" title="' . l('global.info_message.plan_feature_no_access') . '"' ?>
+                        <?= $this->user->plan_settings->custom_url ? null : get_plan_feature_disabled_info() ?>
                     />
                 </div>
                 <small class="form-text text-muted"><?= l('link.settings.url_help') ?></small>
             </div>
+
+            <?php if(count($data->domains)): ?>
+                <div id="is_main_link_wrapper" class="form-group custom-control custom-switch <?= $data->link->domain_id && $data->domains[$data->link->domain_id]->type == '0' ? null : 'd-none' ?>">
+                    <input id="is_main_link" name="is_main_link" type="checkbox" class="custom-control-input" <?= $data->link->domain_id && $data->domains[$data->link->domain_id]->link_id == $data->link->link_id ? 'checked="checked"' : null ?>>
+                    <label class="custom-control-label" for="is_main_link"><?= l('link.settings.is_main_link') ?></label>
+                    <small class="form-text text-muted"><?= l('link.settings.is_main_link_help') ?></small>
+                </div>
+            <?php endif ?>
 
             <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#app_linking_container" aria-expanded="false" aria-controls="app_linking_container">
                 <i class="fas fa-fw fa-mobile-button fa-sm mr-1"></i> <?= l('link.settings.app_linking_header') ?>
             </button>
 
             <div class="collapse" id="app_linking_container">
-                <div <?= $this->user->plan_settings->app_linking_is_enabled ? null : 'data-toggle="tooltip" title="' . l('global.info_message.plan_feature_no_access') . '"' ?>>
+                <div <?= $this->user->plan_settings->app_linking_is_enabled ? null : get_plan_feature_disabled_info() ?>>
                     <div class="<?= $this->user->plan_settings->app_linking_is_enabled ? null : 'container-disabled' ?>">
                         <div class="form-group custom-control custom-switch">
                             <input
@@ -107,8 +116,8 @@
                         <?php foreach($supported_apps as $app_key => $app): ?>
                             <?php
                             $tooltip_title = '<div class=\'p-3 text-left\'><p class=\'my-1\'>' . implode('</p> <p class=\'my-1\'>', array_map(function($key) {
-                                return $key;
-                            }, $app['display_formats'])) . '</p></div>';
+                                    return $key;
+                                }, $app['display_formats'])) . '</p></div>';
                             ?>
 
                             <div id="<?= $app_key ?>" class="col-12 col-lg-6 mb-2">
@@ -129,42 +138,44 @@
                 <div id="app_linking_supported_apps_no_match" class="alert alert-info <?= $data->link->settings->app_linking->app ? 'd-none' : null ?>"><?= l('link.settings.app_linking_supported_apps.no_match') ?></div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#pixels_container" aria-expanded="false" aria-controls="pixels_container">
-                <i class="fas fa-fw fa-adjust fa-sm mr-1"></i> <?= l('link.settings.pixels_header') ?>
-            </button>
+            <?php if(settings()->links->pixels_is_enabled): ?>
+                <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#pixels_container" aria-expanded="false" aria-controls="pixels_container">
+                    <i class="fas fa-fw fa-adjust fa-sm mr-1"></i> <?= l('link.settings.pixels_header') ?>
+                </button>
 
-            <div class="collapse" id="pixels_container">
-                <div class="form-group">
-                    <div class="d-flex flex-column flex-xl-row justify-content-between">
-                        <label><i class="fas fa-fw fa-sm fa-adjust text-muted mr-1"></i> <?= l('link.settings.pixels_ids') ?></label>
-                        <a href="<?= url('pixels') ?>" target="_blank" class="small mb-2"><i class="fas fa-fw fa-sm fa-plus mr-1"></i> <?= l('pixels.create') ?></a>
-                    </div>
+                <div class="collapse" id="pixels_container">
+                    <div class="form-group">
+                        <div class="d-flex flex-wrap flex-row justify-content-between">
+                            <label><i class="fas fa-fw fa-sm fa-adjust text-muted mr-1"></i> <?= l('link.settings.pixels_ids') ?></label>
+                            <a href="<?= url('pixel-create') ?>" target="_blank" class="small mb-2"><i class="fas fa-fw fa-sm fa-plus mr-1"></i> <?= l('pixels.create') ?></a>
+                        </div>
 
-                    <div class="row">
-                        <?php $available_pixels = require APP_PATH . 'includes/pixels.php'; ?>
-                        <?php foreach($data->pixels as $pixel): ?>
-                            <div class="col-12 col-lg-6">
-                                <div class="custom-control custom-checkbox my-2">
-                                    <input id="pixel_id_<?= $pixel->pixel_id ?>" name="pixels_ids[]" value="<?= $pixel->pixel_id ?>" type="checkbox" class="custom-control-input" <?= in_array($pixel->pixel_id, $data->link->pixels_ids) ? 'checked="checked"' : null ?>>
-                                    <label class="custom-control-label d-flex align-items-center" for="pixel_id_<?= $pixel->pixel_id ?>">
-                                        <span><?= $pixel->name ?></span>
-                                        <small class="badge badge-light ml-1" data-toggle="tooltip" title="<?= $available_pixels[$pixel->type]['name'] ?>">
-                                            <i class="<?= $available_pixels[$pixel->type]['icon'] ?> fa-fw fa-sm" style="color: <?= $available_pixels[$pixel->type]['color'] ?>"></i>
-                                        </small>
-                                    </label>
+                        <div class="row">
+                            <?php $available_pixels = require APP_PATH . 'includes/pixels.php'; ?>
+                            <?php foreach($data->pixels as $pixel): ?>
+                                <div class="col-12 col-lg-6">
+                                    <div class="custom-control custom-checkbox my-2">
+                                        <input id="pixel_id_<?= $pixel->pixel_id ?>" name="pixels_ids[]" value="<?= $pixel->pixel_id ?>" type="checkbox" class="custom-control-input" <?= in_array($pixel->pixel_id, $data->link->pixels_ids) ? 'checked="checked"' : null ?>>
+                                        <label class="custom-control-label d-flex align-items-center" for="pixel_id_<?= $pixel->pixel_id ?>">
+                                            <span class="text-truncate" title="<?= $pixel->name ?>"><?= $pixel->name ?></span>
+                                            <small class="badge badge-light ml-1" data-toggle="tooltip" title="<?= $available_pixels[$pixel->type]['name'] ?>">
+                                                <i class="<?= $available_pixels[$pixel->type]['icon'] ?> fa-fw fa-sm" style="color: <?= $available_pixels[$pixel->type]['color'] ?>"></i>
+                                            </small>
+                                        </label>
+                                    </div>
                                 </div>
-                            </div>
-                        <?php endforeach ?>
+                            <?php endforeach ?>
+                        </div>
                     </div>
                 </div>
-            </div>
+            <?php endif ?>
 
             <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#temporary_url_container" aria-expanded="false" aria-controls="temporary_url_container">
                 <i class="fas fa-fw fa-clock fa-sm mr-1"></i> <?= l('link.settings.temporary_url_header') ?>
             </button>
 
             <div class="collapse" id="temporary_url_container">
-                <div <?= $this->user->plan_settings->temporary_url_is_enabled ? null : 'data-toggle="tooltip" title="' . l('global.info_message.plan_feature_no_access') . '"' ?>>
+                <div <?= $this->user->plan_settings->temporary_url_is_enabled ? null : get_plan_feature_disabled_info() ?>>
                     <div class="<?= $this->user->plan_settings->temporary_url_is_enabled ? null : 'container-disabled' ?>">
                         <div class="form-group custom-control custom-switch">
                             <input
@@ -182,12 +193,12 @@
                 </div>
 
                 <div id="schedule_container" style="display: none;">
-                    <div <?= $this->user->plan_settings->temporary_url_is_enabled ? null : 'data-toggle="tooltip" title="' . l('global.info_message.plan_feature_no_access') . '"' ?>>
+                    <div <?= $this->user->plan_settings->temporary_url_is_enabled ? null : get_plan_feature_disabled_info() ?>>
                         <div class="<?= $this->user->plan_settings->temporary_url_is_enabled ? null : 'container-disabled' ?>">
                             <div class="row">
                                 <div class="col">
                                     <div class="form-group">
-                                        <label><i class="fas fa-fw fa-clock fa-sm text-muted mr-1"></i> <?= l('link.settings.start_date') ?></label>
+                                        <label><i class="fas fa-fw fa-hourglass-start fa-sm text-muted mr-1"></i> <?= l('link.settings.start_date') ?></label>
                                         <input
                                                 type="text"
                                                 class="form-control"
@@ -202,7 +213,7 @@
 
                                 <div class="col">
                                     <div class="form-group">
-                                        <label><i class="fas fa-fw fa-clock fa-sm text-muted mr-1"></i> <?= l('link.settings.end_date') ?></label>
+                                        <label><i class="fas fa-fw fa-hourglass-end fa-sm text-muted mr-1"></i> <?= l('link.settings.end_date') ?></label>
                                         <input
                                                 type="text"
                                                 class="form-control"
@@ -219,7 +230,7 @@
                     </div>
                 </div>
 
-                <div <?= $this->user->plan_settings->temporary_url_is_enabled ? null : 'data-toggle="tooltip" title="' . l('global.info_message.plan_feature_no_access') . '"' ?>>
+                <div <?= $this->user->plan_settings->temporary_url_is_enabled ? null : get_plan_feature_disabled_info() ?>>
                     <div class="form-group <?= $this->user->plan_settings->temporary_url_is_enabled ? null : 'container-disabled' ?>">
                         <label for="clicks_limit"><i class="fas fa-fw fa-mouse fa-sm text-muted mr-1"></i> <?= l('link.settings.clicks_limit') ?></label>
                         <input id="clicks_limit" type="number" class="form-control" name="clicks_limit" value="<?= $data->link->settings->clicks_limit ?>" />
@@ -227,14 +238,44 @@
                     </div>
                 </div>
 
-                <div <?= $this->user->plan_settings->temporary_url_is_enabled ? null : 'data-toggle="tooltip" title="' . l('global.info_message.plan_feature_no_access') . '"' ?>>
+                <div <?= $this->user->plan_settings->temporary_url_is_enabled ? null : get_plan_feature_disabled_info() ?>>
                     <div class="form-group <?= $this->user->plan_settings->temporary_url_is_enabled ? null : 'container-disabled' ?>">
                         <label for="expiration_url"><i class="fas fa-fw fa-hourglass-end fa-sm text-muted mr-1"></i> <?= l('link.settings.expiration_url') ?></label>
                         <input id="expiration_url" type="url" class="form-control" name="expiration_url" value="<?= $data->link->settings->expiration_url ?>" maxlength="2048" />
                         <small class="form-text text-muted"><?= l('link.settings.expiration_url_help') ?></small>
                     </div>
                 </div>
+            </div>
 
+            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#utm_container" aria-expanded="false" aria-controls="utm_container">
+                <i class="fas fa-fw fa-keyboard fa-sm mr-1"></i> <?= l('link.settings.utm_header') ?>
+            </button>
+
+            <div class="collapse" id="utm_container">
+                <div <?= $this->user->plan_settings->utm ? null : get_plan_feature_disabled_info() ?>>
+                    <div class="<?= $this->user->plan_settings->utm ? null : 'container-disabled' ?>">
+                        <div class="form-group">
+                            <label for="utm_source"><i class="fas fa-fw fa-sitemap fa-sm text-muted mr-1"></i> <?= l('link.settings.utm_source') ?></label>
+                            <input id="utm_source" type="text" class="form-control" name="utm_source" value="<?= $data->link->settings->utm->source ?? '' ?>" maxlength="128" placeholder="<?= l('link.settings.utm_source_placeholder') ?>" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="utm_medium"><i class="fas fa-fw fa-inbox fa-sm text-muted mr-1"></i> <?= l('link.settings.utm_medium') ?></label>
+                            <input id="utm_medium" type="text" class="form-control" name="utm_medium" value="<?= $data->link->settings->utm->medium ?? '' ?>" maxlength="128" placeholder="<?= l('link.settings.utm_medium_placeholder') ?>" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="utm_campaign"><i class="fas fa-fw fa-bullhorn fa-sm text-muted mr-1"></i> <?= l('link.settings.utm_campaign') ?></label>
+                            <input id="utm_campaign" type="text" class="form-control" name="utm_campaign" value="<?= $data->link->settings->utm->campaign ?? '' ?>" placeholder="<?= l('link.settings.utm_campaign_placeholder') ?>" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="utm_preview"><i class="fas fa-fw fa-eye fa-sm text-muted mr-1"></i> <?= l('link.settings.utm_preview') ?></label>
+                            <input id="utm_preview" type="text" class="form-control-plaintext" name="utm_preview" readonly="readonly" />
+                            <small class="form-text text-muted"><?= l('link.settings.utm_preview_help') ?></small>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#protection_container" aria-expanded="false" aria-controls="protection_container">
@@ -242,9 +283,9 @@
             </button>
 
             <div class="collapse" id="protection_container">
-                <div <?= $this->user->plan_settings->password ? null : 'data-toggle="tooltip" title="' . l('global.info_message.plan_feature_no_access') . '"' ?>>
+                <div <?= $this->user->plan_settings->password ? null : get_plan_feature_disabled_info() ?>>
                     <div class="<?= $this->user->plan_settings->password ? null : 'container-disabled' ?>">
-                        <div class="form-group">
+                        <div class="form-group" data-password-toggle-view data-password-toggle-view-show="<?= l('global.show') ?>" data-password-toggle-view-hide="<?= l('global.hide') ?>">
                             <label for="qweasdzxc"><i class="fas fa-fw fa-key fa-sm text-muted mr-1"></i> <?= l('global.password') ?></label>
                             <input id="qweasdzxc" type="password" class="form-control" name="qweasdzxc" value="<?= $data->link->settings->password ?>" autocomplete="new-password" <?= !$this->user->plan_settings->password ? 'disabled="disabled"': null ?> />
                             <small class="form-text text-muted"><?= l('link.settings.password_help') ?></small>
@@ -252,7 +293,7 @@
                     </div>
                 </div>
 
-                <div <?= $this->user->plan_settings->sensitive_content ? null : 'data-toggle="tooltip" title="' . l('global.info_message.plan_feature_no_access') . '"' ?>>
+                <div <?= $this->user->plan_settings->sensitive_content ? null : get_plan_feature_disabled_info() ?>>
                     <div class="<?= $this->user->plan_settings->sensitive_content ? null : 'container-disabled' ?>">
                         <div class="form-group custom-control custom-switch">
                             <input
@@ -263,7 +304,7 @@
                                 <?= !$this->user->plan_settings->sensitive_content ? 'disabled="disabled"': null ?>
                                 <?= $data->link->settings->sensitive_content ? 'checked="checked"' : null ?>
                             >
-                            <label class="custom-control-label clickable" for="sensitive_content"><?= l('link.settings.sensitive_content') ?></label>
+                            <label class="custom-control-label" for="sensitive_content"><?= l('link.settings.sensitive_content') ?></label>
                             <small class="form-text text-muted"><?= l('link.settings.sensitive_content_help') ?></small>
                         </div>
                     </div>
@@ -275,173 +316,275 @@
             </button>
 
             <div class="collapse" id="targeting_container">
-                <div class="form-group">
-                    <label for="targeting_type"><i class="fas fa-fw fa-bullseye fa-sm text-muted mr-1"></i> <?= l('link.settings.targeting_type') ?></label>
-                    <select id="targeting_type" name="targeting_type" class="custom-select">
-                        <option value="false" <?= $data->link->settings->targeting_type == 'false' ? 'selected="selected"' : null?>><?= l('global.none') ?></option>
-                        <option value="country_code" <?= $data->link->settings->targeting_type == 'country_code' ? 'selected="selected"' : null?>><?= l('global.country') ?></option>
-                        <option value="device_type" <?= $data->link->settings->targeting_type == 'device_type' ? 'selected="selected"' : null?>><?= l('link.settings.targeting_type_device_type') ?></option>
-                        <option value="browser_language" <?= $data->link->settings->targeting_type == 'browser_language' ? 'selected="selected"' : null?>><?= l('link.settings.targeting_type_browser_language') ?></option>
-                        <option value="rotation" <?= $data->link->settings->targeting_type == 'rotation' ? 'selected="selected"' : null?>><?= l('link.settings.targeting_type_rotation') ?></option>
-                        <option value="os_name" <?= $data->link->settings->targeting_type == 'os_name' ? 'selected="selected"' : null?>><?= l('link.settings.targeting_type_os_name') ?></option>
-                    </select>
-                </div>
+                <div <?= $this->user->plan_settings->targeting_is_enabled ? null : get_plan_feature_disabled_info() ?>>
+                    <div class="<?= $this->user->plan_settings->targeting_is_enabled ? null : 'container-disabled' ?>">
+                        <div class="form-group">
+                            <label for="targeting_type"><i class="fas fa-fw fa-bullseye fa-sm text-muted mr-1"></i> <?= l('link.settings.targeting_type') ?></label>
+                            <select id="targeting_type" name="targeting_type" class="custom-select">
+                                <option value="false" <?= $data->link->settings->targeting_type == 'false' ? 'selected="selected"' : null?>>😊 <?= l('global.none') ?></option>
+                                <option value="continent_code" <?= $data->link->settings->targeting_type == 'continent_code' ? 'selected="selected"' : null?>>🌍 <?= l('global.continent') ?></option>
+                                <option value="country_code" <?= $data->link->settings->targeting_type == 'country_code' ? 'selected="selected"' : null?>>🇨🇺 <?= l('global.country') ?></option>
+                                <option value="city_name" <?= $data->link->settings->targeting_type == 'city_name' ? 'selected="selected"' : null?>>🏙️ <?= l('global.city') ?></option>
+                                <option value="device_type" <?= $data->link->settings->targeting_type == 'device_type' ? 'selected="selected"' : null?>>📱 <?= l('link.settings.targeting_type_device_type') ?></option>
+                                <option value="os_name" <?= $data->link->settings->targeting_type == 'os_name' ? 'selected="selected"' : null?>>💻 <?= l('link.settings.targeting_type_os_name') ?></option>
+                                <option value="browser_name" <?= $data->link->settings->targeting_type == 'browser_name' ? 'selected="selected"' : null?>>🌐 <?= l('link.settings.targeting_type_browser_name') ?></option>
+                                <option value="browser_language" <?= $data->link->settings->targeting_type == 'browser_language' ? 'selected="selected"' : null?>>🗣️ <?= l('link.settings.targeting_type_browser_language') ?></option>
+                                <option value="rotation" <?= $data->link->settings->targeting_type == 'rotation' ? 'selected="selected"' : null?>>🔄 <?= l('link.settings.targeting_type_rotation') ?></option>
+                            </select>
+                        </div>
 
-                <div data-targeting-type="false" class="d-none"></div>
+                        <div data-targeting-type="false" class="d-none"></div>
 
-                <div data-targeting-type="country_code" class="d-none">
-                    <p class="small text-muted"><?= l('link.settings.targeting_type_country_code_help') ?></p>
+                        <div data-targeting-type="continent_code" class="d-none">
+                            <p class="small text-muted"><?= l('link.settings.targeting_type_continent_code_help') ?></p>
 
-                    <div data-targeting-list="country_code">
-                        <?php if(isset($data->link->settings->targeting_country_code) && !empty($data->link->settings->targeting_country_code)): ?>
-                            <?php foreach($data->link->settings->targeting_country_code as $key => $targeting): ?>
-                                <div class="form-row">
-                                    <div class="form-group col-lg-6">
-                                        <select name="targeting_country_code_key[<?= $key ?>]" class="custom-select">
-                                            <?php foreach(get_countries_array() as $country => $country_name): ?>
-                                                <option value="<?= $country ?>" <?= $targeting->key == $country ? 'selected="selected"' : null ?>><?= $country_name ?></option>
-                                            <?php endforeach ?>
-                                        </select>
-                                    </div>
+                            <div data-targeting-list="continent_code">
+                                <?php if(isset($data->link->settings->targeting_continent_code) && !empty($data->link->settings->targeting_continent_code)): ?>
+                                    <?php foreach($data->link->settings->targeting_continent_code as $key => $targeting): ?>
+                                        <div class="form-row">
+                                            <div class="form-group col-lg-5">
+                                                <select name="targeting_continent_code_key[<?= $key ?>]" class="custom-select">
+                                                    <?php foreach(get_continents_array() as $continent_code => $continent_name): ?>
+                                                        <option value="<?= $continent_code ?>" <?= $targeting->key == $continent_code ? 'selected="selected"' : null ?>><?= $continent_name ?></option>
+                                                    <?php endforeach ?>
+                                                </select>
+                                            </div>
 
-                                    <div class="form-group col-lg-5">
-                                        <input type="url" name="targeting_country_code_value[<?= $key ?>]" class="form-control" value="<?= $targeting->value ?>" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
-                                    </div>
+                                            <div class="form-group col-lg-5">
+                                                <input type="url" name="targeting_continent_code_value[<?= $key ?>]" class="form-control <?= \Altum\Alerts::has_field_errors('targeting_continent_code_value[' . $key . ']') ? 'is-invalid' : null ?>" value="<?= $targeting->value ?>" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+                                                <?= \Altum\Alerts::output_field_error('targeting_continent_code_value[' . $key . ']') ?>
+                                            </div>
 
-                                    <div class="form-group col-lg-1 text-center">
-                                        <button type="button" data-targeting-remove="" class="btn btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
-                                    </div>
-                                </div>
-                            <?php endforeach ?>
-                        <?php endif ?>
-                    </div>
+                                            <div class="form-group col-lg-2 text-center">
+                                                <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach ?>
+                                <?php endif ?>
+                            </div>
 
-                    <div class="mb-3">
-                        <button data-targeting-add="country_code" type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
-                    </div>
-                </div>
+                            <div class="mb-3">
+                                <button data-targeting-add="continent_code" type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
+                            </div>
+                        </div>
 
-                <div data-targeting-type="device_type" class="d-none">
-                    <p class="small text-muted"><?= l('link.settings.targeting_type_device_type_help') ?></p>
+                        <div data-targeting-type="country_code" class="d-none">
+                            <p class="small text-muted"><?= l('link.settings.targeting_type_country_code_help') ?></p>
 
-                    <div data-targeting-list="device_type">
-                        <?php if(isset($data->link->settings->targeting_device_type) && !empty($data->link->settings->targeting_device_type)): ?>
-                            <?php foreach($data->link->settings->targeting_device_type as $key => $targeting): ?>
-                                <div class="form-row">
-                                    <div class="form-group col-lg-6">
-                                        <select name="targeting_device_type_key[<?= $key ?>]" class="custom-select">
-                                            <?php foreach(['desktop', 'tablet', 'mobile'] as $device_type): ?>
-                                                <option value="<?= $device_type ?>" <?= $targeting->key == $device_type ? 'selected="selected"' : null ?>><?= l('global.device.' . $device_type) ?></option>
-                                            <?php endforeach ?>
-                                        </select>
-                                    </div>
+                            <div data-targeting-list="country_code">
+                                <?php if(isset($data->link->settings->targeting_country_code) && !empty($data->link->settings->targeting_country_code)): ?>
+                                    <?php foreach($data->link->settings->targeting_country_code as $key => $targeting): ?>
+                                        <div class="form-row">
+                                            <div class="form-group col-lg-5">
+                                                <select name="targeting_country_code_key[<?= $key ?>]" class="custom-select">
+                                                    <?php foreach(get_countries_array() as $country => $country_name): ?>
+                                                        <option value="<?= $country ?>" <?= $targeting->key == $country ? 'selected="selected"' : null ?>><?= $country_name ?></option>
+                                                    <?php endforeach ?>
+                                                </select>
+                                            </div>
 
-                                    <div class="form-group col-lg-5">
-                                        <input type="url" name="targeting_device_type_value[<?= $key ?>]" class="form-control" value="<?= $targeting->value ?>" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
-                                    </div>
+                                            <div class="form-group col-lg-5">
+                                                <input type="url" name="targeting_country_code_value[<?= $key ?>]" class="form-control" value="<?= $targeting->value ?>" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+                                            </div>
 
-                                    <div class="form-group col-lg-1 text-center">
-                                        <button type="button" data-targeting-remove="" class="btn btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
-                                    </div>
-                                </div>
-                            <?php endforeach ?>
-                        <?php endif ?>
-                    </div>
+                                            <div class="form-group col-lg-2 text-center">
+                                                <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach ?>
+                                <?php endif ?>
+                            </div>
 
-                    <div class="mb-3">
-                        <button data-targeting-add="device_type" type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
-                    </div>
-                </div>
+                            <div class="mb-3">
+                                <button data-targeting-add="country_code" type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
+                            </div>
+                        </div>
 
-                <div data-targeting-type="browser_language" class="d-none">
-                    <p class="small text-muted"><?= l('link.settings.targeting_type_browser_language_help') ?></p>
+                        <div data-targeting-type="city_name" class="d-none">
+                            <p class="small text-muted"><?= l('link.settings.targeting_type_city_name_help') ?></p>
 
-                    <div data-targeting-list="browser_language">
-                        <?php if(isset($data->link->settings->targeting_browser_language) && !empty($data->link->settings->targeting_browser_language)): ?>
-                            <?php foreach($data->link->settings->targeting_browser_language as $key => $targeting): ?>
-                                <div class="form-row">
-                                    <div class="form-group col-lg-6">
-                                        <select name="targeting_browser_language_key[<?= $key ?>]" class="custom-select">
-                                            <?php foreach(get_locale_languages_array() as $locale => $language): ?>
-                                                <option value="<?= $locale ?>" <?= $targeting->key == $locale ? 'selected="selected"' : null ?>><?= $language ?></option>
-                                            <?php endforeach ?>
-                                        </select>
-                                    </div>
+                            <div data-targeting-list="city_name">
+                                <?php if(isset($data->link->settings->targeting_city_name) && !empty($data->link->settings->targeting_city_name)): ?>
+                                    <?php foreach($data->link->settings->targeting_city_name as $key => $targeting): ?>
+                                        <div class="form-row">
+                                            <div class="form-group col-lg-5">
+                                                <input type="text" name="targeting_city_name_key[<?= $key ?>]" class="form-control" value="<?= $targeting->key ?>" placeholder="<?= l('link.settings.targeting_type_city_name_placeholder') ?>" maxlength="128" />
+                                            </div>
 
-                                    <div class="form-group col-lg-5">
-                                        <input type="url" name="targeting_browser_language_value[<?= $key ?>]" class="form-control" value="<?= $targeting->value ?>" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
-                                    </div>
+                                            <div class="form-group col-lg-5">
+                                                <input type="url" name="targeting_city_name_value[<?= $key ?>]" class="form-control <?= \Altum\Alerts::has_field_errors('targeting_city_name_value[' . $key . ']') ? 'is-invalid' : null ?>" value="<?= $targeting->value ?>" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+                                                <?= \Altum\Alerts::output_field_error('targeting_city_name_value[' . $key . ']') ?>
+                                            </div>
 
-                                    <div class="form-group col-lg-1 text-center">
-                                        <button type="button" data-targeting-remove="" class="btn btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
-                                    </div>
-                                </div>
-                            <?php endforeach ?>
-                        <?php endif ?>
-                    </div>
+                                            <div class="form-group col-lg-2 text-center">
+                                                <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach ?>
+                                <?php endif ?>
+                            </div>
 
-                    <div class="mb-3">
-                        <button data-targeting-add="browser_language" type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
-                    </div>
-                </div>
+                            <div class="mb-3">
+                                <button data-targeting-add="city_name" type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
+                            </div>
+                        </div>
 
-                <div data-targeting-type="rotation" class="d-none">
-                    <p class="small text-muted"><?= l('link.settings.targeting_type_rotation_help') ?></p>
+                        <div data-targeting-type="device_type" class="d-none">
+                            <p class="small text-muted"><?= l('link.settings.targeting_type_device_type_help') ?></p>
 
-                    <div data-targeting-list="rotation">
-                        <?php if(isset($data->link->settings->targeting_rotation) && !empty($data->link->settings->targeting_rotation)): ?>
-                            <?php foreach($data->link->settings->targeting_rotation as $key => $targeting): ?>
-                                <div class="form-row">
-                                    <div class="form-group col-lg-6">
-                                        <input type="number" min="0" max="100" name="targeting_rotation_key[<?= $key ?>]" class="form-control" value="<?= $targeting->key ?>" placeholder="<?= l('link.settings.targeting_type_percentage') ?>" />
-                                    </div>
+                            <div data-targeting-list="device_type">
+                                <?php if(isset($data->link->settings->targeting_device_type) && !empty($data->link->settings->targeting_device_type)): ?>
+                                    <?php foreach($data->link->settings->targeting_device_type as $key => $targeting): ?>
+                                        <div class="form-row">
+                                            <div class="form-group col-lg-5">
+                                                <select name="targeting_device_type_key[<?= $key ?>]" class="custom-select">
+                                                    <?php foreach(['desktop', 'tablet', 'mobile'] as $device_type): ?>
+                                                        <option value="<?= $device_type ?>" <?= $targeting->key == $device_type ? 'selected="selected"' : null ?>><?= l('global.device.' . $device_type) ?></option>
+                                                    <?php endforeach ?>
+                                                </select>
+                                            </div>
 
-                                    <div class="form-group col-lg-5">
-                                        <input type="url" name="targeting_rotation_value[<?= $key ?>]" class="form-control" value="<?= $targeting->value ?>" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
-                                    </div>
+                                            <div class="form-group col-lg-5">
+                                                <input type="url" name="targeting_device_type_value[<?= $key ?>]" class="form-control" value="<?= $targeting->value ?>" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+                                            </div>
 
-                                    <div class="form-group col-lg-1 text-center">
-                                        <button type="button" data-targeting-remove="" class="btn btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
-                                    </div>
-                                </div>
-                            <?php endforeach ?>
-                        <?php endif ?>
-                    </div>
+                                            <div class="form-group col-lg-2 text-center">
+                                                <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach ?>
+                                <?php endif ?>
+                            </div>
 
-                    <div class="mb-3">
-                        <button data-targeting-add="rotation" type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
-                    </div>
-                </div>
+                            <div class="mb-3">
+                                <button data-targeting-add="device_type" type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
+                            </div>
+                        </div>
 
-                <div data-targeting-type="os_name" class="d-none">
-                    <p class="small text-muted"><?= l('link.settings.targeting_type_os_name_help') ?></p>
+                        <div data-targeting-type="os_name" class="d-none">
+                            <p class="small text-muted"><?= l('link.settings.targeting_type_os_name_help') ?></p>
 
-                    <div data-targeting-list="os_name">
-                        <?php if(isset($data->link->settings->targeting_os_name) && !empty($data->link->settings->targeting_os_name)): ?>
-                            <?php foreach($data->link->settings->targeting_os_name as $key => $targeting): ?>
-                                <div class="form-row">
-                                    <div class="form-group col-lg-6">
-                                        <select name="targeting_os_name_key[<?= $key ?>]" class="custom-select">
-                                            <?php foreach(['iOS', 'Android', 'Windows', 'OS X', 'Linux', 'Ubuntu', 'Chrome OS'] as $os_name): ?>
-                                                <option value="<?= $os_name ?>" <?= $targeting->key == $os_name ? 'selected="selected"' : null ?>><?= $os_name ?></option>
-                                            <?php endforeach ?>
-                                        </select>
-                                    </div>
+                            <div data-targeting-list="os_name">
+                                <?php if(isset($data->link->settings->targeting_os_name) && !empty($data->link->settings->targeting_os_name)): ?>
+                                    <?php foreach($data->link->settings->targeting_os_name as $key => $targeting): ?>
+                                        <div class="form-row">
+                                            <div class="form-group col-lg-5">
+                                                <select name="targeting_os_name_key[<?= $key ?>]" class="custom-select">
+                                                    <?php foreach(['iOS', 'Android', 'Windows', 'OS X', 'Linux', 'Ubuntu', 'Chrome OS'] as $os_name): ?>
+                                                        <option value="<?= $os_name ?>" <?= $targeting->key == $os_name ? 'selected="selected"' : null ?>><?= $os_name ?></option>
+                                                    <?php endforeach ?>
+                                                </select>
+                                            </div>
 
-                                    <div class="form-group col-lg-5">
-                                        <input type="url" name="targeting_os_name_value[<?= $key ?>]" class="form-control" value="<?= $targeting->value ?>" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
-                                    </div>
+                                            <div class="form-group col-lg-5">
+                                                <input type="url" name="targeting_os_name_value[<?= $key ?>]" class="form-control" value="<?= $targeting->value ?>" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+                                            </div>
 
-                                    <div class="form-group col-lg-1 text-center">
-                                        <button type="button" data-targeting-remove="" class="btn btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
-                                    </div>
-                                </div>
-                            <?php endforeach ?>
-                        <?php endif ?>
-                    </div>
+                                            <div class="form-group col-lg-2 text-center">
+                                                <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach ?>
+                                <?php endif ?>
+                            </div>
 
-                    <div class="mb-3">
-                        <button data-targeting-add="os_name" type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
+                            <div class="mb-3">
+                                <button data-targeting-add="os_name" type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
+                            </div>
+                        </div>
+
+                        <div data-targeting-type="browser_name" class="d-none">
+                            <p class="small text-muted"><?= l('link.settings.targeting_type_browser_name_help') ?></p>
+
+                            <div data-targeting-list="browser_name">
+                                <?php if(isset($data->link->settings->targeting_browser_name) && !empty($data->link->settings->targeting_browser_name)): ?>
+                                    <?php foreach($data->link->settings->targeting_browser_name as $key => $targeting): ?>
+                                        <div class="form-row">
+                                            <div class="form-group col-lg-5">
+                                                <select name="targeting_browser_name_key[<?= $key ?>]" class="custom-select">
+                                                    <?php foreach(['Chrome', 'Firefox', 'Safari', 'Edge', 'Opera', 'Samsung Internet'] as $browser_name): ?>
+                                                        <option value="<?= $browser_name ?>" <?= $targeting->key == $browser_name ? 'selected="selected"' : null ?>><?= $browser_name ?></option>
+                                                    <?php endforeach ?>
+                                                </select>
+                                            </div>
+
+                                            <div class="form-group col-lg-5">
+                                                <input type="url" name="targeting_browser_name_value[<?= $key ?>]" class="form-control <?= \Altum\Alerts::has_field_errors('targeting_browser_name_value[' . $key . ']') ? 'is-invalid' : null ?>" value="<?= $targeting->value ?>" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+                                                <?= \Altum\Alerts::output_field_error('targeting_browser_name_value[' . $key . ']') ?>
+                                            </div>
+
+                                            <div class="form-group col-lg-2 text-center">
+                                                <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach ?>
+                                <?php endif ?>
+                            </div>
+
+                            <div class="mb-3">
+                                <button data-targeting-add="browser_name" type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
+                            </div>
+                        </div>
+
+                        <div data-targeting-type="browser_language" class="d-none">
+                            <p class="small text-muted"><?= l('link.settings.targeting_type_browser_language_help') ?></p>
+
+                            <div data-targeting-list="browser_language">
+                                <?php if(isset($data->link->settings->targeting_browser_language) && !empty($data->link->settings->targeting_browser_language)): ?>
+                                    <?php foreach($data->link->settings->targeting_browser_language as $key => $targeting): ?>
+                                        <div class="form-row">
+                                            <div class="form-group col-lg-5">
+                                                <select name="targeting_browser_language_key[<?= $key ?>]" class="custom-select">
+                                                    <?php foreach(get_locale_languages_array() as $locale => $language): ?>
+                                                        <option value="<?= $locale ?>" <?= $targeting->key == $locale ? 'selected="selected"' : null ?>><?= $language ?></option>
+                                                    <?php endforeach ?>
+                                                </select>
+                                            </div>
+
+                                            <div class="form-group col-lg-5">
+                                                <input type="url" name="targeting_browser_language_value[<?= $key ?>]" class="form-control" value="<?= $targeting->value ?>" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+                                            </div>
+
+                                            <div class="form-group col-lg-2 text-center">
+                                                <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach ?>
+                                <?php endif ?>
+                            </div>
+
+                            <div class="mb-3">
+                                <button data-targeting-add="browser_language" type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
+                            </div>
+                        </div>
+
+                        <div data-targeting-type="rotation" class="d-none">
+                            <p class="small text-muted"><?= l('link.settings.targeting_type_rotation_help') ?></p>
+
+                            <div data-targeting-list="rotation">
+                                <?php if(isset($data->link->settings->targeting_rotation) && !empty($data->link->settings->targeting_rotation)): ?>
+                                    <?php foreach($data->link->settings->targeting_rotation as $key => $targeting): ?>
+                                        <div class="form-row">
+                                            <div class="form-group col-lg-5">
+                                                <input type="number" min="0" max="100" name="targeting_rotation_key[<?= $key ?>]" class="form-control" value="<?= $targeting->key ?? 1 ?>" placeholder="<?= l('link.settings.targeting_type_percentage') ?>" required="required" />
+                                            </div>
+
+                                            <div class="form-group col-lg-5">
+                                                <input type="url" name="targeting_rotation_value[<?= $key ?>]" class="form-control" value="<?= $targeting->value ?>" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+                                            </div>
+
+                                            <div class="form-group col-lg-2 text-center">
+                                                <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach ?>
+                                <?php endif ?>
+                            </div>
+
+                            <div class="mb-3">
+                                <button data-targeting-add="rotation" type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('global.create') ?></button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -451,7 +594,7 @@
             </button>
 
             <div class="collapse" id="cloaking_container">
-                <div <?= $this->user->plan_settings->cloaking_is_enabled ? null : 'data-toggle="tooltip" title="' . l('global.info_message.plan_feature_no_access') . '"' ?>>
+                <div <?= $this->user->plan_settings->cloaking_is_enabled ? null : get_plan_feature_disabled_info() ?>>
                     <div class="<?= $this->user->plan_settings->cloaking_is_enabled ? null : 'container-disabled' ?>">
                         <div class="form-group custom-control custom-switch">
                             <input
@@ -474,22 +617,33 @@
                 </div>
 
                 <div class="form-group">
-                    <label><i class="fas fa-fw fa-image fa-sm text-muted mr-1"></i> <?= l('link.settings.cloaking_favicon') ?></label>
-                    <div data-image-container="cloaking_favicon" class="<?= !empty($data->link->settings->cloaking_favicon) ? null : 'd-none' ?>">
-                        <div class="row">
-                            <div class="my-2 col-6 col-xl-4">
-                                <img src="<?= $data->link->settings->cloaking_favicon ? \Altum\Uploads::get_full_url('favicons') . $data->link->settings->cloaking_favicon : null ?>" class="img-fluid rounded <?= !empty($data->link->settings->cloaking_favicon) ? null : 'd-none' ?>" loading="lazy" />
-                            </div>
-                        </div>
-                        <div class="custom-control custom-checkbox my-2">
-                            <input id="cloaking_favicon_remove" name="cloaking_favicon_remove" type="checkbox" class="custom-control-input" onchange="this.checked ? document.querySelector('#cloaking_favicon').classList.add('d-none') : document.querySelector('#cloaking_favicon').classList.remove('d-none')">
-                            <label class="custom-control-label" for="cloaking_favicon_remove">
-                                <span class="text-muted"><?= l('global.delete_file') ?></span>
-                            </label>
-                        </div>
-                    </div>
-                    <input id="cloaking_favicon" type="file" name="cloaking_favicon" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('favicons') ?>" class="form-control-file altum-file-input" />
+                    <label for="cloaking_meta_description"><i class="fas fa-fw fa-paragraph fa-sm text-muted mr-1"></i> <?= l('link.settings.cloaking_meta_description') ?></label>
+                    <input id="cloaking_meta_description" type="text" class="form-control" name="cloaking_meta_description" value="<?= $data->link->settings->cloaking_meta_description ?>" maxlength="160" />
+                </div>
+
+                <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= settings()->links->favicon_size_limit ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), settings()->links->favicon_size_limit) ?>">
+                    <label for="cloaking_favicon"><i class="fas fa-fw fa-image fa-sm text-muted mr-1"></i> <?= l('link.settings.cloaking_favicon') ?></label>
+                    <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'favicons', 'file_key' => 'cloaking_favicon', 'already_existing_image' => $data->link->settings->cloaking_favicon, 'input_data' => 'data-crop data-aspect-ratio="1"']) ?>
+                    <?= \Altum\Alerts::output_field_error('cloaking_favicon') ?>
                     <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('favicons')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->links->favicon_size_limit) ?></small>
+                </div>
+
+                <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= settings()->links->seo_image_size_limit ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), settings()->links->seo_image_size_limit) ?>">
+                    <label for="cloaking_opengraph"><i class="fas fa-fw fa-image fa-sm text-muted mr-1"></i> <?= l('link.settings.cloaking_opengraph') ?></label>
+                    <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'biolink_seo_image', 'file_key' => 'cloaking_opengraph', 'already_existing_image' => $data->link->settings->cloaking_opengraph, 'input_data' => 'data-crop data-aspect-ratio="1.91"']) ?>
+                    <?= \Altum\Alerts::output_field_error('cloaking_opengraph') ?>
+                    <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('biolink_seo_image')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->links->seo_image_size_limit) ?></small>
+                </div>
+
+                <div <?= $this->user->plan_settings->custom_js_is_enabled ? null : get_plan_feature_disabled_info() ?>>
+                    <div class="form-group <?= $this->user->plan_settings->custom_js_is_enabled ? null : 'container-disabled' ?>" data-character-counter="textarea">
+                        <label for="cloaking_custom_js" class="d-flex justify-content-between align-items-center">
+                            <span><i class="fab fa-fw fa-sm fa-js-square text-muted mr-1"></i> <?= l('global.custom_js') ?></span>
+                            <small class="text-muted" data-character-counter-wrapper></small>
+                        </label>
+                        <textarea id="cloaking_custom_js" class="form-control" name="cloaking_custom_js" maxlength="10000" placeholder="<?= l('global.custom_js_placeholder') ?>"><?= $data->link->settings->cloaking_custom_js ?></textarea>
+                        <small class="form-text text-muted"><?= l('global.custom_js_help') ?></small>
+                    </div>
                 </div>
             </div>
 
@@ -526,29 +680,60 @@
             </button>
 
             <div class="collapse" id="advanced_container">
+                <?php if(settings()->links->email_reports_is_enabled): ?>
+                    <div <?= $this->user->plan_settings->email_reports_is_enabled ? null : get_plan_feature_disabled_info() ?>>
+                        <div class="form-group <?= $this->user->plan_settings->email_reports_is_enabled ? null : 'container-disabled' ?>">
+                            <div class="d-flex flex-wrap flex-row justify-content-between">
+                                <label><i class="fas fa-fw fa-sm fa-bell text-muted mr-1"></i> <?= l('global.plan_settings.email_reports_is_enabled_' . settings()->links->email_reports_is_enabled) ?></label>
+                                <a href="<?= url('notification-handler-create') ?>" target="_blank" class="small mb-2"><i class="fas fa-fw fa-sm fa-plus mr-1"></i> <?= l('notification_handlers.create') ?></a>
+                            </div>
+                            <div class="mb-2"><small class="text-muted"><?= l('link.settings.email_reports_is_enabled_help') ?></small></div>
+
+                            <div class="row">
+                                <?php foreach($data->notification_handlers as $notification_handler): ?>
+                                    <?php if($notification_handler->type != 'email') continue ?>
+
+                                    <div class="col-12 col-lg-6">
+                                        <div class="custom-control custom-checkbox my-2">
+                                            <input id="<?= 'email_reports_' . $notification_handler->notification_handler_id ?>" name="email_reports[]" value="<?= $notification_handler->notification_handler_id ?>" type="checkbox" class="custom-control-input" <?= in_array($notification_handler->notification_handler_id, $data->link->email_reports) ? 'checked="checked"' : null ?>>
+                                            <label class="custom-control-label" for="<?= 'email_reports_' . $notification_handler->notification_handler_id ?>">
+                                                <span class="mr-1"><?= $notification_handler->name ?></span>
+                                                <small class="badge badge-light badge-pill"><?= l('notification_handlers.type_' . $notification_handler->type) ?></small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                <?php endforeach ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif ?>
+
+
+                <?php if(settings()->links->projects_is_enabled): ?>
                 <div class="form-group">
-                    <div class="d-flex flex-column flex-xl-row justify-content-between">
+                    <div class="d-flex flex-wrap flex-row justify-content-between">
                         <label for="project_id"><i class="fas fa-fw fa-sm fa-project-diagram text-muted mr-1"></i> <?= l('projects.project_id') ?></label>
                         <a href="<?= url('project-create') ?>" target="_blank" class="small mb-2"><i class="fas fa-fw fa-sm fa-plus mr-1"></i> <?= l('projects.create') ?></a>
                     </div>
                     <select id="project_id" name="project_id" class="custom-select">
-                        <option value=""><?= l('global.none') ?></option>
+                        <option value=" "><?= l('global.none') ?></option>
                         <?php foreach($data->projects as $row): ?>
                             <option value="<?= $row->project_id ?>" <?= $data->link->project_id == $row->project_id ? 'selected="selected"' : null?>><?= $row->name ?></option>
                         <?php endforeach ?>
                     </select>
                 </div>
+                <?php endif ?>
 
                 <?php if(settings()->links->splash_page_is_enabled): ?>
-                    <div <?= $this->user->plan_settings->splash_pages_limit ? null : 'data-toggle="tooltip" title="' . l('global.info_message.plan_feature_no_access') . '"' ?>>
+                    <div <?= $this->user->plan_settings->splash_pages_limit ? null : get_plan_feature_disabled_info() ?>>
                         <div class="<?= $this->user->plan_settings->splash_pages_limit ? null : 'container-disabled' ?>">
                             <div class="form-group">
-                                <div class="d-flex flex-column flex-xl-row justify-content-between">
+                                <div class="d-flex flex-wrap flex-row justify-content-between">
                                     <label for="splash_page_id"><i class="fas fa-fw fa-sm fa-droplet text-muted mr-1"></i> <?= l('splash_pages.splash_page_id') ?></label>
                                     <a href="<?= url('splash-pages') ?>" target="_blank" class="small mb-2"><i class="fas fa-fw fa-sm fa-plus mr-1"></i> <?= l('splash_pages.create') ?></a>
                                 </div>
                                 <select id="splash_page_id" name="splash_page_id" class="custom-select">
-                                    <option value=""><?= l('global.none') ?></option>
+                                    <option value=" "><?= l('global.none') ?></option>
                                     <?php foreach($data->splash_pages as $row): ?>
                                         <option value="<?= $row->splash_page_id ?>" <?= $data->link->splash_page_id == $row->splash_page_id ? 'selected="selected"' : null?>><?= $row->name ?></option>
                                     <?php endforeach ?>
@@ -557,6 +742,18 @@
                         </div>
                     </div>
                 <?php endif ?>
+
+                <div class="form-group custom-control custom-switch">
+                    <input
+                            id="forward_query_parameters_is_enabled"
+                            name="forward_query_parameters_is_enabled"
+                            type="checkbox"
+                            class="custom-control-input"
+                        <?= $data->link->settings->forward_query_parameters_is_enabled ? 'checked="checked"' : null ?>
+                    >
+                    <label class="custom-control-label" for="forward_query_parameters_is_enabled"><i class="fas fa-fw fa-forward fa-sm text-muted mr-1"></i> <?= l('link.settings.forward_query_parameters_is_enabled') ?></label>
+                    <small class="form-text text-muted"><?= l('link.settings.forward_query_parameters_is_enabled_help') ?></small>
+                </div>
             </div>
 
             <div class="mt-4">
@@ -567,9 +764,29 @@
     </div>
 </div>
 
+<template id="template_targeting_continent_code">
+    <div class="form-row">
+        <div class="form-group col-lg-5">
+            <select name="targeting_continent_code_key[]" class="custom-select">
+                <?php foreach(get_continents_array() as $continent_code => $continent_name): ?>
+                    <option value="<?= $continent_code ?>"><?= $continent_name ?></option>
+                <?php endforeach ?>
+            </select>
+        </div>
+
+        <div class="form-group col-lg-5">
+            <input type="url" name="targeting_continent_code_value[]" class="form-control" value="" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+        </div>
+
+        <div class="form-group col-lg-2 text-center">
+            <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+        </div>
+    </div>
+</template>
+
 <template id="template_targeting_country_code">
     <div class="form-row">
-        <div class="form-group col-lg-6">
+        <div class="form-group col-lg-5">
             <select name="targeting_country_code_key[]" class="custom-select">
                 <?php foreach(get_countries_array() as $country => $country_name): ?>
                     <option value="<?= $country ?>"><?= $country_name ?></option>
@@ -581,15 +798,31 @@
             <input type="url" name="targeting_country_code_value[]" class="form-control" value="" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
         </div>
 
-        <div class="form-group col-lg-1 text-center">
-            <button type="button" data-targeting-remove="" class="btn btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+        <div class="form-group col-lg-2 text-center">
+            <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+        </div>
+    </div>
+</template>
+
+<template id="template_targeting_city_name">
+    <div class="form-row">
+        <div class="form-group col-lg-5">
+            <input type="text" name="targeting_city_name_key[]" class="form-control" value="" placeholder="<?= l('link.settings.targeting_type_city_name_placeholder') ?>" maxlength="128" />
+        </div>
+
+        <div class="form-group col-lg-5">
+            <input type="url" name="targeting_city_name_value[]" class="form-control" value="" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+        </div>
+
+        <div class="form-group col-lg-2 text-center">
+            <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
         </div>
     </div>
 </template>
 
 <template id="template_targeting_device_type">
     <div class="form-row">
-        <div class="form-group col-lg-6">
+        <div class="form-group col-lg-5">
             <select name="targeting_device_type_key[]" class="custom-select">
                 <?php foreach(['desktop', 'tablet', 'mobile'] as $device_type): ?>
                     <option value="<?= $device_type ?>"><?= l('global.device.' . $device_type) ?></option>
@@ -601,51 +834,15 @@
             <input type="url" name="targeting_device_type_value[]" class="form-control" value="" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
         </div>
 
-        <div class="form-group col-lg-1 text-center">
-            <button type="button" data-targeting-remove="" class="btn btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
-        </div>
-    </div>
-</template>
-
-<template id="template_targeting_browser_language">
-    <div class="form-row">
-        <div class="form-group col-lg-6">
-            <select name="targeting_browser_language_key[]" class="custom-select">
-                <?php foreach(get_locale_languages_array() as $locale => $language): ?>
-                    <option value="<?= $locale ?>"><?= $language ?></option>
-                <?php endforeach ?>
-            </select>
-        </div>
-
-        <div class="form-group col-lg-5">
-            <input type="url" name="targeting_browser_language_value[]" class="form-control" value="" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
-        </div>
-
-        <div class="form-group col-lg-1 text-center">
-            <button type="button" data-targeting-remove="" class="btn btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
-        </div>
-    </div>
-</template>
-
-<template id="template_targeting_rotation">
-    <div class="form-row">
-        <div class="form-group col-lg-6">
-            <input type="number" min="0" max="100" name="targeting_rotation_key[]" class="form-control" value="" placeholder="<?= l('link.settings.targeting_type_percentage') ?>" />
-        </div>
-
-        <div class="form-group col-lg-5">
-            <input type="url" name="targeting_rotation_value[]" class="form-control" value="" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
-        </div>
-
-        <div class="form-group col-lg-1 text-center">
-            <button type="button" data-targeting-remove="" class="btn btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+        <div class="form-group col-lg-2 text-center">
+            <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
         </div>
     </div>
 </template>
 
 <template id="template_targeting_os_name">
     <div class="form-row">
-        <div class="form-group col-lg-6">
+        <div class="form-group col-lg-5">
             <select name="targeting_os_name_key[]" class="custom-select">
                 <?php foreach(['iOS', 'Android', 'Windows', 'OS X', 'Linux', 'Ubuntu', 'Chrome OS'] as $os_name): ?>
                     <option value="<?= $os_name ?>"><?= $os_name ?></option>
@@ -657,8 +854,64 @@
             <input type="url" name="targeting_os_name_value[]" class="form-control" value="" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
         </div>
 
-        <div class="form-group col-lg-1 text-center">
-            <button type="button" data-targeting-remove="" class="btn btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+        <div class="form-group col-lg-2 text-center">
+            <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+        </div>
+    </div>
+</template>
+
+<template id="template_targeting_browser_name">
+    <div class="form-row">
+        <div class="form-group col-lg-5">
+            <select name="targeting_browser_name_key[]" class="custom-select">
+                <?php foreach(['Chrome', 'Firefox', 'Safari', 'Edge', 'Opera', 'Samsung Internet'] as $browser_name): ?>
+                    <option value="<?= $browser_name ?>"><?= $browser_name ?></option>
+                <?php endforeach ?>
+            </select>
+        </div>
+
+        <div class="form-group col-lg-5">
+            <input type="url" name="targeting_browser_name_value[]" class="form-control" value="" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+        </div>
+
+        <div class="form-group col-lg-2 text-center">
+            <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+        </div>
+    </div>
+</template>
+
+<template id="template_targeting_browser_language">
+    <div class="form-row">
+        <div class="form-group col-lg-5">
+            <select name="targeting_browser_language_key[]" class="custom-select">
+                <?php foreach(get_locale_languages_array() as $locale => $language): ?>
+                    <option value="<?= $locale ?>"><?= $language ?></option>
+                <?php endforeach ?>
+            </select>
+        </div>
+
+        <div class="form-group col-lg-5">
+            <input type="url" name="targeting_browser_language_value[]" class="form-control" value="" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+        </div>
+
+        <div class="form-group col-lg-2 text-center">
+            <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
+        </div>
+    </div>
+</template>
+
+<template id="template_targeting_rotation">
+    <div class="form-row">
+        <div class="form-group col-lg-5">
+            <input type="number" min="0" max="100" name="targeting_rotation_key[]" class="form-control" value="1" placeholder="<?= l('link.settings.targeting_type_percentage') ?>" required="required" />
+        </div>
+
+        <div class="form-group col-lg-5">
+            <input type="url" name="targeting_rotation_value[]" class="form-control" value="" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
+        </div>
+
+        <div class="form-group col-lg-2 text-center">
+            <button type="button" data-targeting-remove="" class="btn btn-block btn-outline-danger" title="<?= l('global.delete') ?>"><i class="fas fa-fw fa-times"></i></button>
         </div>
     </div>
 </template>
@@ -668,6 +921,37 @@
 
 <?php ob_start() ?>
 <script>
+    'use strict';
+
+    /* UTM */
+    let process_utm = () => {
+
+        let utm_source = document.querySelector('input[name="utm_source"]').value;
+        let utm_medium = document.querySelector('input[name="utm_medium"]').value;
+        let utm_campaign = document.querySelector('input[name="utm_campaign"]').value;
+        let utm_preview = <?= json_encode(l('global.none')) ?>;
+
+        if(utm_source || utm_medium || utm_campaign) {
+            let link = new URL(<?= json_encode(SITE_URL) ?>);
+
+            if(utm_source) link.searchParams.set('utm_source', utm_source.trim());
+            if(utm_medium) link.searchParams.set('utm_medium', utm_medium.trim());
+            if(utm_campaign) link.searchParams.set('utm_campaign', utm_campaign.trim());
+
+            utm_preview = '?' + link.searchParams.toString();
+        }
+
+        document.querySelector('input[name="utm_preview"]').value = utm_preview;
+    }
+
+    document.querySelectorAll('input[name="utm_source"], input[name="utm_medium"], input[name="utm_campaign"]').forEach(element => {
+        ['change', 'paste', 'keyup'].forEach(event_type => {
+            element.addEventListener(event_type, process_utm);
+        });
+    })
+
+    process_utm();
+
     /* Targeting */
     let targeting_type_handler = () => {
         let targeting_type = document.querySelector('#targeting_type').value;
@@ -737,7 +1021,7 @@
     /* Daterangepicker */
     let locale = <?= json_encode(require APP_PATH . 'includes/daterangepicker_translations.php') ?>;
     $('[data-daterangepicker]').daterangepicker({
-        minDate: new Date(),
+        minDate: "<?= (new \DateTime('', new \DateTimeZone(\Altum\Date::$default_timezone)))->setTimezone(new \DateTimeZone($this->user->timezone))->format('Y-m-d H:i:s'); ?>",
         alwaysShowCalendars: true,
         singleCalendar: true,
         singleDatePicker: true,
@@ -792,6 +1076,8 @@
         event.preventDefault();
     })
 </script>
+
+<?php include_view(THEME_PATH . 'views/partials/js_cropper.php') ?>
 <?php $javascript = ob_get_clean() ?>
 
 <?php return (object) ['html' => $html, 'javascript' => $javascript] ?>

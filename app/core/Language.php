@@ -1,13 +1,22 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum;
+
+defined('ALTUMCODE') || die();
 
 class Language {
     /* Selected language */
@@ -48,7 +57,7 @@ class Language {
             $language = [
                 'name' => $file_name_exploded[0],
                 'code' => $file_name_exploded[1],
-                'status' => settings()->languages->{$file_name_exploded[0]}->status ?? $file_name_exploded[2] ?? 'active',
+                'status' => settings()->languages->{$file_name_exploded[0]}->status ?? true,
                 'content' => null,
                 'order' => settings()->languages->{$file_name_exploded[0]}->order ?? 1,
                 'language_flag' => settings()->languages->{$file_name_exploded[0]}->language_flag ?? '',
@@ -56,7 +65,7 @@ class Language {
 
             self::$languages[$language['name']] = $language;
 
-            if($language['status'] == 'active') {
+            if($language['status']) {
                 self::$active_languages[$language['name']] = $language['code'];
             }
         }
@@ -99,11 +108,36 @@ class Language {
             return self::$languages[$name]['content'];
         }
 
-        /* Include the language file */
-        if(file_exists(self::$path . $name . '#' . self::$languages[$name]['code'] . '.php')) {
-            self::$languages[$name]['content'] = require self::$path . $name . '#' . self::$languages[$name]['code'] . '.php';
-        } else {
-            self::$languages[$name]['content'] = require self::$path . $name . '#' . self::$languages[$name]['code'] . '#' . self::$languages[$name]['status'] . '.php';
+        /* Caching system */
+        if(\Altum\Router::$path !== 'admin' && ALTUMCODE == 66) {
+            /* Try to access the cached file */
+            if(file_exists(self::$path . 'cache/' . $name . '#' . self::$languages[$name]['code'] . '.php')) {
+                self::$languages[$name]['content'] = require self::$path . 'cache/' . $name . '#' . self::$languages[$name]['code'] . '.php';
+            }
+
+            /* We need to generate the caching */
+            else {
+                /* Include the language file */
+                if(file_exists(self::$path . $name . '#' . self::$languages[$name]['code'] . '.php')) {
+                    self::$languages[$name]['content'] = require self::$path . $name . '#' . self::$languages[$name]['code'] . '.php';
+
+                    /* Only generate the caching if permissions allow */
+                    if(is_writable(self::$path . 'cache/')) {
+                        /* Run processing hook */
+                        $prefixes_to_skip = \Altum\CustomHooks::generate_language_prefixes_to_skip();
+                        self::$languages[$name]['content'] = self::generate_cached_language_file(self::$languages[$name], $prefixes_to_skip);
+                    }
+                }
+            }
+
+        }
+
+        /* Include the original file if we are in the admin panel */
+        else {
+            /* Include the language file */
+            if(file_exists(self::$path . $name . '#' . self::$languages[$name]['code'] . '.php')) {
+                self::$languages[$name]['content'] = require self::$path . $name . '#' . self::$languages[$name]['code'] . '.php';
+            }
         }
 
         /* Check the language file */
@@ -115,8 +149,6 @@ class Language {
         if(\Altum\Router::$path == 'admin') {
             if(file_exists(self::$path . 'admin/' . $name . '#' . self::$languages[$name]['code'] . '.php')) {
                 $admin_language = require self::$path . 'admin/' . $name . '#' . self::$languages[$name]['code'] . '.php';
-            } else {
-                $admin_language = require self::$path . 'admin/' . $name . '#' . self::$languages[$name]['code'] . '#' . self::$languages[$name]['status'] . '.php';
             }
 
             /* Merge */
@@ -160,5 +192,61 @@ class Language {
             self::$code = self::$languages[self::$default_name]['code'];
         }
 
+    }
+
+    public static function clear_cache(){
+        if(ALTUMCODE != 66) return;
+
+        /* Determine all the languages available in the directory */
+        foreach(glob(self::$path . 'cache/*.php') as $file_path) {
+            unlink($file_path);
+        }
+
+    }
+
+    public static function generate_cached_language_file($language, $prefixes_to_skip) {
+        /* Non skip able even if asked for */
+        $keys_to_not_skip = [
+            'index.breadcrumb',
+            'index.menu'
+        ];
+        
+        /* New language strings */
+        $language_strings = '';
+
+        /* Go through the language content */
+        foreach($language['content'] as $key => $value) {
+
+            /* Remove translations that are not used */
+            if(!in_array($key, $keys_to_not_skip)) {
+                foreach ($prefixes_to_skip as $prefix) {
+                    if(string_starts_with($prefix, $key)) {
+                        unset($language['content'][$key]);
+                        continue 2;
+                    }
+                }
+            }
+
+            /* Add the language string */
+            $value = addcslashes($value, "'");
+            $language_strings .= "\t'{$key}' => '{$value}',\n";
+        }
+
+        /* Prepare new strings for saving */
+        $language_content = function($language_strings) {
+            return <<<ALTUM
+<?php
+
+return [
+{$language_strings}
+];
+ALTUM;
+        };
+
+        /* Save / update file */
+        file_put_contents(Language::$path . 'cache/' . $language['name'] . '#' . $language['code'] . '.php', $language_content($language_strings));
+        chmod(Language::$path . 'cache/' . $language['name'] . '#' . $language['code'] . '.php', 0777);
+
+        return $language['content'];
     }
 }

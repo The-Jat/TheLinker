@@ -22,17 +22,18 @@
     <?php endif ?>
 
     <?php if(!empty(settings()->main->favicon)): ?>
-        <link href="<?= \Altum\Uploads::get_full_url('favicon') . settings()->main->favicon ?>" rel="shortcut icon" />
+        <link href="<?= settings()->main->favicon_full_url ?>" rel="icon" />
     <?php endif ?>
 
-    <?php foreach(['bootstrap.min.css', 'custom.css', 'link-custom.css', 'animate.min.css'] as $file): ?>
+    <link href="<?= ASSETS_FULL_URL . 'css/' . \Altum\ThemeStyle::get_file() . '?v=' . PRODUCT_CODE ?>" id="css_theme_style" rel="stylesheet" media="screen,print">
+    <?php foreach(['custom.css', 'link-custom.css', 'animate.min.css'] as $file): ?>
         <link href="<?= ASSETS_FULL_URL . 'css/' . $file . '?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
     <?php endforeach ?>
 
     <?= \Altum\Event::get_content('head') ?>
 
     <?php if(!empty(settings()->custom->head_js)): ?>
-        <?= settings()->custom->head_js ?>
+        <?= get_settings_custom_head_js() ?>
     <?php endif ?>
 
     <?php if(!empty(settings()->custom->head_css)): ?>
@@ -41,6 +42,7 @@
 </head>
 
 <body class="<?= l('direction') == 'rtl' ? 'rtl' : null ?>">
+<?php if(settings()->main->admin_spotlight_is_enabled || settings()->main->user_spotlight_is_enabled) require THEME_PATH . 'views/partials/spotlight.php' ?>
 
 <main class="altum-animate altum-animate-fill-none altum-animate-fade-in">
     <?= $this->views['content'] ?>

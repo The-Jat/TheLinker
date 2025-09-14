@@ -1,23 +1,32 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
-namespace Altum\controllers;
+namespace Altum\Controllers;
 
 use Altum\Alerts;
+
+defined('ALTUMCODE') || die();
 
 class Syntheses extends Controller {
 
     public function index() {
         \Altum\Authentication::guard();
 
-        if(!settings()->aix->syntheses_is_enabled) {
-            redirect('dashboard');
+        if(!\Altum\Plugin::is_active('aix') || !settings()->aix->syntheses_is_enabled) {
+            redirect('not-found');
         }
 
         /* Check for exclusive personal API usage limitation */
@@ -26,8 +35,8 @@ class Syntheses extends Controller {
         }
 
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['user_id', 'project_id', 'language', 'format', 'voice_id', 'voice_engine', 'voice_gender'], ['name'], ['last_datetime', 'datetime', 'name', 'characters']));
-        $filters->set_default_order_by('synthesis_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
+        $filters = (new \Altum\Filters(['user_id', 'project_id', 'language', 'format', 'voice_id', 'voice_engine', 'voice_gender'], ['name'], ['synthesis_id', 'last_datetime', 'datetime', 'name', 'characters']));
+        $filters->set_default_order_by($this->user->preferences->syntheses_default_order_by, $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
         /* Prepare the paginator */
@@ -54,8 +63,8 @@ class Syntheses extends Controller {
         }
 
         /* Export handler */
-        process_export_csv($syntheses, 'include', ['synthesis_id', 'project_id', 'user_id', 'name', 'input', 'file', 'language', 'format', 'voice_id', 'voice_engine', 'voice_gender',  'characters', 'api_response_time', 'datetime', 'last_datetime'], sprintf(l('syntheses.title')));
-        process_export_json($syntheses, 'include', ['synthesis_id', 'project_id', 'user_id', 'name', 'input', 'file', 'language', 'format', 'voice_id', 'voice_engine', 'voice_gender', 'settings', 'characters', 'api_response_time', 'datetime', 'last_datetime'], sprintf(l('syntheses.title')));
+        process_export_csv($syntheses, ['synthesis_id', 'project_id', 'user_id', 'name', 'input', 'file', 'language', 'format', 'voice_id', 'voice_engine', 'voice_gender',  'characters', 'api_response_time', 'datetime', 'last_datetime'], sprintf(l('syntheses.title')));
+        process_export_json($syntheses, ['synthesis_id', 'project_id', 'user_id', 'name', 'input', 'file', 'language', 'format', 'voice_id', 'voice_engine', 'voice_gender', 'settings', 'characters', 'api_response_time', 'datetime', 'last_datetime'], sprintf(l('syntheses.title')));
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/pagination', (array) $this))->run(['paginator' => $paginator]);
@@ -82,7 +91,7 @@ class Syntheses extends Controller {
         /* Formats */
         $ai_formats = array_merge([], require \Altum\Plugin::get('aix')->path . 'includes/ai_syntheses_openai_audio_formats.php');
 
-        /* Prepare the View */
+        /* Prepare the view */
         $data = [
             'projects' => $projects,
             'syntheses' => $syntheses,
@@ -107,8 +116,8 @@ class Syntheses extends Controller {
 
         \Altum\Authentication::guard();
 
-        if(!settings()->aix->syntheses_is_enabled) {
-            redirect('dashboard');
+        if(!\Altum\Plugin::is_active('aix') || !settings()->aix->syntheses_is_enabled) {
+            redirect('not-found');
         }
 
         /* Team checks */

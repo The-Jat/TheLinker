@@ -1,10 +1,17 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
@@ -12,15 +19,28 @@ namespace Altum\Controllers;
 use Altum\Alerts;
 use Altum\Models\User;
 
+defined('ALTUMCODE') || die();
+
 class AdminPlans extends Controller {
 
     public function index() {
 
         $plans = db()->orderBy('`order`', 'ASC')->get('plans');
 
+        /* Get usage by users */
+        $users_plans = [];
+        $total_users = 0;
+        $result = database()->query("SELECT COUNT(*) AS `total`, `plan_id` FROM `users` GROUP BY `plan_id`");
+        while($row = $result->fetch_object()) {
+            $users_plans[$row->plan_id] = $row->total;
+            $total_users += $row->total;
+        }
+
         /* Main View */
         $data = [
-            'plans' => $plans
+            'plans' => $plans,
+            'users_plans' => $users_plans,
+            'total_users' => $total_users,
         ];
 
         $view = new \Altum\View('admin/plans/index', (array) $this);
@@ -51,19 +71,17 @@ class AdminPlans extends Controller {
 
             /* Insert to database */
             $plan_id = db()->insert('plans', [
-                'name' => $plan->name . ' - ' . l('global.duplicated'),
+                'name' => string_truncate($plan->name . ' - ' . l('global.duplicated'), 64, null),
                 'description' => $plan->description,
+                'translations' => $plan->translations,
                 'prices' => $plan->prices,
-                'monthly_price' => 1,
-                'annual_price' => 1,
-                'lifetime_price' => 1,
                 'trial_days' => $plan->trial_days,
                 'settings' => $plan->settings,
                 'taxes_ids' => $plan->taxes_ids,
                 'color' => $plan->color,
                 'status' => $plan->status,
                 'order' => $plan->order + 1,
-                'datetime' => \Altum\Date::$date,
+                'datetime' => get_date(),
             ]);
 
             /* Set a nice success message */
@@ -108,7 +126,7 @@ class AdminPlans extends Controller {
                 db()->where('user_id', $row->user_id)->update('users', ['plan_id' => 'custom']);
 
                 /* Clear the cache */
-                \Altum\Cache::$adapter->deleteItemsByTag('user_id=' . $row->user_id);
+                cache()->deleteItemsByTag('user_id=' . $row->user_id);
             }
 
             /* Delete the plan */

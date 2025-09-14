@@ -3,130 +3,267 @@
 <h1 class="h3 mb-4 text-truncate"><?= sprintf(l('admin_index.header'), $this->user->name) ?></h1>
 
 <div class="mb-5 row justify-content-between">
-    <div class="col-12 col-sm-6 col-xl-3 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-3 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
             <div class="card-body">
-                <small class="text-muted"><i class="fas fa-fw fa-sm fa-hashtag mr-1"></i> <?= l('admin_index.biolink_links') ?></small>
+                <div class="row">
+                    <div class="col text-truncate">
+                        <small class="text-muted font-weight-bold"><?= l('admin_index.biolink_links') ?></small>
+                    </div>
 
-                <div class="mt-3"><span class="h4"><?= nr($data->biolink_links) ?></span></div>
-            </div>
+                    <div class="col-auto">
+                        <span class="p-2 bg-primary-100 rounded">
+                            <i class="fas fa-fw fa-sm fa-hashtag text-primary"></i>
+                        </span>
+                    </div>
+                </div>
 
-            <div class="pr-4 d-flex flex-column justify-content-center">
-                <a href="<?= url('admin/links?type=biolink') ?>" class="stretched-link">
-                    <i class="fas fa-fw fa-angle-right text-gray-500"></i>
-                </a>
+                <div class="mt-2 text-break">
+                    <a href="<?= url('admin/links?type=biolink') ?>" class="stretched-link text-reset text-decoration-none">
+                        <span class="h4" id="biolink_links">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                    </a>
+
+                    <div class="mt-1 small text-muted">
+                        <span id="biolink_links_current_month">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                        <?= mb_strtolower(l('global.date.this_month')) ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-xl-3 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-3 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
             <div class="card-body">
-                <small class="text-muted"><i class="fas fa-fw fa-sm fa-link mr-1"></i> <?= l('admin_index.shortened_links') ?></small>
+                <div class="row">
+                    <div class="col text-truncate">
+                        <small class="text-muted font-weight-bold"><?= l('admin_index.shortened_links') ?></small>
+                    </div>
 
-                <div class="mt-3"><span class="h4"><?= nr($data->shortened_links) ?></span></div>
-            </div>
+                    <div class="col-auto">
+                        <span class="p-2 bg-primary-100 rounded">
+                            <i class="fas fa-fw fa-sm fa-link text-primary"></i>
+                        </span>
+                    </div>
+                </div>
 
-            <div class="pr-4 d-flex flex-column justify-content-center">
-                <a href="<?= url('admin/links?type=link') ?>" class="stretched-link">
-                    <i class="fas fa-fw fa-angle-right text-gray-500"></i>
-                </a>
+                <div class="mt-2 text-break">
+                    <a href="<?= url('admin/links?type=link') ?>" class="stretched-link text-reset text-decoration-none">
+                        <span class="h4" id="shortened_links">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                    </a>
+
+                    <div class="mt-1 small text-muted">
+                        <span id="shortened_links_current_month">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                        <?= mb_strtolower(l('global.date.this_month')) ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-xl-3 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-3 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
             <div class="card-body">
-                <small class="text-muted"><i class="fas fa-fw fa-sm fa-chart-bar mr-1"></i> <?= l('admin_index.track_links') ?></small>
+                <div class="row">
+                    <div class="col text-truncate">
+                        <small class="text-muted font-weight-bold"><?= l('admin_index.track_links') ?></small>
+                    </div>
 
-                <div class="mt-3"><span class="h4"><?= nr($data->track_links) ?></span></div>
-            </div>
+                    <div class="col-auto">
+                        <span class="p-2 bg-primary-100 rounded">
+                            <i class="fas fa-fw fa-sm fa-chart-bar text-primary"></i>
+                        </span>
+                    </div>
+                </div>
 
-            <div class="pr-4 d-flex flex-column justify-content-center">
-                <a href="<?= url('admin/statistics/track_links') ?>" class="stretched-link">
-                    <i class="fas fa-fw fa-angle-right text-gray-500"></i>
-                </a>
+                <div class="mt-2 text-break">
+                    <a href="<?= url('admin/statistics/track_links') ?>" class="stretched-link text-reset text-decoration-none">
+                        <span class="h4" id="track_links">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                    </a>
+
+                    <div class="mt-1 small text-muted">
+                        <span id="track_links_current_month">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                        <?= mb_strtolower(l('global.date.this_month')) ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-xl-3 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-3 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
             <div class="card-body">
-                <small class="text-muted"><i class="fas fa-fw fa-sm fa-qrcode mr-1"></i> <?= l('admin_qr_codes.menu') ?></small>
+                <div class="row">
+                    <div class="col text-truncate">
+                        <small class="text-muted font-weight-bold"><?= l('admin_qr_codes.menu') ?></small>
+                    </div>
 
-                <div class="mt-3"><span class="h4"><?= nr($data->qr_codes) ?></span></div>
-            </div>
+                    <div class="col-auto">
+                        <span class="p-2 bg-primary-100 rounded">
+                            <i class="fas fa-fw fa-sm fa-qrcode text-primary"></i>
+                        </span>
+                    </div>
+                </div>
 
-            <div class="pr-4 d-flex flex-column justify-content-center">
-                <a href="<?= url('admin/qr-codes') ?>" class="stretched-link">
-                    <i class="fas fa-fw fa-angle-right text-gray-500"></i>
-                </a>
+                <div class="mt-2 text-break">
+                    <a href="<?= url('admin/qr-codes') ?>" class="stretched-link text-reset text-decoration-none">
+                        <span class="h4" id="qr_codes">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                    </a>
+
+                    <div class="mt-1 small text-muted">
+                        <span id="qr_codes_current_month">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                        <?= mb_strtolower(l('global.date.this_month')) ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-xl-3 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-3 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
             <div class="card-body">
-                <small class="text-muted"><i class="fas fa-fw fa-sm fa-globe mr-1"></i> <?= l('admin_domains.menu') ?></small>
+                <div class="row">
+                    <div class="col text-truncate">
+                        <small class="text-muted font-weight-bold"><?= l('admin_domains.menu') ?></small>
+                    </div>
 
-                <div class="mt-3"><span class="h4"><?= nr($data->domains) ?></span></div>
-            </div>
+                    <div class="col-auto">
+                        <span class="p-2 bg-primary-100 rounded">
+                            <i class="fas fa-fw fa-sm fa-globe text-primary"></i>
+                        </span>
+                    </div>
+                </div>
 
-            <div class="pr-4 d-flex flex-column justify-content-center">
-                <a href="<?= url('admin/domains') ?>" class="stretched-link">
-                    <i class="fas fa-fw fa-angle-right text-gray-500"></i>
-                </a>
+                <div class="mt-2 text-break">
+                    <a href="<?= url('admin/domains') ?>" class="stretched-link text-reset text-decoration-none">
+                        <span class="h4" id="domains">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                    </a>
+
+                    <div class="mt-1 small text-muted">
+                        <span id="domains_current_month">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                        <?= mb_strtolower(l('global.date.this_month')) ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-xl-3 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-3 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
             <div class="card-body">
-                <small class="text-muted"><i class="fas fa-fw fa-sm fa-users mr-1"></i> <?= l('admin_users.menu') ?></small>
+                <div class="row">
+                    <div class="col text-truncate">
+                        <small class="text-muted font-weight-bold"><?= l('admin_users.menu') ?></small>
+                    </div>
 
-                <div class="mt-3"><span class="h4"><?= nr($data->users) ?></span></div>
-            </div>
+                    <div class="col-auto">
+                        <span class="p-2 bg-primary-100 rounded">
+                            <i class="fas fa-fw fa-sm fa-users text-primary"></i>
+                        </span>
+                    </div>
+                </div>
 
-            <div class="pr-4 d-flex flex-column justify-content-center">
-                <a href="<?= url('admin/users') ?>" class="stretched-link">
-                    <i class="fas fa-fw fa-angle-right text-gray-500"></i>
-                </a>
+                <div class="mt-2 text-break">
+                    <a href="<?= url('admin/users') ?>" class="stretched-link text-reset text-decoration-none">
+                        <span class="h4" id="users">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                    </a>
+
+                    <div class="mt-1 small text-muted">
+                        <span id="users_current_month">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                        <?= mb_strtolower(l('global.date.this_month')) ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-xl-3 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-3 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
             <div class="card-body">
-                <small class="text-muted"><i class="fas fa-fw fa-sm fa-funnel-dollar mr-1"></i> <?= l('admin_payments.menu') ?></small>
+                <div class="row">
+                    <div class="col text-truncate">
+                        <small class="text-muted font-weight-bold"><?= l('admin_payments.menu') ?></small>
+                    </div>
 
-                <div class="mt-3"><span class="h4"><?= nr($data->payments) ?></span></div>
-            </div>
+                    <div class="col-auto">
+                    <span class="p-2 bg-primary-100 rounded">
+                        <i class="fas fa-fw fa-sm fa-funnel-dollar text-primary"></i>
+                    </span>
+                    </div>
+                </div>
 
-            <div class="pr-4 d-flex flex-column justify-content-center">
-                <a href="<?= url('admin/payments') ?>" class="stretched-link">
-                    <i class="fas fa-fw fa-angle-right text-gray-500"></i>
-                </a>
+                <div class="mt-2 text-break">
+                    <a href="<?= in_array(settings()->license->type, ['Extended License', 'extended']) ? url('admin/payments') : url('admin/settings/payment') ?>" class="stretched-link text-reset text-decoration-none">
+                        <span class="h4" id="payments">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                    </a>
+
+                    <div class="mt-1 small text-muted">
+                        <span id="payments_current_month">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                        <?= mb_strtolower(l('global.date.this_month')) ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-xl-3 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-3 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
             <div class="card-body">
-                <small class="text-muted"><i class="fas fa-fw fa-sm fa-credit-card mr-1"></i> <?= l('admin_index.payments_total_amount') ?></small>
+                <div class="row">
+                    <div class="col text-truncate">
+                        <small class="text-muted font-weight-bold"><?= l('admin_index.payments_total_amount') ?></small>
+                    </div>
 
-                <div class="mt-3"><span class="h4"><?= nr($data->payments_total_amount, 2) ?></span> <small><?= settings()->payment->default_currency ?></small></div>
-            </div>
+                    <div class="col-auto">
+                        <span class="p-2 bg-primary-100 rounded">
+                            <i class="fas fa-fw fa-sm fa-credit-card text-primary"></i>
+                        </span>
+                    </div>
+                </div>
 
-            <div class="pr-4 d-flex flex-column justify-content-center">
-                <a href="<?= url('admin/payments') ?>" class="stretched-link">
-                    <i class="fas fa-fw fa-angle-right text-gray-500"></i>
-                </a>
+                <div class="mt-2 text-break">
+                    <a href="<?= in_array(settings()->license->type, ['Extended License', 'extended']) ? url('admin/payments') : url('admin/settings/payment') ?>" class="stretched-link text-reset text-decoration-none">
+                        <span class="h4" id="payments_total_amount">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                        <small><?= settings()->payment->default_currency ?></small>
+                    </a>
+
+                    <div class="mt-1 small text-muted">
+                        <span id="payments_amount_current_month">
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </span>
+                        <?= settings()->payment->default_currency ?> <?= mb_strtolower(l('global.date.this_month')) ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -134,11 +271,12 @@
 
 <div class="mb-5">
     <div class="d-flex flex-column flex-md-row justify-content-between mb-4">
-        <h1 class="h3 mb-3 mb-md-0"><i class="fas fa-fw fa-xs fa-users text-primary-900 mr-2"></i> <?= l('admin_index.users') ?></h1>
+        <h1 class="h3 mb-3 mb-md-0 text-truncate"><i class="fas fa-fw fa-xs fa-users text-primary-900 mr-2"></i> <?= l('admin_index.users') ?></h1>
 
-        <div class="">
+        <div>
             <span class="badge badge-success" data-toggle="tooltip" title="<?= l('admin_index.active_users_tooltip') ?>">
-                <i class="fas fa-xs fa-fw fa-circle mr-1"></i> <?= sprintf(l('admin_index.active_users'), $data->active_users) ?>
+                <i class="fas fa-xs fa-fw fa-circle fa-fade mr-1"></i>
+                <span id="active_users" data-translation="<?= l('admin_index.active_users') ?>"><?= l('global.loading') ?></span>
             </span>
         </div>
     </div>
@@ -150,7 +288,7 @@
             <tr>
                 <th><?= l('global.user') ?></th>
                 <th><?= l('global.status') ?></th>
-                <th><?= l('admin_users.main.plan_id') ?></th>
+                <th><?= l('admin_users.plan_id') ?></th>
                 <th><?= l('global.details') ?></th>
                 <th></th>
             </tr>
@@ -163,51 +301,51 @@
                     <td class="text-nowrap">
                         <div class="d-flex">
                             <a href="<?= url('admin/user-view/' . $row->user_id) ?>">
-                                <img src="<?= get_gravatar($row->email) ?>" class="user-avatar rounded-circle mr-3" alt="" />
+                                <img src="<?= get_user_avatar($row->avatar, $row->email) ?>" class="user-avatar rounded-circle mr-3" alt="" />
                             </a>
 
                             <div class="d-flex flex-column">
                                 <div>
-                                    <a href="<?= url('admin/user-view/' . $row->user_id) ?>" <?= $row->type == 1 ? 'class="font-weight-bold" data-toggle="tooltip" title="' . l('admin_users.main.type_admin') . '"' : null ?>><?= $row->name ?></a>
+                                    <a href="<?= url('admin/user-view/' . $row->user_id) ?>" <?= $row->type == 1 ? 'class="font-weight-bold" data-toggle="tooltip" title="' . l('admin_users.type_admin') . '"' : null ?>><?= $row->name ?></a>
                                 </div>
 
-                                <span class="text-muted"><?= $row->email ?></span>
+                                <span class="small text-muted"><?= $row->email ?></span>
                             </div>
                         </div>
                     </td>
                     <td class="text-nowrap">
                         <?php if($row->status == 0): ?>
-                            <a href="<?= url('admin/users?status=0') ?>" class="badge badge-warning"><i class="fas fa-fw fa-sm fa-eye-slash mr-1"></i> <?= l('admin_users.main.status_unconfirmed') ?></a>
+                            <a href="<?= url('admin/users?status=0') ?>" class="badge badge-warning"><i class="fas fa-fw fa-sm fa-eye-slash mr-1"></i> <?= l('admin_users.status_unconfirmed') ?></a>
                         <?php elseif($row->status == 1): ?>
-                            <a href="<?= url('admin/users?status=1') ?>" class="badge badge-success"><i class="fas fa-fw fa-sm fa-check mr-1"></i> <?= l('admin_users.main.status_active') ?></a>
+                            <a href="<?= url('admin/users?status=1') ?>" class="badge badge-success"><i class="fas fa-fw fa-sm fa-check mr-1"></i> <?= l('admin_users.status_active') ?></a>
                         <?php elseif($row->status == 2): ?>
-                            <a href="<?= url('admin/users?status=2') ?>" class="badge badge-light"><i class="fas fa-fw fa-sm fa-times mr-1"></i> <?= l('admin_users.main.status_disabled') ?></a>
+                            <a href="<?= url('admin/users?status=2') ?>" class="badge badge-light"><i class="fas fa-fw fa-sm fa-times mr-1"></i> <?= l('admin_users.status_disabled') ?></a>
                         <?php endif ?>
                     </td>
                     <td class="text-nowrap">
                         <div class="d-flex flex-column">
                             <div>
-                                <a href="<?= url('admin/plan-update/' . $row->plan_id) ?>"><?= $data->plans[$row->plan_id]->name ?></a>
+                                <a href="<?= url('admin/plan-update/' . $row->plan_id) ?>" class="badge badge-light"><?= $data->plans[$row->plan_id]->name ?></a>
                             </div>
 
                             <?php if($row->plan_id != 'free'): ?>
                                 <div>
-                                    <small class="text-muted" data-toggle="tooltip" title="<?= l('admin_users.main.plan_expiration_date') ?>"><?= \Altum\Date::get($row->plan_expiration_date, 1) ?></small>
+                                    <small class="text-muted" data-toggle="tooltip" title="<?= l('admin_users.plan_expiration_date') ?>"><?= \Altum\Date::get($row->plan_expiration_date, 1) ?></small>
                                 </div>
                             <?php endif ?>
                         </div>
                     </td>
                     <td class="text-nowrap">
                         <div class="d-flex align-items-center">
-                            <span class="mr-2" data-toggle="tooltip" title="<?= sprintf(l('admin_users.table.datetime'), \Altum\Date::get($row->datetime, 1)) ?>">
+                            <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= l('admin_users.datetime') . '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>' ?>">
                                 <i class="fas fa-fw fa-calendar text-muted"></i>
                             </span>
 
-                            <a href="<?= url('admin/users?source=' . $row->source) ?>" class="mr-2" data-toggle="tooltip" title="<?= l('admin_users.main.source.' . $row->source) ?>">
+                            <a href="<?= url('admin/users?source=' . $row->source) ?>" class="mr-2" data-toggle="tooltip" title="<?= l('admin_users.source.' . $row->source) ?>">
                                 <i class="fas fa-fw fa-sign-in-alt text-muted"></i>
                             </a>
 
-                            <span class="mr-2" data-toggle="tooltip" title="<?= sprintf(l('admin_users.table.last_activity'), ($row->last_activity ? \Altum\Date::get($row->last_activity, 1) : '-')) ?>">
+                            <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= l('admin_users.last_activity') . '<br />' . \Altum\Date::get($row->last_activity, 2) . '<br /><small>' . \Altum\Date::get($row->last_activity, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->last_activity) . ')</small>' ?>">
                                 <i class="fas fa-fw fa-history text-muted"></i>
                             </span>
 
@@ -244,7 +382,7 @@
 
             <tr>
                 <td colspan="5">
-                    <a href="<?= url('admin/users') ?>" class="text-muted">
+                    <a href="<?= url('admin/users') ?>" class="text-muted text-decoration-none small">
                         <i class="fas fa-angle-right fa-sm fa-fw mr-1"></i> <?= l('global.view_more') ?>
                     </a>
                 </td>
@@ -262,7 +400,7 @@
             <div class="card-body py-2">
                 <div>
                     <?php foreach($data->internal_notifications as $notification): ?>
-                        <?php //ALTUMCODE:DEMO if(DEMO) {$row->email = $row->user_email = 'hidden@demo.com'; $row->user_name = $row->name = 'hidden on demo';} ?>
+                        <?php //ALTUMCODE:DEMO if(DEMO) {$notification->title = $notification->description = 'hidden on demo';} ?>
 
                         <div class="bg-gray-100 p-3 my-3 rounded <?= $notification->is_read ? null : 'border border-info' ?> position-relative">
                             <div class="d-flex align-items-center">
@@ -298,7 +436,7 @@
 
 
 <?php if(in_array(settings()->license->type, ['SPECIAL', 'Extended License', 'extended'])): ?>
-    <?php $result = database()->query("SELECT `payments`.*, `users`.`name` AS `user_name`, `users`.`email` AS `user_email` FROM `payments` LEFT JOIN `users` ON `payments`.`user_id` = `users`.`user_id` ORDER BY `id` DESC LIMIT 5"); ?>
+    <?php $result = database()->query("SELECT `payments`.*, `users`.`name` AS `user_name`, `users`.`email` AS `user_email`, `users`.`avatar` AS `user_avatar` FROM `payments` LEFT JOIN `users` ON `payments`.`user_id` = `users`.`user_id` ORDER BY `id` DESC LIMIT 5"); ?>
 
     <?php if($result->num_rows): ?>
         <div class="mb-5">
@@ -309,9 +447,10 @@
                     <thead>
                     <tr>
                         <th><?= l('global.user') ?></th>
-                        <th><?= l('admin_payments.table.plan') ?></th>
-                        <th><?= l('admin_payments.table.total_amount') ?></th>
+                        <th><?= l('admin_payments.plan') ?></th>
+                        <th><?= l('admin_payments.total_amount') ?></th>
                         <th><?= l('global.type') ?></th>
+                        <th></th>
                         <th></th>
                         <th></th>
                     </tr>
@@ -326,7 +465,7 @@
                                 <div class="d-flex align-items-center">
                                     <?php if($row->user_name || $row->user_email): ?>
                                         <a href="<?= url('admin/user-view/' . $row->user_id) ?>">
-                                            <img src="<?= get_gravatar($row->user_email) ?>" class="user-avatar rounded-circle mr-3" alt="" />
+                                            <img src="<?= get_user_avatar($row->user_avatar, $row->user_email) ?>" referrerpolicy="no-referrer" loading="lazy" class="user-avatar rounded-circle mr-3" alt="" />
                                         </a>
 
                                         <div class="d-flex flex-column">
@@ -334,10 +473,10 @@
                                                 <a href="<?= url('admin/user-view/' . $row->user_id) ?>"><?= $row->user_name ?></a>
                                             </div>
 
-                                            <span class="text-muted"><?= $row->user_email ?></span>
+                                            <span class="text-muted small"><?= $row->user_email ?></span>
                                         </div>
                                     <?php else: ?>
-                                        <img src="<?= get_gravatar($row->user_email) ?>" class="user-avatar rounded-circle mr-3" alt="" />
+                                        <img src="<?= get_user_avatar($row->user_avatar, $row->user_email) ?>" referrerpolicy="no-referrer" loading="lazy" class="user-avatar rounded-circle mr-3" alt="" />
 
                                         <div class="text-muted">
                                             <?= l('global.unknown') ?>
@@ -348,11 +487,11 @@
 
                             <td class="text-nowrap">
                                 <?php if(isset($data->plans[$row->plan_id])): ?>
-                                    <a href="<?= url('admin/plan-update/' . $row->plan_id) ?>">
+                                    <a href="<?= url('admin/plan-update/' . $row->plan_id) ?>" class="badge badge-light">
                                         <?= $data->plans[$row->plan_id]->name ?>
                                     </a>
                                 <?php else: ?>
-                                    <?= $row->plan->name ?? l('global.unknown') ?>
+                                    <span class="badge badge-light"><?= $row->plan->name ?? l('global.unknown') ?></span>
                                 <?php endif ?>
                             </td>
 
@@ -363,10 +502,18 @@
                             <td class="text-nowrap">
                                 <div class="d-flex flex-column">
                                     <span><?= l('pay.custom_plan.' . $row->type . '_type') ?></span>
+
                                     <div>
-                                        <span class="text-muted"><?= l('pay.custom_plan.' . $row->frequency) ?></span> - <span class="text-muted"><?= l('pay.custom_plan.' . $row->processor) ?></span>
+                                        <span class="small text-muted"><?= l('pay.custom_plan.' . $row->frequency) ?></span>
                                     </div>
                                 </div>
+                            </td>
+
+                            <td class="text-nowrap">
+                                <a href="<?= url('admin/payments?processor=' . $row->processor) ?>" class="badge badge-light">
+                                    <i class="<?= $data->payment_processors[$row->processor]['icon'] ?> fa-fw fa-sm mr-1" style="color: <?= $data->payment_processors[$row->processor]['color'] ?>"></i>
+                                    <?= l('pay.custom_plan.' . $row->processor) ?>
+                                </a>
                             </td>
 
                             <td class="text-nowrap">
@@ -377,8 +524,8 @@
                                 <?php
                                 $taxes_html = null;
                                 if(count($row->taxes_ids ?? [])) {
-                                    $taxes_html = l('admin_taxes.menu') . ' - ';
-                                    foreach ($row->taxes_ids as $tax_id) {
+                                    $taxes_html = l('admin_taxes.menu') . ': ';
+                                    foreach($row->taxes_ids as $tax_id) {
                                         $taxes_html .= '<a href=\'' . url('admin/tax-update/' . $tax_id) . '\' target=\'_blank\' class=\'mr-1\'>' . $tax_id . '</a>';
                                     }
                                 }
@@ -387,7 +534,7 @@
                                     <i class="fas fa-fw fa-sm fa-paperclip text-muted"></i>
                                 </a>
 
-                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>') ?>">
+                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
                                     <i class="fas fa-fw fa-calendar text-muted"></i>
                                 </span>
                             </td>
@@ -407,7 +554,7 @@
 
                     <tr>
                         <td colspan="6">
-                            <a href="<?= url('admin/payments') ?>" class="text-muted">
+                            <a href="<?= url('admin/payments') ?>" class="text-muted text-decoration-none small">
                                 <i class="fas fa-angle-right fa-sm fa-fw mr-1"></i> <?= l('global.view_more') ?>
                             </a>
                         </td>
@@ -420,9 +567,9 @@
 <?php endif ?>
 
 <div class="row justify-content-between">
-    <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
-            <div class="card-body">
+            <div class="card-body text-truncate">
                 <small class="text-muted"><i class="fas fa-fw fa-sm fa-code mr-1"></i> <?= PRODUCT_NAME ?></small>
 
                 <div class="mt-2"><span class="h6"><?= 'v' . PRODUCT_VERSION ?></span></div>
@@ -436,9 +583,9 @@
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
-            <div class="card-body">
+            <div class="card-body text-truncate">
                 <small class="text-muted"><i class="fas fa-fw fa-sm fa-book mr-1"></i> Read documentation</small>
 
                 <div class="mt-2"><span class="h6">Docs</span></div>
@@ -452,9 +599,9 @@
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
-            <div class="card-body">
+            <div class="card-body text-truncate">
                 <small class="text-muted"><i class="fas fa-fw fa-sm fa-history mr-1"></i> Read changelog</small>
 
                 <div class="mt-2"><span class="h6">Changelog</span></div>
@@ -468,9 +615,9 @@
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
-            <div class="card-body">
+            <div class="card-body text-truncate">
                 <small class="text-muted"><i class="fas fa-fw fa-sm fa-globe mr-1"></i> Official website</small>
 
                 <div class="mt-2"><span class="h6">altumcode.com</span></div>
@@ -484,9 +631,9 @@
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
-            <div class="card-body">
+            <div class="card-body text-truncate">
                 <small class="text-muted"><i class="fas fa-fw fa-sm fa-envelope mr-1"></i> Get support</small>
 
                 <div class="mt-2"><span class="h6">support@altumcode.com</span></div>
@@ -500,9 +647,9 @@
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-xl-4 mb-4 position-relative">
+    <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
         <div class="card d-flex flex-row h-100 overflow-hidden">
-            <div class="card-body">
+            <div class="card-body text-truncate">
                 <small class="text-muted"><i class="fab fa-fw fa-sm fa-twitter mr-1"></i> X</small>
 
                 <div class="mt-2"><span class="h6">@altumcode</span></div>
@@ -516,3 +663,59 @@
         </div>
     </div>
 </div>
+
+<?php ob_start() ?>
+<script>
+    'use strict';
+    
+    (async function fetch_statistics() {
+        /* Send request to server */
+        let response = await fetch(`${url}admin/index/get_stats_ajax`, {
+            method: 'get',
+        });
+
+        let data = null;
+        try {
+            data = await response.json();
+        } catch (error) {
+            /* :)  */
+        }
+
+        if(!response.ok) {
+            /* :)  */
+        }
+
+        if(data.status == 'error') {
+            /* :)  */
+        } else if(data.status == 'success') {
+            document.querySelector('#biolink_links').innerHTML = data.details.biolink_links ? nr(data.details.biolink_links) : 0;
+            document.querySelector('#biolink_links_current_month').innerHTML = data.details.biolink_links_current_month ? nr(data.details.biolink_links_current_month) : 0;
+
+            document.querySelector('#shortened_links').innerHTML = data.details.shortened_links ? nr(data.details.shortened_links) : 0;
+            document.querySelector('#shortened_links_current_month').innerHTML = data.details.shortened_links_current_month ? nr(data.details.shortened_links_current_month) : 0;
+
+            document.querySelector('#track_links').innerHTML = data.details.track_links ? nr(data.details.track_links) : 0;
+            document.querySelector('#track_links_current_month').innerHTML = data.details.track_links_current_month ? nr(data.details.track_links_current_month) : 0;
+
+            document.querySelector('#qr_codes').innerHTML = data.details.qr_codes ? nr(data.details.qr_codes) : 0;
+            document.querySelector('#qr_codes_current_month').innerHTML = data.details.qr_codes_current_month ? nr(data.details.qr_codes_current_month) : 0;
+
+            document.querySelector('#domains').innerHTML = data.details.domains ? nr(data.details.domains) : 0;
+            document.querySelector('#domains_current_month').innerHTML = data.details.domains_current_month ? nr(data.details.domains_current_month) : 0;
+
+            document.querySelector('#payments_total_amount').innerHTML = data.details.payments_total_amount ? nr(data.details.payments_total_amount) : 0;
+            document.querySelector('#users_current_month').innerHTML = data.details.users_current_month ? nr(data.details.users_current_month) : 0;
+
+            document.querySelector('#users').innerHTML = data.details.users ? nr(data.details.users) : 0;
+            document.querySelector('#payments_current_month').innerHTML = data.details.payments_current_month ? nr(data.details.payments_current_month) : 0;
+
+            document.querySelector('#payments').innerHTML = data.details.payments ? nr(data.details.payments) : 0;
+            document.querySelector('#payments_amount_current_month').innerHTML = data.details.payments_amount_current_month ? nr(data.details.payments_amount_current_month) : 0;
+
+            let active_users = data.details.active_users ? nr(data.details.active_users) : 0;
+            document.querySelector('#active_users').innerHTML = document.querySelector('#active_users').getAttribute('data-translation').replace('%s', active_users);
+
+        }
+    })();
+</script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

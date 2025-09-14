@@ -29,12 +29,12 @@
                 <div class="input-group">
                     <input type="text" id="name" name="name" value="<?= $data->template->name ?>" class="form-control" maxlength="64" required="required" />
                     <div class="input-group-append">
-                        <button class="btn btn-dark" type="button" data-toggle="collapse" data-target="#name_translate_container" aria-expanded="false" aria-controls="name_translate_container" data-tooltip title="<?= l('admin_templates.main.translate') ?>"><i class="fas fa-fw fa-sm fa-language"></i></button>
+                        <button class="btn btn-dark" type="button" data-toggle="collapse" data-target="#name_translate_container" aria-expanded="false" aria-controls="name_translate_container" data-tooltip title="<?= l('global.translate') ?>" data-tooltip-hide-on-click><i class="fas fa-fw fa-sm fa-language"></i></button>
                     </div>
                 </div>
             </div>
 
-            <div class="collapses show" id="name_translate_container">
+            <div class="collapse show" id="name_translate_container">
                 <div class="p-3 bg-gray-50 rounded mb-4">
                     <?php foreach(\Altum\Language::$active_languages as $language_name => $language_code): ?>
                         <div class="form-group">
@@ -71,7 +71,7 @@
 
             <div class="form-group">
                 <label for="prompt"><i class="fas fa-fw fa-sm fa-terminal text-muted mr-1"></i> <?= l('admin_templates.main.prompt') ?></label>
-                <textarea id="prompt" name="prompt" class="form-control" placeholder="<?= l('admin_templates.main.prompt_placeholder') ?>" maxlength="2048" required="required"><?= $data->template->prompt ?></textarea>
+                <textarea id="prompt" name="prompt" class="form-control" placeholder="<?= l('admin_templates.main.prompt_placeholder') ?>" maxlength="5000" required="required"><?= $data->template->prompt ?></textarea>
                 <small class="form-text text-muted"><?= l('admin_templates.main.prompt_help') ?></small>
             </div>
 
@@ -159,7 +159,7 @@
 
             <div class="form-group custom-control custom-switch">
                 <input id="is_enabled" name="is_enabled" type="checkbox" class="custom-control-input" <?= $data->template->is_enabled ? 'checked="checked"' : null?>>
-                <label class="custom-control-label" for="is_enabled"><i class="fas fa-fw fa-sm fa-dot-circle text-muted mr-1"></i> <?= l('global.status') ?></label>
+                <label class="custom-control-label" for="is_enabled"><?= l('global.status') ?></label>
             </div>
 
             <button type="submit" name="submit" class="btn btn-lg btn-block btn-primary mt-4"><?= l('global.update') ?></button>
@@ -232,8 +232,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    /* add new */
+    
+/* add new */
     let input_add = event => {
         let clone = document.querySelector(`#template_input`).content.cloneNode(true);
 

@@ -1,13 +1,22 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Models;
+
+defined('ALTUMCODE') || die();
 
 class TemplatesCategories extends Model {
 
@@ -17,7 +26,7 @@ class TemplatesCategories extends Model {
         $templates_categories = [];
 
         /* Try to check if the user posts exists via the cache */
-        $cache_instance = \Altum\Cache::$adapter->getItem('templates_categories');
+        $cache_instance = cache()->getItem('templates_categories');
 
         /* Set cache if not existing */
         if(is_null($cache_instance->get())) {
@@ -29,7 +38,7 @@ class TemplatesCategories extends Model {
                 $templates_categories[$row->template_category_id] = $row;
             }
 
-            \Altum\Cache::$adapter->save(
+            cache()->save(
                 $cache_instance->set($templates_categories)->expiresAfter(CACHE_DEFAULT_SECONDS)
             );
 

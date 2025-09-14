@@ -18,7 +18,7 @@
                     <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
                     <input type="hidden" name="type" value="password" />
 
-                    <div class="form-group">
+                    <div class="form-group" data-password-toggle-view data-password-toggle-view-show="<?= l('global.show') ?>" data-password-toggle-view-hide="<?= l('global.hide') ?>">
                         <label for="password"><?= l('global.password') ?></label>
                         <input type="password" id="password" name="password" value="" class="form-control <?= \Altum\Alerts::has_field_errors('password') ? 'is-invalid' : null ?>" required="required" />
                         <?= \Altum\Alerts::output_field_error('password') ?>

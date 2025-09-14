@@ -29,7 +29,7 @@
                 <div class="input-group">
                     <input type="text" id="name" name="name" value="<?= $data->template_category->name ?>" class="form-control" maxlength="64" required="required" />
                     <div class="input-group-append">
-                        <button class="btn btn-dark" type="button" data-toggle="collapse" data-target="#name_translate_container" aria-expanded="false" aria-controls="name_translate_container" data-tooltip title="<?= l('admin_templates_categories.main.translate') ?>"><i class="fas fa-fw fa-sm fa-language"></i></button>
+                        <button class="btn btn-dark" type="button" data-toggle="collapse" data-target="#name_translate_container" aria-expanded="false" aria-controls="name_translate_container" data-tooltip title="<?= l('global.translate') ?>"><i class="fas fa-fw fa-sm fa-language"></i></button>
                     </div>
                 </div>
             </div>
@@ -90,7 +90,7 @@
 
             <div class="form-group custom-control custom-switch">
                 <input id="is_enabled" name="is_enabled" type="checkbox" class="custom-control-input" <?= $data->template_category->is_enabled ? 'checked="checked"' : null?>>
-                <label class="custom-control-label" for="is_enabled"><i class="fas fa-fw fa-sm fa-dot-circle text-muted mr-1"></i> <?= l('global.status') ?></label>
+                <label class="custom-control-label" for="is_enabled"><?= l('global.status') ?></label>
             </div>
 
             <button type="submit" name="submit" class="btn btn-lg btn-block btn-primary mt-4"><?= l('global.update') ?></button>

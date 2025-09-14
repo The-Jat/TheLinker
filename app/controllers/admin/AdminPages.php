@@ -1,22 +1,31 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum\Controllers;
 
 use Altum\Alerts;
 
+defined('ALTUMCODE') || die();
+
 class AdminPages extends Controller {
 
     public function index() {
 
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['is_published', 'pages_category_id'], ['title', 'url', 'description', 'keywords'], ['datetime', 'last_datetime']));
+        $filters = (new \Altum\Filters(['is_published', 'pages_category_id'], ['title', 'url', 'description', 'keywords'], ['page_id', 'datetime', 'last_datetime']));
         $filters->set_default_order_by('page_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
@@ -78,7 +87,7 @@ class AdminPages extends Controller {
             redirect('admin/pages');
         }
 
-        if(!isset($_POST['type']) || (isset($_POST['type']) && !in_array($_POST['type'], ['delete']))) {
+        if(!isset($_POST['type'])) {
             redirect('admin/pages');
         }
 
@@ -89,6 +98,10 @@ class AdminPages extends Controller {
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+
+            set_time_limit(0);
+
+            session_write_close();
 
             switch($_POST['type']) {
                 case 'delete':
@@ -101,11 +114,13 @@ class AdminPages extends Controller {
             }
 
             /* Clear the cache */
-            \Altum\Cache::$adapter->deleteItems(['pages_top', 'pages_bottom', 'pages_hidden']);
-            \Altum\Cache::$adapter->deleteItemsByTag('pages');
+            cache()->deleteItems(['pages_top', 'pages_bottom', 'pages_hidden']);
+            cache()->deleteItemsByTag('pages');
 
+            session_start();
+            
             /* Set a nice success message */
-            Alerts::add_success(l('admin_bulk_delete_modal.success_message'));
+            Alerts::add_success(l('bulk_delete_modal.success_message'));
 
         }
 
@@ -132,8 +147,8 @@ class AdminPages extends Controller {
             db()->where('page_id', $page_id)->delete('pages');
 
             /* Clear the cache */
-            \Altum\Cache::$adapter->deleteItems(['pages_top', 'pages_bottom', 'pages_hidden']);
-            \Altum\Cache::$adapter->deleteItemsByTag('pages');
+            cache()->deleteItems(['pages_top', 'pages_bottom', 'pages_hidden']);
+            cache()->deleteItemsByTag('pages');
 
             /* Set a nice success message */
             Alerts::add_success(sprintf(l('global.success_message.delete1'), '<strong>' . $page->title . '</strong>'));

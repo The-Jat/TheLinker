@@ -16,9 +16,10 @@
             </div>
         </div>
 
-        <div class="chart-container">
+        <div class="chart-container <?= $data->total['total_affiliates_withdrawals'] ? null : 'd-none' ?>">
             <canvas id="affiliates_withdrawals"></canvas>
         </div>
+        <?= $data->total['total_affiliates_withdrawals'] ? null : include_view(THEME_PATH . 'views/partials/no_chart_data.php', ['has_wrapper' => false]); ?>
     </div>
 </div>
 <?php $html = ob_get_clean() ?>
@@ -26,20 +27,20 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-
-    let total_affiliates_withdrawals_color = css.getPropertyValue('--gray-500');
+    
+let total_affiliates_withdrawals_color = css.getPropertyValue('--gray-500');
     let amount_color = css.getPropertyValue('--primary');
 
     /* Display chart */
     let affiliates_withdrawals_chart = document.getElementById('affiliates_withdrawals').getContext('2d');
 
     let amount_color_gradient = affiliates_withdrawals_chart.createLinearGradient(0, 0, 0, 250);
-    amount_color_gradient.addColorStop(0, 'rgba(63, 136, 253, .1)');
-    amount_color_gradient.addColorStop(1, 'rgba(63, 136, 253, 0.025)')
+    amount_color_gradient.addColorStop(0, set_hex_opacity(amount_color, 0.1));
+    amount_color_gradient.addColorStop(1, set_hex_opacity(amount_color, 0.025));
 
     let total_affiliates_withdrawals_color_gradient = affiliates_withdrawals_chart.createLinearGradient(0, 0, 0, 250);
-    total_affiliates_withdrawals_color_gradient.addColorStop(0, 'rgba(160, 174, 192, .1)');
-    total_affiliates_withdrawals_color_gradient.addColorStop(1, 'rgba(160, 174, 192, 0.025)')
+    total_affiliates_withdrawals_color_gradient.addColorStop(0, set_hex_opacity(total_affiliates_withdrawals_color, 0.1));
+    total_affiliates_withdrawals_color_gradient.addColorStop(1, set_hex_opacity(total_affiliates_withdrawals_color, 0.025));
 
     new Chart(affiliates_withdrawals_chart, {
         type: 'line',

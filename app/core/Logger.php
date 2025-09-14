@@ -1,15 +1,22 @@
 <?php
 /*
- * @copyright Copyright (c) 2023 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
  *
- * This software is exclusively sold through https://altumcode.com/ by the AltumCode author.
- * Downloading this product from any other sources and running it without a proper license is illegal,
- *  except the official ones linked from https://altumcode.com/.
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
  */
 
 namespace Altum;
 
-use MaxMind\Db\Reader;
+defined('ALTUMCODE') || die();
 
 class Logger {
 
@@ -19,7 +26,7 @@ class Logger {
 
         /* Detect the location */
         try {
-            $maxmind = (new Reader(APP_PATH . 'includes/GeoLite2-City.mmdb'))->get($ip);
+            $maxmind = (get_maxmind_reader_city())->get($ip);
         } catch(\Exception $exception) {
             /* :) */
         }
@@ -34,7 +41,7 @@ class Logger {
         $browser_name = $whichbrowser->browser->name ?? null;
         $os_name = $whichbrowser->os->name ?? null;
         $browser_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? mb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
-        $device_type = get_device_type($_SERVER['HTTP_USER_AGENT']);
+        $device_type = get_this_device_type();
 
         db()->insert('users_logs', [
             'user_id'        => $user_id,
@@ -47,7 +54,7 @@ class Logger {
             'continent_code' => $continent_code,
             'country_code'   => $country_code,
             'city_name'      => $city_name,
-            'datetime'       => \Altum\Date::$date,
+            'datetime'       => get_date(),
         ]);
 
     }

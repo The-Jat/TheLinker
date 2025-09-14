@@ -21,7 +21,7 @@
             <form action="" method="post" role="form">
                 <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
 
-                <div class="form-group">
+                <div class="form-group" data-password-toggle-view data-password-toggle-view-show="<?= l('global.show') ?>" data-password-toggle-view-hide="<?= l('global.hide') ?>">
                     <label for="current_password"><i class="fas fa-fw fa-sm fa-unlock text-muted mr-1"></i> <?= l('account_delete.current_password') ?></label>
                     <input type="password" id="current_password" name="current_password" class="form-control <?= \Altum\Alerts::has_field_errors('current_password') ? 'is-invalid' : null ?>" required="required" />
                     <?= \Altum\Alerts::output_field_error('current_password') ?>

@@ -1,4 +1,23 @@
 /* Default chart settings */
+const set_hex_opacity = (color, alpha) => {
+    if (color.startsWith("#")) {
+        const r = parseInt(color.slice(1, 3), 16);
+        const g = parseInt(color.slice(3, 5), 16);
+        const b = parseInt(color.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    if (color.startsWith("hsl")) {
+        const [h, s, l] = color.match(/[\d.]+/g).map(Number);
+        const k = n => (n + h / 30) % 12;
+        const a_ = s * Math.min(l, 100 - l) / 100;
+        const f = n => Math.round((l - a_ * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))) * 2.55);
+        return `rgba(${f(0)}, ${f(8)}, ${f(4)}, ${alpha})`;
+    }
+
+    throw new Error("Unsupported color format");
+};
+
 Chart.defaults.elements.line.borderWidth = 4;
 Chart.defaults.elements.point.radius = 3;
 Chart.defaults.elements.point.hoverRadius = 4;
@@ -10,19 +29,6 @@ let chart_css = window.getComputedStyle(document.body);
 
 /* Default chart options */
 let chart_options = {
-    // animation: false,
-    // animations: {
-    //     colors: false,
-    //     x: false,
-    // },
-    // transitions: {
-    //     active: {
-    //         animation: {
-    //             duration: 0
-    //         }
-    //     }
-    // },
-
     responsiveAnimationDuration: 0,
     elements: {
         line: {

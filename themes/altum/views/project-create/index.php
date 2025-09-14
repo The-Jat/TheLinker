@@ -28,9 +28,9 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="color"><i class="fas fa-fw fa-palette fa-sm text-muted mr-1"></i> <?= l('projects.input.color') ?></label>
+                    <label for="color"><i class="fas fa-fw fa-palette fa-sm text-muted mr-1"></i> <?= l('projects.color') ?></label>
                     <input type="hidden" id="color" name="color" class="form-control" value="<?= $data->values['color'] ?>" required="required" data-color-picker />
-                    <small class="text-muted form-text"><?= l('projects.input.color_help') ?></small>
+                    <small class="text-muted form-text"><?= l('projects.color_help') ?></small>
                 </div>
 
                 <button type="submit" name="submit" class="btn btn-block btn-primary"><?= l('global.create') ?></button>
