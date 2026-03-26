@@ -511,7 +511,7 @@
 
                             <td class="text-nowrap">
                                 <a href="<?= url('admin/payments?processor=' . $row->processor) ?>" class="badge badge-light">
-                                    <i class="<?= $data->payment_processors[$row->processor]['icon'] ?> fa-fw fa-sm mr-1" style="color: <?= $data->payment_processors[$row->processor]['color'] ?>"></i>
+                                    <i class="<?= $data->payment_processors[$row->processor]['icon'] ?> fa-fw mr-1" style="--brand-color: <?= $data->payment_processors[$row->processor]['color'] ?>;--brand-color-dark: <?= $data->payment_processors[$row->processor]['dark_color'] ?>; color: var(--brand-color)" data-custom-colors></i>
                                     <?= l('pay.custom_plan.' . $row->processor) ?>
                                 </a>
                             </td>
@@ -667,7 +667,7 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
+
     (async function fetch_statistics() {
         /* Send request to server */
         let response = await fetch(`${url}admin/index/get_stats_ajax`, {

@@ -28,7 +28,7 @@
                     </div>
 
                     <p class="small text-muted"><i class="fas fa-fw fa-sm fa-circle-info mr-1"></i> <?= l('link.create_info') ?></p>
-                    
+
                     <div class="text-center mt-4">
                         <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('link.biolink.create_block') ?></button>
                     </div>
@@ -39,9 +39,17 @@
 </div>
 
 <template id="template_image_slider_item">
-    <div class="mb-4">
+    <div class="mb-4 p-3 bg-gray-50 rounded">
         <div class="form-group">
-            <label for=""><i class="fas fa-fw fa-image fa-sm text-muted mr-1"></i> <?= l('global.image') ?></label>
+            <div class="d-flex justify-content-between">
+                <label for="<?= 'item_image_' . $key . '_' . $row->biolink_block_id ?>"><i class="fas fa-fw fa-image fa-sm text-muted mr-1"></i> <?= l('global.image') ?></label>
+
+                <div>
+                    <span class="custom-row-side-controller-grab drag" data-toggle="tooltip" title="<?= l('global.drag_and_drop') ?>">
+                        <i class="fas fa-fw fa-sm fa-bars text-muted"></i>
+                    </span>
+                </div>
+            </div>
             <input id="" type="file" name="item_image_" accept="<?= \Altum\Uploads::array_to_list_format($data->biolink_blocks['image_slider']['whitelisted_image_extensions']) ?>" class="form-control-file altum-file-input" required="required" data-crop data-aspect-ratio="1" />
             <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::array_to_list_format($data->biolink_blocks['image_slider']['whitelisted_image_extensions'])) . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->links->image_size_limit) ?></small>
         </div>
@@ -54,7 +62,7 @@
 
         <div class="form-group">
             <label for=""><i class="fas fa-fw fa-link fa-sm text-muted mr-1"></i> <?= l('biolink_link.location_url') ?></label>
-            <input id="" type="text" class="form-control" name="item_location_url[]" maxlength="2048" />
+            <input id="" type="url" class="form-control" name="item_location_url[]" maxlength="2048" placeholder="<?= l('global.url_placeholder') ?>" />
         </div>
 
         <button type="button" data-remove="item" class="btn btn-block btn-sm btn-outline-danger"><i class="fas fa-fw fa-times"></i> <?= l('global.delete') ?></button>
@@ -64,7 +72,7 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
+
 $('#create_biolink_image_slider').on('shown.bs.modal', event => {
         $(event.currentTarget).find('button[data-add]').click();
     })
@@ -74,7 +82,7 @@ $('#create_biolink_image_slider').on('shown.bs.modal', event => {
 <?php ob_start() ?>
 <script>
     'use strict';
-    
+
     /* Image slider Script */
     'use strict';
 

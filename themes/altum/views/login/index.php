@@ -18,7 +18,7 @@
 <h1 class="h5"><?= sprintf(l('login.header'), settings()->main->title) ?></h1>
 
 <form action="" method="post" class="mt-4" role="form">
-    <?php if(isset($_SESSION['twofa_required']) && $data->user && $data->user->twofa_secret && $data->user->status == 1): ?>
+    <?php if(session_has('twofa_required') && $data->user && $data->user->twofa_secret && $data->user->status == 1): ?>
         <input id="email" type="hidden" name="email" value="<?= $data->user ? $data->values['email'] : null ?>" required="required" />
         <input id="password" type="hidden" name="password" value="<?= $data->user ? $data->values['password'] : null ?>" required="required" />
         <input id="rememberme" type="hidden" name="rememberme" value="<?= $data->values['rememberme'] ? '1' : null ?>">

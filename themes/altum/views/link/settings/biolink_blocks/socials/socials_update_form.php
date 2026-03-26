@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<form name="update_biolink_" method="post" role="form" data-type="<?= $row->type ?>" enctype="multipart/form-data">
+<form id="<?= 'update_biolink_block_' . $row->biolink_block_id ?>" name="update_biolink_" method="post" role="form" data-type="<?= $row->type ?>" enctype="multipart/form-data">
     <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" required="required" />
     <input type="hidden" name="request_type" value="update" />
     <input type="hidden" name="block_type" value="socials" />
@@ -22,21 +22,21 @@
 
     <div class="form-group">
         <label for="<?= 'block_border_radius_' . $row->biolink_block_id ?>"><i class="fas fa-fw fa-border-all fa-sm text-muted mr-1"></i> <?= l('biolink_link.border_radius') ?></label>
-        <div class="row btn-group-toggle" data-toggle="buttons">
-            <div class="col-4">
-                <label class="btn btn-light btn-block text-truncate <?= ($row->settings->border_radius  ?? null) == 'straight' ? 'active"' : null?>">
+        <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+            <div class="p-2 col-4">
+                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= ($row->settings->border_radius  ?? null) == 'straight' ? 'active"' : null?>">
                     <input type="radio" name="border_radius" value="straight" class="custom-control-input" <?= ($row->settings->border_radius  ?? null) == 'straight' ? 'checked="checked"' : null?> />
                     <i class="fas fa-fw fa-square-full fa-sm mr-1"></i> <?= l('biolink_link.border_radius_straight') ?>
                 </label>
             </div>
-            <div class="col-4">
-                <label class="btn btn-light btn-block text-truncate <?= ($row->settings->border_radius  ?? null) == 'round' ? 'active' : null?>">
+            <div class="p-2 col-4">
+                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= ($row->settings->border_radius  ?? null) == 'round' ? 'active' : null?>">
                     <input type="radio" name="border_radius" value="round" class="custom-control-input" <?= ($row->settings->border_radius  ?? null) == 'round' ? 'checked="checked"' : null?> />
                     <i class="fas fa-fw fa-circle fa-sm mr-1"></i> <?= l('biolink_link.border_radius_round') ?>
                 </label>
             </div>
-            <div class="col-4">
-                <label class="btn btn-light btn-block text-truncate <?= ($row->settings->border_radius  ?? null) == 'rounded' ? 'active' : null?>">
+            <div class="p-2 col-4">
+                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= ($row->settings->border_radius  ?? null) == 'rounded' ? 'active' : null?>">
                     <input type="radio" name="border_radius" value="rounded" class="custom-control-input" <?= ($row->settings->border_radius  ?? null) == 'rounded' ? 'checked="checked"' : null?> />
                     <i class="fas fa-fw fa-square fa-sm mr-1"></i> <?= l('biolink_link.border_radius_rounded') ?>
                 </label>
@@ -77,7 +77,7 @@
         <i class="fas fa-fw fa-display fa-sm mr-1"></i> <?= l('biolink_link.display_settings_header') ?>
     </button>
 
-    <div class="collapse" id="<?= 'display_settings_container_' . $row->biolink_block_id ?>">
+    <div class="collapse" data-parent="<?= '#update_biolink_block_' . $row->biolink_block_id ?>" id="<?= 'display_settings_container_' . $row->biolink_block_id ?>">
         <div <?= $this->user->plan_settings->temporary_url_is_enabled ? null : get_plan_feature_disabled_info() ?>>
             <div class="<?= $this->user->plan_settings->temporary_url_is_enabled ? null : 'container-disabled' ?>">
                 <div class="form-group custom-control custom-switch">

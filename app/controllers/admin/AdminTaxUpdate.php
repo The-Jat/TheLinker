@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -23,6 +23,10 @@ defined('ALTUMCODE') || die();
 class AdminTaxUpdate extends Controller {
 
     public function index() {
+
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            redirect('admin');
+        }
 
         $tax_id = isset($this->params[0]) ? (int) $this->params[0] : null;
 

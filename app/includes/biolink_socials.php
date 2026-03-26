@@ -137,12 +137,6 @@ return [
         'max_length' => 128,
         'icon' => 'fab fa-spotify'
     ],
-    'skype'=> [
-        'format' => 'https://join.skype.com/invite/%s',
-        'input_group' => true,
-        'max_length' => 256,
-        'icon' => 'fab fa-skype'
-    ],
     'signal'=> [
         'format' => 'https://signal.me/%s',
         'input_group' => true,

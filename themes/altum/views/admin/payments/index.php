@@ -11,6 +11,10 @@
     <h1 class="h3 mb-3 mb-md-0 text-truncate"><i class="fas fa-fw fa-xs fa-credit-card text-primary-900 mr-2"></i> <?= l('admin_payments.header') ?></h1>
 
     <div class="d-flex position-relative d-print-none">
+        <div>
+            <a href="<?= url('admin/payment-create') ?>" class="btn btn-primary text-nowrap"><i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('admin_payment_create.menu') ?></a>
+        </div>
+
         <div class="ml-3">
             <a href="<?= url('admin/statistics/payments') ?>" class="btn btn-gray-300" data-tooltip title="<?= l('global.statistics') ?>">
                 <i class="fas fa-fw fa-sm fa-chart-bar"></i>
@@ -30,7 +34,7 @@
                     <a href="<?= url('admin/payments?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                     </a>
-                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                     </a>
                 </div>
@@ -72,8 +76,10 @@
                             <label for="filters_status" class="small"><?= l('global.status') ?></label>
                             <select name="status" id="filters_status" class="custom-select custom-select-sm">
                                 <option value=""><?= l('global.all') ?></option>
-                                <option value="1" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == '1' ? 'selected="selected"' : null ?>><?= l('admin_payments.filters.status_paid') ?></option>
-                                <option value="0" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == '0' ? 'selected="selected"' : null ?>><?= l('admin_payments.filters.status_pending') ?></option>
+                                <option value="paid" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == 'paid' ? 'selected="selected"' : null ?>><?= l('admin_payments.status.paid') ?></option>
+                                <option value="pending" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == 'pending' ? 'selected="selected"' : null ?>><?= l('admin_payments.status.pending') ?></option>
+                                <option value="cancelled" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == 'cancelled' ? 'selected="selected"' : null ?>><?= l('admin_payments.status.cancelled') ?></option>
+                                <option value="refunded" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == 'refunded' ? 'selected="selected"' : null ?>><?= l('admin_payments.status.refunded') ?></option>
                             </select>
                         </div>
 
@@ -175,6 +181,8 @@
         <?php foreach($data->payments as $row): ?>
             <?php //ALTUMCODE:DEMO if(DEMO) {$row->email = $row->user_email = 'hidden@demo.com'; $row->name = $row->user_name = 'hidden on demo';} ?>
             <?php $row->taxes_ids = json_decode($row->taxes_ids ?? ''); ?>
+            <?php $row->refunds = json_decode($row->refunds ?? '[]'); ?>
+
             <tr>
                 <td class="text-nowrap">
                     <div class="d-flex align-items-center">
@@ -201,7 +209,7 @@
                 </td>
 
                 <td class="text-nowrap">
-                    <?php if(isset($data->plans[$row->plan_id])): ?>
+                    <?php if(isset($data->plans[$row->plan_id ?? ''])): ?>
                         <a href="<?= url('admin/plan-update/' . $row->plan_id) ?>" class="badge badge-light">
                             <?= $data->plans[$row->plan_id]->name ?>
                         </a>
@@ -211,22 +219,32 @@
                 </td>
 
                 <td class="text-nowrap">
-                    <span class="badge badge-success"><?= nr($row->total_amount, 2) . ' ' . $row->currency ?></span>
+                    <?php if($row->status == 'paid'): ?>
+                        <a href="<?= url('admin/payments?status=' . $row->status) ?>" class="badge badge-success mr-1" data-toggle="tooltip" title="<?= l('admin_payments.status.' . $row->status) ?>"><i class="fas fa-fw fa-sm fa-check"></i></a>
+                    <?php elseif($row->status == 'pending'): ?>
+                        <a href="<?= url('admin/payments?status=' . $row->status) ?>" class="badge badge-warning mr-1" data-toggle="tooltip" title="<?= l('admin_payments.status.' . $row->status) ?>"><i class="fas fa-fw fa-sm fa-spinner fa-spin"></i></a>
+                    <?php elseif($row->status == 'cancelled'): ?>
+                        <a href="<?= url('admin/payments?status=' . $row->status) ?>" class="badge badge-danger mr-1" data-toggle="tooltip" title="<?= l('admin_payments.status.' . $row->status) ?>"><i class="fas fa-fw fa-sm fa-times"></i></a>
+                    <?php elseif($row->status == 'refunded'): ?>
+                        <a href="<?= url('admin/payments?status=' . $row->status) ?>" class="badge badge-light mr-1" data-toggle="tooltip" title="<?= $row->refunded_total == $row->total_amount ? l('admin_payments.status.fully_refunded') . ($row->refunds[0]->origin == 'chargeback' ? ' &bullet; ' . l('admin_payment_refund_modal.origin.chargeback') : null) : l('admin_payments.status.partially_refunded') ?>"><i class="fas fa-fw fa-sm fa-redo"></i></a>
+                    <?php endif ?>
+
+                    <span class="badge badge-success ml-1"><?= nr($row->total_amount, 2) . ' ' . $row->currency ?></span>
                 </td>
 
                 <td class="text-nowrap">
-                    <div class="d-flex flex-column">
-                        <span><?= l('pay.custom_plan.' . $row->type . '_type') ?></span>
+                    <?php if($row->type == 'one_time'): ?>
+                        <a href="<?= url('admin/payments?type=' . $row->type) ?>" class="badge badge-info mr-1" data-toggle="tooltip" title="<?= l('pay.custom_plan.' . $row->type . '_type') ?>"><i class="fas fa-fw fa-sm fa-bolt"></i></a>
+                    <?php elseif($row->type == 'recurring'): ?>
+                        <a href="<?= url('admin/payments?type=' . $row->type) ?>" class="badge badge-primary mr-1" data-toggle="tooltip" title="<?= l('pay.custom_plan.' . $row->type . '_type') ?>"><i class="fas fa-fw fa-sm fa-sync fa-spin"></i></a>
+                    <?php endif ?>
 
-                        <div>
-                            <span class="small text-muted"><?= l('pay.custom_plan.' . $row->frequency) ?></span>
-                        </div>
-                    </div>
+                    <span class="small text-muted"><?= l('pay.custom_plan.' . $row->frequency) ?></span>
                 </td>
 
                 <td class="text-nowrap">
                     <a href="<?= url('admin/payments?processor=' . $row->processor) ?>" class="badge badge-light">
-                        <i class="<?= $data->payment_processors[$row->processor]['icon'] ?> fa-fw fa-sm mr-1" style="color: <?= $data->payment_processors[$row->processor]['color'] ?>"></i>
+                        <i class="<?= $data->payment_processors[$row->processor]['icon'] ?> fa-fw mr-1" style="--brand-color: <?= $data->payment_processors[$row->processor]['color'] ?>;--brand-color-dark: <?= $data->payment_processors[$row->processor]['dark_color'] ?>; color: var(--brand-color)" data-custom-colors></i>
                         <?= l('pay.custom_plan.' . $row->processor) ?>
                     </a>
                 </td>
@@ -259,7 +277,9 @@
                             'id' => $row->id,
                             'payment_proof' => $row->payment_proof,
                             'processor' => $row->processor,
-                            'status' => $row->status
+                            'status' => $row->status,
+                            'currency' => $row->currency,
+                            'refund_remaining_amount' => number_format($row->total_amount - $row->refunded_total, 2, '.', ''),
                         ]) ?>
                     </div>
                 </td>

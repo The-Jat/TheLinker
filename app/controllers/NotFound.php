@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -22,12 +22,12 @@ class NotFound extends Controller {
 
     public function index() {
 
+        http_response_code(404);
+
         /* Custom 404 redirect if set */
         if(!empty(settings()->main->not_found_url)) {
             header('Location: ' . settings()->main->not_found_url); die();
         }
-
-        header('HTTP/1.0 404 Not Found');
 
         $view = new \Altum\View('notfound/index', (array) $this);
 

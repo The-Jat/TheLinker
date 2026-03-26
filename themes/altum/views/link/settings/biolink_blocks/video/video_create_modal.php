@@ -29,7 +29,7 @@
 
                     <div class="form-group">
                         <label for="video_poster_url"><i class="fas fa-fw fa-image fa-sm text-muted mr-1"></i> <?= l('biolink_video.poster_url') ?></label>
-                        <input id="video_poster_url" type="url" name="poster_url" maxlength="2048" class="form-control" />
+                        <input id="video_poster_url" type="url" name="poster_url" maxlength="2048" class="form-control" placeholder="<?= l('global.url_placeholder') ?>" />
                     </div>
 
                     <div class="form-group">
@@ -38,7 +38,7 @@
                     </div>
 
                     <p class="small text-muted"><i class="fas fa-fw fa-sm fa-circle-info mr-1"></i> <?= l('link.create_info') ?></p>
-                    
+
                     <div class="text-center mt-4">
                         <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('link.biolink.create_block') ?></button>
                     </div>

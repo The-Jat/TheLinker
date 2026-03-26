@@ -32,16 +32,16 @@
 
             <div class="form-group">
                 <label for="type"><i class="fas fa-fw fa-sm fa-fingerprint text-muted mr-1"></i> <?= l('global.type') ?></label>
-                <div class="row btn-group-toggle" data-toggle="buttons">
-                    <div class="col-12 col-lg-6">
-                        <label class="btn btn-light btn-block text-truncate <?= $data->code->type == 'discount' ? 'active"' : null?>">
+                <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+                    <div class="p-2 col-12 col-lg-6">
+                        <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->code->type == 'discount' ? 'active"' : null?>">
                             <input type="radio" name="type" value="discount" class="custom-control-input" <?= $data->code->type == 'discount' ? 'checked="checked"' : null?> required="required" />
                             <i class="fas fa-percent fa-fw fa-sm mr-1"></i> <?= l('admin_codes.type_discount') ?>
                         </label>
                     </div>
 
-                    <div class="col-12 col-lg-6">
-                        <label class="btn btn-light btn-block text-truncate <?= $data->code->type == 'redeemable' ? 'active"' : null?>">
+                    <div class="p-2 col-12 col-lg-6">
+                        <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->code->type == 'redeemable' ? 'active"' : null?>">
                             <input type="radio" name="type" value="redeemable" class="custom-control-input" <?= $data->code->type == 'redeemable' ? 'checked="checked"' : null?> required="required" />
                             <i class="fas fa-parachute-box fa-fw fa-sm mr-1"></i> <?= l('admin_codes.type_redeemable') ?>
                         </label>
@@ -88,6 +88,45 @@
                 </div>
             </div>
 
+            <div class="form-group custom-control custom-switch">
+                <input id="is_scheduled" name="is_scheduled" type="checkbox" class="custom-control-input" <?= !empty($data->code->start_datetime) || !empty($data->code->end_datetime) ? 'checked="checked"' : null ?>>
+                <label class="custom-control-label" for="is_scheduled"><?= l('admin_codes.is_scheduled') ?></label>
+            </div>
+
+            <div id="is_scheduled_container">
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="start_datetime"><i class="fas fa-fw fa-hourglass-start fa-sm text-muted mr-1"></i> <?= l('admin_codes.start_datetime') ?></label>
+                            <input
+                                    id="start_datetime"
+                                    type="text"
+                                    class="form-control"
+                                    name="start_datetime"
+                                    value="<?= \Altum\Date::get($data->code->start_datetime, 1) ?>"
+                                    autocomplete="off"
+                                    data-daterangepicker
+                            >
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="end_datetime"><i class="fas fa-fw fa-hourglass-end fa-sm text-muted mr-1"></i> <?= l('admin_codes.end_datetime') ?></label>
+                            <input
+                                    id="end_datetime"
+                                    type="text"
+                                    class="form-control"
+                                    name="end_datetime"
+                                    value="<?= \Altum\Date::get($data->code->end_datetime, 1) ?>"
+                                    autocomplete="off"
+                                    data-daterangepicker
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="alert alert-info" role="alert">
                 <?= l('admin_code_update.subheader') ?>
             </div>
@@ -102,14 +141,52 @@
     </div>
 </div>
 
+
 <?php ob_start() ?>
+<link href="<?= ASSETS_FULL_URL . 'css/libraries/daterangepicker.min.css?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
+<?php \Altum\Event::add_content(ob_get_clean(), 'head') ?>
+
+<?php ob_start() ?>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment.min.js?v=' . PRODUCT_CODE ?>"></script>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/daterangepicker.min.js?v=' . PRODUCT_CODE ?>"></script>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/moment-timezone-with-data-10-year-range.min.js?v=' . PRODUCT_CODE ?>"></script>
+
 <script>
     'use strict';
-    
+
+    /* Scheduling */
+    let scheduling_checker = () => {
+        let is_scheduled = document.querySelector('#is_scheduled').checked;
+        if(is_scheduled) {
+            document.querySelector('#is_scheduled_container').classList.remove('d-none');
+        } else {
+            document.querySelector('#is_scheduled_container').classList.add('d-none');
+        }
+    }
+
+    scheduling_checker();
+
+    document.querySelector('#is_scheduled').addEventListener('change', scheduling_checker);
+
+    /* Daterangepicker */
+    let locale = <?= json_encode(require APP_PATH . 'includes/daterangepicker_translations.php') ?>;
+    $('[data-daterangepicker]').daterangepicker({
+        minDate: "<?= (new \DateTime('', new \DateTimeZone(\Altum\Date::$default_timezone)))->setTimezone(new \DateTimeZone($this->user->timezone))->format('Y-m-d H:i:s'); ?>",
+        alwaysShowCalendars: true,
+        singleCalendar: true,
+        singleDatePicker: true,
+        locale: {...locale, format: 'YYYY-MM-DD HH:mm:ss'},
+        timePicker: true,
+        timePicker24Hour: true,
+        timePickerSeconds: true,
+    }, (start, end, label) => {});
+
+    /* Code type handler */
     type_handler('input[name="type"]', 'data-type');
     document.querySelector('input[name="type"]') && document.querySelectorAll('input[name="type"]').forEach(element => element.addEventListener('change', () => { type_handler('input[name="type"]', 'data-type'); }));
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+
 
 <?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/universal_delete_modal_url.php', [
     'name' => 'code',

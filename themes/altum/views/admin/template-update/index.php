@@ -155,6 +155,7 @@
             <div class="form-group">
                 <label for="order"><i class="fas fa-fw fa-sm fa-sort text-muted mr-1"></i> <?= l('global.order') ?></label>
                 <input id="order" type="number" name="order" value="<?= $data->template->order ?>" class="form-control" />
+                <small class="form-text text-muted"><?= l('global.order_int_help') ?></small>
             </div>
 
             <div class="form-group custom-control custom-switch">
@@ -232,7 +233,7 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
+
 /* add new */
     let input_add = event => {
         let clone = document.querySelector(`#template_input`).content.cloneNode(true);

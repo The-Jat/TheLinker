@@ -34,6 +34,10 @@ class NotificationHandlers extends Model {
 
             /* Get data from the database */
             $notification_handlers_result = database()->query("SELECT * FROM `notification_handlers` WHERE `user_id` = {$user_id}");
+            if(!$notification_handlers_result) {
+    die(database()->error); // 👈 shows real SQL problem
+}
+
             while($row = $notification_handlers_result->fetch_object()) {
                 $row->settings = json_decode($row->settings ?? '');
                 $notification_handlers[$row->notification_handler_id] = $row;

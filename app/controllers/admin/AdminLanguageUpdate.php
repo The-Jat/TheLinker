@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -46,7 +46,7 @@ class AdminLanguageUpdate extends Controller {
 
             /* numbered placeholders like %1$s, %2$s... */
             preg_match_all('/%(\d+)\$s/', $safe_string, $numbered_matches);
-            if (!empty($numbered_matches[1])) {
+            if(!empty($numbered_matches[1])) {
                 /* allow repeats of the same index -> count unique indexes only */
                 $unique_indexes = array_unique(array_map('intval', $numbered_matches[1]));
                 return count($unique_indexes);
@@ -140,7 +140,7 @@ ALTUM;
             /* Check for any errors */
             $required_fields = ['language_name', 'language_code'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }

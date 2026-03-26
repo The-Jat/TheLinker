@@ -23,6 +23,7 @@ return [
     'global.edit' => 'Edit',
     'global.view' => 'View',
     'global.duplicate' => 'Duplicate',
+    'global.advanced' => 'Advanced',
     'global.transfer' => 'Transfer',
     'global.reset' => 'Reset',
     'global.share' => 'Share',
@@ -52,6 +53,7 @@ return [
     'global.download' => 'Download',
     'global.all' => 'All',
     'global.order' => 'Order',
+    'global.order_int_help' => 'Set a number to control the display position. Smaller numbers show first (ascending order).',
     'global.statistics' => 'Statistics',
     'global.download_as' => 'Download as %s',
     'global.export' => 'Export',
@@ -139,6 +141,9 @@ return [
     'global.day_part_afternoon' => 'Afternoon',
     'global.day_part_evening' => 'Evening',
     'global.day_part_night' => 'Night',
+    'global.csv_file' => 'CSV file',
+    'global.csv_file_help' => 'The CSV file must contain at least the following columns: %1$s. Optional columns: %2$s.',
+    'global.csv_file_help2' => 'Download CSV file example',
 
     'global.custom_css' => 'Custom CSS',
     'global.custom_css_placeholder' => 'body { background: blue !important; }',
@@ -151,6 +156,8 @@ return [
     'global.info_message.plan_feature_no_access' => 'Your current plan does not allow you to access this feature.',
     'global.info_message.plan_upgrade' => 'Upgrade your plan 🔐',
     'global.info_message.plan_feature_limit' => 'Your have exceeded the limits of your current plan.',
+    'global.info_message.plan_feature_limit_removal' => 'You must delete %1$s %2$s as you have exceeded your plan limits.',
+    'global.info_message.plan_feature_limit_removal_with_upgrade' => 'You must delete %1$s %2$s or %3$s as you have exceeded your plan limits.',
     'global.info_message.plan_feature_limit_info' => '%1$s out of %2$s used <br /> %3$s remaining',
     'global.info_message.plan_feature_limit_month_info' => '%1$s out of %2$s used <br /> %3$s remaining this month',
     'global.info_message.team_no_access' => 'Your team access does not allow you to use this feature.',
@@ -164,6 +171,7 @@ return [
     'global.success_message.update2' => 'Successfully updated.',
     'global.success_message.delete1' => '%s has been successfully deleted.',
     'global.success_message.delete2' => 'Successfully deleted.',
+    'global.success_message.csv_imported' => '%1$s %2$s have been successfully imported.',
 
     'global.error_message.directory_not_writable' => 'Directory <strong>%s</strong> is not writable. Please set the CHMOD permissions so this folder can be written.',
     'global.error_message.file_not_writable' => 'File <strong>%s</strong> is not writable . Please set the CHMOD permissions so this file can be written.',
@@ -226,10 +234,13 @@ return [
     'global.date.custom' => 'Custom',
     'global.date.today' => 'Today',
     'global.date.yesterday' => 'Yesterday',
-    'global.date.last_7_days' => 'Last 7 days',
+    'global.date.this_week' => 'This week',
+    'global.date.last_week' => 'Last week',
     'global.date.last_30_days' => 'Last 30 days',
     'global.date.this_month' => 'This month',
     'global.date.last_month' => 'Last month',
+    'global.date.this_year' => 'This year',
+    'global.date.last_year' => 'Last year',
     'global.date.all_time' => 'All time',
     'global.date.short_milliseconds' => 'ms',
     'global.date.short_seconds' => 's',
@@ -312,25 +323,31 @@ return [
     'global.emails.user_lost_password.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />This is your reset password link:<br /><br /><a href="{{LOST_PASSWORD_LINK}}" class="cta">Reset password</a><br /><br />If you did not request this, you can ignore it.<br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
 
     'global.emails.user_payment.subject' => 'Payment received - {{WEBSITE_TITLE}}',
-    'global.emails.user_payment.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />This is a confirmation that your payment has been received by us.<br /><br />You\'ve paid for the <strong>{{PLAN_NAME}}</strong> plan until <strong>{{PLAN_EXPIRATION_DATE}}</strong>.<br /><br />You can also check all the <a href="{{USER_PAYMENTS_LINK}}">payments</a> you made, <a href="{{USER_PLAN_LINK}}">change your plan</a> or <a href="{{USER_PLAN_LINK}}">cancel it</a>.<br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
+    'global.emails.user_payment.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />This is a confirmation that your payment (#{{PAYMENT_ID}}) has been received by us.<br /><br />You\'ve paid for the <strong>{{PLAN_NAME}}</strong> plan until <strong>{{PLAN_EXPIRATION_DATE}}</strong>.<br /><br />You can also check all the <a href="{{USER_PAYMENTS_LINK}}">payments</a> you made, <a href="{{USER_PLAN_LINK}}">change your plan</a> or <a href="{{USER_PLAN_LINK}}">cancel it</a>.<br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
 
-    'global.emails.user_data_collected.subject' => 'New data for \'{{BLOCK_TITLE}}\' - {{WEBSITE_TITLE}}',
+	'global.emails.user_payment_cancelled.subject' => 'Payment cancelled - {{WEBSITE_TITLE}}',
+    'global.emails.user_payment_cancelled.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />This is a notification that your payment (#{{PAYMENT_ID}}) has been cancelled.<br /><br />The payment was not completed, so no plan has been activated for your account.<br /><br />You can review all your <a href="{{USER_PAYMENTS_LINK}}">payments</a> or choose a <a href="{{USER_PAYMENTS_LINK}}">new plan</a> at any time.<br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
+
+	'global.emails.user_data_collected.subject' => 'New data for \'{{BLOCK_TITLE}}\' - {{WEBSITE_TITLE}}',
     'global.emails.user_data_collected_phone_collector.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />You just got a new <strong>Phone Collector</strong> data submission from one of your visitors.<br /><br /><strong>Phone:</strong> {{DATA_PHONE}}<br /><strong>Name:</strong> {{DATA_NAME}}<br /><br /><a href="{{DATA_LINK}}" class="cta">View all collected data</a><br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
     'global.emails.user_data_collected_email_collector.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />You just got a new <strong>Email Collector</strong> data submission from one of your visitors.<br /><br /><strong>Email:</strong> {{DATA_EMAIL}}<br /><strong>Name:</strong> {{DATA_NAME}}<br /><br /><a href="{{DATA_LINK}}" class="cta">View all collected data</a><br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
     'global.emails.user_data_collected_contact_collector.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />You just got a new <strong>Contact Form</strong> data submission from one of your visitors.<br /><br /><strong>Email:</strong> {{DATA_EMAIL}}<br /><strong>Phone:</strong> {{DATA_PHONE}}<br /><strong>Name:</strong> {{DATA_NAME}}<br /><strong>Message:</strong> {{DATA_MESSAGE}}<br /><br /><a href="{{DATA_LINK}}" class="cta">View all collected data</a><br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
-    'global.emails.user_data_collected_appointment_calendar.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />You just got a new <strong>Appointment Calendar</strong> booking from one of your visitors.<br /><br /><strong>Date:</strong> {{DATA_DATE}}<br /><strong>Time:</strong> {{DATA_TIME}}<br /><strong>Email:</strong> {{DATA_EMAIL}}<br /><strong>Phone:</strong> {{DATA_PHONE}}<br /><strong>Name:</strong> {{DATA_NAME}}<br /><strong>Message:</strong> {{DATA_MESSAGE}}<br /><br /><a href="{{DATA_LINK}}" class="cta">View all collected data</a><br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
+    'global.emails.user_data_collected_appointment_calendar.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />You just got a new <strong>Appointment Calendar</strong> booking from one of your visitors.<br /><br /><strong>Date:</strong> {{DATA_DATE}}<br /><strong>Time:</strong> {{DATA_TIME}}<br /><strong>Duration:</strong> {{DATA_DURATION}}<br /><strong>Email:</strong> {{DATA_EMAIL}}<br /><strong>Phone:</strong> {{DATA_PHONE}}<br /><strong>Name:</strong> {{DATA_NAME}}<br /><strong>Message:</strong> {{DATA_MESSAGE}}<br /><br /><a href="{{DATA_LINK}}" class="cta">View all collected data</a><br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
 
     'global.emails.user_guest_payment_donation.subject' => '{{TOTAL_AMOUNT}} {{CURRENCY}} donation for \'{{DONATION_TITLE}}\' - {{WEBSITE_TITLE}}',
-    'global.emails.user_guest_payment_donation.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />You just got a new donation from one of your visitors.<br /><br /><strong>Email:</strong> {{EMAIL}}<br /><strong>Name:</strong> {{NAME}}<br /><strong>Total amount:</strong> {{TOTAL_AMOUNT}}<br /><strong>Currency:</strong> {{CURRENCY}}<br /><strong>Processor:</strong> {{PROCESSOR}}<br /><strong>Donation:</strong> {{DONATION_TITLE}}<br /><strong>Message:</strong> {{MESSAGE}}<br /><br /><a href="{{GUESTS_PAYMENTS_LINK}}" class="cta">View all payments</a><br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
+    'global.emails.user_guest_payment_donation.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />You just got a new donation from one of your visitors.<br /><br /><strong>Email:</strong> {{EMAIL}}<br /><strong>Name:</strong> {{PAYER_NAME}}<br /><strong>Total amount:</strong> {{TOTAL_AMOUNT}}<br /><strong>Currency:</strong> {{CURRENCY}}<br /><strong>Processor:</strong> {{PROCESSOR}}<br /><strong>Donation:</strong> {{DONATION_TITLE}}<br /><strong>Message:</strong> {{MESSAGE}}<br /><br /><a href="{{GUEST_PAYMENT_LINK}}" class="cta">View payment</a><br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
+
+    'global.emails.guest_guest_payment_donation.subject' => 'You donated to \'{{DONATION_TITLE}}\' - {{WEBSITE_TITLE}}',
+    'global.emails.guest_guest_payment_donation.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />This is the official email notice that your donation is successful, thank you for your contribution.<br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
 
     'global.emails.user_guest_payment_product.subject' => '\'{{PRODUCT_TITLE}}\' sold for {{TOTAL_AMOUNT}} {{CURRENCY}} - {{WEBSITE_TITLE}}',
-    'global.emails.user_guest_payment_product.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />You just got a new payment from one of your visitors, for one of your products.<br /><br /><strong>Email:</strong> {{EMAIL}}<br /><strong>Name:</strong> {{NAME}}<br /><strong>Total amount:</strong> {{TOTAL_AMOUNT}}<br /><strong>Currency:</strong> {{CURRENCY}}<br /><strong>Processor:</strong> {{PROCESSOR}}<br /><strong>Product:</strong> {{PRODUCT_TITLE}}<br /><br /><a href="{{GUESTS_PAYMENTS_LINK}}" class="cta">View all payments</a><br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
+    'global.emails.user_guest_payment_product.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />You just got a new payment from one of your visitors, for one of your products.<br /><br /><strong>Email:</strong> {{EMAIL}}<br /><strong>Name:</strong> {{PAYER_NAME}}<br /><strong>Total amount:</strong> {{TOTAL_AMOUNT}}<br /><strong>Currency:</strong> {{CURRENCY}}<br /><strong>Processor:</strong> {{PROCESSOR}}<br /><strong>Product:</strong> {{PRODUCT_TITLE}}<br /><br /><a href="{{GUEST_PAYMENT_LINK}}" class="cta">View payment</a><br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
 
     'global.emails.guest_guest_payment_product.subject' => 'You purchased \'{{PRODUCT_TITLE}}\' - {{WEBSITE_TITLE}}',
     'global.emails.guest_guest_payment_product.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />This is the official email notice that your order is successful. You can use the download link below to download the product you purchased.<br /><br /><strong>Download link:</strong> {{DOWNLOAD_LINK}}<br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
 
     'global.emails.user_guest_payment_service.subject' => '\'{{SERVICE_TITLE}}\' sold for {{TOTAL_AMOUNT}} {{CURRENCY}} - {{WEBSITE_TITLE}}',
-    'global.emails.user_guest_payment_service.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />You just got a new payment from one of your visitors, for one of your services.<br /><br /><strong>Email:</strong> {{EMAIL}}<br /><strong>Name:</strong> {{NAME}}<br /><strong>Total amount:</strong> {{TOTAL_AMOUNT}}<br /><strong>Currency:</strong> {{CURRENCY}}<br /><strong>Processor:</strong> {{PROCESSOR}}<br /><strong>Service:</strong> {{SERVICE_TITLE}}<br /><strong>Message:</strong> {{MESSAGE}}<br /><br /><a href="{{GUESTS_PAYMENTS_LINK}}" class="cta">View all payments</a><br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
+    'global.emails.user_guest_payment_service.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />You just got a new payment from one of your visitors, for one of your services.<br /><br /><strong>Email:</strong> {{EMAIL}}<br /><strong>Name:</strong> {{PAYER_NAME}}<br /><strong>Total amount:</strong> {{TOTAL_AMOUNT}}<br /><strong>Currency:</strong> {{CURRENCY}}<br /><strong>Processor:</strong> {{PROCESSOR}}<br /><strong>Service:</strong> {{SERVICE_TITLE}}<br /><strong>Message:</strong> {{MESSAGE}}<br /><br /><a href="{{GUEST_PAYMENT_LINK}}" class="cta">View payment</a><br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
 
     'global.emails.guest_guest_payment_service.subject' => 'You paid for \'{{SERVICE_TITLE}}\' - {{WEBSITE_TITLE}}',
     'global.emails.guest_guest_payment_service.body' => 'Hello, <strong>{{NAME}}</strong>,<br /><br />This is the official email notice that your order is successful. You will get contacted by the provider of the service as soon as possible.<br /><br />Regards,<br />The {{WEBSITE_TITLE}} team.',
@@ -361,7 +378,7 @@ return [
     'global.emails.admin_delete_user_notification.body' => 'All data of <strong>{{NAME}}</strong> ({{EMAIL}}) has been deleted.<br /><br /><strong>Account age:</strong> {{ACCOUNT_AGE}}<br /><strong>Source:</strong> {{SOURCE}}<br /><strong>IP:</strong> {{IP}}<br /><strong>Country:</strong> {{COUNTRY_NAME}}<br /><strong>City:</strong> {{CITY_NAME}}<br /><strong>Device:</strong> {{DEVICE_TYPE}}<br /><strong>OS:</strong> {{OS_NAME}}<br /><strong>Browser:</strong> {{BROWSER_NAME}}<br /><br />All of the data related to this user has been deleted.',
 
     'global.emails.admin_new_payment_notification.subject' => 'New payment via {{PROCESSOR}} of {{TOTAL_AMOUNT}} {{CURRENCY}} - {{WEBSITE_TITLE}}',
-    'global.emails.admin_new_payment_notification.body' => '<strong>{{NAME}}</strong> ({{EMAIL}}) just paid <strong>{{TOTAL_AMOUNT}} {{CURRENCY}}</strong> for the <strong>{{PLAN_NAME}} plan</strong>.<br /><br /><strong>Type:</strong> {{PAYMENT_TYPE}}<br /><strong>Frequency:</strong> {{PAYMENT_FREQUENCY}}<br /><strong>Processor:</strong> {{PROCESSOR}}<br /><strong>Code:</strong> {{CODE}} (-{{DISCOUNT_AMOUNT}} {{CURRENCY}})<br /><strong>Payment ID:</strong> {{PAYMENT_ID}}<br /><strong>Processor payment ID:</strong> {{EXTERNAL_PAYMENT_ID}}<br /><strong>Status:</strong> {{PAYMENT_STATUS}}<br /><strong>Date:</strong> {{DATE}} {{DATE_TIMEZONE}}<br /><br /><a href="{{PAYMENT_LINK}}" class="cta">View payment</a>',
+    'global.emails.admin_new_payment_notification.body' => '<strong>{{NAME}}</strong> ({{EMAIL}}) just paid <strong>{{TOTAL_AMOUNT}} {{CURRENCY}}</strong> for the <strong>{{PLAN_NAME}} plan</strong>.<br /><br /><strong>Type:</strong> {{PAYMENT_TYPE}}<br /><strong>Frequency:</strong> {{PAYMENT_FREQUENCY}}<br /><strong>Processor:</strong> {{PROCESSOR}}<br /><strong>Code:</strong> {{CODE}} {{CODE_DETAILS}}<br /><strong>Payment ID:</strong> {{PAYMENT_ID}}<br /><strong>Processor payment ID:</strong> {{EXTERNAL_PAYMENT_ID}}<br /><strong>Status:</strong> {{PAYMENT_STATUS}}<br /><strong>Date:</strong> {{DATE}} {{DATE_TIMEZONE}}<br /><br /><a href="{{PAYMENT_LINK}}" class="cta">View payment</a>',
 
     'global.emails.admin_new_code_redeemed_notification.subject' => '{{CODE}} code has been redeemed - {{WEBSITE_TITLE}}',
     'global.emails.admin_new_code_redeemed_notification.body' => '<strong>{{NAME}}</strong> ({{EMAIL}}) has just redeemed the <strong>{{CODE}}</strong> redeemable code for <strong>{{REDEEMED_DAYS}} days</strong> on the <strong>{{PLAN_NAME}} plan</strong>.<br /><br /><a href="{{USER_LINK}}" class="cta">View user</a>',
@@ -411,6 +428,7 @@ return [
 
     'global.footer.copyright' => 'Copyright © %1$s %2$s.',
 
+    'global.plan_settings.price_savings' => '%s%% off',
     'global.plan_settings.quarterly_price_savings' => 'You save %s by purchasing the quarterly plan',
     'global.plan_settings.biannual_price_savings' => 'You save %s by purchasing the biannual plan',
     'global.plan_settings.annual_price_savings' => 'You save %s by purchasing the annual plan',
@@ -451,6 +469,8 @@ return [
     'global.plan_settings.leap_link_help' => 'The ability to temporarily redirect a biolink page to a specific URL.',
     'global.plan_settings.dofollow_is_enabled' => 'Dofollow links',
     'global.plan_settings.dofollow_is_enabled_help' => 'All your links from your biolink pages will be dofollow links.',
+	'global.plan_settings.branded_button_is_enabled' => 'Branded biolink pages',
+	'global.plan_settings.branded_button_is_enabled_help' => 'Brand your biolink pages with your company logo.',
     'global.plan_settings.custom_pwa_is_enabled' => 'Custom PWA app',
     'global.plan_settings.custom_pwa_is_enabled_help' => 'Generate a custom PWA app for all of your biolink pages.',
     'global.plan_settings.biolink_blocks_limit' => '<strong>%s</strong> biolink blocks',
@@ -488,7 +508,7 @@ return [
     'global.plan_settings.affiliate_commission_percentage_help' => 'The percentage amount that you can earn with the affiliate program.',
     'global.plan_settings.teams_limit' => '<strong>%s</strong> teams',
     'global.plan_settings.team_members_limit' => '<strong>%s</strong> team members',
-    'global.plan_settings.notification_handlers_limit' => 'Multiple notification handlers',
+    'global.plan_settings.notification_handlers_limit' => 'Notification handlers',
     'global.plan_settings.notification_handlers_email_limit' => '%s email handlers',
     'global.plan_settings.notification_handlers_webhook_limit' => '%s webhook handlers',
     'global.plan_settings.notification_handlers_slack_limit' => '%s Slack handlers',
@@ -564,7 +584,7 @@ return [
 
 
     'bulk_delete_modal.header' => 'Delete in bulk',
-    'bulk_delete_modal.subheader' => 'You\'ve selected multiple entries to be deleted, this may take a while & it action cannot be undone.',
+    'bulk_delete_modal.subheader' => 'You\'ve selected multiple entries for deletion. This may take a while and cannot be undone.',
     'bulk_delete_modal.success_message' => 'The bulk deletion process was performed successfully.',
 
 
@@ -628,11 +648,11 @@ return [
 
     'plan.why.header' => 'Why us?',
     'plan.why.one.header' => 'Customer service',
-    'plan.why.one.subheader' => 'Our support team will help you with any questions you may have regarding our service.',
+    'plan.why.one.subheader' => 'Our support team is here to assist with any questions about our service.',
     'plan.why.two.header' => 'Privacy',
     'plan.why.two.subheader' => 'You control all the data that you bring within your account on our website.',
     'plan.why.three.header' => 'Quality',
-    'plan.why.three.subheader' => 'We focus on delivering the best experience to you, as we fully understand how valuable time is.',
+    'plan.why.three.subheader' => 'We aim to give you the best experience because we know your time is valuable.',
 
     'plan.faq.header' => 'Frequently asked questions',
     'plan.faq.one.question' => 'What forms of payment do you accept?',
@@ -666,8 +686,27 @@ return [
     'pay.trial.trial_start' => 'Start my %s days trial',
     'pay.trial.trial_skip' => 'Skip trial',
 
+    'pay.widget.ssl.header' => 'Secure connection',
+    'pay.widget.ssl.subheader' => 'Your payment is encrypted and protected with industry-standard SSL.',
+    'pay.widget.guarantee.header' => 'Money-back guarantee',
+    'pay.widget.guarantee.subheader' => 'If you are not satisfied, you can request a refund within 30 days.',
+    'pay.widget.trusted.header' => 'Loved by creators',
+    'pay.widget.trusted.subheader' => '<strong>%s people</strong> trust & rely on our service for quality and ease of use.',
+
     'pay.custom_plan.header' => 'Purchase the %s plan',
     'pay.custom_plan.subheader' => 'You are almost there, complete the following form and checkout.',
+    'pay.custom_plan.plisio_whitelabel' => 'Cryptocurrency',
+    'pay.custom_plan.plisio_whitelabel.header' => 'Pay with cryptocurrency',
+    'pay.custom_plan.plisio_whitelabel.subheader' => 'Send the payment as per the following details below.<br />Once the payment is fully confirmed, you will receive a confirmation email.',
+    'pay.custom_plan.plisio_whitelabel.success_button' => 'Confirm payment',
+    'pay.custom_plan.plisio_whitelabel.wallet' => 'Wallet address',
+    'pay.custom_plan.plisio_whitelabel.amount' => '%s amount',
+    'pay.custom_plan.plisio_whitelabel.expiration' => 'Invoice expiration date',
+    'pay.custom_plan.plisio' => 'Plisio',
+    'pay.custom_plan.offline' => 'Offline payment',
+    'pay.custom_plan.revolut' => 'Revolut',
+    'pay.custom_plan.cryptocurrency' => 'Cryptocurrency',
+    'pay.custom_plan.klarna' => 'Klarna',
     'pay.custom_plan.paypal' => 'PayPal',
     'pay.custom_plan.stripe' => 'Stripe',
     'pay.custom_plan.offline_payment' => 'Offline payment',
@@ -680,6 +719,7 @@ return [
     'pay.custom_plan.yookassa' => 'Yookassa',
     'pay.custom_plan.crypto_com' => 'Crypto.com',
     'pay.custom_plan.paddle' => 'Paddle',
+    'pay.custom_plan.paddle_billing' => 'Paddle',
     'pay.custom_plan.mercadopago' => 'MercadoPago',
     'pay.custom_plan.midtrans' => 'Midtrans',
     'pay.custom_plan.flutterwave' => 'Flutterwave',
@@ -690,11 +730,11 @@ return [
     'pay.custom_plan.quarterly' => 'Quarterly payments',
     'pay.custom_plan.biannual' => 'Biannual payments',
     'pay.custom_plan.annual' => 'Annual payments',
-    'pay.custom_plan.savings' => '%1$s %2$s',
     'pay.custom_plan.lifetime' => 'Lifetime deal',
     'pay.custom_plan.lifetime_help' => 'One time payment',
     'pay.custom_plan.code_button' => 'Use discount code',
     'pay.custom_plan.code' => 'Code',
+    'pay.custom_plan.code_discount' => '%s%% discount',
     'pay.custom_plan.payment_processor' => 'Payment method',
     'pay.custom_plan.no_processor' => 'There are no payment processors available at the moment.',
     'pay.custom_plan.offline_payment_instructions' => 'Payment instructions',
@@ -730,7 +770,9 @@ return [
     'pay.custom_plan.pay' => 'Checkout',
     'pay.custom_plan.code_redeemable' => 'Redeem %s days for free.',
 
-    'pay.success_message.code' => 'Applied code for %s.',
+	'pay.success_message.code' => '%s off discount applied.',
+	'pay.success_message.code_quantity_percentage_used' => '<strong>Hurry!</strong> %s%% of this discount has already been claimed.',
+	'pay.success_message.code_scheduled_end_datetime' => '<strong>Don\'t miss out!</strong> This discount ends in <strong>%s</strong>.',
 
     'pay.error_message.code_invalid' => 'This code is invalid.',
     'pay.error_message.code_used' => 'You have already used this code.',
@@ -742,10 +784,10 @@ return [
     'pay_thank_you.title' => 'Thank you',
     'pay_thank_you.header' => 'Thank you!',
     'pay_thank_you.button' => 'Go to my dashboard',
-    'pay_thank_you.plan_trial_start' => 'Your %s day trial period just started!',
-    'pay_thank_you.plan_redeemed' => 'You redeemed %s days!',
-    'pay_thank_you.plan_custom_will_start' => 'Your payment was sent and your new membership will be activated!',
-    'pay_thank_you.plan_custom_pending' => 'Your payment order was sent and your new membership will be activated if the proof will be accepted!',
+    'pay_thank_you.plan_trial_start' => 'Your %s day trial period just started.',
+    'pay_thank_you.plan_redeemed' => 'You redeemed %s days.',
+    'pay_thank_you.plan_custom_will_start' => 'Your payment was sent and your new membership will be activated shortly.',
+    'pay_thank_you.plan_custom_pending' => 'Your payment order was sent and your new membership will be activated once the transaction is confirmed.',
 
 
     'account.title' => 'Account',
@@ -776,6 +818,7 @@ return [
     'account.billing.type_business' => 'Business',
     'account.billing.name' => 'Name',
     'account.billing.address' => 'Address',
+    'account.billing.state' => 'State',
     'account.billing.county' => 'County',
     'account.billing.zip' => 'ZIP',
     'account.billing.phone' => 'Phone',
@@ -794,7 +837,7 @@ return [
     'account.twofa.subheader' => 'Use a mobile authentication app to get a verification code to enter every time you log in.',
     'account.twofa.is_enabled' => 'Enable Two-factor authentication',
     'account.twofa.qr' => '1. Scan QR Code',
-    'account.twofa.qr_help' => 'Open your authentication app (ex: Authy, Google Authenticator) on your mobile device and scan the QR code using your camera.',
+    'account.twofa.qr_help' => 'Open your authentication app (e.g. Authy, Google Authenticator) on your mobile device and scan the QR code using your camera.',
     'account.twofa.secret' => 'Can\'t scan the QR Code?',
     'account.twofa.secret_help' => 'Copy the following secret code into your app for a manual setup.',
     'account.twofa.verify' => '2. Enter freshly generated token',
@@ -853,9 +896,10 @@ return [
     'account_redeem_code.plan_id' => 'Plan',
     'account_redeem_code.code' => 'Code',
     'account_redeem_code.success_message' => 'You redeemed %1$s days of the %2$s plan.',
-    'account_redeem_code.success_message_lifetime' => 'You redeemed the %2$s plan for lifetime.',
+    'account_redeem_code.success_message_lifetime' => 'You redeemed the %s plan for lifetime.',
     'account_redeem_code.info_message' => 'Your current plan will be overwritten if you redeem a code that is different than your already existing plan.',
-    'account_redeem_code.error_message.code_invalid' => 'This code is invalid.',
+	'account_redeem_code.error_message.code_invalid' => 'This code is invalid.',
+	'account_redeem_code.error_message.code_expired' => 'This code is expired.',
     'account_redeem_code.error_message.code_used' => 'You have already used this code.',
 
 
@@ -900,9 +944,9 @@ return [
     'domain_delete_modal.subheader' => 'All data related to the domain will be completely deleted. This action cannot be undone.',
 
 
-    'account_plan.title' => 'Account Plan',
+    'account_plan.title' => 'Account plan',
     'account_plan.menu' => 'Plan',
-    'account_plan.header' => 'Account Plan',
+    'account_plan.header' => '%s plan',
     'account_plan.plan.renews' => 'Plan will renew on %1$s via %2$s (%3$s %4$s)',
     'account_plan.plan.expires' => 'Plan ends on %s',
     'account_plan.plan.lifetime' => 'Plan is for lifetime, it does not expire.',
@@ -912,6 +956,10 @@ return [
     'account_plan.cancel.confirm_message' => 'Are you sure you want to cancel your subscription?',
     'account_plan.cancel.reason' => 'Cancelled from %s',
     'account_plan.success_message.subscription_canceled' => 'Your recurring subscription was canceled.',
+    'account_plan.upgrade.header' => 'Upgrade',
+    'account_plan.upgrade.header_discount' => 'Upgrade for %s off',
+    'account_plan.upgrade.subheader' => 'In need of more? Choose the %s plan.',
+    'account_plan.upgrade.discount_button' => 'Checkout at %s off',
 
 
     'account_payments.title' => 'Account payments',
@@ -922,14 +970,20 @@ return [
     'account_payments.total_amount' => 'Total amount',
     'account_payments.plan_id' => 'Plan',
     'account_payments.invoice' => 'Invoice',
-    'account_payments.status_pending' => 'Pending',
-    'account_payments.status_approved' => 'Approved',
+    'account_payments.status.paid' => 'Paid',
+    'account_payments.status.pending' => 'Pending',
+    'account_payments.status.approved' => 'Approved',
+    'account_payments.status.cancelled' => 'Cancelled',
+    'account_payments.status.refunded' => 'Refunded',
+    'account_payments.status.partially_refunded' => 'Partially refunded',
+    'account_payments.status.fully_refunded' => 'Fully refunded',
     'account_payments.no_data' => 'No payments found',
     'account_payments.processor' => 'Processor',
     'account_payments.type_one_time' => 'One time',
     'account_payments.type_recurring' => 'Recurring',
     'account_payments.frequency' => 'Frequency',
     'account_payments.order_by_total_amount' => 'Total amount',
+    'account_payments.action.view_proof' => 'View proof',
 
 
     'account_logs.title' => 'Account logs',
@@ -950,6 +1004,9 @@ return [
     'account_api.button' => 'Regenerate API Key',
     'account_api.success_message' => 'Your API key was regenerated successfully.',
 
+    'api_key_regenerate_modal.header' => 'Regenerate API key',
+    'api_key_regenerate_modal.subheader' => 'The previous key will stop working immediately. This action cannot be undone.',
+
 
     'teams_system.title' => 'Teams system',
     'teams_system.menu' => 'Teams',
@@ -957,7 +1014,7 @@ return [
     'teams_system.header' => 'Teams system',
 
 
-    'teams.title' => 'My teams',
+    'teams.title' => 'Teams',
     'teams.menu' => 'My teams',
     'teams.breadcrumb' => 'My teams',
     'teams.header' => ' My teams',
@@ -984,7 +1041,9 @@ return [
     'team_update.header' => 'Update team',
 
 
+    'team_members.title' => 'Team members',
     'team_members.create' => 'Invite member',
+    'team_members.permissions' => 'Permissions',
     'team_members.access' => '%s permissions',
     'team_members.access_help' => 'Set what permissions you want to hand out to the user.',
     'team_members.access.read' => 'View',
@@ -995,7 +1054,7 @@ return [
     'team_members.table.status_invited' => 'Invited',
     'team_members.table.status_accepted' => 'Accepted',
     'team_members.table.datetime' => 'Invited',
-    'team_members.info_message.access' => 'The invited user will not have access to any account related pages, such as the account settings, payments, logs...etc.',
+    'team_members.info_message.access' => 'The invited user will not have access to any account related pages, such as the account settings, payments, logs, etc.',
     'team_members.error_message.email_exists' => 'This email is already invited.',
     'team_members.no_data' => 'There are no team members available',
     'team_members.no_data_help' => 'Start by inviting your first member.',
@@ -1098,6 +1157,15 @@ return [
     'invoice.paid_via' => 'Paid via %s',
 
 
+    'credit_notes.title' => 'Credit notes - %s',
+    'credit_notes.credit_notes' => 'Credit notes',
+    'credit_notes.credit_note' => 'Credit note',
+    'credit_notes.credit_note_nr' => 'Credit Note Nr',
+    'credit_notes.original_invoice' => 'Credit note',
+    'credit_notes.invoice_date' => 'Invoice Date',
+    'credit_notes.refund_item' => 'Refund for Invoice %s',
+
+
     'maintenance.title' => 'Maintenance mode',
     'maintenance.header' => 'Maintenance mode',
     'maintenance.subheader' => 'We are doing some maintenance work, we\'ll be back soon.',
@@ -1141,8 +1209,15 @@ return [
     'resend_activation.header' => 'Resend activation email',
     'resend_activation.subheader' => 'Mails can get lost, but we can send you another activation email for your account.',
     'resend_activation.return' => 'Return to Login',
-    'resend_activation.submit' => 'Send me the activation email',
-    'resend_activation.success_message' => 'We\'ve emailed you the activation link.',
+    'resend_activation.submit' => 'Send activation email',
+
+
+    'sent_activation.title' => 'Verify your email',
+    'sent_activation.header' => 'Verify your email',
+    'sent_activation.subheader' => 'Thank you for choosing our platform! Could you please verify your email address by clicking the link we just emailed you to %s?',
+    'sent_activation.resend_activation' => 'Resend activation',
+    'sent_activation.resend_activation_timer' => 'Resend after %s seconds',
+    'sent_activation.return' => 'Return to Login',
 
 
     'reset_password.title' => 'Set a new password',
@@ -1173,7 +1248,7 @@ return [
     'register.error_message.email_aliases_not_allowed' => 'Email aliases are not allowed.',
     'register.error_message.blacklisted_domain' => 'This email domain has been blacklisted.',
     'register.error_message.blacklisted_country' => 'Your country has been blacklisted.',
-    'register.success_message.registration' => 'We\'ve emailed you the activation link.',
+    'register.error_message.blacklisted_ip' => 'Your IP has been blacklisted.',
     'register.success_message.login' => 'Welcome to our platform, we are grateful to have you here.',
 
 
@@ -1240,7 +1315,7 @@ return [
     'index.presentation3.feature2' => 'Custom logo & background branding',
     'index.presentation3.feature3' => 'Multiple QR shapes to choose from',
     'index.presentation3.feature4' => 'Customizable QR Code Frames',
-    'index.presentation3.feature5' => 'Vcard, WiFi, Calendar, Location..etc templates',
+    'index.presentation3.feature5' => 'Vcard, WiFi, Calendar, Location, Templates',
 
     'index.presentation4.header' => 'Built-in analytics',
     'index.presentation4.subheader' => 'Easy to understand, yet detailed analytics for all your links.',
@@ -1394,7 +1469,7 @@ return [
     'contact.title' => 'Contact',
     'contact.menu' => 'Contact',
     'contact.header' => 'Contact us',
-    'contact.subheader' => 'Get in touch with us via email.',
+    'contact.subheader' => 'Get in touch with us.',
     'contact.email' => 'Email address',
     'contact.name' => 'Full name',
     'contact.subject' => 'Subject',
@@ -1449,6 +1524,8 @@ return [
     'directory.menu' => 'Directory',
     'directory.header' => 'Explore our bio pages community',
     'directory.subheader' => 'Discover and meet creative people that our using our platform.',
+    'directory.no_data' => 'There are no pages for now',
+    'directory.no_data_help' => 'Come back later when new content is added.',
 
 
     'biolinks_templates.title' => 'Biolinks templates',
@@ -1505,12 +1582,12 @@ return [
     'data.no_data' => 'No existing data',
 
 
-    'guests_payments.title' => 'Guests payments',
-    'guests_payments.menu' => 'Guests payments',
-    'guests_payments.link' => 'Payments',
-    'guests_payments.breadcrumb' => 'Guests payments',
-    'guests_payments.header' => 'Guests payments',
-    'guests_payments.subheader' => 'All your guest payment from all your biolink payment blocks.',
+    'guests_payments.title' => 'Sales',
+    'guests_payments.menu' => 'Sales',
+    'guests_payments.link' => 'Sales',
+    'guests_payments.breadcrumb' => 'Sales',
+    'guests_payments.header' => 'Sales',
+    'guests_payments.subheader' => 'All your guest payment from all your biolink pages payment blocks.',
     'guests_payments.biolink' => 'View biolink',
     'guests_payments.no_data' => 'There are no payments made yet',
     'guests_payments.processor' => 'Processor',
@@ -1520,8 +1597,22 @@ return [
     'guests_payments.push_notification.description' => 'From the \'%1$s\' link',
     'guests_payments.free' => 'Free',
     'guests_payments.biolink_block' => 'Block',
+    'guests_payments.action.view_proof' => 'View proof',
+    'guests_payments.action.approve_proof' => 'Approve payment',
+    'guests_payments.action.cancel' => 'Cancel payment',
 
-    'guests_payments_statistics.title' => 'Guests payments statistics',
+
+	'guest_payment_approve_modal.header' => 'Approve payment',
+	'guest_payment_approve_modal.subheader' => 'If you approve the payment, the user will receive the confirmation.',
+	'guest_payment_approve_modal.success_message' => 'Payment approval was performed successfully.',
+
+
+	'guest_payment_cancel_modal.header' => 'Cancel payment',
+	'guest_payment_cancel_modal.subheader' => 'If you cancel the payment, the payment will be marked as cancelled.',
+	'guest_payment_cancel_modal.success_message' => 'Payment cancelling was performed successfully.',
+
+
+	'guests_payments_statistics.title' => 'Guests payments statistics',
     'guests_payments_statistics.menu' => 'Guests payments statistics',
     'guests_payments_statistics.link' => 'Payments statistics',
     'guests_payments_statistics.breadcrumb' => 'Guests payments statistics',
@@ -1554,7 +1645,7 @@ return [
     'payment_processors.paypal.instructions_4' => 'Switch to Live by clicking the button near your new App\'s Name.',
     'payment_processors.paypal.instructions_5' => 'Copy the <strong>Client ID</strong> and <strong>Secret</strong> and paste them here accordingly.',
     'payment_processors.paypal.instructions_6' => 'Scroll down to the Webhooks section, and click on the <strong>Add Webhook</strong> button.',
-    'payment_processors.paypal.instructions_7' => 'In the <strong>Webhook URL</strong> field, add the following: <code>%s</code>',
+    'payment_processors.paypal.instructions_7' => 'In the <strong>Webhook URL</strong> field, add the following: %s',
     'payment_processors.paypal.instructions_8' => 'In the <strong>Event Types</strong> field, check the <strong>Payment sale completed</strong> event, and save the webhook.',
 
     'payment_processors.stripe.publishable_key' => 'Publishable Key',
@@ -1566,7 +1657,7 @@ return [
     'payment_processors.stripe.instructions_4' => 'Copy the <strong>Publishable Key</strong> and <strong>Secret Key</strong> and paste them here accordingly.',
     'payment_processors.stripe.instructions_5' => 'Go to the <strong>Developers</strong> page, then go to the <strong>Webhooks</strong> page',
     'payment_processors.stripe.instructions_6' => 'Click on the <strong>Add endpoint</strong> button.',
-    'payment_processors.stripe.instructions_7' => 'In the <strong>Endpoint URL</strong> field, add the following: <code>%s</code>',
+    'payment_processors.stripe.instructions_7' => 'In the <strong>Endpoint URL</strong> field, add the following: %s',
     'payment_processors.stripe.instructions_8' => 'In the <strong>Events</strong> section, check the <strong>checkout.session.completed</strong> event, and save the webhook.',
     'payment_processors.stripe.instructions_9' => 'Now make sure to reveal the <strong>Signing secret</strong>, copy and paste it here accordingly.',
 
@@ -1577,7 +1668,7 @@ return [
     'payment_processors.crypto_com.instructions_2' => 'Go to the <a href="https://merchant.crypto.com/integration/api_keys" target="_blank">Developers</a> page.',
     'payment_processors.crypto_com.instructions_3' => 'Copy the <strong>Publishable key</strong> and <strong>Secret Key</strong> and paste them here accordingly.',
     'payment_processors.crypto_com.instructions_4' => 'Go to the <strong>Webhooks</strong> tab and click on the <strong>Add webhook</strong> button.',
-    'payment_processors.crypto_com.instructions_5' => 'In the field, add the following: <code>%s</code>',
+    'payment_processors.crypto_com.instructions_5' => 'In the field, add the following: %s',
     'payment_processors.crypto_com.instructions_6' => 'Copy the <strong>Signature secret</strong> key after adding the webhook, and paste it here accordingly.',
 
     'payment_processors.razorpay.key_id' => 'Key Id',
@@ -1587,7 +1678,7 @@ return [
     'payment_processors.razorpay.instructions_2' => 'Go to the <strong>Settings</strong> page -> <strong>API Keys</strong> tab on Razorpay & generate your API keys.',
     'payment_processors.razorpay.instructions_3' => 'Copy the keys and paste them here accordingly.',
     'payment_processors.razorpay.instructions_4' => 'Go to the <strong>Settings</strong> page -> <strong>Webhooks</strong> tab on Razorpay & Add a new webhook.',
-    'payment_processors.razorpay.instructions_5' => 'In the field, add the following: <code>%s</code>',
+    'payment_processors.razorpay.instructions_5' => 'In the field, add the following: %s',
     'payment_processors.razorpay.instructions_6' => 'Add a new Secret (like a password), check the <code>payment_link.paid</code> option & save the webhook.',
     'payment_processors.razorpay.instructions_7' => 'Copy the <strong>Webhook secret</strong> key after adding the webhook, and paste it here accordingly.',
 
@@ -1596,12 +1687,26 @@ return [
     'payment_processors.paystack.instructions_1' => 'Go to the <a href="https://paystack.com" target="_blank">Paystack page</a> and log into your account.',
     'payment_processors.paystack.instructions_2' => 'Go to the <strong>Settings</strong> page -> <strong>API Keys & Webhooks</strong> tab on Paystack.',
     'payment_processors.paystack.instructions_3' => 'Copy the keys and paste them here accordingly.',
-    'payment_processors.paystack.instructions_4' => 'Add the following <code>%s</code> in the <strong>Webhook URL</strong> field.',
+    'payment_processors.paystack.instructions_4' => 'In the <strong>Webhook URL</strong> field, add the following: %s',
 
     'payment_processors.mollie.api_key' => 'API Key',
     'payment_processors.mollie.instructions_1' => 'Go to <a href="https://my.mollie.com/dashboard">Mollie Dashboard</a> and Login to your account..',
     'payment_processors.mollie.instructions_2' => 'Go to Developers -> API Keys page.',
     'payment_processors.mollie.instructions_3' => 'Copy the API key and paste them here accordingly.',
+
+    'payment_processors.plisio.secret_key' => 'Secret key',
+    'payment_processors.plisio.accepted_cryptocurrencies' => 'Accepted cryptocurrencies',
+    'payment_processors.plisio.default_cryptocurrency' => 'Default cryptocurrency',
+    'payment_processors.plisio.instructions_1' => 'Log in to your <a href="https://plisio.net/dashboard">Plisio Dashboard</a>.',
+    'payment_processors.plisio.instructions_2' => 'Ensure your domain is connected and your crypto wallets are properly configured.',
+    'payment_processors.plisio.instructions_3' => 'Go to the API page and click on the Site Settings button for your connected domain.',
+    'payment_processors.plisio.instructions_4' => 'Copy the Secret Key and paste it here accordingly.',
+
+    'payment_processors.plisio_whitelabel.wallet' => '%s wallet address',
+    'payment_processors.plisio_whitelabel.wallet_help' => 'Leave empty to not accept this cryptocurrency payment.',
+
+    'payment_processors.offline_payment.instructions' => 'Payment instructions',
+    'payment_processors.offline_payment.instructions_help' => 'Payment instructions for the user to see, before submitting the payment.',
 
 
     'payment_processor_create.breadcrumb' => 'Add payment processor',
@@ -1704,6 +1809,7 @@ return [
     'qr_codes.is_not_readable' => 'QR Code might not be readable. Adjust your QR code settings or content.',
     'qr_codes.info' => 'Test out the QR code with a scanner before using it in production.',
     'qr_codes.embedded_data' => 'Embedded data',
+    'qr_codes.info_message.slow' => 'Some QR codes might take a while to generate, depending on the amount of data & style. Please wait.',
 
     'qr_codes.type.text' => 'Text',
     'qr_codes.type.text_description' => 'Simple and clear text embedded into a QR code.',
@@ -1964,7 +2070,7 @@ return [
     'link.settings.is_main_link_help' => 'Make this link page to be accessible via the index of this custom domain. Other link pages won\'t be able to be associated with this domain after.',
     'link.settings.pixels_ids' => 'Pixels',
     'link.settings.forward_query_parameters_is_enabled' => 'Forward query parameters',
-    'link.settings.forward_query_parameters_is_enabled_help' => 'If your short URL is accessed with query parameters (ex: ?name=sample), append that to the destination URL automatically.',
+    'link.settings.forward_query_parameters_is_enabled_help' => 'If your short URL is accessed with query parameters (e.g. ?name=sample), append that to the destination URL automatically.',
     'link.settings.http_header' => 'HTTP Status',
     'link.settings.http_header_help' => 'The HTTP status code is only sent when the pixels and cloaking features are not used.',
     'link.settings.http_status_code.301' => '301 Permanent redirect',
@@ -2034,14 +2140,16 @@ return [
     'link.settings.seo_meta_description_help' => 'Set a custom meta description to rank better in search engines.',
     'link.settings.seo_meta_keywords' => 'Meta keywords',
     'link.settings.seo_image' => 'Opengraph image',
+    'link.settings.language_code' => 'Language',
+    'link.settings.language_code_help' => 'Set the meta language of your page to help browsers and search engines identify its language.',
     'link.settings.utm_header' => 'UTM Parameters',
     'link.settings.utm_medium' => 'Medium',
-    'link.settings.utm_medium_placeholder' => 'ex: link, banner, email, social',
+    'link.settings.utm_medium_placeholder' => 'e.g. link, banner, email, social',
     'link.settings.utm_campaign' => 'Campaign',
-    'link.settings.utm_campaign_placeholder' => 'ex: spring_sale_2024, black_friday',
+    'link.settings.utm_campaign_placeholder' => 'e.g. spring_sale_2024, black_friday',
     'link.settings.utm_campaign_placeholder_automatic' => 'Automatically set for each link based on the name.',
     'link.settings.utm_source' => 'Source',
-    'link.settings.utm_source_placeholder' => 'ex: newsletter, bing, google, youtube',
+    'link.settings.utm_source_placeholder' => 'e.g. newsletter, bing, google, youtube',
     'link.settings.utm_preview' => 'UTM preview',
     'link.settings.utm_preview_help' => 'This query parameter will be appended to your destination URL.',
     'link.settings.font' => 'Font',
@@ -2088,8 +2196,16 @@ return [
     'link.settings.targeting_type_os_name' => 'Operating system',
     'link.settings.targeting_type_os_name_help' => 'Send visitors to different URLs based on the device operating system that they are using.',
     'link.settings.advanced_header' => 'Advanced',
-    'link.settings.pwa_header' => 'PWA',
-    'link.settings.pwa_help' => 'Generate an installable Progressive Web App (PWA) that works like a native app on your devices for your biolink page.',
+    'link.settings.branded_button_header' => 'Branded button',
+	'link.settings.branded_button_is_enabled' => 'Enable branded button',
+	'link.settings.branded_button_is_enabled_help' => 'Display an icon in the top right corner, upon clicking open a modal with your custom content.',
+	'link.settings.branded_button_icon' => 'Branded icon',
+	'link.settings.branded_button_icon_help' => 'Make sure it\'s a 1:1 ratio sized image with transparent background.',
+	'link.settings.branded_button_title' => 'Modal title',
+	'link.settings.branded_button_content' => 'Modal content',
+	'link.settings.branded_button_content_help' => 'This field accepts the usage of HTML.',
+	'link.settings.pwa_header' => 'PWA',
+	'link.settings.pwa_help' => 'Generate an installable Progressive Web App (PWA) that works like a native app on your devices for your biolink page.',
     'link.settings.pwa_is_enabled' => 'Enable custom PWA app',
     'link.settings.pwa_is_enabled_help' => 'Disable to use the main website PWA app (no personalized experience for your users).',
     'link.settings.pwa_display_install_bar' => 'Display installation bar',
@@ -2210,6 +2326,7 @@ return [
     'link.biolink.blocks.tiktok_video' => 'TikTok Video',
     'link.biolink.blocks.tiktok_profile' => 'TikTok Profile',
     'link.biolink.blocks.vk_video' => 'VK Video',
+    'link.biolink.blocks.tumblr_post' => 'Tumblr post',
     'link.biolink.blocks.applemusic' => 'Apple Music',
     'link.biolink.blocks.tidal' => 'Tidal',
     'link.biolink.blocks.mixcloud' => 'Mixcloud',
@@ -2220,15 +2337,19 @@ return [
     'link.biolink.blocks.twitter_tweet' => 'Twitter tweet',
     'link.biolink.blocks.pinterest_profile' => 'Pinterest profile',
     'link.biolink.blocks.instagram_media' => 'Instagram media',
+    'link.biolink.blocks.bluesky_post' => 'Bluesky post',
+    'link.biolink.blocks.canva' => 'Canva design',
     'link.biolink.blocks.rss_feed' => 'RSS feed',
     'link.biolink.blocks.custom_html' => 'Custom HTML',
     'link.biolink.blocks.vcard' => 'VCard',
     'link.biolink.blocks.image_grid' => 'Image grid',
+    'link.biolink.blocks.code' => 'Code highlight',
     'link.biolink.blocks.divider' => 'Divider',
     'link.biolink.blocks.list' => 'List',
     'link.biolink.blocks.alert' => 'Alert',
     'link.biolink.blocks.email_collector' => 'Email collector',
     'link.biolink.blocks.big_link' => 'Big link',
+    'link.biolink.blocks.featured_link' => 'Featured link',
     'link.biolink.blocks.header' => 'Header section',
     'link.biolink.blocks.faq' => 'FAQ',
     'link.biolink.blocks.discord' => 'Discord server',
@@ -2242,7 +2363,7 @@ return [
     'link.biolink.blocks.excel_spreadsheet' => 'Excel spreadsheet',
     'link.biolink.blocks.countdown' => 'Countdown',
     'link.biolink.blocks.cta' => 'Call to action',
-    'link.biolink.blocks.external_item' => 'External item',
+    'link.biolink.blocks.external_item' => 'External product',
     'link.biolink.blocks.share' => 'Share',
     'link.biolink.blocks.coupon' => 'Coupon',
     'link.biolink.blocks.modal_text' => 'Modal text',
@@ -2263,6 +2384,11 @@ return [
     'link.biolink.blocks.telegram' => 'Telegram post',
     'link.biolink.blocks.iframe' => 'Iframe embed',
     'link.biolink.blocks.appointment_calendar' => 'Appointment calendar',
+    'link.biolink.blocks.image_comparison' => 'Image before & after',
+    'link.biolink.blocks.weather' => 'Weather',
+    'link.biolink.blocks.counter' => 'Counter',
+    'link.biolink.blocks.loading' => 'Loading',
+    'link.biolink.blocks.google_form' => 'Google form',
 
 
     'create_link_modal.header' => 'Shorten URL',
@@ -2277,7 +2403,7 @@ return [
     'create_file_modal.header' => 'File URL',
     'create_file_modal.input.file' => 'File',
     'create_file_modal.input.force_download_is_enabled' => 'Force download',
-    'create_file_modal.input.force_download_is_enabled_help' => 'File types that can be viewed in browser (ex: pdf, images) will be force downloaded automatically.',
+    'create_file_modal.input.force_download_is_enabled_help' => 'File types that can be viewed in browser (e.g. pdf, images) will be force downloaded automatically.',
     'create_file_modal.input.submit' => 'Create file URL',
 
 
@@ -2302,7 +2428,7 @@ return [
     'create_static_modal.file' => 'HTML or ZIP file',
     'create_static_modal.file.inside_zip_whitelisted_file_extensions' => 'File types allowed inside of a ZIP file: %s',
     'create_static_modal.file.help1' => 'Make sure your zip file contents have an <code>index.html</code> file when unzipped.',
-    'create_static_modal.file.help2' => 'Make sure your you reference your images, js, css...etc in the following relative format, example: <code>&lt;link rel="stylesheet" href="./css/styles.css"&gt;</code>.',
+    'create_static_modal.file.help2' => 'Make sure your you reference your images, js, css, etc in the following relative format, example: <code>&lt;link rel="stylesheet" href="./css/styles.css"&gt;</code>.',
     'create_static_modal.submit' => 'Create static site',
 
 
@@ -2311,7 +2437,7 @@ return [
 
 
     'biolink_link.header' => 'Add a link button',
-    'biolink_link.subheader' => 'Link to any external web pages with ease.',
+    'biolink_link.subheader' => 'Link to any external web pages.',
     'biolink_link.button_header' => 'Customization settings',
     'biolink_link.url_help' => 'Leave empty for a random generated one.',
     'biolink_link.location_url' => 'Destination URL',
@@ -2338,11 +2464,12 @@ return [
     'biolink_link.image_alt_help' => 'Image description for accessibility & SEO purposes.',
     'biolink_link.border_width' => 'Border width',
     'biolink_link.border_color' => 'Border color',
-    'biolink_link.border_shadow_color' => 'Border shadow color',
-    'biolink_link.border_shadow_offset_x' => 'Border shadow offset X',
-    'biolink_link.border_shadow_offset_y' => 'Border shadow offset Y',
-    'biolink_link.border_shadow_blur' => 'Border shadow blur',
-    'biolink_link.border_shadow_spread' => 'Border shadow spread',
+    'biolink_link.border_shadow_color' => 'Shadow color',
+    'biolink_link.border_shadow_style' => 'Shadow style',
+    'biolink_link.border_shadow_style.none' => 'None',
+    'biolink_link.border_shadow_style.subtle' => 'Subtle',
+    'biolink_link.border_shadow_style.strong' => 'Strong',
+    'biolink_link.border_shadow_style.hard' => 'Hard',
     'biolink_link.border_radius' => 'Border radius',
     'biolink_link.border_radius_straight' => 'Straight',
     'biolink_link.border_radius_round' => 'Round',
@@ -2362,7 +2489,7 @@ return [
     'biolink_link.animation_runs_infinite' => 'Infinite',
     'biolink_link.columns' => 'Columns',
     'biolink_link.border_header' => 'Border settings',
-    'biolink_link.border_shadow_header' => 'Border shadow settings',
+    'biolink_link.border_shadow_header' => 'Shadow settings',
     'biolink_link.display_settings_header' => 'Display settings',
     'biolink_link.display_devices' => 'Devices',
     'biolink_link.display_languages' => 'Browser languages',
@@ -2373,12 +2500,40 @@ return [
     'biolink_link.settings.display_help' => 'Select who should see this block. Leave empty for all.',
 
 
+    'biolink_counter.header' => 'Add a counter',
+    'biolink_counter.subheader' => 'Display an animated number counter widget.',
+    'biolink_counter.number' => 'Final number',
+    'biolink_counter.starting_number' => 'Starting number',
+    'biolink_counter.number_suffix' => 'Number suffix',
+    'biolink_counter.number_prefix' => 'Number prefix',
+    'biolink_counter.number_color' => 'Number color',
+    'biolink_counter.animation_duration' => 'Number animation duration',
+
+
+    'biolink_loading.header' => 'Add a loading bar',
+    'biolink_loading.subheader' => 'Display a nice loading bar widget.',
+    'biolink_loading.number' => 'Loading number',
+    'biolink_loading.number_suffix' => 'Number suffix',
+    'biolink_loading.number_prefix' => 'Number prefix',
+    'biolink_loading.number_color' => 'Number color',
+    'biolink_loading.bar_color' => 'Bar color',
+    'biolink_loading.bar_height' => 'Bar height',
+    'biolink_loading.bar_is_striped' => 'Bar is striped',
+    'biolink_loading.bar_is_animated' => 'Bar is animated',
+
+
     'biolink_heading.header' => 'Add a heading',
     'biolink_heading.subheader' => 'A heading section will allow you to separate your page content.',
 
 
     'biolink_paragraph.header' => 'Add a paragraph',
     'biolink_paragraph.subheader' => 'A block of simple text.',
+
+
+    'biolink_code.header' => 'Add a code block',
+    'biolink_code.subheader' => 'Render a code snippet with automatic language-based highlighting.',
+    'biolink_code.language' => 'Code language',
+    'biolink_code.code' => 'Code snippet',
 
 
     'biolink_business_hours.header' => 'Add your business hours',
@@ -2420,8 +2575,6 @@ return [
     'biolink_socials.vk.placeholder' => 'id',
     'biolink_socials.telegram.name' => 'Telegram',
     'biolink_socials.telegram.placeholder' => 'telegram-username',
-    'biolink_socials.skype.name' => 'Skype',
-    'biolink_socials.skype.placeholder' => 'Skype invitation id',
     'biolink_socials.whatsapp.name' => 'Whatsapp',
     'biolink_socials.whatsapp.placeholder' => '2124567890',
     'biolink_socials.whatsapp_channel.name' => 'Whatsapp channel',
@@ -2477,7 +2630,7 @@ return [
 
 
     'biolink_youtube.header' => 'Add a YouTube video',
-    'biolink_youtube.subheader' => 'Display a YouTube video on your page with ease.',
+    'biolink_youtube.subheader' => 'Display a YouTube video on your page.',
     'biolink_youtube.location_url' => 'YouTube Video URL',
     'biolink_youtube.location_url_placeholder' => 'https://www.youtube.com/watch?v=2a8PgqWrc_4',
     'biolink_youtube.video_autoplay' => 'Allow video autoplay',
@@ -2487,49 +2640,49 @@ return [
 
 
     'biolink_twitch.header' => 'Add a Twitch channel or video',
-    'biolink_twitch.subheader' => 'Display a Twitch account or video widget on your page with ease.',
+    'biolink_twitch.subheader' => 'Display a Twitch account or video widget on your page.',
     'biolink_twitch.location_url' => 'Twitch URL',
     'biolink_twitch.location_url_placeholder' => 'https://www.twitch.tv/sodapoppin',
 
 
     'biolink_vimeo.header' => 'Add a Vimeo video',
-    'biolink_vimeo.subheader' => 'Display a Vimeo video on your page with ease.',
+    'biolink_vimeo.subheader' => 'Display a Vimeo video on your page.',
     'biolink_vimeo.location_url' => 'Vimeo URL',
     'biolink_vimeo.location_url_placeholder' => 'https://vimeo.com/43338103',
 
 
     'biolink_soundcloud.header' => 'Add a Soundcloud song',
-    'biolink_soundcloud.subheader' => 'Display a Soundcloud player widget on your page with ease.',
+    'biolink_soundcloud.subheader' => 'Display a Soundcloud player widget on your page.',
     'biolink_soundcloud.location_url' => 'Soundcloud URL',
     'biolink_soundcloud.location_url_placeholder' => 'https://soundcloud.com/octobersveryown/duppy-freestyle',
 
 
     'biolink_threads.header' => 'Add a Threads post',
-    'biolink_threads.subheader' => 'Display a Threads post widget on your page with ease.',
+    'biolink_threads.subheader' => 'Display a Threads post widget on your page.',
     'biolink_threads.location_url' => 'Threads Post URL',
     'biolink_threads.location_url_placeholder' => 'https://www.threads.com/@zuck/post/Cy3m1VnRiwP',
 
 
     'biolink_snapchat.header' => 'Add a Snapchat embed',
-    'biolink_snapchat.subheader' => 'Display a Spotlight video or Lens widget from Snapchat on your page with ease.',
+    'biolink_snapchat.subheader' => 'Display a Spotlight video or Lens widget from Snapchat on your page.',
     'biolink_snapchat.location_url' => 'Snapchat Spotlight/Lens URL',
     'biolink_snapchat.location_url_placeholder' => 'https://www.snapchat.com/spotlight/W7_EDlXWTBiXAEEniNoMPwAAYbnh4Z3d0aHdoAYpqrMorAYpqrKT5AAAAAQ',
 
 
     'biolink_applemusic.header' => 'Add an Apple Music song',
-    'biolink_applemusic.subheader' => 'Display an Apple Music player widget on your page with ease.',
+    'biolink_applemusic.subheader' => 'Display an Apple Music player widget on your page.',
     'biolink_applemusic.location_url' => 'Apple Music URL',
     'biolink_applemusic.location_url_placeholder' => 'https://music.apple.com/us/album/evermore/1544268281',
 
 
     'biolink_tidal.header' => 'Add a Tidal song',
-    'biolink_tidal.subheader' => 'Display a Tidal player widget on your page with ease.',
+    'biolink_tidal.subheader' => 'Display a Tidal player widget on your page.',
     'biolink_tidal.location_url' => 'Tidal Music URL',
     'biolink_tidal.location_url_placeholder' => 'https://tidal.com/browse/track/18445266',
 
 
     'biolink_mixcloud.header' => 'Add a Mixcloud song',
-    'biolink_mixcloud.subheader' => 'Display a Mixcloud player widget on your page with ease.',
+    'biolink_mixcloud.subheader' => 'Display a Mixcloud player widget on your page.',
     'biolink_mixcloud.location_url' => 'Mixcloud Music URL',
     'biolink_mixcloud.location_url_placeholder' => 'https://www.mixcloud.com/maestrosdelritmo/maestros-del-ritmo-volxxx-the-masterpiece-top-100-2012-2018/',
     'biolink_mixcloud.theme' => 'Theme',
@@ -2539,71 +2692,95 @@ return [
 
 
     'biolink_kick.header' => 'Add a Kick video',
-    'biolink_kick.subheader' => 'Display a Kick account widget on your page with ease.',
+    'biolink_kick.subheader' => 'Display a Kick account widget on your page.',
     'biolink_kick.location_url' => 'Kick URL',
     'biolink_kick.location_url_placeholder' => 'https://kick.com/xqc',
 
 
     'biolink_anchor.header' => 'Add an Anchor.fm podcast',
-    'biolink_anchor.subheader' => 'Display an Anchor FM podcast player widget on your page with ease.',
+    'biolink_anchor.subheader' => 'Display an Anchor FM podcast player widget on your page.',
     'biolink_anchor.location_url' => 'Anchor FM Podcast URL',
     'biolink_anchor.location_url_placeholder' => 'https://anchor.fm/beachtoosandy/episodes/107-Reviews-of-Driving-Schools-ensejl',
 
 
     'biolink_twitter_profile.header' => 'Add a Twitter profile',
-    'biolink_twitter_profile.subheader' => 'Display a Twitter profile widget on your page with ease.',
+    'biolink_twitter_profile.subheader' => 'Display a Twitter profile widget on your page.',
     'biolink_twitter_profile.location_url' => 'Twitter Profile URL',
     'biolink_twitter_profile.location_url_placeholder' => 'https://twitter.com/naval/',
     'biolink_twitter_profile.theme' => 'Theme',
 
 
     'biolink_twitter_video.header' => 'Add a Twitter video',
-    'biolink_twitter_video.subheader' => 'Display a Twitter video widget on your page with ease.',
+    'biolink_twitter_video.subheader' => 'Display a Twitter video widget on your page.',
     'biolink_twitter_video.location_url' => 'Twitter Video URL',
     'biolink_twitter_video.location_url_placeholder' => 'https://x.com/MrBeast/status/1776732112013463825',
 
 
     'biolink_twitter_tweet.header' => 'Add a Twitter tweet',
-    'biolink_twitter_tweet.subheader' => 'Display a Twitter tweet widget on your page with ease.',
+    'biolink_twitter_tweet.subheader' => 'Display a Twitter tweet widget on your page.',
     'biolink_twitter_tweet.location_url' => 'Twitter Tweet URL',
     'biolink_twitter_tweet.location_url_placeholder' => 'https://twitter.com/naval/status/1002103360646823936',
     'biolink_twitter_tweet.theme' => 'Theme',
 
 
     'biolink_pinterest_profile.header' => 'Add a Pinterest profile',
-    'biolink_pinterest_profile.subheader' => 'Display a Pinterest profile widget on your page with ease.',
+    'biolink_pinterest_profile.subheader' => 'Display a Pinterest profile widget on your page.',
     'biolink_pinterest_profile.location_url' => 'Pinterest Profile URL',
     'biolink_pinterest_profile.location_url_placeholder' => 'https://pinterest.com/Google/',
 
 
     'biolink_instagram_media.header' => 'Add Instagram media',
-    'biolink_instagram_media.subheader' => 'Display an Instagram post, video or reel widget on your page with ease.',
+    'biolink_instagram_media.subheader' => 'Display an Instagram post, video or reel widget on your page.',
     'biolink_instagram_media.location_url' => 'Instagram Media URL',
     'biolink_instagram_media.location_url_placeholder' => 'https://www.instagram.com/p/CI1pQoDjZTz',
 
 
     'biolink_spotify.header' => 'Add Spotify media',
-    'biolink_spotify.subheader' => 'Display a Spotify song, album, show or episode widget on your page with ease.',
+    'biolink_spotify.subheader' => 'Display a Spotify song, album, show or episode widget on your page.',
     'biolink_spotify.location_url' => 'Spotify URL',
     'biolink_spotify.location_url_placeholder' => 'https://open.spotify.com/track/5ry2OE6R2zPQFDO85XkgRb',
 
 
     'biolink_tiktok_video.header' => 'Add a TikTok video',
-    'biolink_tiktok_video.subheader' => 'Display a TikTok video widget on your page with ease.',
+    'biolink_tiktok_video.subheader' => 'Display a TikTok video widget on your page.',
     'biolink_tiktok_video.location_url' => 'TikTok Video URL',
     'biolink_tiktok_video.location_url_placeholder' => 'https://www.tiktok.com/@charlidamelio/video/6808693617306111237',
 
 
     'biolink_tiktok_profile.header' => 'Add a TikTok profile',
-    'biolink_tiktok_profile.subheader' => 'Display a TikTok profile widget on your page with ease.',
+    'biolink_tiktok_profile.subheader' => 'Display a TikTok profile widget on your page.',
     'biolink_tiktok_profile.location_url' => 'TikTok Profile URL',
     'biolink_tiktok_profile.location_url_placeholder' => 'https://www.tiktok.com/@charlidamelio',
 
 
     'biolink_vk_video.header' => 'Add a VK video',
-    'biolink_vk_video.subheader' => 'Display a VK video widget on your page with ease.',
+    'biolink_vk_video.subheader' => 'Display a VK video widget on your page.',
     'biolink_vk_video.location_url' => 'VK Video URL',
     'biolink_vk_video.location_url_placeholder' => 'https://vk.com/video-30666517_456244845',
+
+
+    'biolink_tumblr_post.header' => 'Add a Tumblr post',
+    'biolink_tumblr_post.subheader' => 'Display a Tumblr post widget on your page.',
+    'biolink_tumblr_post.location_url' => ' URL',
+    'biolink_tumblr_post.location_url_placeholder' => 'https://www.tumblr.com/theclassyissue/805699955176226816',
+
+
+    'biolink_bluesky_post.header' => 'Add a Bluesky post',
+    'biolink_bluesky_post.subheader' => 'Display a Bluesky post widget on your page.',
+    'biolink_bluesky_post.location_url' => ' URL',
+    'biolink_bluesky_post.location_url_placeholder' => 'https://bsky.app/profile/stephenking.bsky.social/post/3mbx73esp3k2c',
+
+
+    'biolink_canva.header' => 'Add a Canva design',
+    'biolink_canva.subheader' => 'Display a Canva design widget on your page.',
+    'biolink_canva.location_url' => ' URL',
+    'biolink_canva.location_url_placeholder' => 'https://www.canva.com/design/DAG-yok00YE/We3b-TgNdWdR7_QpnxFdzg',
+
+
+    'biolink_google_form.header' => 'Add a Google Form',
+    'biolink_google_form.subheader' => 'Display a Google form widget on your page.',
+    'biolink_google_form.location_url' => ' URL',
+    'biolink_google_form.location_url_placeholder' => 'https://docs.google.com/forms/d/e/ID/viewform',
 
 
     'biolink_email_collector.header' => 'Add a sign up form',
@@ -2674,7 +2851,7 @@ return [
 
 
     'biolink_alert.header' => 'Add an alert box',
-    'biolink_alert.subheader' => 'Display an alert notification type of widget with ease.',
+    'biolink_alert.subheader' => 'Display an alert notification type of widget.',
     'biolink_alert.display_close_button' => 'Display close button',
     'biolink_alert.alert_pause_after_closed' => 'Pause alert for X minutes after closed',
 
@@ -2688,6 +2865,8 @@ return [
     'biolink_big_link.header' => 'Add a big link button',
     'biolink_big_link.subheader' => 'Link to any external web pages with an expanded link.',
 
+    'biolink_featured_link.header' => 'Add a featured link button',
+    'biolink_featured_link.subheader' => 'Link to any external web pages with an expanded featured image.',
 
     'biolink_header.header' => 'Add a header section',
     'biolink_header.subheader' => 'A beautiful avatar with background section for your page.',
@@ -2705,22 +2884,22 @@ return [
 
 
     'biolink_discord.header' => 'Add a Discord server',
-    'biolink_discord.subheader' => 'Display a Discord server widget on your page with ease.',
+    'biolink_discord.subheader' => 'Display a Discord server widget on your page.',
     'biolink_discord.server_id' => 'Server Id',
 
 
     'biolink_facebook.header' => 'Add a Facebook post',
-    'biolink_facebook.subheader' => 'Display a Facebook post widget on your page with ease.',
+    'biolink_facebook.subheader' => 'Display a Facebook post widget on your page.',
     'biolink_facebook.location_url' => 'Facebook Post/Video URL',
 
 
     'biolink_reddit.header' => 'Add a Reddit post',
-    'biolink_reddit.subheader' => 'Display a Reddit post widget on your page with ease.',
+    'biolink_reddit.subheader' => 'Display a Reddit post widget on your page.',
     'biolink_reddit.location_url' => 'Reddit Post URL',
 
 
     'biolink_audio.header' => 'Add an audio file',
-    'biolink_audio.subheader' => 'Display a playable audio widget on your page with ease.',
+    'biolink_audio.subheader' => 'Display a playable audio widget on your page.',
     'biolink_audio.file' => 'Audio file',
     'biolink_audio.audio_autoplay' => 'Allow audio autoplay',
     'biolink_audio.audio_controls' => 'Display audio controls',
@@ -2728,7 +2907,7 @@ return [
     'biolink_audio.audio_muted' => 'Audio is muted',
 
     'biolink_video.header' => 'Add a video file',
-    'biolink_video.subheader' => 'Display a playable video widget on your page with ease.',
+    'biolink_video.subheader' => 'Display a playable video widget on your page.',
     'biolink_video.file' => 'Video file',
     'biolink_video.poster_url' => 'Thumbnail image URL',
     'biolink_video.video_autoplay' => 'Allow video autoplay',
@@ -2738,7 +2917,7 @@ return [
 
 
     'biolink_file.header' => 'Add a file block',
-    'biolink_file.subheader' => 'A link to a downloadable file on your page with ease.',
+    'biolink_file.subheader' => 'A link to a downloadable file on your page.',
     'biolink_file.file' => 'File',
 
 
@@ -2758,9 +2937,10 @@ return [
 
 
     'biolink_countdown.header' => 'Add a countdown timer',
-    'biolink_countdown.subheader' => 'Display a simple countdown widget on your page with ease.',
+    'biolink_countdown.subheader' => 'Display a simple countdown widget on your page.',
     'biolink_countdown.end_date' => 'End date',
-    'biolink_countdown.theme' => 'Theme',
+    'biolink_countdown.expired_text' => 'Expired text',
+    'biolink_countdown.expired_text_help' => 'Text to display after the countdown is expired.',
 
 
     'biolink_cta.header' => 'Add a call to action button',
@@ -2775,9 +2955,9 @@ return [
     'biolink_cta.value_facetime' => 'Phone number or email address',
 
 
-    'biolink_external_item.header' => 'Add an external item',
+    'biolink_external_item.header' => 'Add an external product',
     'biolink_external_item.subheader' => 'A more detailed link button to an external sold product.',
-    'biolink_external_item.location_url' => 'Item URL',
+    'biolink_external_item.location_url' => 'Product URL',
     'biolink_external_item.price' => 'Price',
     'biolink_external_item.price_placeholder' => '20 USD',
     'biolink_external_item.name_color' => 'Name color',
@@ -2837,6 +3017,29 @@ return [
     'biolink_image_slider.autoplay' => 'Autoplay',
 
 
+    'biolink_image_comparison.header' => 'Add an image before & after viewer',
+    'biolink_image_comparison.subheader' => 'Display an interactive before & after image viewer on your page.',
+    'biolink_image_comparison.before_text' => 'Before text label',
+    'biolink_image_comparison.before_image' => 'Before image',
+    'biolink_image_comparison.after_text' => 'After text label',
+    'biolink_image_comparison.after_image' => 'After image',
+    'biolink_image_comparison.comparison_settings_header' => 'Comparison settings',
+
+
+    'biolink_weather.header' => 'Add a weather widget',
+    'biolink_weather.subheader' => 'Display a customizable weather widget of your user\'s location or a specific set location.',
+    'biolink_weather.source' => 'Weather source',
+    'biolink_weather.source.latitude_longitude' => 'Specified lat/long',
+    'biolink_weather.source.user_location' => 'User location',
+    'biolink_weather.source.address' => 'Specified address',
+    'biolink_weather.address' => 'Address',
+    'biolink_weather.latitude' => 'Latitude',
+    'biolink_weather.longitude' => 'Longitude',
+    'biolink_weather.display_address' => 'Display address',
+    'biolink_weather.display_forecast' => 'Display 7 day forecast',
+    'biolink_weather.unit' => 'Display unit',
+
+
     'biolink_paypal.header' => 'Add a PayPal payment button',
     'biolink_paypal.subheader' => 'Redirect your users to pay via PayPal for a custom product.',
     'biolink_paypal.type_buy_now' => 'Buy now',
@@ -2852,7 +3055,7 @@ return [
 
 
     'biolink_phone_collector.header' => 'Add a phone collector form',
-    'biolink_phone_collector.subheader' => 'Capture phone numbers with ease from your visitors.',
+    'biolink_phone_collector.subheader' => 'Capture phone numbers from your visitors.',
     'biolink_phone_collector.phone_collector_header' => 'Form settings',
     'biolink_phone_collector.phone_placeholder' => 'Phone placeholder',
     'biolink_phone_collector.name_placeholder' => 'Name placeholder',
@@ -2893,7 +3096,7 @@ return [
 
 
     'biolink_appointment_calendar.header' => 'Add an appointment calendar form',
-    'biolink_appointment_calendar.subheader' => 'Allow your visitors to book sessions on your calendar with ease.',
+    'biolink_appointment_calendar.subheader' => 'Allow your visitors to book sessions on your calendar.',
     'biolink_appointment_calendar.booking_header' => 'Booking settings',
     'biolink_appointment_calendar.form_header' => 'Form settings',
     'biolink_appointment_calendar.duration' => 'Slot duration',
@@ -2926,21 +3129,21 @@ return [
 
 
     'biolink_donation.header' => 'Get donations',
-    'biolink_donation.subheader' => 'Receive donations from your visitors with ease.',
+    'biolink_donation.subheader' => 'Receive donations from your visitors.',
     'biolink_donation.donation_header' => 'Donation settings',
     'biolink_donation.title' => 'Donation title',
     'biolink_donation.description' => 'Donation description',
     'biolink_donation.prefilled_amount' => 'Prefilled amount',
     'biolink_donation.minimum_amount' => 'Minimum amount',
     'biolink_donation.currency' => 'Currency code',
-    'biolink_donation.currency_help' => 'Currency code, such as USD, EUR, AUD...etc. Make sure that it is compatible with the payment processor you choose to use.',
+    'biolink_donation.currency_help' => 'Make sure your chosen currency is compatible with the payment processors you select.',
     'biolink_donation.allow_custom_amount' => 'Allow custom amount',
     'biolink_donation.allow_message' => 'Allow messages',
     'biolink_donation.allow_message_help' => 'You will be able to receive a small message from people who donate.',
     'biolink_donation.thank_you_title' => 'Thank you title',
     'biolink_donation.thank_you_description' => 'Thank you description',
     'biolink_donation.thank_you_url' => 'Thank you URL',
-    'biolink_donation.thank_you_url_help' => 'Instead of displaying a thank you modal with the Title and Description, redirect to a custom Thank you URL.',
+    'biolink_donation.thank_you_url_help' => 'Redirect to a custom thank-you URL instead of the default thank you modal.',
     'biolink_donation.amount' => 'Amount',
     'biolink_donation.message' => 'Your message',
     'biolink_donation.payment_processor' => 'Pay via',
@@ -2948,7 +3151,7 @@ return [
 
 
     'biolink_product.header' => 'Sell a digital product',
-    'biolink_product.subheader' => 'Sell digital products to your visitors with ease.',
+    'biolink_product.subheader' => 'Sell digital products to your visitors.',
     'biolink_product.product_header' => 'Product settings',
     'biolink_product.file' => 'Product file',
     'biolink_product.title' => 'Product title',
@@ -2956,22 +3159,24 @@ return [
     'biolink_product.price' => 'Price',
     'biolink_product.minimum_price' => 'Minimum price',
     'biolink_product.currency' => 'Currency code',
-    'biolink_product.currency_help' => 'Currency code, such as USD, EUR, AUD...etc. Make sure that it is compatible with the payment processor you choose to use.',
+    'biolink_product.currency_help' => 'Make sure your chosen currency is compatible with the payment processors you select.',
     'biolink_product.allow_custom_price' => 'Allow custom amount',
     'biolink_product.email_help' => 'You will receive your unique download link of the product via email.',
     'biolink_product.payment_processor' => 'Pay via',
     'biolink_product.submit' => 'Pay',
     'biolink_product.free' => 'Download for free',
+    'biolink_product.offline_payment.instructions' => 'Payment instructions',
+    'biolink_product.offline_payment.proof' => 'Payment proof',
     'biolink_product.error_message.double_download' => 'You have already downloaded this product. Your download link was already sent to your email once.',
 
 
     'biolink_service.header' => 'Sell a service',
-    'biolink_service.subheader' => 'Sell services to your visitors with ease.',
+    'biolink_service.subheader' => 'Sell services to your visitors.',
     'biolink_service.service_header' => 'Payment service settings',
     'biolink_service.title' => 'Service title',
     'biolink_service.description' => 'Service description',
     'biolink_service.currency' => 'Currency code',
-    'biolink_service.currency_help' => 'Currency code, such as USD, EUR, AUD...etc. Make sure that it is compatible with the payment processor you choose to use.',
+    'biolink_service.currency_help' => 'Make sure your chosen currency is compatible with the payment processors you select.',
     'biolink_service.email_help' => 'You will be contacted after via email.',
     'biolink_service.message' => 'Your request',
     'biolink_service.payment_processor' => 'Pay via',
@@ -2994,6 +3199,7 @@ return [
     'biolink_map.address' => 'Address',
     'biolink_map.address_placeholder' => 'Via Montenapoleone 12, Milan, Italy',
     'biolink_map.markers' => 'Markers addresses',
+    'biolink_map.markers_placeholder' => '40.712776,-74.005974 or New York, NY 10007, USA',
     'biolink_map.markers_help' => 'One map marker address per line.',
     'biolink_map.zoom' => 'Zoom',
     'biolink_map.type.roadmap' => 'Roadmap',
@@ -3015,13 +3221,13 @@ return [
 
 
     'biolink_rumble.header' => 'Add a Rumble video',
-    'biolink_rumble.subheader' => 'Display a Rumble post widget on your page with ease.',
+    'biolink_rumble.subheader' => 'Display a Rumble post widget on your page.',
     'biolink_rumble.location_url' => 'Rumble Video Embed URL',
     'biolink_rumble.location_url_placeholder' => 'https://rumble.com/embed/v4oja79',
 
 
     'biolink_telegram.header' => 'Add a Telegram post',
-    'biolink_telegram.subheader' => 'Display a Telegram post widget from a public channel on your bio page with ease.',
+    'biolink_telegram.subheader' => 'Display a Telegram post widget from a public channel on your bio page.',
     'biolink_telegram.location_url' => 'Telegram Post URL',
     'biolink_telegram.location_url_placeholder' => 'https://t.me/altumcode/12345',
 
@@ -3063,6 +3269,7 @@ return [
     'tools.text' => 'Text',
     'tools.quality' => 'Quality',
     'tools.last_submissions' => 'Last submissions',
+    'tools.total_submissions' => 'Total submissions',
     'tools.no_data' => 'We haven\'t found any tool named like that.',
     'tools.extra_content' => 'Additional page content: Editable from the admin panel -> languages -> choose or create language -> translate app page.',
 
@@ -3313,7 +3520,7 @@ return [
     'tools.markdown_to_html.extra_content' => '',
 
     'tools.case_converter.name' => 'Case converter',
-    'tools.case_converter.description' => 'Convert your text to any kind of text case, such as lowercase, UPPERCASE, camelCase...etc.',
+    'tools.case_converter.description' => 'Convert your text to any kind of text case, such as lowercase, UPPERCASE, camelCase, etc.',
     'tools.case_converter.meta_keywords' => '',
     'tools.case_converter.lowercase' => 'lowercase',
     'tools.case_converter.uppercase' => 'UPPERCASE',
@@ -3927,7 +4134,7 @@ return [
     'tools.gif_to_ico.extra_content' => '',
 
     'tools.text_separator.name' => 'Text separator',
-    'tools.text_separator.description' => 'Separate text back and forth by new lines, commas, dots...etc.',
+    'tools.text_separator.description' => 'Separate text back and forth by new lines, commas, dots, etc.',
     'tools.text_separator.meta_keywords' => '',
     'tools.text_separator.separated_by' => 'Currently separated by',
     'tools.text_separator.separate_by' => 'Separate by',

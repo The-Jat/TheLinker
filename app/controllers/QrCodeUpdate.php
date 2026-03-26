@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -29,12 +29,18 @@ class QrCodeUpdate extends Controller {
         \Altum\Authentication::guard();
 
         if(!settings()->codes->qr_codes_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('update.qr_codes')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
+            redirect('qr-codes');
+        }
+
+        /* Check for the plan limit */
+        $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `qr_codes` WHERE `user_id` = {$this->user->user_id}")->fetch_object()->total ?? 0;
+        if($this->user->plan_settings->qr_codes_limit != -1 && $total_rows > $this->user->plan_settings->qr_codes_limit) {
             redirect('qr-codes');
         }
 
@@ -62,7 +68,7 @@ class QrCodeUpdate extends Controller {
             $required_fields = ['name', 'type'];
             $settings = [];
 
-            $_POST['name'] = trim(query_clean($_POST['name']));
+            $_POST['name'] = input_clean($_POST['name'], 64);
             $_POST['project_id'] = !empty($_POST['project_id']) && array_key_exists($_POST['project_id'], $projects) ? (int) $_POST['project_id'] : null;
             $_POST['embedded_data'] = input_clean($_POST['embedded_data'], 10000);
             $_POST['type'] = isset($_POST['type']) && array_key_exists($_POST['type'], $available_qr_codes) ? $_POST['type'] : 'text';
@@ -335,7 +341,7 @@ class QrCodeUpdate extends Controller {
 
             /* Check for any errors */
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -354,7 +360,7 @@ class QrCodeUpdate extends Controller {
                     $_POST['qr_code'] = base64_decode(mb_substr($_POST['qr_code'], mb_strlen('data:image/svg+xml;base64,')));
 
                     /* Generate new name for image */
-                    $image_new_name = md5(time() . rand()) . '.svg';
+                    $image_new_name = md5(uniqid('', true) . random_bytes(16)) . '.svg';
 
                     /* Offload uploading */
                     if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {

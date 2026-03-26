@@ -1,6 +1,5 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-
 <div class="container">
     <?= \Altum\Alerts::output_alerts() ?>
 

@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<?php if(count(\Altum\Language::$languages)): ?>
+<?php if (!empty(\Altum\Language::$languages)): ?>
 
     <div class="d-flex flex-column flex-md-row justify-content-between mb-4">
         <h1 class="h3 mb-3 mb-md-0 text-truncate"><i class="fas fa-fw fa-xs fa-language text-primary-900 mr-2"></i> <?= l('admin_languages.header') ?></h1>

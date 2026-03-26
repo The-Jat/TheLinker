@@ -34,37 +34,36 @@ document.querySelectorAll('[data-file-image-input-wrapper]').forEach(element => 
 
         /* Preview image */
         if(input.files && input.files[0]) {
-            let reader = new FileReader();
+            const object_url = URL.createObjectURL(input.files[0]);
 
-            reader.onload = event => {
-                /* Display preview wrapper */
-                element.querySelector('[id*="_preview"]').classList.remove('d-none');
+            /* Display preview wrapper */
+            element.querySelector('[id*="_preview"]').classList.remove('d-none');
 
-                /* Mark it as no default */
-                if(!preview_image.getAttribute('src') && !preview_image.getAttribute('data-src')) {
-                    preview_image.setAttribute('data-no-default-src', 'yes');
-                }
+            /* Mark it as no default */
+            if(!preview_image.getAttribute('src') && !preview_image.getAttribute('data-src')) {
+                preview_image.setAttribute('data-no-default-src', 'yes');
+            }
 
-                /* Make sure to save the default src */
-                if(preview_image.getAttribute('src') && !preview_image.getAttribute('data-src') && !preview_image.getAttribute('data-no-default-src')) {
-                    preview_image.setAttribute('data-src', preview_image.getAttribute('src'))
-                }
+            /* Make sure to save the default src */
+            if(preview_image.getAttribute('src') && !preview_image.getAttribute('data-src') && !preview_image.getAttribute('data-no-default-src')) {
+                preview_image.setAttribute('data-src', preview_image.getAttribute('src'))
+            }
 
-                /* Display new preview */
-                preview_image.setAttribute('src', event.target.result);
-                preview_image.classList.remove('d-none');
-
-                /* Remove selected file handler */
-                element.querySelector('[id$="_remove_selected_file_wrapper"]').classList.remove('d-none');
-
-                /* Main remove wrapper */
-                element.querySelector('[id$="_remove_wrapper"]').classList.add('d-none');
-
-                /* Disable clicks */
-                element.querySelector('[id*="_preview"] a').style.pointerEvents = 'none';
+            /* Display new preview */
+            preview_image.setAttribute('src', object_url);
+            preview_image.onload = () => {
+                URL.revokeObjectURL(object_url);
             };
+            preview_image.classList.remove('d-none');
 
-            reader.readAsDataURL(input.files[0]);
+            /* Remove selected file handler */
+            element.querySelector('[id$="_remove_selected_file_wrapper"]').classList.remove('d-none');
+
+            /* Main remove wrapper */
+            element.querySelector('[id$="_remove_wrapper"]').classList.add('d-none');
+
+            /* Disable clicks */
+            element.querySelector('[id*="_preview"] a').style.pointerEvents = 'none';
         }
 
         /* Remove image preview / fallback to original */
@@ -156,27 +155,20 @@ let type_handler = (selector, data_key, matching_selector = '=') => {
 }
 
 /* Temporarily disable the form submission button to avoid multiple submissions */
-document.querySelectorAll('[type="submit"][name="submit"]:not([data-is-ajax])').forEach(element => {
+document.querySelectorAll('button[type="submit"]:not([data-is-ajax])').forEach(element => {
     element.addEventListener('click', event => {
         let button = event.currentTarget;
+        let form = button.form;
 
-        /* Disable the button */
-        button.classList.add('disabled');
-        button.classList.add('container-disabled-simple');
+        /* Validate first */
+        if (form && form.checkValidity()) {
+            /* Disable the button */
+            button.classList.add('disabled');
+            button.classList.add('container-disabled-simple');
 
-        /* Save the current button text */
-        let current_button_text = button.innerText;
-
-        /* Show a loading spinner instead of the text */
-        button.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
-
-        /* Go back to the button default state */
-        setTimeout(() => {
-            button.classList.remove('disabled');
-            button.classList.remove('container-disabled-simple');
-            button.innerText = current_button_text;
-        }, 2500);
-
+            /* Show a loading spinner instead of the text */
+            button.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
+        }
     });
 });
 
@@ -278,8 +270,8 @@ const display_notifications = (messages, type, selector) => {
 
         html += `
             <div class="alert alert-${type} altum-animate altum-animate-fill-none altum-animate-fade-in">
-                <button type="button" class="close ml-2" data-dismiss="alert">&times;</button>
-                <i class="fas fa-fw ${icon} mr-2"></i> ${message}
+                <button type="button" class="close ml-2" data-dismiss="alert"><i class="fas fa-fw fa-sm fa-times text-${type}"></i></button>
+                <i class="fas fa-fw ${icon} text-${type} mr-2"></i> ${message}
             </div>`;
     }
 
@@ -290,32 +282,66 @@ const redirect = (path, is_full_url = false) => {
     window.location.href = is_full_url ? path : `${url}${path}`;
 };
 
-const number_format = (number, decimals, dec_point = '.', thousands_point = ',') => {
-
-    if(number == null || !isFinite(number)) {
+const number_format = (number, decimals = 0, dec_point = '.', thousands_point = ',') => {
+    if (number === null || !isFinite(number)) {
         throw new TypeError('number is not valid');
     }
 
-    if(!decimals) {
-        let len = number.toString().split('.').length;
-        decimals = len > 1 ? len : 0;
-    }
+    number = Number(number).toFixed(decimals);
 
-    number = parseFloat(number).toFixed(decimals);
+    let split_number = number.split('.');
+    split_number[0] = split_number[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousands_point);
 
-    number = number.replace('.', dec_point);
-
-    let splitNum = number.split(dec_point);
-    splitNum[0] = splitNum[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousands_point);
-    number = splitNum.join(dec_point);
-
-    return number;
+    return split_number.join(dec_point);
 };
 
-const nr = (number, decimals = 0, display_decimals_if_zero = false) => {
-    if(!display_decimals_if_zero && decimals > 0) {
-        decimals = Math.floor(number) != number ? decimals : 0;
+const nr = (number, decimals = 0, display_decimals_if_zero = false, extra = false) => {
+
+    if(extra) {
+        let formatted_number = number;
+
+        const scales = [
+            { limit: 999999999, divisor: 1000000000, suffix: 'B' },
+            { limit: 999999,    divisor: 1000000,    suffix: 'M' },
+            { limit: 999,       divisor: 1000,       suffix: 'K' }
+        ];
+
+        const extra_is_array = Array.isArray(extra);
+
+        for(const scale of scales) {
+
+            if(number > scale.limit &&
+                (!extra_is_array || extra.includes(scale.suffix))) {
+
+                formatted_number =
+                    number_format(
+                        number / scale.divisor,
+                        decimals,
+                        decimal_point,
+                        thousands_separator
+                    ) + scale.suffix;
+
+                break;
+            }
+        }
+
+        if(decimals > 0) {
+            const dotzero = decimal_point + '0'.repeat(decimals);
+            formatted_number = formatted_number.replace(dotzero, '');
+        }
+
+        return formatted_number;
     }
+
+    if(number === 0) {
+        return 0;
+    }
+
+    if(!display_decimals_if_zero && decimals > 0) {
+        decimals = Math.floor(number) !== number ? decimals : 0;
+    }
+
+    console.log(number, decimals);
 
     return number_format(number, decimals, decimal_point, thousands_separator);
 };
@@ -521,7 +547,7 @@ document.addEventListener('keydown', event => {
     }
 });
 
-let get_plan_feature_limit_info = (used, total, should_display = true, info_message) => {
+let get_plan_feature_limit_info = (used, total, should_display = true, info_message, unlimited_translation) => {
     /* return null if not to be displayed */
     if (!should_display) return null;
 
@@ -529,14 +555,15 @@ let get_plan_feature_limit_info = (used, total, should_display = true, info_mess
     let percentage_used = (total === -1 || total === 0) ? 0 : (used / total * 100);
 
     /* determine remaining percentage or unlimited */
-    let percentage_remaining = (total === -1) ? 'Unlimited' : nr(100 - percentage_used) + '%';
+    let percentage_remaining = (total === -1) ? unlimited_translation : nr(100 - percentage_used) + '%';
 
     /* build the final message */
     return info_message
         .replace('%1$s', '<strong>' + nr(used) + '</strong>')
-        .replace('%2$s', '<strong>' + (total === -1 ? 'Unlimited' : nr(total)) + '</strong>')
+        .replace('%2$s', '<strong>' + (total === -1 ? unlimited_translation : nr(total)) + '</strong>')
         .replace('%3$s', '<strong>' + percentage_remaining + '</strong>');
 }
+
 document.querySelectorAll('input[type="url"]').forEach(input => {
     const fixURL = () => input.value = input.value.trim().replace(/^(?!https?:\/\/)(.+\..+)/i, 'https://$1').replace(/^(https?:\/\/)/i, m => m.toLowerCase());
 

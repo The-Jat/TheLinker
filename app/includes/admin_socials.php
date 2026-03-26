@@ -25,6 +25,8 @@ return [
         'format' => 'https://threads.com/@%s',
         'input_display_format' => true,
         'placeholder' => '',
+        'color' => '#808080',
+        'background_color' => 'rgba(128, 128, 128, 0.1)',
     ],
 
     'youtube' => [
@@ -33,6 +35,8 @@ return [
         'format' => 'https://youtube.com/%s',
         'input_display_format' => true,
         'placeholder' => '',
+        'color' => '#FF0000',
+        'background_color' => 'rgba(255, 0, 0, 0.1)',
     ],
 
     'facebook' => [
@@ -41,6 +45,8 @@ return [
         'format' => 'https://facebook.com/%s',
         'input_display_format' => true,
         'placeholder' => '',
+        'color' => '#1877F2',
+        'background_color' => 'rgba(24, 119, 242, 0.1)',
     ],
 
     'x' => [
@@ -49,6 +55,8 @@ return [
         'format' => 'https://x.com/%s',
         'input_display_format' => true,
         'placeholder' => '',
+        'color' => '#1DA1F2',
+        'background_color' => 'rgba(29, 161, 242, 0.1)',
     ],
 
     'instagram' => [
@@ -57,6 +65,8 @@ return [
         'format' => 'https://instagram.com/%s',
         'input_display_format' => true,
         'placeholder' => '',
+        'color' => '#C13584',
+        'background_color' => 'rgba(193, 53, 132, 0.1)',
     ],
 
     'tiktok' => [
@@ -65,6 +75,8 @@ return [
         'format' => 'https://tiktok.com/@%s',
         'input_display_format' => true,
         'placeholder' => '',
+        'color' => '#69C9D0',
+        'background_color' => 'rgba(105, 201, 208, 0.1)',
     ],
 
     'linkedin' => [
@@ -73,6 +85,8 @@ return [
         'format' => 'https://linkedin.com/%s',
         'input_display_format' => true,
         'placeholder' => '',
+        'color' => '#0077B5',
+        'background_color' => 'rgba(0, 119, 181, 0.1)',
     ],
 
     'whatsapp' => [
@@ -80,7 +94,9 @@ return [
         'icon' => 'fab fa-whatsapp',
         'format' => 'https://wa.me/%s',
         'input_display_format' => false,
-        'placeholder' => '010101010101'
+        'placeholder' => '010101010101',
+        'color' => '#25D366',
+        'background_color' => 'rgba(37, 211, 102, 0.1)',
     ],
 
     'email'=> [
@@ -88,6 +104,8 @@ return [
         'icon' => 'fas fa-envelope',
         'format' => 'mailto:%s',
         'input_display_format' => false,
-        'placeholder' => 'hey@example.com'
+        'placeholder' => 'hey@example.com',
+        'color' => '#3b5998',
+        'background_color' => 'rgba(59, 89, 152, 0.1)',
     ],
 ];

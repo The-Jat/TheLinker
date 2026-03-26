@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,12 +25,25 @@ class WebhookPayu extends Controller {
 
     public function index() {
 
-        if($_SERVER['REQUEST_METHOD'] != 'POST') {
-            die();
+        /* Make sure no cache is being used on the endpoint */
+		header('Cache-Control: no-store');
+
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            throw_404();
         }
 
-        /* Verify the source of the webhook event */
+        if((strtoupper($_SERVER['REQUEST_METHOD']) != 'POST')) {
+            throw_404();
+        }
+
+        /* Get the headers */
+        $headers = getallheaders();
+
+        /* Get the payload */
         $payload = trim(@file_get_contents('php://input'));
+
+        /* Log for debugging purposes */
+        debug_log('[' . \Altum\Router::$controller . '] ' . print_r(['headers' => $headers, 'payload' => $payload], true));
 
         if(empty($payload)) {
             die();
@@ -55,7 +68,7 @@ class WebhookPayu extends Controller {
 
                     /* details about the payment */
                     $payment_payment_id = $result->getResponse()->order->extOrderId;
-                    $payment = db()->where('payment_id', $payment_payment_id)->where('status', 0)->getOne('payments');
+                    $payment = db()->where('payment_id', $payment_payment_id)->where('status', 'pending')->getOne('payments');
 
                     if(!$payment) {
                         http_response_code(400); die();
@@ -116,6 +129,7 @@ class WebhookPayu extends Controller {
                         [],
                         l('global.emails.user_payment.subject'),
                         [
+                            '{{PAYMENT_ID}}' => $payment->id,
                             '{{NAME}}' => $user->name,
                             '{{PLAN_NAME}}' => $plan->name,
                             '{{PLAN_EXPIRATION_DATE}}' => Date::get($plan_expiration_date, 2),
@@ -146,7 +160,7 @@ class WebhookPayu extends Controller {
                     /* Update the payment */
                     db()->where('id', $payment->id)->update('payments', [
                         'total_amount_default_currency' => $total_amount_default_currency,
-                        'status' => 1,
+                        'status' => 'paid',
                     ]);
 
                     /* Affiliate */

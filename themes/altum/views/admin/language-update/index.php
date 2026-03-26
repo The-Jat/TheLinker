@@ -33,10 +33,14 @@
         if(!empty(\Altum\Language::$languages[$data->language['name']]['content'][$key])) $total_translated++;
         $total++;
     }
+    $total = ceil($total / 1000) * 1000;
     ?>
 
     <div class="alert <?= $total > (int) ini_get('max_input_vars') ? 'alert-danger' : 'alert-info' ?>" role="alert">
         <?= sprintf(l('admin_languages.info_message.max_input_vars'), nr((int) ini_get('max_input_vars'))) ?>
+        <?php if($total > (int) ini_get('max_input_vars')): ?>
+            <br /><small><?= sprintf(l('admin_languages.info_message.max_input_vars_help'), '<strong>' . $total . '</strong>') ?></small>
+        <?php endif ?>
     </div>
 <?php endif ?>
 
@@ -82,6 +86,7 @@
             <div class="form-group">
                 <label for="order"><i class="fas fa-fw fa-sm fa-sort text-muted mr-1"></i> <?= l('global.order') ?></label>
                 <input id="order" type="number" name="order" value="<?= settings()->languages->{$data->language['name']}->order ?? 1 ?>" class="form-control" />
+                <small class="form-text text-muted"><?= l('global.order_int_help') ?></small>
             </div>
 
             <div class="form-group">
@@ -194,8 +199,8 @@
                     </div>
 
                     <div id="custom_translations">
-                    <?php foreach(\Altum\Language::$languages[$data->language['name']]['content'] as $key => $value): ?>
-                        <?php if(array_key_exists($key, \Altum\Language::$languages[\Altum\Language::$main_name]['content'])) continue ?>
+                        <?php foreach(\Altum\Language::$languages[$data->language['name']]['content'] as $key => $value): ?>
+                            <?php if(array_key_exists($key, \Altum\Language::$languages[\Altum\Language::$main_name]['content'])) continue ?>
                             <div class="row" data-display-container>
                                 <div class="col-6">
                                     <div class="form-group">
@@ -217,7 +222,7 @@
                                     </div>
                                 </div>
                             </div>
-                    <?php endforeach ?>
+                        <?php endforeach ?>
                     </div>
 
                 </div>
@@ -359,7 +364,7 @@
 
     let translate = async button => {
         const openai_api_key = <?= json_encode(settings()->main->openai_api_key) ?>;
-        const openai_api_endpoint = 'https://api.openai.com/v1/chat/completions';
+        const openai_api_endpoint = 'https://api.openai.com/v1/responses';
 
         if(!openai_api_key) {
             alert('<?= l('admin_languages.auto_translate_info') ?>');
@@ -384,23 +389,14 @@
                 },
                 body: JSON.stringify({
                     'model': '<?= settings()->main->openai_model ?? 'gpt-4o' ?>',
-                    'messages': [
-                        {
-                            'role': 'system',
-                            'content':
-                                `You are a professional translator. Translate the given text from English to ${language_to_translate_to}. ` +
-                                `Keep all PHP sprintf placeholders (e.g., %1$s, %2$d) unchanged. ` +
-                                `Keep HTML tags unchanged. ` +
-                                `Do not add, remove, or modify punctuation except to match the original text. ` +
-                                `Return only the translated text with no explanations, comments, or formatting outside the translation.`
-                        },
-                        {
-                            'role': 'user',
-                            'content' : `${string_to_translate}`
-                        }
-                    ],
+                    'input':
+                        `You are a professional translator. Translate the given text from English to ${language_to_translate_to}. ` +
+                        `Keep all PHP sprintf placeholders (e.g., %1$s, %2$d) unchanged. ` +
+                        `Keep HTML tags unchanged. ` +
+                        `Do not add, remove, or modify punctuation except to match the original text. ` +
+                        `Return only the translated text with no explanations, comments, or formatting outside the translation.` +
+                        `Translate: ${string_to_translate}`,
                     'user': 'Admin panel - auto translation',
-                    'temperature': 0
                 })
             });
 
@@ -411,7 +407,19 @@
                 enable_submit_button(button);
                 return false;
             } else {
-                let translated_string = data.choices[0].message.content;
+                let translated_string = '';
+
+                /* Parse the AI response */
+                for (const item of data.output || []) {
+                    if (item.type !== 'message') continue;
+
+                    for (const content of item.content || []) {
+                        if (content.type === 'output_text') {
+                            translated_string = content.text;
+                        }
+                    }
+                }
+
                 button.value = '';
                 type_in_field(target_field, translated_string);
             }
@@ -547,8 +555,8 @@
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
 
 <?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/universal_delete_modal_url.php', [
-    'name' => 'language',
-    'resource_id' => 'language_name',
-    'has_dynamic_resource_name' => true,
-    'path' => 'admin/languages/delete/'
+        'name' => 'language',
+        'resource_id' => 'language_name',
+        'has_dynamic_resource_name' => true,
+        'path' => 'admin/languages/delete/'
 ]), 'modals'); ?>

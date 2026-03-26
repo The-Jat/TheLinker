@@ -5,8 +5,8 @@ defined('ALTUMCODE') || die();
 
 <?php if(isset($data->demo_url)): ?>
     <script>
-    'use strict';
-     if(window.location !== window.parent.location){ window.top.location.href = <?= json_encode($data->demo_url) ?>; } </script>
+        'use strict';
+        if(window.location !== window.parent.location){ window.top.location.href = <?= json_encode($data->demo_url) ?>; } </script>
 <?php endif ?>
 
 <style>
@@ -118,6 +118,19 @@ defined('ALTUMCODE') || die();
             transform: translate3d(0, 0, 0);
         }
     }
+
+    @media print {
+        .ac-wrapper {
+            display: none;
+        }
+    }
+
+    @media print {
+        .ac-wrapper {
+            display: none;
+        }
+    }
+
     /* Gradient background */
     .ac-bg-gradient {
         animation: ac-bg-gradient-animation 3s ease infinite alternate;

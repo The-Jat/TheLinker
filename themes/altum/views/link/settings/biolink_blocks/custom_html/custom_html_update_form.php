@@ -1,12 +1,17 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<form name="update_biolink_" method="post" role="form" data-type="<?= $row->type ?>">
+<form id="<?= 'update_biolink_block_' . $row->biolink_block_id ?>" name="update_biolink_" method="post" role="form" data-type="<?= $row->type ?>">
     <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" required="required" />
     <input type="hidden" name="request_type" value="update" />
     <input type="hidden" name="block_type" value="custom_html" />
     <input type="hidden" name="biolink_block_id" value="<?= $row->biolink_block_id ?>" />
 
     <div class="notification-container"></div>
+
+    <div class="form-group">
+        <label for="<?= 'custom_html_name_' . $row->biolink_block_id ?>"><i class="fas fa-fw fa-signature fa-sm text-muted mr-1"></i> <?= l('biolink_link.name') ?></label>
+        <input id="<?= 'custom_html_name_' . $row->biolink_block_id ?>" type="text" name="name" class="form-control" value="<?= $row->settings->name ?>" maxlength="128" />
+    </div>
 
     <div class="form-group">
         <label for="<?= 'custom_html_html_' . $row->biolink_block_id ?>"><i class="fas fa-fw fa-code fa-sm text-muted mr-1"></i> <?= l('biolink_custom_html.html') ?></label>
@@ -17,7 +22,7 @@
         <i class="fas fa-fw fa-display fa-sm mr-1"></i> <?= l('biolink_link.display_settings_header') ?>
     </button>
 
-    <div class="collapse" id="<?= 'display_settings_container_' . $row->biolink_block_id ?>">
+    <div class="collapse" data-parent="<?= '#update_biolink_block_' . $row->biolink_block_id ?>" id="<?= 'display_settings_container_' . $row->biolink_block_id ?>">
         <div <?= $this->user->plan_settings->temporary_url_is_enabled ? null : get_plan_feature_disabled_info() ?>>
             <div class="<?= $this->user->plan_settings->temporary_url_is_enabled ? null : 'container-disabled' ?>">
                 <div class="form-group custom-control custom-switch">
@@ -129,7 +134,7 @@
             </select>
             <small class="form-text text-muted"><?= l('biolink_link.settings.display_help') ?></small>
         </div>
-        
+
         <div class="form-group">
             <label for="<?= 'link_display_languages_' . $row->biolink_block_id ?>"><i class="fas fa-fw fa-language fa-sm text-muted mr-1"></i> <?= l('biolink_link.display_languages') ?></label>
             <select id="<?= 'link_display_languages_' . $row->biolink_block_id ?>" name="display_languages[]" class="custom-select" multiple="multiple">

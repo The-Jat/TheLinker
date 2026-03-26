@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -70,8 +70,8 @@ class Login extends Controller {
             }
 
             /* Login the user */
-            $_SESSION['user_id'] = $user->user_id;
-            $_SESSION['user_password_hash'] = md5($user->password);
+            session_set('user_id', $user->user_id);
+            session_set('user_password_hash', md5($user->password));
 
             (new User())->login_aftermath_update($user->user_id);
 
@@ -101,7 +101,7 @@ class Login extends Controller {
             ];
 
             if($method == 'facebook-initiate') {
-                $_SESSION['register_language'] = \Altum\Language::$name;
+                session_set('register_language', \Altum\Language::$name);
 
                 try {
                     $facebook = new \Hybridauth\Provider\Facebook($facebook_config);
@@ -146,7 +146,7 @@ class Login extends Controller {
             ];
 
             if($method == 'google-initiate') {
-                $_SESSION['register_language'] = \Altum\Language::$name;
+                session_set('register_language', \Altum\Language::$name);
 
                 try {
                     $google = new \Hybridauth\Provider\Google($google_config);
@@ -191,7 +191,7 @@ class Login extends Controller {
             ];
 
             if($method == 'twitter-initiate') {
-                $_SESSION['register_language'] = \Altum\Language::$name;
+                session_set('register_language', \Altum\Language::$name);
 
                 try {
                     $twitter = new \Hybridauth\Provider\Twitter($twitter_config);
@@ -236,7 +236,7 @@ class Login extends Controller {
             ];
 
             if($method == 'discord-initiate') {
-                $_SESSION['register_language'] = \Altum\Language::$name;
+                session_set('register_language', \Altum\Language::$name);
 
                 try {
                     $discord = new \Hybridauth\Provider\Discord($discord_config);
@@ -281,7 +281,7 @@ class Login extends Controller {
             ];
 
             if($method == 'linkedin-initiate') {
-                $_SESSION['register_language'] = \Altum\Language::$name;
+                session_set('register_language', \Altum\Language::$name);
 
                 try {
                     $linkedin = new \Hybridauth\Provider\LinkedInOpenID($linkedin_config);
@@ -327,7 +327,7 @@ class Login extends Controller {
             ];
 
             if($method == 'microsoft-initiate') {
-                $_SESSION['register_language'] = \Altum\Language::$name;
+                session_set('register_language', \Altum\Language::$name);
 
                 try {
                     $microsoft = new \Hybridauth\Provider\MicrosoftGraph($microsoft_config);
@@ -371,12 +371,12 @@ class Login extends Controller {
             /* Check for any errors */
             $required_fields = ['email', 'password'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
 
-            if(settings()->captcha->login_is_enabled && !isset($_SESSION['twofa_required']) && !$captcha->is_valid()) {
+            if(settings()->captcha->login_is_enabled && !session_has('twofa_required') && !$captcha->is_valid()) {
                 Alerts::add_field_error('captcha', l('global.error_message.invalid_captcha'));
             }
 
@@ -417,7 +417,7 @@ class Login extends Controller {
             /* Check if the user has Two-factor Authentication enabled */
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
                 if($user && $user->twofa_secret) {
-                    $_SESSION['twofa_required'] = 1;
+                    session_set('twofa_required', 1);
 
                     if($_POST['twofa_token']) {
                         $twofa = new \RobThree\Auth\TwoFactorAuth(new \RobThree\Auth\Providers\Qr\BaconQrCodeProvider(format: 'svg'), settings()->main->title, 6, 30);
@@ -440,21 +440,21 @@ class Login extends Controller {
 
                     /* Generate a new token */
                     if(empty($user->token_code)) {
-                        $token_code = md5($user->email . microtime());
+                        $token_code = md5(uniqid('', true) . random_bytes(16));
 
                         db()->where('user_id', $user->user_id)->update('users', ['token_code' => $token_code]);
                     }
 
                     setcookie('user_id', $user->user_id, time()+60*60*24* (settings()->users->login_rememberme_cookie_days ?? 30), COOKIE_PATH);
-setcookie('token_code', $token_code, time()+60*60*24* (settings()->users->login_rememberme_cookie_days ?? 30), COOKIE_PATH);
-setcookie('user_password_hash', md5($user->password), time()+60*60*24* (settings()->users->login_rememberme_cookie_days ?? 30), COOKIE_PATH);
+                    setcookie('token_code', $token_code, time()+60*60*24* (settings()->users->login_rememberme_cookie_days ?? 30), COOKIE_PATH);
+                    setcookie('user_password_hash', md5($user->password), time()+60*60*24* (settings()->users->login_rememberme_cookie_days ?? 30), COOKIE_PATH);
 
                 } else {
-                    $_SESSION['user_id'] = $user->user_id;
-                    $_SESSION['user_password_hash'] = md5($user->password);
+                    session_set('user_id', $user->user_id);
+                    session_set('user_password_hash', md5($user->password));
                 }
 
-                unset($_SESSION['twofa_required']);
+                session_unset_key('twofa_required');
 
                 (new User())->login_aftermath_update($user->user_id);
 
@@ -470,7 +470,7 @@ setcookie('user_password_hash', md5($user->password), time()+60*60*24* (settings
         }
 
         if(empty($_POST)) {
-            unset($_SESSION['twofa_required']);
+            session_unset_key('twofa_required');
         }
 
         /* Prepare the view */
@@ -491,51 +491,87 @@ setcookie('user_password_hash', md5($user->password), time()+60*60*24* (settings
     private function process_social_login($email, $name, $redirect, $method, $id = null) {
 
         /* Clear session variable */
-        if(isset($_SESSION['register_language'])) {
-            \Altum\Language::set_by_name($_SESSION['register_language']);
-            unset($_SESSION['register_language']);
+        if(session_has('register_language')) {
+            \Altum\Language::set_by_name(session_get('register_language'));
+            session_unset_key('register_language');
         }
 
-        /* If the user is already in the system, log him in */
-        if($user = db()->where('email', $email)->getOne('users', ['user_id', 'email', 'password', 'lost_password_code', 'language', 'name', 'extra'])) {
+        /* Make sure the domain is not blacklisted */
+        $email_domain = get_domain_from_email($email);
+        if(settings()->users->blacklisted_domains && in_array($email_domain, settings()->users->blacklisted_domains)) {
+            Alerts::add_field_error('email', l('register.error_message.blacklisted_domain'));
+        }
 
-            /* Make sure the account has the id matching in case its required */
-            if($id && $method == 'microsoft') {
-                $user->extra = json_decode($user->extra ?? '');
-                if($id != $user->extra->initial_social_id) {
-                    throw new \Exception(l('login.error_message.email_is_null'));
+        /* Email shield plugin */
+        if(
+            \Altum\Plugin::is_active('email-shield')
+            && settings()->email_shield->is_enabled
+            && !in_array($email_domain, settings()->email_shield->whitelisted_domains ?? [])
+            && !\Altum\Plugin\EmailShield::validate($email_domain)
+        ) {
+            Alerts::add_field_error('email', l('register.error_message.blacklisted_domain'));
+        }
+
+        /* Detect the location */
+        try {
+            $maxmind = (get_maxmind_reader_country())->get(get_ip());
+        } catch(\Exception $exception) { /* :) */ }
+        $country = isset($maxmind) && isset($maxmind['country']) ? $maxmind['country']['iso_code'] : null;
+
+        /* Make sure the country is not blacklisted */
+        if($country && in_array($country, settings()->users->blacklisted_countries ?? [])) {
+            Alerts::add_error(l('register.error_message.blacklisted_country'));
+        }
+
+        /* Make sure the IP is not blacklisted */
+        if(in_array(get_ip(), settings()->users->blacklisted_ips ?? [])) {
+            Alerts::add_error(l('register.error_message.blacklisted_country'));
+        }
+
+        if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+            /* If the user is already in the system, log him in */
+            if($user = db()->where('email', $email)->getOne('users', ['user_id', 'email', 'password', 'lost_password_code', 'language', 'name', 'extra', 'status'])) {
+
+                /* Make sure the account has the id matching in case its required */
+                if($id && $method == 'microsoft') {
+                    $user->extra = json_decode($user->extra ?? '');
+                    if($id != $user->extra->initial_social_id) {
+                        throw new \Exception(l('login.error_message.email_is_null'));
+                    }
+                }
+
+                /* Make sure the user has a password set before letting the user login */
+                (new User())->verify_null_password($user->user_id, $user->email, $user->password);
+
+                /* Make sure the account is activated / confirmed */
+                if($user->status == 0) {
+                    db()->where('user_id', $user->user_id)->update('users', ['status' => 1]);
+                    $user->status = 1;
+                }
+
+                session_set('user_id', $user->user_id);
+                session_set('user_password_hash', md5($user->password));
+
+                (new User())->login_aftermath_update($user->user_id, $method);
+
+                Alerts::add_info(sprintf(l('login.info_message.logged_in'), $user->name));
+
+                /* Check to see if the user has a custom language set */
+                if(\Altum\Language::$name == $user->language) {
+                    redirect($redirect);
+                } else {
+                    redirect((\Altum\Language::$active_languages[$user->language] ? \Altum\Language::$active_languages[$user->language] . '/' : null) . $redirect, true);
                 }
             }
 
-            /* Make sure the user has a password set before letting the user login */
-            (new User())->verify_null_password($user->user_id, $user->email, $user->password);
-
-            $_SESSION['user_id'] = $user->user_id;
-            $_SESSION['user_password_hash'] = md5($user->password);
-
-            (new User())->login_aftermath_update($user->user_id, $method);
-
-            Alerts::add_info(sprintf(l('login.info_message.logged_in'), $user->name));
-
-            /* Check to see if the user has a custom language set */
-            if(\Altum\Language::$name == $user->language) {
-                redirect($redirect);
-            } else {
-                redirect((\Altum\Language::$active_languages[$user->language] ? \Altum\Language::$active_languages[$user->language] . '/' : null) . $redirect, true);
-            }
-        }
-
-        /* Create a new account */
-        else {
-
-            if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
-
+            /* Create a new account */
+            else {
                 /* Determine what plan is set by default */
-                $plan_id                    = 'free';
-                $plan_settings              = json_encode(settings()->plan_free->settings ?? '');
-                $plan_expiration_date       = get_date();
-                $lost_password_code         = md5($email . microtime());
-                $password                   = settings()->users->register_social_login_require_password ? null : md5($email . microtime() . rand());
+                $plan_id = 'free';
+                $plan_settings = json_encode(settings()->plan_free->settings ?? '');
+                $plan_expiration_date = get_date();
+                $lost_password_code = md5(uniqid('', true) . random_bytes(16));
+                $password = settings()->users->register_social_login_require_password ? null : md5(uniqid('', true) . random_bytes(16));
 
                 $registered_user = (new User())->create(
                     $email,
@@ -568,7 +604,7 @@ setcookie('user_password_hash', md5($user->password), time()+60*60*24* (settings
                         [
                             '{{NAME}}' => $name,
                             '{{URL}}' => url(),
-                                '{{DASHBOARD_LINK}}' => url('dashboard'),
+                            '{{DASHBOARD_LINK}}' => url('dashboard'),
                         ],
                         l('global.emails.user_welcome.body')
                     );
@@ -611,7 +647,7 @@ setcookie('user_password_hash', md5($user->password), time()+60*60*24* (settings
                         'source' => $method,
                         'is_newsletter_subscribed' => false,
                         'datetime' => get_date()
-                    ]);
+                    ], signature: true);
                 }
 
                 /* Send internal notification if needed */
@@ -629,15 +665,15 @@ setcookie('user_password_hash', md5($user->password), time()+60*60*24* (settings
 
                 if($password) {
                     /* Login the user */
-                    $_SESSION['user_id'] = $registered_user['user_id'];
-                    $_SESSION['user_password_hash'] = md5($registered_user['password']);
+                    session_set('user_id', $registered_user['user_id']);
+                    session_set('user_password_hash', md5($registered_user['password']));
 
                     (new User())->login_aftermath_update($registered_user['user_id'], $method);
 
                     /* Set a nice success message */
                     Alerts::add_success(l('register.success_message.login'));
 
-                    redirect($redirect .'?welcome=' . $registered_user['user_id']);
+                    redirect($redirect . '?welcome=' . $registered_user['user_id']);
                 } else {
                     /* Redirect the newly created user to set a new password */
                     redirect('reset-password/' . md5($email) . '/' . $lost_password_code . '?redirect=' . $redirect . '&welcome=' . $registered_user['user_id']);

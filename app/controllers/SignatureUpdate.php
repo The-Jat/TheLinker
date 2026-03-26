@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,22 +25,28 @@ class SignatureUpdate extends Controller {
 
     public function index() {
         if(!\Altum\Plugin::is_active('email-signatures') || !settings()->signatures->is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('update.signatures')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('dashboard');
+        }
+
+        /* Check for the plan limit */
+        $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `signatures` WHERE `user_id` = {$this->user->user_id}")->fetch_object()->total ?? 0;
+        if($this->user->plan_settings->signatures_limit != -1 && $total_rows > $this->user->plan_settings->signatures_limit) {
+            redirect('signatures');
         }
 
         $signature_id = isset($this->params[0]) ? (int) $this->params[0] : null;
 
         /* Get signature details */
         if(!$signature = db()->where('signature_id', $signature_id)->getOne('signatures')) {
-            redirect();
+            throw_404();
         }
 
         $signature->settings = json_decode($signature->settings ?? '');
@@ -68,7 +74,7 @@ class SignatureUpdate extends Controller {
             /* Check for any errors */
             $required_fields = ['name'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }

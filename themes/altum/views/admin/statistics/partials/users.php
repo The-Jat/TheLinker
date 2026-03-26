@@ -15,7 +15,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php if(count($data->sources)): ?>
+                <?php if (!empty($data->sources)): ?>
                     <?php foreach ($data->sources as $source => $total): ?>
                         <tr>
                             <td class="text-nowrap">
@@ -56,7 +56,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php if(count($data->plans)): ?>
+                <?php if (!empty($data->plans)): ?>
                     <?php foreach ($data->plans as $plan => $total): ?>
                         <tr>
                             <td class="text-nowrap">
@@ -97,7 +97,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php if(count($data->devices)): ?>
+                <?php if (!empty($data->devices)): ?>
                     <?php foreach ($data->devices as $device => $total): ?>
                         <tr>
                             <td class="text-nowrap">
@@ -138,7 +138,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php if(count($data->operating_systems)): ?>
+                <?php if (!empty($data->operating_systems)): ?>
                     <?php foreach ($data->operating_systems as $os_name => $total): ?>
                         <tr>
                             <td class="text-nowrap">
@@ -180,7 +180,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php if(count($data->browsers)): ?>
+                <?php if (!empty($data->browsers)): ?>
                     <?php foreach ($data->browsers as $browser_name => $total): ?>
                         <tr>
                             <td class="text-nowrap">

@@ -18,7 +18,7 @@
                 <p class="text-muted"><?= l('admin_users_bulk_resend_activation_modal.subheader') ?></p>
 
                 <div class="mt-4">
-                    <button type="submit" form="table" class="btn btn-lg btn-block btn-primary" onclick="document.querySelector('#table input[data-bulk-type]').value = 'resend_activation'">
+                    <button type="submit" name="submit" form="table" class="btn btn-lg btn-block btn-primary" onclick="document.querySelector('#table input[data-bulk-type]').value = 'resend_activation'">
                         <?= l('admin_users_bulk_resend_activation_modal.button') ?>
                     </button>
                 </div>

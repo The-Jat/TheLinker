@@ -5,7 +5,7 @@
 <div class="card">
     <div class="card-body">
 
-        <form name="update_link" action="" method="post" role="form" enctype="multipart/form-data">
+        <form id="update_link" name="update_link" action="" method="post" role="form" enctype="multipart/form-data">
             <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
             <input type="hidden" name="request_type" value="update" />
             <input type="hidden" name="type" value="link" />
@@ -22,7 +22,7 @@
                 <label for="url"><i class="fas fa-fw fa-bolt fa-sm text-muted mr-1"></i> <?= l('link.settings.url') ?></label>
                 <div class="input-group">
                     <div class="input-group-prepend">
-                        <?php if(count($data->domains)): ?>
+                        <?php if (!empty($data->domains)): ?>
                             <select name="domain_id" class="appearance-none custom-select form-control input-group-text">
                                 <?php if(settings()->links->main_domain_is_enabled || \Altum\Authentication::is_admin()): ?>
                                     <option value=" " <?= $data->link->domain ? 'selected="selected"' : null ?> data-full-url="<?= SITE_URL ?>"><?= remove_url_protocol_from_url(SITE_URL) ?></option>
@@ -54,7 +54,7 @@
                 <small class="form-text text-muted"><?= l('link.settings.url_help') ?></small>
             </div>
 
-            <?php if(count($data->domains)): ?>
+            <?php if (!empty($data->domains)): ?>
                 <div id="is_main_link_wrapper" class="form-group custom-control custom-switch <?= $data->link->domain_id && $data->domains[$data->link->domain_id]->type == '0' ? null : 'd-none' ?>">
                     <input id="is_main_link" name="is_main_link" type="checkbox" class="custom-control-input" <?= $data->link->domain_id && $data->domains[$data->link->domain_id]->link_id == $data->link->link_id ? 'checked="checked"' : null ?>>
                     <label class="custom-control-label" for="is_main_link"><?= l('link.settings.is_main_link') ?></label>
@@ -62,11 +62,11 @@
                 </div>
             <?php endif ?>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#app_linking_container" aria-expanded="false" aria-controls="app_linking_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#app_linking_container" aria-expanded="false" aria-controls="app_linking_container">
                 <i class="fas fa-fw fa-mobile-button fa-sm mr-1"></i> <?= l('link.settings.app_linking_header') ?>
             </button>
 
-            <div class="collapse" id="app_linking_container">
+            <div class="collapse" data-parent="#update_link" id="app_linking_container">
                 <div <?= $this->user->plan_settings->app_linking_is_enabled ? null : get_plan_feature_disabled_info() ?>>
                     <div class="<?= $this->user->plan_settings->app_linking_is_enabled ? null : 'container-disabled' ?>">
                         <div class="form-group custom-control custom-switch">
@@ -139,11 +139,11 @@
             </div>
 
             <?php if(settings()->links->pixels_is_enabled): ?>
-                <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#pixels_container" aria-expanded="false" aria-controls="pixels_container">
+                <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#pixels_container" aria-expanded="false" aria-controls="pixels_container">
                     <i class="fas fa-fw fa-adjust fa-sm mr-1"></i> <?= l('link.settings.pixels_header') ?>
                 </button>
 
-                <div class="collapse" id="pixels_container">
+                <div class="collapse" data-parent="#update_link" id="pixels_container">
                     <div class="form-group">
                         <div class="d-flex flex-wrap flex-row justify-content-between">
                             <label><i class="fas fa-fw fa-sm fa-adjust text-muted mr-1"></i> <?= l('link.settings.pixels_ids') ?></label>
@@ -170,11 +170,11 @@
                 </div>
             <?php endif ?>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#temporary_url_container" aria-expanded="false" aria-controls="temporary_url_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#temporary_url_container" aria-expanded="false" aria-controls="temporary_url_container">
                 <i class="fas fa-fw fa-clock fa-sm mr-1"></i> <?= l('link.settings.temporary_url_header') ?>
             </button>
 
-            <div class="collapse" id="temporary_url_container">
+            <div class="collapse" data-parent="#update_link" id="temporary_url_container">
                 <div <?= $this->user->plan_settings->temporary_url_is_enabled ? null : get_plan_feature_disabled_info() ?>>
                     <div class="<?= $this->user->plan_settings->temporary_url_is_enabled ? null : 'container-disabled' ?>">
                         <div class="form-group custom-control custom-switch">
@@ -247,11 +247,11 @@
                 </div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#utm_container" aria-expanded="false" aria-controls="utm_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#utm_container" aria-expanded="false" aria-controls="utm_container">
                 <i class="fas fa-fw fa-keyboard fa-sm mr-1"></i> <?= l('link.settings.utm_header') ?>
             </button>
 
-            <div class="collapse" id="utm_container">
+            <div class="collapse" data-parent="#update_link" id="utm_container">
                 <div <?= $this->user->plan_settings->utm ? null : get_plan_feature_disabled_info() ?>>
                     <div class="<?= $this->user->plan_settings->utm ? null : 'container-disabled' ?>">
                         <div class="form-group">
@@ -278,11 +278,11 @@
                 </div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#protection_container" aria-expanded="false" aria-controls="protection_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#protection_container" aria-expanded="false" aria-controls="protection_container">
                 <i class="fas fa-fw fa-user-shield fa-sm mr-1"></i> <?= l('link.settings.protection_header') ?>
             </button>
 
-            <div class="collapse" id="protection_container">
+            <div class="collapse" data-parent="#update_link" id="protection_container">
                 <div <?= $this->user->plan_settings->password ? null : get_plan_feature_disabled_info() ?>>
                     <div class="<?= $this->user->plan_settings->password ? null : 'container-disabled' ?>">
                         <div class="form-group" data-password-toggle-view data-password-toggle-view-show="<?= l('global.show') ?>" data-password-toggle-view-hide="<?= l('global.hide') ?>">
@@ -311,11 +311,11 @@
                 </div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#targeting_container" aria-expanded="false" aria-controls="targeting_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#targeting_container" aria-expanded="false" aria-controls="targeting_container">
                 <i class="fas fa-fw fa-bullseye fa-sm mr-1"></i> <?= l('link.settings.targeting_header') ?>
             </button>
 
-            <div class="collapse" id="targeting_container">
+            <div class="collapse" data-parent="#update_link" id="targeting_container">
                 <div <?= $this->user->plan_settings->targeting_is_enabled ? null : get_plan_feature_disabled_info() ?>>
                     <div class="<?= $this->user->plan_settings->targeting_is_enabled ? null : 'container-disabled' ?>">
                         <div class="form-group">
@@ -589,11 +589,11 @@
                 </div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#cloaking_container" aria-expanded="false" aria-controls="cloaking_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#cloaking_container" aria-expanded="false" aria-controls="cloaking_container">
                 <i class="fas fa-fw fa-eye fa-sm mr-1"></i> <?= l('link.settings.cloaking_header') ?>
             </button>
 
-            <div class="collapse" id="cloaking_container">
+            <div class="collapse" data-parent="#update_link" id="cloaking_container">
                 <div <?= $this->user->plan_settings->cloaking_is_enabled ? null : get_plan_feature_disabled_info() ?>>
                     <div class="<?= $this->user->plan_settings->cloaking_is_enabled ? null : 'container-disabled' ?>">
                         <div class="form-group custom-control custom-switch">
@@ -647,11 +647,11 @@
                 </div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#http_container" aria-expanded="false" aria-controls="http_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#http_container" aria-expanded="false" aria-controls="http_container">
                 <i class="fas fa-fw fa-laptop-code fa-sm mr-1"></i> <?= l('link.settings.http_header') ?>
             </button>
 
-            <div class="collapse" id="http_container">
+            <div class="collapse" data-parent="#update_link" id="http_container">
                 <div class="alert alert-info"><?= l('link.settings.http_header_help') ?></div>
 
                 <div class="form-group custom-control custom-radio">
@@ -675,11 +675,11 @@
                 </div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#advanced_container" aria-expanded="false" aria-controls="advanced_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#advanced_container" aria-expanded="false" aria-controls="advanced_container">
                 <i class="fas fa-fw fa-user-tie fa-sm mr-1"></i> <?= l('link.settings.advanced_header') ?>
             </button>
 
-            <div class="collapse" id="advanced_container">
+            <div class="collapse" data-parent="#update_link" id="advanced_container">
                 <?php if(settings()->links->email_reports_is_enabled): ?>
                     <div <?= $this->user->plan_settings->email_reports_is_enabled ? null : get_plan_feature_disabled_info() ?>>
                         <div class="form-group <?= $this->user->plan_settings->email_reports_is_enabled ? null : 'container-disabled' ?>">

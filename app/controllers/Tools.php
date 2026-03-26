@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -28,7 +28,7 @@ class Tools extends Controller {
     public function index() {
 
         if(!settings()->tools->is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         if(settings()->tools->access == 'users') {
@@ -37,11 +37,18 @@ class Tools extends Controller {
 
         /* Make sure there are no extra URL additions */
         if(isset($this->params[0])) {
-            redirect('not-found');
+            throw_404();
         }
 
         $tools = require APP_PATH . 'includes/tools/tools.php';
         $this->tools_usage = (new \Altum\Models\Tools())->get_tools_usage();
+
+        /* Popular tools View */
+        $view = new \Altum\View('tools/popular_tools', (array) $this);
+        $this->add_view_content('popular_tools', $view->run([
+            'tools_usage' => $this->tools_usage,
+            'tools' => require APP_PATH . 'includes/tools/tools.php',
+        ]));
 
         /* Prepare the view */
         $data = [
@@ -60,7 +67,7 @@ class Tools extends Controller {
         require_once APP_PATH . 'helpers/Parsedown.php';
 
         if(!settings()->tools->is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         if(settings()->tools->access == 'users') {
@@ -72,7 +79,7 @@ class Tools extends Controller {
         }
 
         /* Detect extra details about the user */
-        $whichbrowser = new \WhichBrowser\Parser($_SERVER['HTTP_USER_AGENT']);
+        $whichbrowser = get_whichbrowser();
 
         /* Add a new view to the page */
         $cookie_name = 't_statistics_' . \Altum\Router::$method;
@@ -176,7 +183,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['host'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -236,7 +243,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['ip'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -295,7 +302,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['ip'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -344,7 +351,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['host'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -398,7 +405,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['domain_name'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -407,27 +414,45 @@ class Tools extends Controller {
                 Alerts::add_error(l('global.error_message.invalid_csrf_token'));
             }
 
-            try {
-                /* Create the original socket loader */
-                $socket_loader = new \Iodev\Whois\Loaders\SocketLoader();
-                $socket_loader->setTimeout(5); /* connection timeout in seconds */
+			$domain_name = get_domain_from_host($_POST['domain_name']);
 
-                /* Create whois instance using the factory with the custom loader */
-                $get_whois = \Iodev\Whois\Factory::get()->createWhois($socket_loader);
+			/* RDAP check */
+			$rdap_dns_servers = get_rdap_dns_map();
+			$tld = strtolower(pathinfo($domain_name, PATHINFO_EXTENSION));
+			if(isset($rdap_dns_servers[$tld])) {
+				$whois = get_domain_info_rdap($rdap_dns_servers[$tld], $domain_name);
+			}
 
-                /* Load whois information */
-                $whois_info = $get_whois->loadDomainInfo(get_domain_from_host($_POST['domain_name']));
-            } catch (\Exception $exception) {
-                /* handle exception or timeout */
-            }
+			if(
+				!isset($whois)
+				|| empty($whois['start_datetime'])
+				|| empty($whois['updated_datetime'])
+				|| empty($whois['end_datetime'])
+				|| empty($whois['registrar'])
+				|| empty($whois['nameservers'])
+			) {
+				try {
+					/* Create the original socket loader */
+					$socket_loader = new \Iodev\Whois\Loaders\SocketLoader();
+					$socket_loader->setTimeout(5); /* connection timeout in seconds */
 
-            $whois = isset($whois_info) && $whois_info ? [
-                'start_datetime' => $whois_info->creationDate ? (new \DateTime())->setTimestamp($whois_info->creationDate)->format('Y-m-d H:i:s') : null,
-                'updated_datetime' => $whois_info->updatedDate ? (new \DateTime())->setTimestamp($whois_info->updatedDate)->format('Y-m-d H:i:s') : null,
-                'end_datetime' => $whois_info->expirationDate ? (new \DateTime())->setTimestamp($whois_info->expirationDate)->format('Y-m-d H:i:s') : null,
-                'registrar' => $whois_info->registrar,
-                'nameservers' => $whois_info->nameServers,
-            ] : [];
+					/* Create whois instance using the factory with the custom loader */
+					$get_whois = \Iodev\Whois\Factory::get()->createWhois($socket_loader);
+
+					/* Load whois information */
+					$whois_info = $get_whois->loadDomainInfo($domain_name);
+				} catch (\Exception $exception) {
+					/* handle exception or timeout */
+				}
+
+				$whois = isset($whois_info) && $whois_info ? [
+					'start_datetime' => $whois_info->creationDate ? (new \DateTime())->setTimestamp($whois_info->creationDate)->format('Y-m-d H:i:s') : null,
+					'updated_datetime' => $whois_info->updatedDate ? (new \DateTime())->setTimestamp($whois_info->updatedDate)->format('Y-m-d H:i:s') : null,
+					'end_datetime' => $whois_info->expirationDate ? (new \DateTime())->setTimestamp($whois_info->expirationDate)->format('Y-m-d H:i:s') : null,
+					'registrar' => $whois_info->registrar,
+					'nameservers' => $whois_info->nameServers,
+				] : [];
+			}
 
             if(empty($whois)) {
                 Alerts::add_field_error('domain_name', l('tools.whois_lookup.error_message'));
@@ -468,7 +493,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['target'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -531,7 +556,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -573,7 +598,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -615,7 +640,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -657,7 +682,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -699,7 +724,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -741,7 +766,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -783,7 +808,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -825,7 +850,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -867,7 +892,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -909,7 +934,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -951,7 +976,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -993,7 +1018,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1035,7 +1060,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1077,7 +1102,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1119,7 +1144,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1162,7 +1187,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1205,7 +1230,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1248,7 +1273,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1289,7 +1314,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = [];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1353,7 +1378,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1396,7 +1421,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1439,7 +1464,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['amount'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1495,7 +1520,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['markdown'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1539,7 +1564,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1720,7 +1745,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1766,7 +1791,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['characters'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1846,7 +1871,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1902,7 +1927,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['html'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -1953,7 +1978,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['css'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2004,7 +2029,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['js'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2054,7 +2079,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['user_agent'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2106,7 +2131,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['host'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2179,7 +2204,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['email'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2224,7 +2249,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2268,7 +2293,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2310,7 +2335,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2351,7 +2376,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2394,7 +2419,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2437,7 +2462,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2490,7 +2515,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2611,7 +2636,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2709,7 +2734,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2836,7 +2861,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2880,7 +2905,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['url'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -2935,7 +2960,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['color'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3010,7 +3035,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['url'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3059,7 +3084,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['url'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3110,7 +3135,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['url'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3167,7 +3192,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3233,7 +3258,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text', 'language_code'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3275,7 +3300,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3317,7 +3342,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['json'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3400,7 +3425,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['url'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3501,7 +3526,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['sql'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3541,7 +3566,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3585,7 +3610,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3660,7 +3685,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3712,7 +3737,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3775,7 +3800,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3840,7 +3865,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3903,7 +3928,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -3956,7 +3981,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['language'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -4046,7 +4071,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['url'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -4097,7 +4122,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['url'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -4185,7 +4210,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['url'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -4238,7 +4263,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['url'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -4308,7 +4333,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = [];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -4348,7 +4373,7 @@ class Tools extends Controller {
                 }
 
                 /* Generate new name for image */
-                $image_new_name = md5(time() . rand()) . '.' . $image_file_extension;
+                $image_new_name = md5(uniqid('', true) . random_bytes(16)) . '.' . $image_file_extension;
 
                 /* Build the request to the API */
                 $mime = mime_content_type($image_file_temp);
@@ -4581,7 +4606,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -4655,7 +4680,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -4701,7 +4726,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['text'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -4781,7 +4806,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['bbcode'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -4821,7 +4846,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -4861,7 +4886,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['number'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -4916,7 +4941,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['roman_numerals'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -5004,7 +5029,7 @@ class Tools extends Controller {
             /* Check for any errors */
             $required_fields = ['year', 'month', 'day', 'hour', 'minute', 'second', 'timezone'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }

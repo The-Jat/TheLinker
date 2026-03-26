@@ -15,7 +15,7 @@
         <div class="col-12 col-lg-auto d-flex flex-wrap gap-3 d-print-none">
             <div>
                 <div class="dropdown">
-                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= count($data->biolinks_templates) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
+                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= !empty($data->biolinks_templates) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-filter"></i>
                     </button>
 
@@ -80,7 +80,7 @@
         </div>
     </div>
 
-    <?php if(count($data->biolinks_templates)): ?>
+    <?php if (!empty($data->biolinks_templates)): ?>
         <div class="row">
             <?php foreach($data->biolinks_templates as $biolink_template): ?>
                 <div class="col-lg-6 col-xl-4">

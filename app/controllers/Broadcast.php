@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -30,7 +30,7 @@ class Broadcast extends Controller {
         }
 
         if(!isset($_GET['id'])) {
-            redirect();
+            throw_404();
         }
 
         /* Decode the base64 id */
@@ -41,7 +41,7 @@ class Broadcast extends Controller {
 
         /* Make sure all parameters are present */
         if(!isset($parameters['broadcast_id'], $parameters['user_id'])) {
-            redirect();
+            throw_404();
         }
 
         $parameters['broadcast_id'] = (int) $parameters['broadcast_id'];
@@ -50,22 +50,22 @@ class Broadcast extends Controller {
 
         /* Make sure the broadcast & user exists properly */
         if(!$broadcast = db()->where('broadcast_id', $parameters['broadcast_id'])->getOne('broadcasts')) {
-            redirect();
+            throw_404();
         }
 
         if(!in_array($broadcast->status, ['sent', 'processing'])) {
-            redirect();
+            throw_404();
         }
 
         $broadcast->users_ids = json_decode($broadcast->users_ids);
 
         if(!$user_id = db()->where('user_id', $parameters['user_id'])->getValue('users', 'user_id')) {
-            redirect();
+            throw_404();
         }
 
         /* Make sure the user is included in the broadcast */
         if(!in_array($user_id, $broadcast->users_ids)) {
-            redirect();
+            throw_404();
         }
 
         /* Prepare for database insertion */
@@ -89,7 +89,7 @@ class Broadcast extends Controller {
         }
 
         if($type == 'click' && !str_contains($broadcast->content, $url)) {
-            redirect();
+            throw_404();
         }
 
         /* Insert log and update stats */

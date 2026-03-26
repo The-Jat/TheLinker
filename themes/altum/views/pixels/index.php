@@ -3,6 +3,12 @@
 <div class="container">
     <?= \Altum\Alerts::output_alerts() ?>
 
+    <?php if($this->user->plan_settings->pixels_limit != -1 && $data->total_pixels > $this->user->plan_settings->pixels_limit): ?>
+        <div class="alert alert-danger">
+            <i class="fas fa-fw fa-times-circle text-danger mr-2"></i> <?= sprintf(settings()->payment->is_enabled ? l('global.info_message.plan_feature_limit_removal_with_upgrade') : l('global.info_message.plan_feature_limit_removal'), '<strong>' . $data->total_pixels - $this->user->plan_settings->pixels_limit, mb_strtolower(l('pixels.title')) . '</strong>', '<a href="' . url('plan') . '" class="font-weight-bold text-reset">' . l('global.info_message.plan_upgrade') . '</a>') ?>
+        </div>
+    <?php endif ?>
+
     <div class="row mb-4">
         <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0 text-truncate">
             <h1 class="h4 m-0 text-truncate"><i class="fas fa-fw fa-xs fa-adjust mr-1"></i> <?= l('pixels.header') ?></h1>
@@ -29,7 +35,7 @@
 
             <div>
                 <div class="dropdown">
-                    <button type="button" class="btn btn-light dropdown-toggle-simple <?= count($data->pixels) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
+                    <button type="button" class="btn btn-light dropdown-toggle-simple <?= !empty($data->pixels) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-download"></i>
                     </button>
 
@@ -40,7 +46,7 @@
                         <a href="<?= url('pixels?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                     </a>
-                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                     </a>
                     </div>
@@ -49,7 +55,7 @@
 
             <div>
                 <div class="dropdown">
-                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= count($data->pixels) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
+                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= !empty($data->pixels) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-filter"></i>
                     </button>
 
@@ -143,7 +149,7 @@
         </div>
     </div>
 
-    <?php if(count($data->pixels)): ?>
+    <?php if (!empty($data->pixels)): ?>
         <?php $available_pixels = require APP_PATH . 'includes/pixels.php'; ?>
         <form id="table" action="<?= SITE_URL . 'pixels/bulk' ?>" method="post" role="form">
             <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />

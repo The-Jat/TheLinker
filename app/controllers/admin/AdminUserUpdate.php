@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -95,7 +95,8 @@ class AdminUserUpdate extends Controller {
                         'sensitive_content' => isset($_POST['sensitive_content']),
                         'leap_link' => isset($_POST['leap_link']),
                         'api_is_enabled' => isset($_POST['api_is_enabled']),
-                        'dofollow_is_enabled' => isset($_POST['dofollow_is_enabled']),
+						'dofollow_is_enabled' => isset($_POST['dofollow_is_enabled']),
+						'branded_button_is_enabled' => isset($_POST['branded_button_is_enabled']),
                         'custom_pwa_is_enabled' => isset($_POST['custom_pwa_is_enabled']),
                         'biolink_blocks_limit' => (int) $_POST['biolink_blocks_limit'],
                         'projects_limit' => (int) $_POST['projects_limit'],
@@ -170,7 +171,7 @@ class AdminUserUpdate extends Controller {
             /* Check for any errors */
             $required_fields = ['name', 'email'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }

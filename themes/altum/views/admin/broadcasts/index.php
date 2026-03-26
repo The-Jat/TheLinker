@@ -29,7 +29,7 @@
                         <a href="<?= url('admin/broadcasts?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                         </a>
-                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                         </a>
                     </div>
@@ -167,7 +167,7 @@
                     <th><?= l('admin_broadcasts.broadcast') ?></th>
                     <th><?= l('admin_broadcasts.segment') ?></th>
                     <th><?= l('admin_broadcasts.sent_emails') ?></th>
-                    <?php if(settings()->main->broadcasts_statistics_is_enabled): ?>
+                    <?php if(settings()->content->broadcasts_statistics_is_enabled): ?>
                         <th><?= l('admin_broadcasts.views') ?></th>
                         <th><?= l('admin_broadcasts.clicks') ?></th>
                     <?php endif ?>
@@ -202,7 +202,7 @@
                             </span>
                         </td>
 
-                        <?php if(settings()->main->broadcasts_statistics_is_enabled): ?>
+                        <?php if(settings()->content->broadcasts_statistics_is_enabled): ?>
                             <td class="text-nowrap">
                                 <a href="<?= url('admin/broadcast-view/' . $row->broadcast_id) ?>" class="badge badge-info" data-toggle="tooltip" title="<?= nr(get_percentage_between_two_numbers($row->views, $row->total_emails)) . '%' ?>">
                                     <i class="fas fa-fw fa-sm fa-eye mr-1"></i> <?= nr($row->views) ?>

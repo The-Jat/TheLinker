@@ -1,4 +1,18 @@
 <?php
+/*
+ * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ *
+ * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
+ * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
+ *
+ * 🌍 View all other existing AltumCode projects via https://altumcode.com/
+ * 📧 Get in touch for support or general queries via https://altumcode.com/contact
+ * 📤 Download the latest version via https://altumcode.com/downloads
+ *
+ * 🐦 X/Twitter: https://x.com/AltumCode
+ * 📘 Facebook: https://facebook.com/altumcode
+ * 📸 Instagram: https://instagram.com/altumcode
+ */
 
 defined('ALTUMCODE') || die();
 define('ROOT_PATH', realpath(__DIR__ . '/..') . '/');
@@ -30,19 +44,6 @@ session_set_cookie_params([
     'samesite' => 'Lax',
     'secure' => str_starts_with(SITE_URL, 'https://'),
 ]);
-
-/* Only start a session handler if we need to */
-$should_start_session = !isset($_GET['altum'])
-    || (
-        !str_starts_with($_GET['altum'], 'cron')
-        && !str_starts_with($_GET['altum'], 'sitemap')
-        && !str_starts_with($_GET['altum'], 'webhook-')
-        && !str_starts_with($_GET['altum'], 'api/')
-    );
-
-if($should_start_session) {
-    session_start();
-}
 
 /* Autoloader */
 spl_autoload_register (function ($class) {
@@ -78,10 +79,13 @@ spl_autoload_register (function ($class) {
 /* Require files */
 require_once APP_PATH . 'core/Controller.php';
 require_once APP_PATH . 'core/Model.php';
+require_once APP_PATH . 'core/NotFoundException.php';
 
 /* Load some helpers */
 require_once APP_PATH . 'helpers/Link.php';
 require_once APP_PATH . 'helpers/core.php';
+require_once APP_PATH . 'helpers/sessions.php';
+require_once APP_PATH . 'helpers/sessions.php';
 require_once APP_PATH . 'helpers/others.php';
 require_once APP_PATH . 'helpers/links.php';
 require_once APP_PATH . 'helpers/strings.php';

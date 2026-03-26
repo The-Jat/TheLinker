@@ -1,5 +1,12 @@
 <?php defined('ALTUMCODE') || die() ?>
 
+<?php if(!settings()->codes->qr_codes_is_enabled): ?>
+    <div class="alert alert-info">
+        <i class="fas fa-fw fa-info-circle mr-1"></i>
+        <?= sprintf(l('global.info_message.admin_feature_disabled'), url('admin/settings/codes')) ?>
+    </div>
+<?php endif ?>
+
 <div class="d-flex flex-column flex-md-row justify-content-between mb-4">
     <h1 class="h3 mb-3 mb-md-0 text-truncate"><i class="fas fa-fw fa-xs fa-qrcode text-primary-900 mr-2"></i> <?= l('admin_qr_codes.header') ?></h1>
 
@@ -23,7 +30,7 @@
                     <a href="<?= url('admin/qr-codes?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                     </a>
-                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                     </a>
                 </div>

@@ -27,7 +27,7 @@
                         <a href="<?= url('links-statistics' . \Altum\Router::$original_request_query . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                         </a>
-                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                         </a>
                     </div>
@@ -50,13 +50,24 @@
                 $hour_end = sprintf('%02d:00', ($row->hour + 1) % 24);
                 $label = $hour_start . ' - ' . $hour_end;
 
+                /* choose emoji based on time of day */
+                if($row->hour >= 5 && $row->hour < 12) {
+                    $emoji_icon = '🌅'; /* morning */
+                } elseif($row->hour >= 12 && $row->hour < 17) {
+                    $emoji_icon = '🌞'; /* afternoon */
+                } elseif($row->hour >= 17 && $row->hour < 21) {
+                    $emoji_icon = '🌇'; /* evening */
+                } else {
+                    $emoji_icon = '🌙'; /* night */
+                }
+
                 $percentage = round($row->total / $data->total_sum * 100, 1);
                 ?>
 
                 <div class="mt-4">
                     <div class="d-flex justify-content-between mb-1">
                         <div class="text-truncate">
-                            <span><i class="fas fa-fw fa-sm fa-clock text-muted mr-1"></i> <?= $label ?></span>
+                            <span><?= $emoji_icon ?> <?= $label ?></span>
                         </div>
 
                         <div>

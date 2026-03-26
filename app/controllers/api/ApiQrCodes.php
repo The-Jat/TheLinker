@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -32,7 +32,7 @@ class ApiQrCodes extends Controller {
     public function index() {
 
         if(!settings()->codes->qr_codes_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Decide what to continue with */
@@ -461,7 +461,7 @@ class ApiQrCodes extends Controller {
         /* Check for any errors */
         $required_fields = ['type', 'name'];
         foreach($required_fields as $field) {
-            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+            if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                 $this->response_error(l('global.error_message.empty_fields'), 401);
                 break 1;
             }
@@ -587,7 +587,7 @@ class ApiQrCodes extends Controller {
                 if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
                     /* Generate new name for image */
-                    $image_new_name = md5(time() . rand()) . '.' . $file_extension;
+                    $image_new_name = md5(uniqid('', true) . random_bytes(16)) . '.' . $file_extension;
 
                     /* Offload uploading */
                     if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
@@ -646,7 +646,7 @@ class ApiQrCodes extends Controller {
                 if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
                     /* Generate new name for image */
-                    $image_new_name = md5(time() . rand()) . '.' . $file_extension;
+                    $image_new_name = md5(uniqid('', true) . random_bytes(16)) . '.' . $file_extension;
 
                     /* Offload uploading */
                     if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
@@ -705,7 +705,7 @@ class ApiQrCodes extends Controller {
                 if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
                     /* Generate new name for image */
-                    $image_new_name = md5(time() . rand()) . '.' . $file_extension;
+                    $image_new_name = md5(uniqid('', true) . random_bytes(16)) . '.' . $file_extension;
 
                     /* Offload uploading */
                     if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
@@ -740,7 +740,7 @@ class ApiQrCodes extends Controller {
             $_POST['embedded_data'] = input_clean($response->body->details->embedded_data, 10000);
 
             /* Generate new name for image */
-            $image_new_name = md5(time() . rand()) . '.svg';
+            $image_new_name = md5(uniqid('', true) . random_bytes(16)) . '.svg';
 
             /* Offload uploading */
             if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
@@ -796,6 +796,13 @@ class ApiQrCodes extends Controller {
     }
 
     private function patch() {
+
+        /* Check for the plan limit */
+        $total_rows = db()->where('user_id', $this->api_user->user_id)->getValue('qr_codes', 'count(`qr_code_id`)');
+
+        if($this->api_user->plan_settings->qr_codes_limit != -1 && $total_rows > $this->api_user->plan_settings->qr_codes_limit) {
+            $this->response_error(sprintf(settings()->payment->is_enabled ? l('global.info_message.plan_feature_limit_removal_with_upgrade') : l('global.info_message.plan_feature_limit_removal'), $total_rows - $this->user->plan_settings->qr_codes_limit, mb_strtolower(l('qr_codes.title')), l('global.info_message.plan_upgrade')), 401);
+        }
 
         $qr_code_id = isset($this->params[0]) ? (int) $this->params[0] : null;
 
@@ -1112,7 +1119,7 @@ class ApiQrCodes extends Controller {
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
                 /* Generate new name for image */
-                $image_new_name = md5(time() . rand()) . '.' . $file_extension;
+                $image_new_name = md5(uniqid('', true) . random_bytes(16)) . '.' . $file_extension;
 
                 /* Offload uploading */
                 if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
@@ -1190,7 +1197,7 @@ class ApiQrCodes extends Controller {
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
                 /* Generate new name for image */
-                $image_new_name = md5(time() . rand()) . '.' . $file_extension;
+                $image_new_name = md5(uniqid('', true) . random_bytes(16)) . '.' . $file_extension;
 
                 /* Offload uploading */
                 if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
@@ -1268,7 +1275,7 @@ class ApiQrCodes extends Controller {
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
                 /* Generate new name for image */
-                $image_new_name = md5(time() . rand()) . '.' . $file_extension;
+                $image_new_name = md5(uniqid('', true) . random_bytes(16)) . '.' . $file_extension;
 
                 /* Offload uploading */
                 if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
@@ -1322,7 +1329,7 @@ class ApiQrCodes extends Controller {
         $_POST['embedded_data'] = input_clean($response->body->details->embedded_data, 10000);
 
         /* Generate new name for image */
-        $image_new_name = md5(time() . rand()) . '.svg';
+        $image_new_name = md5(uniqid('', true) . random_bytes(16)) . '.svg';
 
         /* Offload uploading */
         if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {

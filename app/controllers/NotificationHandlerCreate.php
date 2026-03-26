@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -28,7 +28,7 @@ class NotificationHandlerCreate extends Controller {
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('create.notification_handlers')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('notification-handlers');
         }
 
@@ -41,14 +41,14 @@ class NotificationHandlerCreate extends Controller {
 
         if(!empty($_POST)) {
             $_POST['type'] = array_key_exists($_POST['type'], require APP_PATH . 'includes/notification_handlers.php') ? input_clean($_POST['type']) : null;
-            $_POST['name'] = input_clean($_POST['name']);
+            $_POST['name'] = input_clean($_POST['name'], 128);
 
             //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Alerts::add_error('Please create an account on the demo to test out this function.');
 
             /* Check for any errors */
             $required_fields = ['type', 'name'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -59,7 +59,7 @@ class NotificationHandlerCreate extends Controller {
 
             /* Check for the plan limit */
             if($this->user->plan_settings->{'notification_handlers_' . $_POST['type'] . '_limit'} != -1 && $total_notification_handlers[$_POST['type']] >= $this->user->plan_settings->{'notification_handlers_' . $_POST['type'] . '_limit'}) {
-                Alerts::add_error(l('global.info_message.plan_feature_limit'));
+                Alerts::add_error(l('global.info_message.plan_feature_limit') . (settings()->payment->is_enabled ? ' <a href="' . url('plan') . '" class="font-weight-bold text-reset">' . l('global.info_message.plan_upgrade') . '.</a>' : null));
             }
 
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
@@ -92,7 +92,7 @@ class NotificationHandlerCreate extends Controller {
                 }
 
                 /* Test integration */
-                if(isset($_POST['test']) && ($_SESSION['notification_handler_test_' . $_POST['type']] ?? 0) < 10) {
+                if(isset($_POST['test']) && (session_get('notification_handler_test_' . $_POST['type']) ?? 0) < 10) {
 
                     /* Send a test notification */
                     switch($_POST['type']) {
@@ -106,7 +106,7 @@ class NotificationHandlerCreate extends Controller {
 
                             break;
 
-                        case 'webhook';
+                        case 'webhook':
 
                             try {
                                 $response = \Unirest\Request::post(
@@ -121,7 +121,7 @@ class NotificationHandlerCreate extends Controller {
 
                             break;
 
-                        case 'slack';
+                        case 'slack':
 
                             try {
                                 $response = \Unirest\Request::post(
@@ -143,7 +143,7 @@ class NotificationHandlerCreate extends Controller {
 
                             break;
 
-                        case 'discord';
+                        case 'discord':
 
                             try {
                                 $response = \Unirest\Request::post(
@@ -171,7 +171,7 @@ class NotificationHandlerCreate extends Controller {
 
                             break;
 
-                        case 'telegram';
+                        case 'telegram':
 
                             try {
                                 $response = \Unirest\Request::get(
@@ -192,7 +192,7 @@ class NotificationHandlerCreate extends Controller {
 
                             break;
 
-                        case 'microsoft_teams';
+                        case 'microsoft_teams':
 
                             try {
                                 $response = \Unirest\Request::post(
@@ -235,7 +235,7 @@ class NotificationHandlerCreate extends Controller {
 
                             break;
 
-                        case 'twilio';
+                        case 'twilio':
 
                             try {
                                 \Unirest\Request::auth(settings()->notification_handlers->twilio_sid, settings()->notification_handlers->twilio_token);
@@ -255,13 +255,13 @@ class NotificationHandlerCreate extends Controller {
 
                             \Unirest\Request::auth('', '');
 
-                            if($response->code != 200) {
+                            if($response->code != 201) {
                                 Alerts::add_error(l('notification_handlers.error_message_test') . '<br />' . '<strong>' . $response->code . ':</strong> ' .  e($response->raw_body));
                             }
 
                             break;
 
-                        case 'twilio_call';
+                        case 'twilio_call':
 
                             try {
                                 \Unirest\Request::auth(settings()->notification_handlers->twilio_sid, settings()->notification_handlers->twilio_token);
@@ -279,13 +279,13 @@ class NotificationHandlerCreate extends Controller {
                                 Alerts::add_error(l('notification_handlers.error_message_test') . '<br />' . e($exception->getMessage()));
                             }
 
-                            if($response->code != 200) {
+                            if($response->code != 201) {
                                 Alerts::add_error(l('notification_handlers.error_message_test') . '<br />' . '<strong>' . $response->code . ':</strong> ' .  e($response->raw_body));
                             }
 
                             break;
 
-                        case 'whatsapp';
+                        case 'whatsapp':
 
                             try {
                                 $response = \Unirest\Request::post(
@@ -361,7 +361,7 @@ class NotificationHandlerCreate extends Controller {
                     }
 
                     /* Increment */
-                    $_SESSION['notification_handler_test_' . $_POST['type']] = ($_SESSION['notification_handler_test_' . $_POST['type']] ?? 0) + 1;
+                    session_set('notification_handler_test_' . $_POST['type'], (session_get('notification_handler_test_' . $_POST['type']) ?? 0) + 1);
 
                     if(!Alerts::has_errors()) {
                         Alerts::add_success(l('notification_handlers.success_message_test'));

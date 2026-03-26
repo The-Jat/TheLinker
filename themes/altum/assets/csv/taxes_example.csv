@@ -1,0 +1,11 @@
+name,description,value,value_type,type,billing_type,countries,state,county,datetime
+Environmental Fee,Environmental protection contribution,1.25,fixed,exclusive,business,"[""DE"",""FR"",""IT""]",,,"2025-01-15 09:30:00"
+Regional VAT,Regional value added tax,7.5,percentage,inclusive,both,"[""ES"",""PT""]",Madrid,,"2025-03-22 11:00:00"
+Luxury Goods Tax,Applied on luxury goods purchases,12.75,percentage,exclusive,both,,"California","Orange","2025-05-10 17:45:00"
+Digital Services Fee,Tax for online digital services,3.5,fixed,exclusive,personal,"[""US"",""CA""]",,,"2025-06-01 10:00:00"
+Import Duty,Customs import tax,5,percentage,exclusive,business,"[""CN"",""JP"",""KR"",""VN""]",,,"2025-06-15 08:20:00"
+Hotel Accommodation Tax,Tax for hotel stays,10,percentage,inclusive,both,,"New York","Queens","2025-07-04 14:15:00"
+Green Energy Tax,Encouragement for renewable energy,2.5,fixed,inclusive,personal,,"Ontario","York","2025-07-20 19:00:00"
+Service Charge,Applied to service-based invoices,1.75,fixed,exclusive,both,,,"","2025-08-11 13:10:00"
+International Fee,Fee applied to cross-border transactions,4.25,percentage,exclusive,business,"[""AU"",""NZ"",""SG"",""MY""]",,,"2025-09-01 09:00:00"
+City Infrastructure Tax,Helps fund city infrastructure,6,percentage,inclusive,both,,"Texas","Dallas","2025-10-01 16:30:00"

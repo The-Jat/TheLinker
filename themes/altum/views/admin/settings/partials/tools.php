@@ -23,6 +23,11 @@
     </div>
 
     <div class="form-group custom-control custom-switch">
+        <input id="categories_expanded_is_enabled" name="categories_expanded_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->tools->categories_expanded_is_enabled ? 'checked="checked"' : null?>>
+        <label class="custom-control-label" for="categories_expanded_is_enabled"><i class="fas fa-fw fa-sm fa-paragraph text-muted mr-1"></i> <?= l('admin_settings.tools.categories_expanded_is_enabled') ?></label>
+    </div>
+
+    <div class="form-group custom-control custom-switch">
         <input id="extra_content_is_enabled" name="extra_content_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->tools->extra_content_is_enabled ? 'checked="checked"' : null?>>
         <label class="custom-control-label" for="extra_content_is_enabled"><i class="fas fa-fw fa-sm fa-paragraph text-muted mr-1"></i> <?= l('admin_settings.tools.extra_content_is_enabled') ?></label>
     </div>

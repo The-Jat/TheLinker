@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -28,12 +28,12 @@ class Chat extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->chats_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('update.chats')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('dashboard');
         }
 
@@ -46,7 +46,7 @@ class Chat extends Controller {
 
         /* Get chat details */
         if(!$chat = db()->where('chat_id', $chat_id)->where('user_id', $this->user->user_id)->getOne('chats')) {
-            redirect();
+            throw_404();
         }
 
         $chat->settings = json_decode($chat->settings ?? '');
@@ -86,7 +86,7 @@ class Chat extends Controller {
         //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Response::json('Please create an account on the demo to test out this function.', 'error');
 
         if(empty($_POST)) {
-            redirect();
+            throw_404();
         }
 
         set_time_limit(0);
@@ -94,7 +94,7 @@ class Chat extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->chats_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         $_POST['chat_id'] = (int) $_POST['chat_id'];
@@ -104,7 +104,7 @@ class Chat extends Controller {
 
         /* Get chat details */
         if(!$chat = db()->where('chat_id', $_POST['chat_id'])->where('user_id', $this->user->user_id)->getOne('chats')) {
-            redirect();
+            throw_404();
         }
 
         /* Team checks */
@@ -135,7 +135,7 @@ class Chat extends Controller {
         /* Check for any errors */
         $required_fields = ['content'];
         foreach($required_fields as $field) {
-            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+            if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                 Response::json(l('global.error_message.empty_fields'), 'error');
             }
         }
@@ -253,7 +253,7 @@ class Chat extends Controller {
             case 'custom:': $temperature = number_format($_POST['creativity_level'], 1); break;
         }
 
-        if(in_array($this->user->plan_settings->documents_model, ['o1', 'o1-mini', 'o3-mini'])) {
+        if(in_array($this->user->plan_settings->documents_model, ['gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'o1', 'o1-mini', 'o3-mini'])) {
             $temperature = 1;
         }
 

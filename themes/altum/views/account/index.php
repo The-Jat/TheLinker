@@ -68,11 +68,11 @@
                     <?php endif ?>
 
                     <?php if(settings()->users->account_display_newsletter_checkbox): ?>
-                    <div class="form-group custom-control custom-switch">
-                        <input id="is_newsletter_subscribed" name="is_newsletter_subscribed" type="checkbox" class="custom-control-input" <?= $this->user->is_newsletter_subscribed ? 'checked="checked"' : null ?>>
-                        <label class="custom-control-label" for="is_newsletter_subscribed"><i class="fas fa-fw fa-sm fa-newspaper text-muted mr-1"></i> <?= l('account.settings.is_newsletter_subscribed') ?></label>
-                        <small class="form-text text-muted"><?= l('account.settings.is_newsletter_subscribed_help') ?></small>
-                    </div>
+                        <div class="form-group custom-control custom-switch">
+                            <input id="is_newsletter_subscribed" name="is_newsletter_subscribed" type="checkbox" class="custom-control-input" <?= $this->user->is_newsletter_subscribed ? 'checked="checked"' : null ?>>
+                            <label class="custom-control-label" for="is_newsletter_subscribed"><i class="fas fa-fw fa-sm fa-newspaper text-muted mr-1"></i> <?= l('account.settings.is_newsletter_subscribed') ?></label>
+                            <small class="form-text text-muted"><?= l('account.settings.is_newsletter_subscribed_help') ?></small>
+                        </div>
                     <?php endif ?>
                 </div>
             </div>
@@ -93,106 +93,107 @@
 
             <div class="card">
                 <div class="card-body">
-
-                    <?php if(!empty($this->user->payment_subscription_id)): ?>
-                        <div class="alert alert-info" role="alert">
-                            <?= l('account.billing.subscription_id_active') ?>
-                        </div>
-                    <?php endif ?>
-
                     <div class="row">
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label for="billing_type"><i class="fas fa-fw fa-sm fa-briefcase text-muted mr-1"></i> <?= l('account.billing.type') ?></label>
-                                <div class="row btn-group-toggle" data-toggle="buttons">
-                                    <div class="col-6">
-                                        <label class="btn btn-light btn-block text-truncate <?= $this->user->billing->type == 'personal' ? 'active"' : null?>">
-                                            <input type="radio" name="billing_type" value="personal" class="custom-control-input" <?= $this->user->billing->type == 'personal' ? 'checked="checked"' : null?> />
-                                            <i class="fas fa-user fa-fw fa-sm mr-1"></i> <?= l('account.billing.type_personal') ?>
-                                        </label>
-                                    </div>
-
-                                    <div class="col-6">
-                                        <label class="btn btn-light btn-block text-truncate <?= $this->user->billing->type == 'business' ? 'active"' : null?>">
-                                            <input type="radio" name="billing_type" value="business" class="custom-control-input" <?= $this->user->billing->type == 'business' ? 'checked="checked"' : null?> />
-                                            <i class="fas fa-user-tag fa-fw fa-sm mr-1"></i> <?= l('account.billing.type_business') ?>
-                                        </label>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="billing_type"><i class="fas fa-fw fa-sm fa-briefcase text-muted mr-1"></i> <?= l('account.billing.type') ?></label>
+                                    <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+                                        <div class="p-2 col-6">
+                                            <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $this->user->billing->type == 'personal' ? 'active' : null ?>">
+                                                <input type="radio" name="billing_type" value="personal" class="custom-control-input" <?= $this->user->billing->type == 'personal' ? 'checked="checked"' : null ?> />
+                                                <i class="fas fa-user fa-fw fa-sm mr-1"></i> <?= l('account.billing.type_personal') ?>
+                                            </label>
+                                        </div>
+                                        <div class="p-2 col-6">
+                                            <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $this->user->billing->type == 'business' ? 'active' : null ?>">
+                                                <input type="radio" name="billing_type" value="business" class="custom-control-input" <?= $this->user->billing->type == 'business' ? 'checked="checked"' : null ?> />
+                                                <i class="fas fa-user-tag fa-fw fa-sm mr-1"></i> <?= l('account.billing.type_business') ?>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label for="billing_name"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('account.billing.name') ?></label>
-                                <input id="billing_name" type="text" name="billing_name" class="form-control" value="<?= $this->user->billing->name ?>" maxlength="64" />
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="billing_name"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('account.billing.name') ?></label>
+                                    <input id="billing_name" type="text" name="billing_name" class="form-control" value="<?= $this->user->billing->name ?>" maxlength="64" />
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="billing_address"><i class="fas fa-fw fa-sm fa-map-marker-alt text-muted mr-1"></i> <?= l('account.billing.address') ?></label>
+                                    <input id="billing_address" type="text" name="billing_address" class="form-control" value="<?= $this->user->billing->address ?>" maxlength="128" />
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg">
+                                <div class="form-group">
+                                    <label for="billing_city"><i class="fas fa-fw fa-sm fa-city text-muted mr-1"></i> <?= l('global.city') ?></label>
+                                    <input id="billing_city" type="text" name="billing_city" class="form-control" value="<?= $this->user->billing->city ?>" maxlength="64" />
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg" id="billing_state_container" style="display: none;">
+                                <div class="form-group">
+                                    <label for="billing_state"><i class="fas fa-fw fa-sm fa-map text-muted mr-1"></i> <?= l('account.billing.state') ?></label>
+                                    <select id="billing_state" name="billing_state" class="custom-select">
+                                        <option value=" "><?= l('global.none') ?></option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg">
+                                <div class="form-group">
+                                    <label for="billing_county"><i class="fas fa-fw fa-sm fa-building text-muted mr-1"></i> <?= l('account.billing.county') ?></label>
+                                    <input id="billing_county" type="text" name="billing_county" class="form-control" value="<?= $this->user->billing->county ?>" maxlength="64" />
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg">
+                                <div class="form-group">
+                                    <label for="billing_zip"><i class="fas fa-fw fa-sm fa-sort-numeric-up-alt text-muted mr-1"></i> <?= l('account.billing.zip') ?></label>
+                                    <input id="billing_zip" type="text" name="billing_zip" class="form-control" value="<?= $this->user->billing->zip ?>" maxlength="32" />
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="billing_country"><i class="fas fa-fw fa-sm fa-flag text-muted mr-1"></i> <?= l('global.country') ?></label>
+                                    <select id="billing_country" name="billing_country" class="custom-select">
+                                        <?php foreach(get_countries_array() as $key => $value): ?>
+                                            <option value="<?= $key ?>" <?= $this->user->billing->country == $key ? 'selected="selected"' : null ?>><?= $value ?></option>
+                                        <?php endforeach ?>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="billing_phone"><i class="fas fa-fw fa-sm fa-phone-square-alt text-muted mr-1"></i> <?= l('account.billing.phone') ?></label>
+                                    <input id="billing_phone" type="text" name="billing_phone" class="form-control" value="<?= $this->user->billing->phone ?>" maxlength="32" />
+                                </div>
+                            </div>
+
+                            <div class="col-12" data-billing-type="business">
+                                <div class="form-group">
+                                    <label for="billing_tax_id"><i class="fas fa-fw fa-sm fa-tag text-muted mr-1"></i> <?= !empty(settings()->business->tax_type) ? settings()->business->tax_type : l('account.billing.tax_id') ?></label>
+                                    <input id="billing_tax_id" type="text" name="billing_tax_id" class="form-control" value="<?= $this->user->billing->tax_id ?>" maxlength="64" />
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-group" data-character-counter="textarea">
+                                    <label for="billing_notes" class="d-flex justify-content-between align-items-center">
+                                        <span><i class="fas fa-fw fa-sm fa-file-alt text-muted mr-1"></i> <?= l('account.billing.notes') ?></span>
+                                        <small class="text-muted" data-character-counter-wrapper></small>
+                                    </label>
+                                    <textarea id="billing_notes" name="billing_notes" class="form-control" maxlength="512"><?= $this->user->billing->notes ?></textarea>
+                                    <small class="form-text text-muted"><?= l('account.billing.notes_help') ?></small>
+                                </div>
                             </div>
                         </div>
-
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label for="billing_address"><i class="fas fa-fw fa-sm fa-map-marker-alt text-muted mr-1"></i> <?= l('account.billing.address') ?></label>
-                                <input id="billing_address" type="text" name="billing_address" class="form-control" value="<?= $this->user->billing->address ?>" maxlength="128" />
-                            </div>
-                        </div>
-
-                        <div class="col-12 col-lg-6">
-                            <div class="form-group">
-                                <label for="billing_city"><i class="fas fa-fw fa-sm fa-city text-muted mr-1"></i> <?= l('global.city') ?></label>
-                                <input id="billing_city" type="text" name="billing_city" class="form-control" value="<?= $this->user->billing->city ?>" maxlength="64" />
-                            </div>
-                        </div>
-
-                        <div class="col-12 col-lg-4">
-                            <div class="form-group">
-                                <label for="billing_county"><i class="fas fa-fw fa-sm fa-building text-muted mr-1"></i> <?= l('account.billing.county') ?></label>
-                                <input id="billing_county" type="text" name="billing_county" class="form-control" value="<?= $this->user->billing->county ?>" maxlength="64" />
-                            </div>
-                        </div>
-
-                        <div class="col-12 col-lg-2">
-                            <div class="form-group">
-                                <label for="billing_zip"><i class="fas fa-fw fa-sm fa-sort-numeric-up-alt text-muted mr-1"></i> <?= l('account.billing.zip') ?></label>
-                                <input id="billing_zip" type="text" name="billing_zip" class="form-control" value="<?= $this->user->billing->zip ?>" maxlength="32" />
-                            </div>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label for="billing_country"><i class="fas fa-fw fa-sm fa-flag text-muted mr-1"></i> <?= l('global.country') ?></label>
-                                <select id="billing_country" name="billing_country" class="custom-select">
-                                    <?php foreach(get_countries_array() as $key => $value): ?>
-                                        <option value="<?= $key ?>" <?= $this->user->billing->country == $key ? 'selected="selected"' : null ?>><?= $value ?></option>
-                                    <?php endforeach ?>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label for="billing_phone"><i class="fas fa-fw fa-sm fa-phone-square-alt text-muted mr-1"></i> <?= l('account.billing.phone') ?></label>
-                                <input id="billing_phone" type="text" name="billing_phone" class="form-control" value="<?= $this->user->billing->phone ?>" maxlength="32" />
-                            </div>
-                        </div>
-
-                        <div class="col-12" data-billing-type="business">
-                            <div class="form-group">
-                                <label for="billing_tax_id"><i class="fas fa-fw fa-sm fa-tag text-muted mr-1"></i> <?= !empty(settings()->business->tax_type) ? settings()->business->tax_type : l('account.billing.tax_id') ?></label>
-                                <input id="billing_tax_id" type="text" name="billing_tax_id" class="form-control" value="<?= $this->user->billing->tax_id ?>" maxlength="64" />
-                            </div>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="form-group" data-character-counter="textarea">
-                                <label for="billing_notes" class="d-flex justify-content-between align-items-center">
-                                    <span><i class="fas fa-fw fa-sm fa-file-alt text-muted mr-1"></i> <?= l('account.billing.notes') ?></span>
-                                    <small class="text-muted" data-character-counter-wrapper></small>
-                                </label>
-                                <textarea id="billing_notes" name="billing_notes" class="form-control" maxlength="512"><?= $this->user->billing->notes ?></textarea>
-                                <small class="form-text text-muted"><?= l('account.billing.notes_help') ?></small>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -201,15 +202,77 @@
         <script>
             'use strict';
 
+            /* Toggle business fields */
             type_handler('[name="billing_type"]', 'data-billing-type');
-            document.querySelector('[name="billing_type"]') && document.querySelectorAll('[name="billing_type"]').forEach(element => element.addEventListener('change', () => { type_handler('[name="billing_type"]', 'data-billing-type'); }));
+            document.querySelectorAll('[name="billing_type"]').forEach(element => {
+                element.addEventListener('change', () => {
+                    type_handler('[name="billing_type"]', 'data-billing-type');
+                });
+            });
 
+            /* Disable all billing fields if subscription is active */
             <?php if(!empty($this->user->payment_subscription_id)): ?>
             document.querySelectorAll('[name^="billing_"]').forEach(element => {
                 element.setAttribute('disabled', 'disabled');
             });
             <?php endif ?>
 
+            /* Dynamic states */
+            const states_data = {
+                'US': [
+                    'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia',
+                    'Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts',
+                    'Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey',
+                    'New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island',
+                    'South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia',
+                    'Wisconsin','Wyoming'
+                ],
+                'CA': [
+                    'Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador','Northwest Territories',
+                    'Nova Scotia','Nunavut','Ontario','Prince Edward Island','Quebec','Saskatchewan','Yukon'
+                ],
+                'IN': [
+                    'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Delhi','Goa','Gujarat','Haryana',
+                    'Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya',
+                    'Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura',
+                    'Uttar Pradesh','Uttarakhand','West Bengal'
+                ],
+                'BR': [
+                    'Acre','Alagoas','Amapá','Amazonas','Bahia','Ceará','Distrito Federal','Espírito Santo','Goiás','Maranhão',
+                    'Mato Grosso','Mato Grosso do Sul','Minas Gerais','Pará','Paraíba','Paraná','Pernambuco','Piauí',
+                    'Rio de Janeiro','Rio Grande do Norte','Rio Grande do Sul','Rondônia','Roraima','Santa Catarina',
+                    'São Paulo','Sergipe','Tocantins'
+                ]
+            };
+
+            const country_select = document.querySelector('#billing_country');
+            const state_container = document.querySelector('#billing_state_container');
+            const state_select = document.querySelector('#billing_state');
+            const saved_state = '<?= $this->user->billing->state ?? '' ?>';
+
+            let state_handler = (selected_country) => {
+                /* Reset dropdown */
+                state_select.innerHTML = '<option value=" "><?= l('global.none') ?></option>';
+
+                if(states_data[selected_country]) {
+                    /* Populate with states */
+                    states_data[selected_country].forEach(state => {
+                        const is_selected = (state === saved_state) ? 'selected' : '';
+                        state_select.innerHTML += `<option value="${state}" ${is_selected}>${state}</option>`;
+                    });
+                    state_container.style.display = 'block';
+                } else {
+                    state_container.style.display = 'none';
+                }
+            }
+
+            /* Trigger on page load */
+            state_handler(country_select.value);
+
+            /* Trigger when country changes */
+            country_select.addEventListener('change', function() {
+                state_handler(this.value);
+            });
         </script>
         <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
 
@@ -231,8 +294,8 @@
                     <div class="form-group">
                         <label for="twofa_is_enabled"><i class="fas fa-fw fa-sm fa-passport text-muted mr-1"></i> <?= l('account.twofa.is_enabled') ?></label>
                         <select id="twofa_is_enabled" name="twofa_is_enabled" class="custom-select <?= \Altum\Alerts::has_field_errors('twofa_token') ? 'is-invalid' : null ?>">
-                            <option value="1" <?= $this->user->twofa_secret || $_POST['twofa_is_enabled'] ? 'selected="selected"' : null ?>><?= l('global.yes') ?></option>
-                            <option value="0" <?= !$this->user->twofa_secret && !$_POST['twofa_is_enabled'] ? 'selected="selected"' : null ?>><?= l('global.no') ?></option>
+                            <option value="1" <?= $this->user->twofa_secret || (!empty($_POST) && $_POST['twofa_is_enabled']) ? 'selected="selected"' : null ?>><?= l('global.yes') ?></option>
+                            <option value="0" <?= !$this->user->twofa_secret || (!empty($_POST) && !$_POST['twofa_is_enabled']) ? 'selected="selected"' : null ?>><?= l('global.no') ?></option>
                         </select>
                     </div>
 

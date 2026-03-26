@@ -161,7 +161,7 @@
                     </a>
                 </li>
 
-                <li class="<?= \Altum\Router::$controller == 'AdminPayments' ? 'active' : null ?>">
+                <li class="<?= in_array(\Altum\Router::$controller, ['AdminPayments', 'AdminPaymentCreate']) ? 'active' : null ?>">
                     <a class="nav-link text-truncate" href="<?= url('admin/payments') ?>">
                         <i class="fas fa-fw fa-sm fa-credit-card mr-2"></i> <?= l('admin_payments.menu') ?>
                     </a>
@@ -415,7 +415,7 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
+
     document.querySelector('ul[class="admin-sidebar-links"] li.active') && document.querySelector('ul[class="admin-sidebar-links"] li.active').scrollIntoView({ behavior: 'smooth', block: 'center' });
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

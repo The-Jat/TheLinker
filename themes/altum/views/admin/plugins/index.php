@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<?php if(count(\Altum\Plugin::$plugins)): ?>
+<?php if (!empty(\Altum\Plugin::$plugins)): ?>
 
     <?php
     if(ALTUMCODE == 66) {

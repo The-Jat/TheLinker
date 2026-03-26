@@ -22,7 +22,7 @@
                 </span>
 
                 <div class="mt-4">
-                    <a href="" id="<?= $data->name . '_delete_modal_url' ?>" class="btn btn-lg btn-block btn-danger"><?= l('global.delete') ?></a>
+                    <a href="" id="<?= $data->name . '_delete_modal_url' ?>" class="btn btn-lg btn-block btn-danger" data-loader-on-click><?= l('global.delete') ?></a>
                 </div>
             </div>
 
@@ -33,14 +33,14 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
-/* On modal show load new data */
+
+    /* On modal show load new data */
     $('<?= '#' . $data->name . '_delete_modal' ?>').on('show.bs.modal', event => {
         let related_target = event.relatedTarget;
         let current_target = event.currentTarget;
 
         let <?= $data->resource_id ?> = related_target.getAttribute('data-<?= str_replace('_', '-', $data->resource_id) ?>');
-        current_target.querySelector('<?= '#' . $data->name . '_delete_modal_url' ?>').setAttribute('href', `${url}<?= $data->path ?>${<?= $data->resource_id ?>}&global_token=${global_token}&original_request=<?= base64_encode(\Altum\Router::$original_request) ?>&original_request_query=<?= base64_encode(\Altum\Router::$original_request_query) ?>`);
+        current_target.querySelector('<?= '#' . $data->name . '_delete_modal_url' ?>').setAttribute('href', `${url}<?= $data->path ?>${<?= $data->resource_id ?>}&global_token=${global_token}&original_request=<?= base64_encode(\Altum\Router::$original_request) ?>?original_request_query=<?= base64_encode(\Altum\Router::$original_request_query) ?>`);
 
         <?php if($data->has_dynamic_resource_name): ?>
         current_target.querySelector('<?= '#' . $data->name . '_delete_modal_subheader' ?>').innerHTML = current_target.querySelector('<?= '#' . $data->name . '_delete_modal_subheader_hidden' ?>').innerHTML.replace('%s', related_target.getAttribute('data-resource-name'));

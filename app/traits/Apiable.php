@@ -26,10 +26,8 @@ trait Apiable {
     /* Function to check the request authentication */
     private function verify_request($require_to_be_admin = false, $require_to_have_plan_setting = true, $require_to_have_api_enabled = true) {
 
-        //ALTUMCODE:DEMO if(DEMO) $this->response_error('This feature is blocked on the demo.', 400);
-
         if(!settings()->main->api_is_enabled && !$require_to_be_admin && $require_to_have_api_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Define the return content to be treated as JSON */
@@ -53,6 +51,8 @@ trait Apiable {
         if(!$this->api_user) {
             $this->response_error(l('api.error_message.no_access'), 401);
         }
+
+        //ALTUMCODE:DEMO if(DEMO) if($this->api_user->user_id == 1) $this->response_error('Please create an account on the demo to test out this function.', 400);
 
         if($require_to_be_admin && $this->api_user->type != 1) {
             $this->response_error(l('api.error_message.no_access'), 401);

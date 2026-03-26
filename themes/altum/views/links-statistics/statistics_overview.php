@@ -454,7 +454,7 @@
     <script>
         'use strict';
 
-        <?php if(count($data->pageviews)): ?>
+        <?php if (!empty($data->pageviews)): ?>
         let css = window.getComputedStyle(document.body);
         let pageviews_color = css.getPropertyValue('--primary');
         let visitors_color = css.getPropertyValue('--gray-400');

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -21,28 +21,28 @@ defined('ALTUMCODE') || die();
 class PushSubscribers extends Controller {
 
     public function index() {
-        redirect('not-found');
+        throw_404();
     }
 
     public function create_ajax() {
 
         if(!\Altum\Plugin::is_active('push-notifications') || !settings()->push_notifications->is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         if(!is_logged_in() && !settings()->push_notifications->guests_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         if(empty($_POST)) {
-            redirect();
+            throw_404();
         }
 
         /* Check for any errors */
         $required_fields = ['endpoint', 'p256dh', 'auth'];
         foreach($required_fields as $field) {
-            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
-                redirect();
+            if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
+                throw_404();
             }
         }
 
@@ -75,7 +75,7 @@ class PushSubscribers extends Controller {
         }
 
         if(!$accepted) {
-            redirect();
+            throw_404();
         }
 
         $ip = get_ip();
@@ -91,7 +91,7 @@ class PushSubscribers extends Controller {
         $city_name = isset($maxmind) && isset($maxmind['city']) ? $maxmind['city']['names']['en'] : null;
 
         /* Detect extra details about the user */
-        $whichbrowser = new \WhichBrowser\Parser($_SERVER['HTTP_USER_AGENT']);
+        $whichbrowser = get_whichbrowser();
         $browser_name = $whichbrowser->browser->name ?? null;
         $os_name = $whichbrowser->os->name ?? null;
         $browser_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? mb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
@@ -122,22 +122,22 @@ class PushSubscribers extends Controller {
     public function delete_ajax() {
 
         if(!\Altum\Plugin::is_active('push-notifications') || !settings()->push_notifications->is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         if(!is_logged_in() && !settings()->push_notifications->guests_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         if(empty($_POST)) {
-            redirect();
+            throw_404();
         }
 
         /* Check for any errors */
         $required_fields = ['endpoint', 'p256dh', 'auth'];
         foreach($required_fields as $field) {
-            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
-                redirect();
+            if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
+                throw_404();
             }
         }
 
@@ -166,7 +166,7 @@ class PushSubscribers extends Controller {
         }
 
         if(!$accepted) {
-            redirect();
+            throw_404();
         }
 
         /* Database query */

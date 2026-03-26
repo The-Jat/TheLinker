@@ -2,10 +2,6 @@ html {
 	scroll-behavior: smooth;
 }
 
-b, strong {
-	font-weight: 500;
-}
-
 /* Cancel the bg white for dark mode */
 body[data-theme-style="dark"].bg-white {
 	background: var(--body-bg) !important;
@@ -19,8 +15,6 @@ body[data-theme-style="dark"].bg-white {
 [data-theme-style="dark"].app {
 	background: #0D0F11;
 }
-
-
 
 .app-overlay {
 	position: fixed;
@@ -360,6 +354,24 @@ body.app-sidebar-opened .app-sidebar {
 	color: var(--black) !important;
 }
 
+.footer-social-wrapper {
+    border-radius: 50%;
+    aspect-ratio: 1 / 1;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 2.5rem;
+    height: auto;
+}
+
+.footer-social-wrapper a {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 /* App footer */
 .app-footer {
 	border: 1px solid var(--gray-100);
@@ -398,8 +410,16 @@ body.app-sidebar-opened .app-sidebar {
 
 
 /* Helper classes */
+.font-size-little-small {
+    font-size: .95rem;
+}
+
 .font-size-small {
 	font-size: .9rem;
+}
+
+.font-weight-450 {
+    font-weight: 450;
 }
 
 .font-weight-500 {
@@ -446,9 +466,14 @@ img {
 
 /* Navbar */
 .navbar-main {
+    z-index: 10;
 	min-height: 0 !important;
-	background: var(--white);
+	background: #ffffff75;
 	border-bottom: 1px solid var(--gray-100);
+}
+
+[data-theme-style="dark"] .navbar-main {
+    background: #00000057;
 }
 
 .navbar-main .navbar-nav > li > a {
@@ -753,6 +778,11 @@ input[type="radio"]:checked ~ .link-biolink-theme {
 	cursor: pointer;
 }
 
+.no-focus:focus {
+    outline: 0;
+    box-shadow: none;
+}
+
 .appearance-none {
 	appearance: none;
 	-moz-appearance: none;
@@ -861,19 +891,20 @@ input[type="radio"]:checked ~ .link-biolink-theme {
 	font-size: 1.25rem;
 }
 
-.custom-radio-box input[type="radio"] + div {
+.custom-radio-box input[type="radio"] + div, .custom-radio-box input[type="checkbox"] + div {
 	transition: all .3s ease-in-out;
 	border: 1px solid var(--gray-100);
 	background: var(--white);
 }
 
-.custom-radio-box input[type="radio"]:checked + div {
+.custom-radio-box input[type="radio"]:checked + div, .custom-radio-box input[type="checkbox"]:checked + div {
 	border: 1px solid var(--primary);
 }
 
-.custom-radio-box input[type="radio"]:hover + div {
+.custom-radio-box input[type="radio"]:hover + div, .custom-radio-box input[type="checkbox"]:hover + div {
 	border: 1px solid var(--primary);
 }
+
 
 /* QR Codes */
 .qr-code {
@@ -895,6 +926,12 @@ input[type="radio"]:checked ~ .link-biolink-theme {
 	border-radius: var(--border-radius);
 	padding: .25rem;
 	border: 1px solid var(--gray-100);
+}
+
+/* Crypto icon */
+.cryptocurrency-icon {
+    width: 40px;
+    height: 40px;
 }
 
 /* Round circles */
@@ -926,6 +963,15 @@ input[type="radio"]:checked ~ .link-biolink-theme {
 }
 
 @media print {
+    .invoice {
+        page-break-after: always;
+    }
+
+    body, html, .container {
+        height: auto !important;
+        overflow: visible !important;
+    }
+
 	.invoice-logo {
 		filter: grayscale(100%);
 	}
@@ -1094,6 +1140,11 @@ a:active svg {
 	transform: scale(.9);
 }
 
+/* Dark mode for some icons */
+[data-theme-style="dark"] svg[data-custom-colors] {
+    color: var(--brand-color-dark) !important;
+}
+
 /* Helper zoom class for icons */
 .icon-zoom-animation svg {
 	transition: transform .15s;
@@ -1249,6 +1300,7 @@ a:active svg {
 .btn-group-custom .btn.active {
 	background: var(--dark);
 	color: var(--white);
+    z-index: 0 !important;
 }
 
 /* Custom scrollbar */
@@ -1304,6 +1356,8 @@ body *::-webkit-scrollbar, body *::-webkit-scrollbar-track {
 
 /* Announcements */
 .announcement-wrapper {
+	position: relative;
+	z-index: 10;
 	margin: .75rem;
 	border-radius: .5rem;
 	opacity: 0;

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -24,18 +24,23 @@ class CookieConsent extends Controller {
     public function index() {
 
         if(!settings()->cookie_consent->is_enabled || !settings()->cookie_consent->logging_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         $payload = @file_get_contents('php://input');
+
+        if(empty($payload)) {
+            throw_404();
+        }
+
         $_POST = json_decode($payload, true);
 
         if(!\Altum\Csrf::check('global_token')) {
-            redirect();
+            throw_404();
         }
 
         /* Detect extra details about the user */
-        $whichbrowser = new \WhichBrowser\Parser($_SERVER['HTTP_USER_AGENT']);
+        $whichbrowser = get_whichbrowser();
 
         /* Do not track bots */
         if($whichbrowser->device->type == 'bot') {
@@ -70,8 +75,6 @@ class CookieConsent extends Controller {
         if(!file_exists(UPLOADS_PATH . 'cookie_consent/.htaccess')) {
             file_put_contents(UPLOADS_PATH . 'cookie_consent/.htaccess', 'Deny from all');
         }
-
-        die();
     }
 
 }

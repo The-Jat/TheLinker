@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,7 +25,7 @@ class Teams extends Controller {
     public function index() {
 
         if(!\Altum\Plugin::is_active('teams')) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
@@ -76,11 +76,11 @@ class Teams extends Controller {
     public function delete() {
         \Altum\Authentication::guard();
 
-        if(empty($_POST)) {
-            redirect('teams');
+        if (empty($_POST)) {
+            throw_404();
         }
 
-        $team_id = (int) query_clean($_POST['team_id']);
+        $team_id = (int) $_POST['team_id'];
 
         //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Alerts::add_error('Please create an account on the demo to test out this function.');
 

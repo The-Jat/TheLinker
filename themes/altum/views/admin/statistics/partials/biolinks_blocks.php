@@ -1,7 +1,7 @@
 <?php defined('ALTUMCODE') || die() ?>
 
 <?php ob_start() ?>
-<?php if(count($data->total)): ?>
+<?php if (!empty($data->total)): ?>
 <?php foreach($data->total as $key => $value): ?>
 <div class="card mb-5">
     <div class="card-body">

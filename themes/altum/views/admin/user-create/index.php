@@ -47,3 +47,5 @@
     </div>
 </div>
 
+<?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>
+

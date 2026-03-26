@@ -33,79 +33,55 @@ if($product_info) {
     $product_info = json_decode($product_info->value);
 }
 
-/* Start the pre updating process */
-$update_key = array_search($product_info ? $product_info->code : (defined('PRODUCT_CODE') ? PRODUCT_CODE : '800'), $updates);
+/* Request the update */
+$altumcode_api = 'https://api2.altumcode.com/validate-update';
+//$altumcode_api = 'http://127.0.0.1/altumcode-api/validate-update';
 
-if($update_key !== false) {
-    $update_key++;
+/* Make sure the license is correct */
+$response = \Unirest\Request::post($altumcode_api, [], [
+    'version_code'      => $product_info ? $product_info->code : PRODUCT_CODE,
+    'requested_version_code' => NEW_PRODUCT_CODE,
+    'license_key_obfuscated' => $license->license,
+    'license_type'      => $license->type,
+    'installation_url'  => url(),
+    'product_key'       => PRODUCT_KEY,
+    'product_name'      => PRODUCT_NAME,
+    'product_version'   => $product_info->version,
+    'server_ip'         => $_SERVER['SERVER_ADDR'],
+    'client_ip'         => get_ip()
+]);
+
+if($response->body->status == 'error') {
+    die(json_encode([
+        'status' => 'error',
+        'message' => $response->body->message
+    ]));
 }
 
-$updates_to_run = array_slice($updates, $update_key);
+/* Run SQL */
+$dump = array_filter(explode('-- SEPARATOR --', $response->body->sql));
 
-/* Go over each updates that we need to run */
-foreach($updates_to_run as $value) {
+foreach($dump as $query) {
+    $throw_error = true;
+    $query = trim($query);
 
-    /* Run SQL */
-    $dump_content = file_get_contents(ROOT . 'update/sql/' . $value . '.sql');
-
-    /* Get the Regular & Extended queries */
-    $exploded_dump_content = array_filter(explode('-- EXTENDED SEPARATOR --', $dump_content));
-
-    $dump = array_filter(explode('-- SEPARATOR --', $exploded_dump_content[0]));
-
-    /* Run all the SQL from the specific version */
-    foreach($dump as $query) {
-        $throw_error = true;
-        $query = trim($query);
-
-        if(empty($query)) {
-            continue;
-        }
-
-        if(string_starts_with('-- X --', $query)) {
-            $throw_error = false;
-            $query = trim(str_replace('-- X --', '', $query));
-        }
-
-        $database->query($query);
-
-        if($database->error && $throw_error) {
-            die(json_encode([
-                'status' => 'error',
-                'message' => 'Error when running the database queries: ' . $database->error
-            ]));
-        }
+    if(empty($query)) {
+        continue;
     }
 
-    /* Run Extended SQL queries if existing */
-    if(isset($exploded_dump_content[1]) && in_array($license->type, ['SPECIAL', 'Extended License', 'extended'])) {
-        $dump = array_filter(explode('-- SEPARATOR --', $exploded_dump_content[1]));
-
-        /* Run all the SQL from the specific version */
-        foreach($dump as $query) {
-        $throw_error = true;
-        $query = trim($query);
-
-        if(empty($query)) {
-            continue;
-        }
-
-        if(string_starts_with('-- X --', $query)) {
-            $throw_error = false;
-            $query = trim(str_replace('-- X --', '', $query));
-        }
-
-        $database->query($query);
-
-        if($database->error && $throw_error) {
-                die(json_encode([
-                    'status' => 'error',
-                    'message' => 'Error when running the database queries: ' . $database->error
-                ]));
-            }
-        }
+    if(string_starts_with('-- X --', $query)) {
+        $throw_error = false;
+        $query = trim(str_replace('-- X --', '', $query));
     }
 
+    $database->query($query);
+
+    if($database->error && $throw_error) {
+        die(json_encode([
+            'status' => 'error',
+            'message' => 'Error when running the database queries: ' . $database->error
+        ]));
+    }
 }
 
 /* Delete the cache store for the settings */

@@ -8,6 +8,7 @@ $primary-400: hsl(179, 45%, 39%);
 $primary-300: hsl(181, 41%, 33%);
 $primary-200: hsl(183, 30%, 27%);
 $primary-100: hsl(185, 25%, 23%);
+$primary-50: hsl(185, 20%, 6%);
 
 $gray-900: hsl(204, 12%, 95%) !default;
 $gray-800: hsl(210, 12%, 86%) !default;
@@ -34,6 +35,7 @@ $theme-colors: (
     "gray-800": $gray-800,
     "gray-900": $gray-900,
 
+    "primary-50": $primary-50,
     "primary-100": $primary-100,
     "primary-200": $primary-200,
     "primary-300": $primary-300,
@@ -58,9 +60,6 @@ $spacers: (
         9: ($spacer * 8),
         10: ($spacer * 10)
 );
-
-/* Font */
-$font-weight-bold: 500;
 
 /* Overriding */
 $white: hsl(210, 7%, 8%);
@@ -208,6 +207,11 @@ code {
 
 /* Tooltip fix */
 .tooltip { top: 0; }
+
+/* Stretched link fix - otherwise leaks on top of dropdown menu */
+.stretched-link::after {
+    z-index: 0 !important;
+}
 
 /* Custom switches */
 .custom-control-label::before {

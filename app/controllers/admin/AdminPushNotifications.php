@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -75,8 +75,8 @@ class AdminPushNotifications extends Controller {
 
     public function get_segment_count() {
 
-        if(!empty($_POST)) {
-            redirect();
+        if($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            throw_404();
         }
 
         \Altum\Authentication::guard();
@@ -145,8 +145,8 @@ class AdminPushNotifications extends Controller {
 
     public function duplicate() {
 
-        if(empty($_POST)) {
-            redirect('admin/push-notifications');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         $push_notification_id = (int) $_POST['push_notification_id'];
@@ -190,8 +190,8 @@ class AdminPushNotifications extends Controller {
     public function bulk() {
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('admin/push-notifications');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -214,6 +214,8 @@ class AdminPushNotifications extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
@@ -224,7 +226,7 @@ class AdminPushNotifications extends Controller {
             }
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -244,7 +246,7 @@ class AdminPushNotifications extends Controller {
         }
 
         if(!$push_notification = db()->where('push_notification_id', $push_notification_id)->getOne('push_notifications', ['push_notification_id'])) {
-            redirect('admin/push-notifications');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

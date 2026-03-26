@@ -12,7 +12,12 @@
 
         <div class="form-group">
             <label for="api_key"><?= l('api_documentation.api_key') ?></label>
-            <input type="text" id="api_key" value="<?= $this->user->api_key ?>" class="form-control" onclick="this.select();" readonly="readonly" />
+            <?php
+                        //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) $this->user->api_key = 'hidden on demo';
+                        ?>
+
+                        <input type="text" id="api_key" value="<?= $this->user->api_key ?>" class="form-control" onclick="this.select();" readonly="readonly" />
+
         </div>
 
         <div class="form-group">

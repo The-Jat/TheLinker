@@ -84,6 +84,7 @@
             <div class="form-group">
                 <label for="order"><i class="fas fa-fw fa-sm fa-sort text-muted mr-1"></i> <?= l('global.order') ?></label>
                 <input id="order" type="number" name="order" class="form-control" />
+                <small class="form-text text-muted"><?= l('global.order_int_help') ?></small>
             </div>
 
             <div class="form-group custom-control custom-switch">

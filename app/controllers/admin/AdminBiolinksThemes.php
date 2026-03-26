@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -78,8 +78,8 @@ class AdminBiolinksThemes extends Controller {
         //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('admin/biolinks-themes');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -99,6 +99,8 @@ class AdminBiolinksThemes extends Controller {
             set_time_limit(0);
 
             session_write_close();
+
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
 
             switch($_POST['type']) {
                 case 'delete':
@@ -142,7 +144,7 @@ class AdminBiolinksThemes extends Controller {
             }
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -153,8 +155,8 @@ class AdminBiolinksThemes extends Controller {
 
     public function duplicate() {
 
-        if(empty($_POST)) {
-            redirect('admin/biolinks-themes');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         $biolink_theme_id = (int) $_POST['biolink_theme_id'];
@@ -170,11 +172,13 @@ class AdminBiolinksThemes extends Controller {
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+            $biolink_theme->settings = json_decode($biolink_theme->settings ?? '');
+            if($biolink_theme->settings->biolink->background_type == 'image') $biolink_theme->settings->biolink->background = \Altum\Uploads::copy_uploaded_file($biolink_theme->settings->biolink->background, 'backgrounds/', 'backgrounds/');
 
             /* Insert to database */
             $biolink_theme_id = db()->insert('biolinks_themes', [
                 'name' => string_truncate($biolink_theme->name . ' - ' . l('global.duplicated'), 64, null),
-                'settings' => $biolink_theme->settings,
+                'settings' => json_encode($biolink_theme->settings),
                 'is_enabled' => $biolink_theme->is_enabled,
                 'order' => $biolink_theme->order + 1,
                 'datetime' => get_date(),

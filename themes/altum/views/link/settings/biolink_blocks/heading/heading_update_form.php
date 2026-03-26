@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<form name="update_biolink_" method="post" role="form" data-type="<?= $row->type ?>">
+<form id="<?= 'update_biolink_block_' . $row->biolink_block_id ?>" name="update_biolink_" method="post" role="form" data-type="<?= $row->type ?>">
     <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" required="required" />
     <input type="hidden" name="request_type" value="update" />
     <input type="hidden" name="block_type" value="heading" />
@@ -10,10 +10,10 @@
 
     <div class="form-group">
         <label for="<?= 'heading_heading_type_' . $row->biolink_block_id ?>"><i class="fas fa-fw fa-heading fa-sm text-muted mr-1"></i> <?= l('global.type') ?></label>
-        <div class="row btn-group-toggle" data-toggle="buttons">
+        <div class="row btn-group-toggle m-n2" data-toggle="buttons">
             <?php foreach(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as $heading_type): ?>
-                <div class="col-4">
-                    <label class="btn btn-light btn-block text-truncate <?= ($row->settings->heading_type  ?? null) == $heading_type ? 'active"' : null?>">
+                <div class="p-2 col-4">
+                    <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= ($row->settings->heading_type  ?? null) == $heading_type ? 'active"' : null?>">
                         <input type="radio" name="heading_type" value="<?= $heading_type ?>" class="custom-control-input" <?= ($row->settings->heading_type  ?? null) == $heading_type ? 'checked="checked"' : null ?> />
                         <?= strtoupper($heading_type) ?>
                     </label>
@@ -35,10 +35,10 @@
 
     <div class="form-group">
         <label for="<?= 'block_text_alignment_' . $row->biolink_block_id ?>"><i class="fas fa-fw fa-align-center fa-sm text-muted mr-1"></i> <?= l('biolink_link.text_alignment') ?></label>
-        <div class="row btn-group-toggle" data-toggle="buttons">
+        <div class="row btn-group-toggle m-n2" data-toggle="buttons">
             <?php foreach(['center', 'justify', 'left', 'right'] as $text_alignment): ?>
-                <div class="col-6">
-                    <label class="btn btn-light btn-block text-truncate <?= ($row->settings->text_alignment  ?? null) == $text_alignment ? 'active"' : null?>">
+                <div class="p-2 col-6">
+                    <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= ($row->settings->text_alignment  ?? null) == $text_alignment ? 'active"' : null?>">
                         <input type="radio" name="text_alignment" value="<?= $text_alignment ?>" class="custom-control-input" <?= ($row->settings->text_alignment  ?? null) == $text_alignment ? 'checked="checked"' : null ?> />
                         <i class="fas fa-fw fa-align-<?= $text_alignment ?> fa-sm mr-1"></i> <?= l('biolink_link.text_alignment.' . $text_alignment) ?>
                     </label>
@@ -51,7 +51,7 @@
         <i class="fas fa-fw fa-check-circle fa-sm mr-1"></i> <?= l('link.settings.verified_header') ?>
     </button>
 
-    <div class="collapse" id="verified_container">
+    <div class="collapse" data-parent="<?= '#update_biolink_block_' . $row->biolink_block_id ?>" id="verified_container">
         <?php if(!$data->link->is_verified): ?>
             <div class="alert alert-info">
                 <i class="fas fa-fw fa-info-circle mr-1"></i>
@@ -68,17 +68,17 @@
 
                 <div class="form-group">
                     <label for="<?= 'link_verified_location_' . $row->biolink_block_id ?>"><i class="fas fa-fw fa-check-circle fa-sm text-muted mr-1"></i> <?= l('link.settings.verified_location') ?></label>
-                    <div class="row btn-group-toggle" data-toggle="buttons">
-                        <div class="col-12 col-lg-4 p-2 h-100">
-                            <label class="btn btn-light btn-block text-truncate <?= $row->settings->verified_location == '' ? 'active"' : null?>">
+                    <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+                        <div class="p-2 col-12 col-lg-4 p-2 h-100">
+                            <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $row->settings->verified_location == '' ? 'active"' : null?>">
                                 <input type="radio" name="verified_location" value="" class="custom-control-input" <?= $row->settings->verified_location == 'false' ? 'checked="checked"' : null?> />
                                 <?= l('global.none') ?>
                             </label>
                         </div>
 
                         <?php foreach(['left', 'right',] as $key): ?>
-                            <div class="col-12 col-lg-4 p-2 h-100">
-                                <label class="btn btn-light btn-block text-truncate <?= $row->settings->verified_location == $key ? 'active"' : null?>">
+                            <div class="p-2 col-12 col-lg-4 p-2 h-100">
+                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $row->settings->verified_location == $key ? 'active"' : null?>">
                                     <input type="radio" name="verified_location" value="<?= $key ?>" class="custom-control-input" <?= $row->settings->verified_location == $key ? 'checked="checked"' : null?> />
                                     <?= l('link.settings.verified_location.' . $key) ?>
                                 </label>
@@ -95,7 +95,7 @@
         <i class="fas fa-fw fa-display fa-sm mr-1"></i> <?= l('biolink_link.display_settings_header') ?>
     </button>
 
-    <div class="collapse" id="<?= 'display_settings_container_' . $row->biolink_block_id ?>">
+    <div class="collapse" data-parent="<?= '#update_biolink_block_' . $row->biolink_block_id ?>" id="<?= 'display_settings_container_' . $row->biolink_block_id ?>">
         <div <?= $this->user->plan_settings->temporary_url_is_enabled ? null : get_plan_feature_disabled_info() ?>>
             <div class="<?= $this->user->plan_settings->temporary_url_is_enabled ? null : 'container-disabled' ?>">
                 <div class="form-group custom-control custom-switch">

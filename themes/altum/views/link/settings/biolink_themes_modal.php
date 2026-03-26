@@ -19,6 +19,8 @@
                 <div id="biolinks_themes" class="biolink-themes-wrapper row">
                     <?php foreach($data->biolinks_themes as $key => $theme): ?>
                         <?php $link_style = \Altum\Link::get_processed_link_style($theme->settings->biolink_block) ?>
+                        <?php $block_shadow_style = \Altum\Link::get_processed_box_shadow_style($theme->settings->biolink_block) ?>
+                        <?php $paragraph_shadow_style = \Altum\Link::get_processed_box_shadow_style($theme->settings->biolink_block_paragraph) ?>
 
                         <label for="settings_biolink_theme_id_<?= $key ?>" class="m-0 col-6 col-lg-4 p-3" <?= in_array($theme->biolink_theme_id, $this->user->plan_settings->biolinks_themes ?? []) ? 'data-toggle="tooltip" title="' . $theme->name . '"' : get_plan_feature_disabled_info() ?>>
                             <input type="radio" name="biolink_theme_id" value="<?= $key ?>" id="settings_biolink_theme_id_<?= $key ?>" class="d-none" <?= $this->link->biolink_theme_id == $key ? 'checked="checked"' : null ?> />
@@ -27,23 +29,25 @@
 
                                     <div class="w-100" style="cursor: not-allowed;pointer-events: none;">
 
-                                        <div class="text-center text-truncate mb-1">
+                                        <div class="text-center text-truncate mb-2">
                                             <span style="color: <?= $theme->settings->biolink_block_heading->text_color ?? '#ffffff' ?>"><?= $this->link->url ?></span>
                                         </div>
 
-                                        <div class="text-center text-truncate small mb-3">
-                                            <span style="color: <?= $theme->settings->biolink_block_paragraph->text_color ?? '#ffffff' ?>"><?= l('biolink_themes.sample_description') ?></span>
+                                        <div class="mb-2 text-center card <?= 'link-btn-' . $theme->settings->biolink_block_paragraph->border_radius ?>" style="<?= $link_style['style'] ?><?= 'border-width: ' . ($theme->settings->biolink_block->border_width ?? '1') . 'px;' . 'border-color: ' . (empty($theme->settings->biolink_block->border_color) ? 'transparent' : $theme->settings->biolink_block->border_color) . ';' . 'border-style: ' . ($theme->settings->biolink_block->border_style ?? 'solid') . ';' . 'background: ' . ($theme->settings->biolink_block_paragraph->background_color ?? 'transparent') . ';' . $paragraph_shadow_style ?>">
+                                            <div class="<?= $theme->settings->biolink_block->border_width == 0 && in_array($theme->settings->biolink_block_paragraph->background_color, ['#00000000', '#FFFFFF00']) && in_array($theme->settings->biolink_block_paragraph->border_shadow_color, ['#00000000', '#FFFFFF00']) ? null : 'card-body p-2' ?> small text-break" style="color: <?= $theme->settings->biolink_block_paragraph->text_color ?>;">
+                                                <?= l('biolink_themes.sample_description') ?>
+                                            </div>
                                         </div>
 
-                                        <button type="button" class="btn btn-block btn-sm btn-primary link-btn <?= 'link-btn-' . $theme->settings->biolink_block->border_radius ?>" style="<?= $link_style['style'] ?>">
+                                        <button type="button" class="btn btn-block btn-sm btn-primary link-btn <?= 'link-btn-' . $theme->settings->biolink_block->border_radius ?>" style="<?= $link_style['style'] . $block_shadow_style ?>">
                                             <small><?= $theme->name ?></small>
                                         </button>
 
-                                        <button type="button" class="btn btn-block btn-sm btn-primary link-btn <?= 'link-btn-' . $theme->settings->biolink_block->border_radius ?>" style="<?= $link_style['style'] ?>">
+                                        <button type="button" class="btn btn-block btn-sm btn-primary link-btn <?= 'link-btn-' . $theme->settings->biolink_block->border_radius ?>" style="<?= $link_style['style'] . $block_shadow_style ?>">
                                             <small><?= $theme->name ?></small>
                                         </button>
 
-                                        <button type="button" class="btn btn-block btn-sm btn-primary link-btn <?= 'link-btn-' . $theme->settings->biolink_block->border_radius ?>" style="<?= $link_style['style'] ?>">
+                                        <button type="button" class="btn btn-block btn-sm btn-primary link-btn <?= 'link-btn-' . $theme->settings->biolink_block->border_radius ?>" style="<?= $link_style['style'] . $block_shadow_style ?>">
                                             <small><?= $theme->name ?></small>
                                         </button>
 
@@ -84,8 +88,8 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
-document.querySelectorAll('#biolink_themes_modal input[name="biolink_theme_id"]').forEach(element => {
+
+    document.querySelectorAll('#biolink_themes_modal input[name="biolink_theme_id"]').forEach(element => {
         element.addEventListener('change', event => {
             document.querySelector('#biolink_theme_id').value = element.value;
             $('#biolink_themes_modal').modal('hide');

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -27,7 +27,7 @@ class ApiSignatures extends Controller {
     public function index() {
 
         if(!\Altum\Plugin::is_active('email-signatures') || !settings()->signatures->is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         $this->verify_request();
@@ -42,8 +42,6 @@ class ApiSignatures extends Controller {
                 } else {
                     $this->get_all();
                 }
-
-            break;
 
             break;
 

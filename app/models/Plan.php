@@ -60,7 +60,8 @@ class Plan extends Model {
                     }
 
                     $plan->settings = json_decode($plan->settings ?? '');
-                $plan->translations = json_decode($plan->translations ?? '');
+                    $plan->additional_settings = json_decode($plan->additional_settings ?? '');
+                    $plan->translations = json_decode($plan->translations ?? '');
                     $plan->prices = json_decode($plan->prices);
                 }
 
@@ -74,7 +75,7 @@ class Plan extends Model {
 
     public function get_plan_taxes_by_taxes_ids($taxes_ids) {
 
-        $taxes_ids = json_decode($taxes_ids);
+        $taxes_ids = json_decode($taxes_ids ?? '');
 
         if(empty($taxes_ids)) {
             return null;
@@ -110,6 +111,7 @@ class Plan extends Model {
 
             while($row = $result->fetch_object()) {
                 $row->settings = json_decode($row->settings ?? '');
+                $row->additional_settings = json_decode($row->additional_settings ?? '');
                 $row->translations = json_decode($row->translations ?? '');
                 $row->prices = json_decode($row->prices);
                 $data[$row->plan_id] = $row;

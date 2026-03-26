@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -29,7 +29,7 @@ class AccountApi extends Controller {
         if(!empty($_POST)) {
 
             /* Clean some posted variables */
-            $api_key = md5($this->user->email . microtime() . microtime());
+            $api_key = bin2hex(random_bytes(16));
 
             //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Alerts::add_error('Please create an account on the demo to test out this function.');
 
@@ -42,6 +42,9 @@ class AccountApi extends Controller {
 
                 /* Database query */
                 db()->where('user_id', $this->user->user_id)->update('users', ['api_key' => $api_key]);
+
+                /* Log the action */
+                \Altum\Logger::users($this->user->user_id, 'account_api.updated');
 
                 /* Set a nice success message */
                 Alerts::add_success(l('account_api.success_message'));

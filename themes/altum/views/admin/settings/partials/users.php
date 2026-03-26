@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div>
+<div id="users">
     <div class="form-group custom-control custom-switch">
         <input id="register_is_enabled" name="register_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->users->register_is_enabled ? 'checked="checked"' : null?>>
         <label class="custom-control-label" for="register_is_enabled"><i class="fas fa-fw fa-sm fa-user-plus text-muted mr-1"></i> <?= l('admin_settings.users.register_is_enabled') ?></label>
@@ -11,43 +11,6 @@
         <input id="register_only_social_logins" name="register_only_social_logins" type="checkbox" class="custom-control-input" <?= settings()->users->register_only_social_logins ? 'checked="checked"' : null?>>
         <label class="custom-control-label" for="register_only_social_logins"><i class="fas fa-fw fa-sm fa-share-alt text-muted mr-1"></i> <?= l('admin_settings.users.register_only_social_logins') ?></label>
         <small class="form-text text-muted"><?= l('admin_settings.users.register_only_social_logins_help') ?></small>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="register_social_login_require_password" name="register_social_login_require_password" type="checkbox" class="custom-control-input" <?= settings()->users->register_social_login_require_password ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="register_social_login_require_password"><i class="fas fa-fw fa-sm fa-unlock-alt text-muted mr-1"></i> <?= l('admin_settings.users.register_social_login_require_password') ?></label>
-        <small class="form-text text-muted"><?= l('admin_settings.users.register_social_login_require_password_help') ?></small>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="register_display_newsletter_checkbox" name="register_display_newsletter_checkbox" type="checkbox" class="custom-control-input" <?= settings()->users->register_display_newsletter_checkbox ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="register_display_newsletter_checkbox"><i class="fas fa-fw fa-sm fa-newspaper text-muted mr-1"></i> <?= l('admin_settings.users.register_display_newsletter_checkbox') ?></label>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="account_display_newsletter_checkbox" name="account_display_newsletter_checkbox" type="checkbox" class="custom-control-input" <?= settings()->users->account_display_newsletter_checkbox ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="account_display_newsletter_checkbox"><i class="fas fa-fw fa-sm fa-newspaper text-muted mr-1"></i> <?= l('admin_settings.users.account_display_newsletter_checkbox') ?></label>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="login_rememberme_checkbox_is_checked" name="login_rememberme_checkbox_is_checked" type="checkbox" class="custom-control-input" <?= settings()->users->login_rememberme_checkbox_is_checked ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="login_rememberme_checkbox_is_checked"><i class="fas fa-fw fa-sm fa-bookmark text-muted mr-1"></i> <?= l('admin_settings.users.login_rememberme_checkbox_is_checked') ?></label>
-    </div>
-
-    <div class="form-group">
-        <label for="login_rememberme_cookie_days"><i class="fas fa-fw fa-sm fa-cookie text-muted mr-1"></i> <?= l('admin_settings.users.login_rememberme_cookie_days') ?></label>
-        <div class="input-group">
-            <input id="login_rememberme_cookie_days" type="number" min="1" name="login_rememberme_cookie_days" class="form-control" value="<?= settings()->users->login_rememberme_cookie_days ?? 30 ?>" />
-            <div class="input-group-append">
-                <span class="input-group-text"><?= l('global.date.days') ?></span>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-group custom-control custom-switch">
-        <input id="email_aliases_is_enabled" name="email_aliases_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->users->email_aliases_is_enabled ? 'checked="checked"' : null?>>
-        <label class="custom-control-label" for="email_aliases_is_enabled"><i class="fas fa-fw fa-sm fa-at text-muted mr-1"></i> <?= l('admin_settings.users.email_aliases_is_enabled') ?></label>
-        <small class="form-text text-muted"><?= l('admin_settings.users.email_aliases_is_enabled_help') ?></small>
     </div>
 
     <div class="form-group custom-control custom-switch">
@@ -62,11 +25,11 @@
         <small class="form-text text-muted"><?= l('admin_settings.users.welcome_email_is_enabled_help') ?></small>
     </div>
 
-    <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#cleanup_container" aria-expanded="false" aria-controls="cleanup_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#cleanup_container" aria-expanded="false" aria-controls="cleanup_container">
         <i class="fas fa-fw fa-broom fa-sm mr-1"></i> <?= l('admin_settings.users.cleanup') ?>
     </button>
 
-    <div class="collapse" id="cleanup_container">
+    <div class="collapse" data-parent="#users" id="cleanup_container">
         <div class="form-group">
             <label for="auto_delete_unconfirmed_users"><i class="fas fa-fw fa-sm fa-user-minus text-muted mr-1"></i> <?= l('admin_settings.users.auto_delete_unconfirmed_users') ?></label>
             <div class="input-group">
@@ -101,15 +64,21 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#lockouts_container" aria-expanded="false" aria-controls="lockouts_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#lockouts_container" aria-expanded="false" aria-controls="lockouts_container">
         <i class="fas fa-fw fa-shield-alt fa-sm mr-1"></i> <?= l('admin_settings.users.lockouts') ?>
     </button>
 
-    <div class="collapse" id="lockouts_container">
+    <div class="collapse" data-parent="#users" id="lockouts_container">
         <div class="form-group">
             <label for="blacklisted_domains"><i class="fas fa-fw fa-sm fa-ban text-muted mr-1"></i> <?= l('admin_settings.users.blacklisted_domains') ?></label>
-            <textarea id="blacklisted_domains" name="blacklisted_domains" class="form-control"><?= implode(',', settings()->users->blacklisted_domains) ?></textarea>
+            <textarea id="blacklisted_domains" name="blacklisted_domains" class="form-control"><?= implode(',', settings()->users->blacklisted_domains ?? []) ?></textarea>
             <small class="form-text text-muted"><?= l('admin_settings.users.blacklisted_domains_help') ?></small>
+        </div>
+
+        <div class="form-group">
+            <label for="blacklisted_ips"><i class="fas fa-fw fa-sm fa-eye-slash text-muted mr-1"></i> <?= l('admin_settings.users.blacklisted_ips') ?></label>
+            <textarea id="blacklisted_ips" name="blacklisted_ips" class="form-control"><?= implode(',', settings()->users->blacklisted_ips ?? []) ?></textarea>
+            <small class="form-text text-muted"><?= l('admin_settings.users.blacklisted_ips_help') ?></small>
         </div>
 
         <div class="form-group">
@@ -206,6 +175,49 @@
                     <span class="input-group-text">
                         <?= l('global.date.days') ?>
                     </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#advanced_container" aria-expanded="false" aria-controls="advanced_container">
+        <i class="fas fa-fw fa-user-tie fa-sm mr-1"></i> <?= l('global.advanced') ?>
+    </button>
+
+    <div class="collapse" data-parent="#users" id="advanced_container">
+        <div class="form-group custom-control custom-switch">
+            <input id="register_social_login_require_password" name="register_social_login_require_password" type="checkbox" class="custom-control-input" <?= settings()->users->register_social_login_require_password ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="register_social_login_require_password"><i class="fas fa-fw fa-sm fa-unlock-alt text-muted mr-1"></i> <?= l('admin_settings.users.register_social_login_require_password') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.users.register_social_login_require_password_help') ?></small>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="register_display_newsletter_checkbox" name="register_display_newsletter_checkbox" type="checkbox" class="custom-control-input" <?= settings()->users->register_display_newsletter_checkbox ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="register_display_newsletter_checkbox"><i class="fas fa-fw fa-sm fa-newspaper text-muted mr-1"></i> <?= l('admin_settings.users.register_display_newsletter_checkbox') ?></label>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="account_display_newsletter_checkbox" name="account_display_newsletter_checkbox" type="checkbox" class="custom-control-input" <?= settings()->users->account_display_newsletter_checkbox ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="account_display_newsletter_checkbox"><i class="fas fa-fw fa-sm fa-newspaper text-muted mr-1"></i> <?= l('admin_settings.users.account_display_newsletter_checkbox') ?></label>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="email_aliases_is_enabled" name="email_aliases_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->users->email_aliases_is_enabled ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="email_aliases_is_enabled"><i class="fas fa-fw fa-sm fa-at text-muted mr-1"></i> <?= l('admin_settings.users.email_aliases_is_enabled') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.users.email_aliases_is_enabled_help') ?></small>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="login_rememberme_checkbox_is_checked" name="login_rememberme_checkbox_is_checked" type="checkbox" class="custom-control-input" <?= settings()->users->login_rememberme_checkbox_is_checked ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="login_rememberme_checkbox_is_checked"><i class="fas fa-fw fa-sm fa-bookmark text-muted mr-1"></i> <?= l('admin_settings.users.login_rememberme_checkbox_is_checked') ?></label>
+        </div>
+
+        <div class="form-group">
+            <label for="login_rememberme_cookie_days"><i class="fas fa-fw fa-sm fa-cookie text-muted mr-1"></i> <?= l('admin_settings.users.login_rememberme_cookie_days') ?></label>
+            <div class="input-group">
+                <input id="login_rememberme_cookie_days" type="number" min="1" name="login_rememberme_cookie_days" class="form-control" value="<?= settings()->users->login_rememberme_cookie_days ?? 30 ?>" />
+                <div class="input-group-append">
+                    <span class="input-group-text"><?= l('global.date.days') ?></span>
                 </div>
             </div>
         </div>

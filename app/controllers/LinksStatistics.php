@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -28,7 +28,7 @@ class LinksStatistics extends Controller {
         \Altum\Authentication::guard();
 
         if(!$this->user->plan_settings->statistics) {
-            Alerts::add_info(l('global.info_message.plan_feature_no_access'));
+            Alerts::add_error(l('global.info_message.plan_feature_no_access'));
             redirect('links');
         }
 
@@ -369,6 +369,7 @@ class LinksStatistics extends Controller {
                 /* Start processing the rows from the database */
                 while($row = $result->fetch_object()) {
                     foreach($statistics_keys as $key) {
+                        $row->{$key} = $row->{$key} ?? '';
 
                         $statistics[$key][$row->{$key}] = isset($statistics[$key][$row->{$key}]) ? $statistics[$key][$row->{$key}] + 1 : 1;
 
@@ -492,12 +493,12 @@ class LinksStatistics extends Controller {
         \Altum\Authentication::guard();
 
         if(!$this->user->plan_settings->statistics) {
-            Alerts::add_info(l('global.info_message.plan_feature_no_access'));
+            Alerts::add_error(l('global.info_message.plan_feature_no_access'));
             redirect('links');
         }
 
-        if(empty($_POST)) {
-            redirect('links');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         $_POST['project_id'] = isset($_POST['project_id']) ? (int) $_POST['project_id'] : null;
@@ -505,7 +506,7 @@ class LinksStatistics extends Controller {
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.links')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('links-statistics');
         }
 

@@ -31,14 +31,14 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
+
     document.querySelector('select[name="account_header_menu"]').addEventListener('change', event => {
         window.location = document.querySelector('select[name="account_header_menu"]').value;
     })
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
 
-<div class="row d-none d-lg-flex mb-4">
+<div class="row d-none d-lg-flex mb-4 mx-n2">
     <div class="col-lg-4 p-2 text-truncate">
         <a class="btn btn-block btn-custom text-truncate  <?= \Altum\Router::$controller_key == 'account' ? 'active' : null ?>" href="<?= url('account') ?>">
             <i class="fas fa-fw fa-sm fa-user-cog mr-2"></i> <?= l('account.menu') ?>

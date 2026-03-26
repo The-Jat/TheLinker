@@ -31,7 +31,7 @@
 
         <div class="ml-2">
             <small class="text-muted">
-                <?= sprintf(l('tools.rating'),
+                <?= sprintf(l('blog.rating'),
                     '<span id="average-rating">' . nr($data->blog_post->average_rating, 2, false) . '</span>',
                     '<span id="total-ratings">' . nr($data->blog_post->total_ratings, 2, false) . '</span>') ?>
             </small>

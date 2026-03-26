@@ -42,6 +42,18 @@ return [
         'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'],
         'path' => 'main/',
     ],
+    'taxes_csv' => [
+        'whitelisted_file_extensions' => ['csv'],
+        'path' => 'main/',
+    ],
+    'resources_csv' => [
+        'whitelisted_file_extensions' => ['csv'],
+        'path' => 'main/',
+    ],
+    'default_avatar' => [
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'ico', 'svg', 'gif', 'webp'],
+        'path' => 'main/',
+    ],
 
     /* Users misc */
     'users' => [
@@ -145,6 +157,11 @@ return [
         'path' => 'favicons/',
     ],
 
+	'branded_button_icon'  => [
+		'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'ico', 'svg', 'gif', 'webp'],
+		'path' => 'favicons/',
+	],
+
     'biolink_background' => [
         'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'mp4', 'avif'],
         'path' => 'backgrounds/',
@@ -175,5 +192,11 @@ return [
     'chats_images' => [
         'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'svg', 'gif', 'webp', 'avif'],
         'path' => 'chats_images/',
+    ],
+
+    /* Payment blocks plugin */
+    'payment_processors_offline_payment_proofs' => [
+        'whitelisted_file_extensions' => ['jpg', 'jpeg', 'png', 'webp', 'avif', 'pdf'],
+        'path' => 'payment_processors_offline_payment_proofs/',
     ],
 ];

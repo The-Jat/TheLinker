@@ -76,6 +76,10 @@ class App {
             header("Strict-Transport-Security: max-age=31536000; preload");
         }
 
+        /* Referrer policy */
+        $referrer_policy = settings()->main->referrer_policy ?? 'strict-origin-when-cross-origin';
+        header('Referrer-Policy: ' . $referrer_policy);
+
         /* Check for Preflight requests for the tracking of submissions from biolink pages */
         if(in_array(\Altum\Router::$controller, ['Link'])) {
             header('Access-Control-Allow-Origin: *');
@@ -97,13 +101,13 @@ class App {
         date_default_timezone_set(Date::$default_timezone);
         Date::$timezone = date_default_timezone_get();
 
-        /* Setting the datetime for backend usages ( insertions in database..etc ) */
+        /* Setting the datetime for backend usages ( insertions in database, etc ) */
         Date::$date = Date::get();
 
         /* Check if the team is set and do not allow access for certain routes */
-        if(isset($_SESSION['team_id']) && \Altum\Plugin::is_active('teams') && !is_null(\Altum\Router::$controller_settings['allow_team_access'])) {
+        if(!is_null(\Altum\Router::$controller_settings['allow_team_access']) && \Altum\Plugin::is_active('teams') && session_has('team_id')) {
             if(!\Altum\Router::$controller_settings['allow_team_access']) {
-                Alerts::add_info(l('global.info_message.team_limit'));
+                Alerts::add_error(l('global.info_message.team_limit'));
                 redirect();
             }
         }
@@ -115,6 +119,42 @@ class App {
         settings()->main->logo_light_full_url = \Altum\Uploads::get_full_url('logo_light') . settings()->main->logo_light;
         settings()->main->logo_dark_full_url = \Altum\Uploads::get_full_url('logo_dark') . settings()->main->logo_dark;
         settings()->main->favicon_full_url = \Altum\Uploads::get_full_url('favicon') . settings()->main->favicon;
+        settings()->main->default_avatar_full_url = \Altum\Uploads::get_full_url('default_avatar') . settings()->main->default_avatar;
+
+        /* Auto currency detection */
+        if(!is_logged_in() && settings()->payment->auto_currency_detection && settings()->payment->is_enabled && !isset($_COOKIE['set_currency'])) {
+            $set_currency = false;
+
+            /* Detect the location */
+            try {
+                $maxmind = get_maxmind_reader_country()->get(get_ip());
+                $continent_code = isset($maxmind) && isset($maxmind['continent']) ? $maxmind['continent']['code'] : null;
+                $country_code = isset($maxmind) && isset($maxmind['country']) ? $maxmind['country']['iso_code'] : null;
+            } catch(\Exception $exception) {
+                /* :) */
+            }
+
+            /* Try association with the country */
+            if(isset($country_code)) {
+                $potential_currency = get_currency_for_country($country_code);
+
+                if(array_key_exists($potential_currency, (array) settings()->payment->currencies)) {
+                    setcookie('set_currency', $potential_currency, time() + 60*60*24*30, COOKIE_PATH);
+                    \Altum\Currency::$currency = $potential_currency;
+                    $set_currency = true;
+                }
+            }
+
+            /* Try association with the continent */
+            if(!$set_currency && isset($continent_code)) {
+                $potential_currency = get_currency_for_continent($continent_code);
+
+                if(array_key_exists($potential_currency, (array) settings()->payment->currencies)) {
+                    setcookie('set_currency', $potential_currency, time() + 60*60*24*30, COOKIE_PATH);
+                    \Altum\Currency::$currency = $potential_currency;
+                }
+            }
+        }
 
         /* Check for a potential logged in account and do some extra checks */
         if(is_logged_in()) {
@@ -146,7 +186,10 @@ class App {
                 db()->where('user_id', $user->user_id)->update('users', [
                     'plan_id' => 'free',
                     'plan_settings' => json_encode(settings()->plan_free->settings),
-                    'payment_subscription_id' => ''
+                    'payment_subscription_id' => '',
+                    'payment_processor' => '',
+                    'payment_total_amount' => 0,
+                    'payment_currency' => '',
                 ]);
 
                 /* Clear the cache */
@@ -160,7 +203,7 @@ class App {
 
             /* Update last activity */
             /* Do not update if user is impersonated by an admin */
-            if(!$user->last_activity || (new \DateTime($user->last_activity))->modify('+15 minutes') < (new \DateTime()) && !isset($_SESSION['admin_user_id'])) {
+            if(!$user->last_activity || (new \DateTime($user->last_activity))->modify('+15 minutes') < (new \DateTime()) && !session_has('admin_user_id')) {
                 (new User())->update_last_activity(\Altum\Authentication::$user_id);
             }
 
@@ -247,8 +290,8 @@ class App {
         Meta::initialize();
 
         /* Set a CSRF Token */
-        \Altum\Csrf::set('token');
-        \Altum\Csrf::set('global_token');
+//        \Altum\Csrf::set('token');
+//        \Altum\Csrf::set('global_token');
 
         /* If the language code is the default one, redirect to index */
         if(\Altum\Router::$language_code == Language::$default_code) {
@@ -282,11 +325,48 @@ class App {
             \Altum\Authentication::guard(\Altum\Router::$controller_settings['authentication']);
         }
 
-        /* Call the controller method */
-        call_user_func_array([ $controller, $method ], []);
+        try {
+
+            /* Call the controller method */
+            call_user_func_array([$controller, $method], []);
+
+        } catch (\Altum\NotFoundException $exception) {
+
+            /* Router change */
+            \Altum\Router::$controller_settings = [
+                'wrapper' => 'wrapper',
+                'no_authentication_check' => false,
+                'no_browser_language_detection' => false,
+                'allow_indexing' => true,
+                'has_view' => true,
+                'currency_switcher' => false,
+                'ads' => false,
+                'authentication' => null,
+                'allow_team_access' => null,
+                'allow_sessions' => true,
+            ];
+            \Altum\Router::$controller_key = 'not-found';
+            \Altum\Router::$controller = 'NotFound';
+            \Altum\Router::$path = '';
+
+            /* Set title */
+            Title::set(l('not_found.title'));
+
+            /* Rewrite the controller to not found 404 */
+            require_once APP_PATH . 'controllers/NotFound.php';
+            $controller = new \Altum\Controllers\NotFound();
+            $controller->add_params(['params' => $params, 'user' => \Altum\Authentication::$user]);
+            $controller->index();
+
+        }
 
         /* Render and output everything */
         $controller->run();
+
+        /* Dynamic OG images plugin */
+        if(\Altum\Plugin::is_active('dynamic-og-images') && settings()->dynamic_og_images->is_enabled) {
+            \Altum\Plugin\DynamicOgImages::process();
+        }
 
         /* Close database */
         Database::close();

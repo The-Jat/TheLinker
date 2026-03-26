@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,7 +25,7 @@ class Pixels extends Controller {
     public function index() {
 
         if(!settings()->links->pixels_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
@@ -68,14 +68,14 @@ class Pixels extends Controller {
     public function bulk() {
 
         if(!settings()->links->pixels_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('pixels');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -98,12 +98,14 @@ class Pixels extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
                     /* Team checks */
                     if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.pixels')) {
-                        Alerts::add_info(l('global.info_message.team_no_access'));
+                        Alerts::add_error(l('global.info_message.team_no_access'));
                         redirect('pixels');
                     }
 
@@ -120,7 +122,7 @@ class Pixels extends Controller {
             cache()->deleteItem('pixels?user_id=' . $this->user->user_id);
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -132,22 +134,22 @@ class Pixels extends Controller {
     public function delete() {
 
         if(!settings()->links->pixels_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.pixels')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('pixels');
         }
 
-        if(empty($_POST)) {
-            redirect('pixels');
+        if (empty($_POST)) {
+            throw_404();
         }
 
-        $pixel_id = (int) query_clean($_POST['pixel_id']);
+        $pixel_id = (int) $_POST['pixel_id'];
 
         //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Alerts::add_error('Please create an account on the demo to test out this function.');
 
@@ -156,7 +158,7 @@ class Pixels extends Controller {
         }
 
         if(!$pixel = db()->where('pixel_id', $pixel_id)->where('user_id', $this->user->user_id)->getOne('pixels', ['pixel_id', 'name'])) {
-            redirect('pixels');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

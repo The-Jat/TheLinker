@@ -23,7 +23,7 @@
                     </div>
                 <?php endif ?>
 
-                <?php if(settings()->tools->last_submissions_is_enabled): ?>
+                <?php if(settings()->tools->submissions_is_enabled): ?>
                     <div class="badge badge-gray-100" data-toggle="tooltip" title="<?= l('tools.total_submissions') ?>">
                         <i class="fas fa-fw fa-sm fa-check mr-1"></i> <?= nr($data->tools_usage[$data->tool_id]->total_submissions ?? 0) ?>
                     </div>

@@ -26,15 +26,15 @@ RewriteRule ^(.+)$ index.php?altum=$1 [QSA,L]
 </IfModule>
 
 <IfModule mod_headers.c>
-    <FilesMatch "\.json$">
-        Header set Access-Control-Allow-Origin "*"
-        Header set Access-Control-Allow-Methods "GET"
-        Header set Access-Control-Allow-Headers "Content-Type"
-    </FilesMatch>
-</IfModule>
-
-<IfModule mod_headers.c>
     <Files ~ "sw\.js">
         Header set Service-Worker-Allowed: /
     </Files>
+</IfModule>
+
+<IfModule mod_headers.c>
+    SetEnvIf Request_URI "^/uploads/pwa/" IS_PWA
+
+    Header always set Access-Control-Allow-Origin "*" env=IS_PWA
+    Header always set Access-Control-Allow-Methods "GET, OPTIONS" env=IS_PWA
+    Header always set Access-Control-Allow-Headers "Content-Type" env=IS_PWA
 </IfModule>

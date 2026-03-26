@@ -22,10 +22,14 @@ defined('ALTUMCODE') || die();
 
 class Cache {
     public static $adapter;
+    public static $driver = 'Devnull';
 
     public static function initialize($force_enable = false) {
 
-        $driver = $force_enable ? 'Files' : (CACHE ? 'Files' : 'Devnull');
+        $driver = self::$driver;
+        if($force_enable || CACHE) {
+            $driver = defined('REDIS_IS_ENABLED') && REDIS_IS_ENABLED ? 'Redis' : 'Files';
+        }
 
         /* Cache adapter for phpFastCache */
         if($driver == 'Files') {
@@ -36,7 +40,30 @@ class Cache {
                 'cacheSlamsTimeout' => 20,
                 'secureFileManipulation' => true
             ]);
-        } else {
+        }
+
+        elseif($driver == 'Redis') {
+            $redis_config = [
+                'database' => REDIS_DATABASE,
+                'timeout'  => REDIS_TIMEOUT,
+                'password' => REDIS_PASSWORD,
+            ];
+
+            if(defined('REDIS_SOCKET_PATH') && is_string(REDIS_SOCKET_PATH)) {
+                $redis_config = $redis_config + [
+                    'path' => REDIS_SOCKET_PATH,
+                ];
+            } else {
+                $redis_config = $redis_config + [
+                    'host' => REDIS_HOST,
+                    'port' => REDIS_PORT,
+                ];
+            }
+
+            $config = new \Phpfastcache\Drivers\Redis\Config($redis_config);
+        }
+
+        elseif($driver == 'Devnull') {
             $config = new \Phpfastcache\Config\Config([
                 'path' => UPLOADS_PATH . 'cache',
             ]);
@@ -45,6 +72,7 @@ class Cache {
         \Phpfastcache\CacheManager::setDefaultConfig($config);
 
         self::$adapter = \Phpfastcache\CacheManager::getInstance($driver);
+        self::$driver = $driver;
     }
 
     public static function cache_function_result($key, $tag, $function_to_cache, $cached_seconds = CACHE_DEFAULT_SECONDS) {

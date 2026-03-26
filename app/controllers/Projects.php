@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,7 +25,7 @@ class Projects extends Controller {
     public function index() {
 
         if(!settings()->links->projects_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
@@ -70,8 +70,8 @@ class Projects extends Controller {
         \Altum\Authentication::guard();
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('projects');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -94,12 +94,14 @@ class Projects extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
                     /* Team checks */
                     if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.projects')) {
-                        Alerts::add_info(l('global.info_message.team_no_access'));
+                        Alerts::add_error(l('global.info_message.team_no_access'));
                         redirect('projects');
                     }
 
@@ -116,7 +118,7 @@ class Projects extends Controller {
             cache()->deleteItem('projects?user_id=' . $this->user->user_id);
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -131,12 +133,12 @@ class Projects extends Controller {
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.projects')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('projects');
         }
 
-        if(empty($_POST)) {
-            redirect('projects');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         $project_id = (int) $_POST['project_id'];
@@ -148,7 +150,7 @@ class Projects extends Controller {
         }
 
         if(!$project = db()->where('project_id', $project_id)->where('user_id', $this->user->user_id)->getOne('projects', ['project_id', 'name'])) {
-            redirect('projects');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -60,7 +60,7 @@ class AdminApiSSO extends Controller {
 
         /* Check for any errors */
         foreach($required_fields as $field) {
-            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+            if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                 $this->response_error(l('global.error_message.empty_fields'), 401);
                 break 1;
             }
@@ -73,7 +73,7 @@ class AdminApiSSO extends Controller {
         $user = db()->where('email', $_POST['email'])->getOne('users', ['user_id', 'email', 'datetime']);
 
         if($user) {
-            $one_time_login_code = md5($user->email . $user->datetime . time());
+            $one_time_login_code = md5(uniqid('', true) . random_bytes(16));
 
             /* Database query */
             db()->where('user_id', $user->user_id)->update('users', ['one_time_login_code' => $one_time_login_code]);
@@ -120,10 +120,10 @@ class AdminApiSSO extends Controller {
                     'source' => 'direct',
                     'is_newsletter_subscribed' => false,
                     'datetime' => get_date(),
-                ]);
+                ], signature: true);
             }
 
-            $one_time_login_code = md5($registered_user['user_id'] . $registered_user['email'] . time());
+            $one_time_login_code = md5(uniqid('', true) . random_bytes(16));
 
             /* Database query */
             db()->where('user_id', $registered_user['user_id'])->update('users', ['one_time_login_code' => $one_time_login_code]);

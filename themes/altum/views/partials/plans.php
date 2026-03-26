@@ -19,7 +19,7 @@
     }
     ?>
 
-    <?php if(count($plans)): ?>
+    <?php if (!empty($plans)): ?>
         <?php if(\Altum\Router::$controller_settings['currency_switcher'] && count((array) settings()->payment->currencies ?? []) > 1): ?>
             <div class="mb-3 text-center">
                 <div class="dropdown mb-2 ml-lg-3">
@@ -70,13 +70,13 @@
             <div class="col-12 col-lg-6 col-xl-4 p-3">
                 <div class="pricing-plan position-relative rounded-2x" style="<?= settings()->plan_free->color ? 'border-width: 3px; border-color: ' . settings()->plan_free->color : null ?>">
                     <?php if(settings()->plan_free->settings->tag ?? null): ?>
-                        <div class="pricing-tag"><?= settings()->plan_free->translations->{\Altum\Language::$name}->tag ?: settings()->plan_free->settings->tag ?></div>
+                        <div class="pricing-tag" style="<?= (settings()->plan_free->additional_settings->tag_background_color ?? null) ? 'background: ' . settings()->plan_free->additional_settings->tag_background_color . ';' : null ?><?= (settings()->plan_free->additional_settings->tag_text_color ?? null) ? 'color: ' . settings()->plan_free->additional_settings->tag_text_color . ';' : null ?>"><?= (settings()->plan_free->translations->{\Altum\Language::$name}->tag ?? '') ?: settings()->plan_free->settings->tag ?></div>
                     <?php endif ?>
 
                     <div class="pricing-header">
-                        <p class="pricing-name" style="<?= settings()->plan_free->color ? 'color: ' . settings()->plan_free->color : null ?>"><?= settings()->plan_free->translations->{\Altum\Language::$name}->name ?: settings()->plan_free->name ?></p>
+                        <p class="pricing-name" style="<?= settings()->plan_free->color ? 'color: ' . settings()->plan_free->color : null ?>"><?= (settings()->plan_free->translations->{\Altum\Language::$name}->name ?? '') ?: settings()->plan_free->name ?></p>
 
-                        <div class="pricing-details"><?= settings()->plan_free->translations->{\Altum\Language::$name}->description ?: settings()->plan_free->description ?></div>
+                        <div class="pricing-details"><?= (settings()->plan_free->translations->{\Altum\Language::$name}->description ?? '') ?: settings()->plan_free->description ?></div>
 
                         <div class="pricing-price">
                             <span class="pricing-price-amount"><?= settings()->plan_free->translations->{\Altum\Language::$name}->price ?: settings()->plan_free->price ?></span>
@@ -131,21 +131,27 @@
 
             /* savings (never negative, and not shown for the base itself) */
             $quarterly_price_savings = 0;
+            $quarterly_savings_percentage = 0;
             if($quarterly_price > 0 && $base_months > 0 && $base_label !== 'quarterly') {
                 $quarterly_price_savings = ceil(($base_price * (3 / $base_months)) - $quarterly_price);
                 $quarterly_price_savings = $quarterly_price_savings > 0 ? $quarterly_price_savings : 0;
+                $quarterly_savings_percentage = $quarterly_price_savings > 0 ? round(($quarterly_price_savings / ($base_price * (3 / $base_months))) * 100) : 0;
             }
 
             $biannual_price_savings = 0;
+            $biannual_savings_percentage = 0;
             if($biannual_price > 0 && $base_months > 0 && $base_label !== 'biannual') {
                 $biannual_price_savings = ceil(($base_price * (6 / $base_months)) - $biannual_price);
                 $biannual_price_savings = $biannual_price_savings > 0 ? $biannual_price_savings : 0;
+                $biannual_savings_percentage = $biannual_price_savings > 0 ? round(($biannual_price_savings / ($base_price * (6 / $base_months))) * 100) : 0;
             }
 
             $annual_price_savings = 0;
+            $annual_savings_percentage = 0;
             if($annual_price > 0 && $base_months > 0 && $base_label !== 'annual') {
                 $annual_price_savings = ceil(($base_price * (12 / $base_months)) - $annual_price);
                 $annual_price_savings = $annual_price_savings > 0 ? $annual_price_savings : 0;
+                $annual_savings_percentage = $annual_price_savings > 0 ? round(($annual_price_savings / ($base_price * (12 / $base_months))) * 100) : 0;
             }
             ?>
 
@@ -160,33 +166,33 @@
             >
                 <div class="pricing-plan position-relative rounded-2x" style="<?= $plan->color ? 'border-width: 3px; border-color: ' . $plan->color : null ?>">
                     <?php if($plan->settings->tag ?? null): ?>
-                    <div class="pricing-tag"><?= $plan->translations->{\Altum\Language::$name}->tag ?: $plan->settings->tag ?></div>
+                    <div class="pricing-tag" style="<?= ($plan->additional_settings->tag_background_color ?? null) ? 'background: ' . $plan->additional_settings->tag_background_color . ';' : null ?><?= ($plan->additional_settings->tag_text_color ?? null) ? 'color: ' . $plan->additional_settings->tag_text_color . ';' : null ?>"><?= ($plan->translations->{\Altum\Language::$name}->tag ?? '') ?: $plan->settings->tag ?></div>
                     <?php endif ?>
 
                     <div class="pricing-header">
                         <div>
-                            <p class="pricing-name" style="<?= $plan->color ? 'color: ' . $plan->color : null ?>"><?= $plan->translations->{\Altum\Language::$name}->name ?: $plan->name ?></p>
+                            <p class="pricing-name" style="<?= $plan->color ? 'color: ' . $plan->color : null ?>"><?= ($plan->translations->{\Altum\Language::$name}->name ?? '') ?: $plan->name ?></p>
 
                             <?php if($quarterly_price_savings > 0): ?>
                                 <span class="badge badge-success badge-pill ml-1 d-none" data-plan-payment-frequency="quarterly" data-toggle="tooltip" title="<?= sprintf(l('global.plan_settings.quarterly_price_savings'), $quarterly_price_savings . ' ' . currency()) ?>">
-                                    <i class="fas fa-fw fa-sm fa-percentage"></i>
+                                    <?= sprintf(l('global.plan_settings.price_savings'), $quarterly_savings_percentage) ?>
                                 </span>
                             <?php endif ?>
 
                             <?php if($biannual_price_savings > 0): ?>
                                 <span class="badge badge-success badge-pill ml-1 d-none" data-plan-payment-frequency="biannual" data-toggle="tooltip" title="<?= sprintf(l('global.plan_settings.biannual_price_savings'), $biannual_price_savings . ' ' . currency()) ?>">
-                                    <i class="fas fa-fw fa-sm fa-percentage"></i>
+                                    <?= sprintf(l('global.plan_settings.price_savings'), $biannual_savings_percentage) ?>
                                 </span>
                             <?php endif ?>
 
                             <?php if($annual_price_savings > 0): ?>
                                 <span class="badge badge-success badge-pill ml-1 d-none" data-plan-payment-frequency="annual" data-toggle="tooltip" title="<?= sprintf(l('global.plan_settings.annual_price_savings'), $annual_price_savings . ' ' . currency()) ?>">
-                                    <i class="fas fa-fw fa-sm fa-percentage"></i>
+                                    <?= sprintf(l('global.plan_settings.price_savings'), $annual_savings_percentage) ?>
                                 </span>
                             <?php endif ?>
                         </div>
 
-                        <div class="pricing-details"><?= $plan->translations->{\Altum\Language::$name}->description ?: $plan->description ?></div>
+                        <div class="pricing-details"><?= ($plan->translations->{\Altum\Language::$name}->description ?? '') ?: $plan->description ?></div>
 
                         <div class="pricing-price">
                             <?php $selected_currency = settings()->payment->currencies->{currency()}; ?>
@@ -195,11 +201,11 @@
                                 <span class="<?= ($selected_currency->display_as ?? 'currency_symbol') == 'currency_code' ? 'pricing-price-currency' : 'pricing-price-currency-symbol' ?>"><?= ($selected_currency->display_as ?? 'currency_symbol') == 'currency_code' ? currency() : $selected_currency->symbol ?></span>
                             <?php endif ?>
 
-                            <span class="pricing-price-amount d-none" data-plan-payment-frequency="monthly"><?= nr($monthly_price, 2, false) ?></span>
-                            <span class="pricing-price-amount d-none" data-plan-payment-frequency="quarterly"><?= nr($quarterly_price, 2, false) ?></span>
-                            <span class="pricing-price-amount d-none" data-plan-payment-frequency="biannual"><?= nr($biannual_price, 2, false) ?></span>
-                            <span class="pricing-price-amount d-none" data-plan-payment-frequency="annual"><?= nr($annual_price, 2, false) ?></span>
-                            <span class="pricing-price-amount d-none" data-plan-payment-frequency="lifetime"><?= nr($plan->prices->lifetime->{currency()}, 2, false) ?></span>
+                            <span class="pricing-price-amount d-none" data-plan-payment-frequency="monthly"><?= nr($monthly_price, ($selected_currency->currency_decimals ?? 2), false) ?></span>
+                            <span class="pricing-price-amount d-none" data-plan-payment-frequency="quarterly"><?= nr($quarterly_price, ($selected_currency->currency_decimals ?? 2), false) ?></span>
+                            <span class="pricing-price-amount d-none" data-plan-payment-frequency="biannual"><?= nr($biannual_price, ($selected_currency->currency_decimals ?? 2), false) ?></span>
+                            <span class="pricing-price-amount d-none" data-plan-payment-frequency="annual"><?= nr($annual_price, ($selected_currency->currency_decimals ?? 2), false) ?></span>
+                            <span class="pricing-price-amount d-none" data-plan-payment-frequency="lifetime"><?= nr($plan->prices->lifetime->{currency()}, ($selected_currency->currency_decimals ?? 2), false) ?></span>
 
                             <?php if(($selected_currency->currency_placement ?? 'left') == 'right'): ?>
                             <span class="<?= ($selected_currency->display_as ?? 'currency_symbol') == 'currency_code' ? 'pricing-price-currency' : 'pricing-price-currency-symbol' ?>"><?= ($selected_currency->display_as ?? 'currency_symbol') == 'currency_code' ? currency() : $selected_currency->symbol ?></span>
@@ -280,13 +286,13 @@
             <div class="col-12 col-lg-6 col-xl-4 p-3">
                 <div class="pricing-plan position-relative rounded-2x" style="<?= settings()->plan_custom->color ? 'border-width: 3px; border-color: ' . settings()->plan_custom->color : null ?>">
                     <?php if(settings()->plan_custom->settings->tag ?? null): ?>
-                        <div class="pricing-tag"><?= settings()->plan_custom->translations->{\Altum\Language::$name}->tag ?: settings()->plan_custom->settings->tag ?></div>
+                        <div class="pricing-tag" style="<?= (settings()->plan_custom->additional_settings->tag_background_color ?? null) ? 'background: ' . settings()->plan_custom->additional_settings->tag_background_color . ';' : null ?><?= (settings()->plan_custom->additional_settings->tag_text_color ?? null) ? 'color: ' . settings()->plan_custom->additional_settings->tag_text_color . ';' : null ?>"><?= (settings()->plan_custom->translations->{\Altum\Language::$name}->tag ?? '') ?: settings()->plan_custom->settings->tag ?></div>
                     <?php endif ?>
 
                     <div class="pricing-header">
-                        <p class="pricing-name" style="<?= settings()->plan_custom->color ? 'color: ' . settings()->plan_custom->color : null ?>"><?= settings()->plan_custom->translations->{\Altum\Language::$name}->name ?: settings()->plan_custom->name ?></p>
+                        <p class="pricing-name" style="<?= settings()->plan_custom->color ? 'color: ' . settings()->plan_custom->color : null ?>"><?= (settings()->plan_custom->translations->{\Altum\Language::$name}->name ?? '') ?: settings()->plan_custom->name ?></p>
 
-                        <div class="pricing-details"><?= settings()->plan_custom->translations->{\Altum\Language::$name}->description ?: settings()->plan_custom->description ?></div>
+                        <div class="pricing-details"><?= (settings()->plan_custom->translations->{\Altum\Language::$name}->description ?? '') ?: settings()->plan_custom->description ?></div>
 
                         <div class="pricing-price">
                             <span class="pricing-price-amount"><?= settings()->plan_custom->translations->{\Altum\Language::$name}->price ?: settings()->plan_custom->price ?></span>
@@ -318,7 +324,7 @@ $offers = [];
 if(settings()->plan_guest->status ?? null) {
     $offers[] = [
         '@type' => 'Offer',
-        'name' => settings()->plan_guest->translations->{\Altum\Language::$name}->name ?: settings()->plan_guest->name,
+        'name' => (settings()->plan_guest->translations->{\Altum\Language::$name}->name ?? '') ?: settings()->plan_guest->name,
         'availability' => 'https://schema.org/InStock',
         'url' => url('plan')
     ];
@@ -327,7 +333,7 @@ if(settings()->plan_guest->status ?? null) {
 if(settings()->plan_free->status) {
     $offers[] = [
         '@type' => 'Offer',
-        'name' => settings()->plan_free->translations->{\Altum\Language::$name}->name ?: settings()->plan_free->name,
+        'name' => (settings()->plan_free->translations->{\Altum\Language::$name}->name ?? '') ?: settings()->plan_free->name,
         'availability' => 'https://schema.org/InStock',
         'url' => url('plan')
     ];
@@ -336,7 +342,7 @@ if(settings()->plan_free->status) {
 if(settings()->plan_custom->status) {
     $offers[] = [
         '@type' => 'Offer',
-        'name' => settings()->plan_custom->translations->{\Altum\Language::$name}->name ?: settings()->plan_custom->name,
+        'name' => (settings()->plan_custom->translations->{\Altum\Language::$name}->name ?? '') ?: settings()->plan_custom->name,
         'availability' => 'https://schema.org/InStock',
         'url' => url('plan')
     ];
@@ -350,8 +356,8 @@ if(settings()->payment->is_enabled) {
             if($plan->prices->{$value}->{currency()}) {
                 $offers[] = [
                     '@type' => 'Offer',
-                    'name' => $plan->translations->{\Altum\Language::$name}->name ?: $plan->name . ' - ' . l('plan.custom_plan.' . $value),
-                    'price' => nr($plan->prices->{$value}->{currency()}, 2, false),
+                    'name' => ($plan->translations->{\Altum\Language::$name}->name ?? '') ?: $plan->name . ' - ' . l('plan.custom_plan.' . $value),
+                    'price' => nr($plan->prices->{$value}->{currency()}, ($selected_currency->currency_decimals ?? 2), false),
                     'priceCurrency' => currency(),
                     'availability' => 'https://schema.org/InStock',
                     'url' => url('pay/' . $plan->plan_id)

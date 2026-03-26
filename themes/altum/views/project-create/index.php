@@ -24,7 +24,7 @@
 
                 <div class="form-group">
                     <label for="name"><i class="fas fa-fw fa-signature fa-sm text-muted mr-1"></i> <?= l('global.name') ?></label>
-                    <input type="text" id="name" name="name" class="form-control" value="<?= $data->values['name'] ?>" required="required" />
+                    <input type="text" id="name" name="name" class="form-control" value="<?= $data->values['name'] ?>" maxlength="64" required="required" />
                 </div>
 
                 <div class="form-group">

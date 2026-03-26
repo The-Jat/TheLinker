@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -85,10 +85,7 @@ class AdminBiolinkThemeCreate extends Controller {
                         'border_color' => $_POST['biolink_block_border_color'],
                         'border_radius' => $_POST['biolink_block_border_radius'],
                         'border_style' => $_POST['biolink_block_border_style'],
-                        'border_shadow_offset_x' => $_POST['biolink_block_border_shadow_offset_x'],
-                        'border_shadow_offset_y' => $_POST['biolink_block_border_shadow_offset_y'],
-                        'border_shadow_blur' => $_POST['biolink_block_border_shadow_blur'],
-                        'border_shadow_spread' => $_POST['biolink_block_border_shadow_spread'],
+                        'border_shadow_style' => $_POST['biolink_block_border_shadow_style'],
                         'border_shadow_color' => $_POST['biolink_block_border_shadow_color'],
                     ],
 
@@ -102,6 +99,8 @@ class AdminBiolinkThemeCreate extends Controller {
                         'text_color' => $_POST['biolink_block_paragraph_text_color'],
                         'background_color' => $_POST['biolink_block_paragraph_background_color'],
                         'border_radius' => $_POST['biolink_block_paragraph_border_radius'],
+                        'border_shadow_style' => $_POST['biolink_block_paragraph_border_shadow_style'],
+                        'border_shadow_color' => $_POST['biolink_block_paragraph_border_shadow_color'],
                     ],
 
                     'biolink_block_heading' => [
@@ -128,9 +127,12 @@ class AdminBiolinkThemeCreate extends Controller {
             }
         }
 
+        $suggested_next_order_number = db()->orderBy('`order`', 'DESC')->getValue('biolinks_themes', '`order`', 1);
+        $suggested_next_order_number = $suggested_next_order_number ? $suggested_next_order_number + 1 : 1;
+
         $values = [
             'name' => $_POST['name'] ?? null,
-            'order' => $_POST['order'] ?? 0,
+            'order' => $_POST['order'] ?? $suggested_next_order_number,
             'is_enabled' => $_POST['is_enabled'] ?? 1,
             'additional_custom_css' => $_POST['additional_custom_css'] ?? null,
             'additional_custom_js' => $_POST['additional_custom_js'] ?? null,
@@ -153,10 +155,7 @@ class AdminBiolinkThemeCreate extends Controller {
             'biolink_block_border_color' => $_POST['biolink_block_border_color'] ?? null,
             'biolink_block_border_radius' => $_POST['biolink_block_border_radius'] ?? null,
             'biolink_block_border_style' => $_POST['biolink_block_border_style'] ?? null,
-            'biolink_block_border_shadow_offset_x' => $_POST['biolink_block_border_shadow_offset_x'] ?? 0,
-            'biolink_block_border_shadow_offset_y' => $_POST['biolink_block_border_shadow_offset_y'] ?? 0,
-            'biolink_block_border_shadow_blur' => $_POST['biolink_block_border_shadow_blur'] ?? 20,
-            'biolink_block_border_shadow_spread' => $_POST['biolink_block_border_shadow_spread'] ?? 0,
+            'biolink_block_border_shadow_style' => $_POST['biolink_block_border_shadow_style'] ?? 'subtle',
             'biolink_block_border_shadow_color' => $_POST['biolink_block_border_shadow_color'] ?? '#00000010',
 
             'biolink_block_socials_color' => $_POST['biolink_block_socials_color'] ?? '#ffffff',
@@ -166,9 +165,12 @@ class AdminBiolinkThemeCreate extends Controller {
             'biolink_block_paragraph_text_color' => $_POST['biolink_block_paragraph_text_color'] ?? '#ffffff',
             'biolink_block_paragraph_background_color' => $_POST['biolink_block_paragraph_background_color'] ?? '#00000000',
             'biolink_block_paragraph_border_radius' => $_POST['biolink_block_paragraph_border_radius'] ?? 'rounded',
+            'biolink_block_paragraph_border_shadow_style' => $_POST['biolink_block_paragraph_border_shadow_style'] ?? 'none',
+            'biolink_block_paragraph_border_shadow_color' => $_POST['biolink_block_paragraph_border_shadow_color'] ?? '#00000000',
 
             'biolink_block_heading_text_color' => $_POST['biolink_block_heading_text_color'] ?? '#000000',
         ];
+
 
         /* Main View */
         $data = [

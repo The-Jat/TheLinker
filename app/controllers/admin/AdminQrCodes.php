@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -87,8 +87,8 @@ class AdminQrCodes extends Controller {
         //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('admin/qr-codes');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -108,6 +108,8 @@ class AdminQrCodes extends Controller {
             set_time_limit(0);
 
             session_write_close();
+
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
 
             switch($_POST['type']) {
                 case 'delete':
@@ -155,7 +157,7 @@ class AdminQrCodes extends Controller {
         }
 
         if(!$qr_code = db()->where('qr_code_id', $qr_code_id)->getOne('qr_codes', ['qr_code_id', 'name'])) {
-            redirect('admin/qr-codes');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
@@ -173,8 +175,8 @@ class AdminQrCodes extends Controller {
 
     public function transfer() {
 
-        if(empty($_POST)) {
-            redirect('admin/qr-codes');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         $qr_code_id = (int) $_POST['qr_code_id'];
@@ -187,15 +189,15 @@ class AdminQrCodes extends Controller {
         }
 
         if(!$qr_code = db()->where('qr_code_id', $qr_code_id)->getOne('qr_codes', ['qr_code_id', 'user_id', 'name'])) {
-            redirect('admin/qr-codes');
+            throw_404();
         }
 
         if(!$current_user = db()->where('user_id', $qr_code->user_id)->getOne('users', ['user_id', 'email'])) {
-            redirect('admin/qr-codes');
+            throw_404();
         }
 
         if(!$new_user = db()->where('email', $_POST['email'])->getOne('users', ['user_id', 'email'])) {
-            redirect('admin/qr-codes');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

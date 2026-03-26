@@ -51,34 +51,53 @@
                         <pre data-shiki="json">
 {
     "data": {
-        "id":"1",
-        "type":"users",
-        "email":"example@example.com",
-        "billing":{
-            "type":"personal",
-            "name":"John Doe",
-            "address":"Lorem Ipsum",
-            "city":"Dolor Sit",
-            "county":"Amet",
-            "zip":"5000",
-            "country":"",
-            "phone":"",
-            "tax_id":"",
-            "is_enabled":true,
-            "plan_id":"custom",
-            "plan_expiration_date":"<?= date('Y-m-d H:i:s', strtotime('+1 year')) ?>",
-            "plan_settings":{
-                ...
-            },
-            "plan_trial_done":false,
-            "language":"english",
-            "timezone":"UTC",
-            "country":null,
-            "datetime": "<?= get_date() ?>",
-            "last_activity":"2020-01-01 00:00:00",
-            "total_logins":10
-        }
+        "id": 1,
+        "name": "Example",
+        "email": "example@example.com",
+        "language": "english",
+        "timezone": "Europe/Bucharest",
+        "anti_phishing_code": true,
+        "is_newsletter_subscribed": false,
+        "billing": {
+            "type": "personal",
+            "name": "",
+            "address": "",
+            "city": "",
+            "state": "",
+            "county": "",
+            "zip": "3000",
+            "country": "US",
+            "phone": "+123 123 123",
+            "tax_id": "",
+            "notes": ""
+        },
+        "status": true,
+        "plan_id": "custom",
+        "plan_expiration_date": "<?= date('Y-m-d H:i:s', strtotime('+1 year')) ?>",
+        "plan_settings": {},
+        "plan_trial_done": true,
+        "payment_processor": "revolut",
+        "payment_total_amount": 300,
+        "payment_currency": "USD",
+        "payment_subscription_id": null,
+        "source": "direct",
+        "ip": "123.123.123.123",
+        "continent_code": "NA",
+        "country": "US",
+        "city_name": "New York",
+        "os_name": "OS X",
+        "browser_name": "Chrome",
+        "browser_language": "en",
+        "device_type": "desktop",
+        "api_key": "123456789",
+        "referral_key": "altum",
+        "referred_by": null,
+        "last_activity": "<?= get_date() ?>",
+        "total_logins": 100,
+        "datetime": "<?= date('Y-m-d H:i:s', strtotime('-1 year')) ?>",
+        "next_cleanup_datetime": "<?= date('Y-m-d H:i:s', strtotime('+1 month')) ?>"
     }
+}
 </pre>
                     </div>
                 </div>

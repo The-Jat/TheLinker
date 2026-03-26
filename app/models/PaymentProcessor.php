@@ -35,6 +35,8 @@ class PaymentProcessor extends Model {
             /* Get data from the database */
             $payment_processors_result = database()->query("SELECT * FROM `payment_processors` WHERE `user_id` = {$user_id}");
             while($row = $payment_processors_result->fetch_object()) {
+				if(!isset($available_payment_processors[$row->processor])) continue;
+
                 $row->settings = json_decode($row->settings ?? '');
                 $payment_processors[$row->payment_processor_id] = $row;
                 $payment_processors[$row->payment_processor_id]->icon = $available_payment_processors[$row->processor]['icon'];

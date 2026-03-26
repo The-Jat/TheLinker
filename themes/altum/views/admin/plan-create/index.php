@@ -77,15 +77,34 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="tag"><i class="fas fa-fw fa-sm fa-tag text-muted mr-1"></i> <?= l('admin_plans.tag') ?></label>
-                <div class="input-group">
-                    <input type="text" id="tag" name="tag" class="form-control <?= \Altum\Alerts::has_field_errors('tag') ? 'is-invalid' : null ?>" value="" maxlength="64" />
-                    <div class="input-group-append">
-                        <button class="btn btn-dark" type="button" data-toggle="collapse" data-target="#tag_translate_container" aria-expanded="false" aria-controls="tag_translate_container" data-tooltip title="<?= l('global.translate') ?>" data-tooltip-hide-on-click><i class="fas fa-fw fa-sm fa-language"></i></button>
+            <div class="row">
+                <div class="col-12 col-lg-6">
+                    <div class="form-group">
+                        <label for="tag"><i class="fas fa-fw fa-sm fa-tag text-muted mr-1"></i> <?= l('admin_plans.tag') ?></label>
+                        <div class="input-group">
+                            <input type="text" id="tag" name="tag" class="form-control <?= \Altum\Alerts::has_field_errors('tag') ? 'is-invalid' : null ?>" value="" maxlength="64" />
+                            <div class="input-group-append">
+                                <button class="btn btn-dark" type="button" data-toggle="collapse" data-target="#tag_translate_container" aria-expanded="false" aria-controls="tag_translate_container" data-tooltip title="<?= l('global.translate') ?>" data-tooltip-hide-on-click><i class="fas fa-fw fa-sm fa-language"></i></button>
+                            </div>
+                        </div>
+                        <?= \Altum\Alerts::output_field_error('tag') ?>
+                        <small class="form-text text-muted"><?= l('admin_plans.tag_help') ?></small>
                     </div>
                 </div>
-                <?= \Altum\Alerts::output_field_error('tag') ?>
+
+                <div class="col-6 col-lg-3">
+                    <div class="form-group">
+                        <label for="tag_background_color"><i class="fas fa-fw fa-palette fa-sm text-muted mr-1"></i> <?= l('admin_plans.tag_background_color') ?></label>
+                        <input type="hidden" id="tag_background_color" name="tag_background_color" class="form-control" value="" data-color-picker data-color-picker-has-clear="true" />
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-3">
+                    <div class="form-group">
+                        <label for="tag_text_color"><i class="fas fa-fw fa-palette fa-sm text-muted mr-1"></i> <?= l('admin_plans.tag_text_color') ?></label>
+                        <input type="hidden" id="tag_text_color" name="tag_text_color" class="form-control" value="" data-color-picker data-color-picker-has-clear="true" />
+                    </div>
+                </div>
             </div>
 
             <div class="collapse" id="tag_translate_container">
@@ -106,7 +125,7 @@
 
             <div class="form-group">
                 <label for="order"><i class="fas fa-fw fa-sm fa-sort text-muted mr-1"></i> <?= l('global.order') ?></label>
-                <input type="number" min="0" id="order" name="order" class="form-control" value="" />
+                <input type="number" min="0" id="order" name="order" class="form-control" value="<?= $data->values['order'] ?>" />
             </div>
 
             <div class="form-group">
@@ -116,46 +135,76 @@
             </div>
 
             <?php foreach((array) settings()->payment->currencies as $currency => $currency_data): ?>
-                <div class="row">
-                    <div class="col-sm-12 col-xl-4">
-                        <div class="form-group">
-                            <label for="monthly_price[<?= $currency ?>]"><i class="fas fa-fw fa-sm fa-calendar-alt text-muted mr-1"></i> <?= l('admin_plans.monthly_price') ?></label>
-                            <div class="input-group">
-                                <input type="text" id="monthly_price[<?= $currency ?>]" name="monthly_price[<?= $currency ?>]" class="form-control <?= \Altum\Alerts::has_field_errors('monthly_price[' . $currency . ']') ? 'is-invalid' : null ?>" required="required" />
-                                <div class="input-group-append">
-                                    <span class="input-group-text"><?= $currency ?></span>
+                <div class="p-3 bg-gray-50 rounded mb-4">
+                    <div class="row">
+                        <div class="col-12 col-lg-4">
+                            <div class="form-group">
+                                <label for="monthly_price[<?= $currency ?>]"><i class="fas fa-fw fa-sm fa-calendar-alt text-muted mr-1"></i> <?= l('admin_plans.monthly_price') ?></label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="monthly_price[<?= $currency ?>]" name="monthly_price[<?= $currency ?>]" value="0" class="form-control form-control-sm <?= \Altum\Alerts::has_field_errors('monthly_price[' . $currency . ']') ? 'is-invalid' : null ?>" required="required" />
+                                    <div class="input-group-append">
+                                        <span class="input-group-text"><?= $currency ?></span>
+                                    </div>
                                 </div>
+                                <?= \Altum\Alerts::output_field_error('monthly_price[' . $currency . ']') ?>
+                                <small class="form-text text-muted"><?= sprintf(l('admin_plans.price_help'), l('admin_plans.monthly_price')) ?></small>
                             </div>
-                            <?= \Altum\Alerts::output_field_error('monthly_price[' . $currency . ']') ?>
-                            <small class="form-text text-muted"><?= sprintf(l('admin_plans.price_help'), l('admin_plans.monthly_price')) ?></small>
                         </div>
-                    </div>
 
-                    <div class="col-sm-12 col-xl-4">
-                        <div class="form-group">
-                            <label for="annual_price[<?= $currency ?>]"><i class="fas fa-fw fa-sm fa-calendar text-muted mr-1"></i> <?= l('admin_plans.annual_price') ?></label>
-                            <div class="input-group">
-                                <input type="text" id="annual_price[<?= $currency ?>]" name="annual_price[<?= $currency ?>]" class="form-control <?= \Altum\Alerts::has_field_errors('annual_price[' . $currency . ']') ? 'is-invalid' : null ?>" required="required" />
-                                <div class="input-group-append">
-                                    <span class="input-group-text"><?= $currency ?></span>
+                        <div class="col-12 col-lg-4">
+                            <div class="form-group">
+                                <label for="quarterly_price[<?= $currency ?>]"><i class="fas fa-fw fa-sm fa-calendar-alt text-muted mr-1"></i> <?= l('admin_plans.quarterly_price') ?></label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="quarterly_price[<?= $currency ?>]" name="quarterly_price[<?= $currency ?>]" value="0" class="form-control form-control-sm <?= \Altum\Alerts::has_field_errors('quarterly_price[' . $currency . ']') ? 'is-invalid' : null ?>" required="required" />
+                                    <div class="input-group-append">
+                                        <span class="input-group-text"><?= $currency ?></span>
+                                    </div>
                                 </div>
+                                <?= \Altum\Alerts::output_field_error('quarterly_price[' . $currency . ']') ?>
+                                <small class="form-text text-muted"><?= sprintf(l('admin_plans.price_help'), l('admin_plans.quarterly_price')) ?></small>
                             </div>
-                            <?= \Altum\Alerts::output_field_error('annual_price[' . $currency . ']') ?>
-                            <small class="form-text text-muted"><?= sprintf(l('admin_plans.price_help'), l('admin_plans.annual_price')) ?></small>
                         </div>
-                    </div>
 
-                    <div class="col-sm-12 col-xl-4">
-                        <div class="form-group">
-                            <label for="lifetime_price[<?= $currency ?>]"><i class="fas fa-fw fa-sm fa-infinity text-muted mr-1"></i> <?= l('admin_plans.lifetime_price') ?></label>
-                            <div class="input-group">
-                                <input type="text" id="lifetime_price[<?= $currency ?>]" name="lifetime_price[<?= $currency ?>]" class="form-control <?= \Altum\Alerts::has_field_errors('lifetime_price[' . $currency . ']') ? 'is-invalid' : null ?>" required="required" />
-                                <div class="input-group-append">
-                                    <span class="input-group-text"><?= $currency ?></span>
+                        <div class="col-12 col-lg-4">
+                            <div class="form-group">
+                                <label for="biannual_price[<?= $currency ?>]"><i class="fas fa-fw fa-sm fa-calendar-alt text-muted mr-1"></i> <?= l('admin_plans.biannual_price') ?></label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="biannual_price[<?= $currency ?>]" name="biannual_price[<?= $currency ?>]" value="0" class="form-control form-control-sm <?= \Altum\Alerts::has_field_errors('biannual_price[' . $currency . ']') ? 'is-invalid' : null ?>" required="required" />
+                                    <div class="input-group-append">
+                                        <span class="input-group-text"><?= $currency ?></span>
+                                    </div>
                                 </div>
+                                <?= \Altum\Alerts::output_field_error('biannual_price[' . $currency . ']') ?>
+                                <small class="form-text text-muted"><?= sprintf(l('admin_plans.price_help'), l('admin_plans.biannual_price')) ?></small>
                             </div>
-                            <?= \Altum\Alerts::output_field_error('lifetime_price[' . $currency . ']') ?>
-                            <small class="form-text text-muted"><?= sprintf(l('admin_plans.price_help'), l('admin_plans.lifetime_price')) ?></small>
+                        </div>
+
+                        <div class="col-12 col-lg-4">
+                            <div class="form-group">
+                                <label for="annual_price[<?= $currency ?>]"><i class="fas fa-fw fa-sm fa-calendar text-muted mr-1"></i> <?= l('admin_plans.annual_price') ?></label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="annual_price[<?= $currency ?>]" name="annual_price[<?= $currency ?>]" value="0" class="form-control form-control-sm <?= \Altum\Alerts::has_field_errors('annual_price[' . $currency . ']') ? 'is-invalid' : null ?>" required="required" />
+                                    <div class="input-group-append">
+                                        <span class="input-group-text"><?= $currency ?></span>
+                                    </div>
+                                </div>
+                                <?= \Altum\Alerts::output_field_error('annual_price[' . $currency . ']') ?>
+                                <small class="form-text text-muted"><?= sprintf(l('admin_plans.price_help'), l('admin_plans.annual_price')) ?></small>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-4">
+                            <div class="form-group">
+                                <label for="lifetime_price[<?= $currency ?>]"><i class="fas fa-fw fa-sm fa-infinity text-muted mr-1"></i> <?= l('admin_plans.lifetime_price') ?></label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="lifetime_price[<?= $currency ?>]" name="lifetime_price[<?= $currency ?>]" value="0" class="form-control form-control-sm <?= \Altum\Alerts::has_field_errors('lifetime_price[' . $currency . ']') ? 'is-invalid' : null ?>" required="required" />
+                                    <div class="input-group-append">
+                                        <span class="input-group-text"><?= $currency ?></span>
+                                    </div>
+                                </div>
+                                <?= \Altum\Alerts::output_field_error('lifetime_price[' . $currency . ']') ?>
+                                <small class="form-text text-muted"><?= sprintf(l('admin_plans.price_help'), l('admin_plans.lifetime_price')) ?></small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -184,9 +233,31 @@
 
             <div class="form-group">
                 <label for="color"><i class="fas fa-fw fa-sm fa-palette text-muted mr-1"></i> <?= l('admin_plans.color') ?></label>
-                <input type="text" id="color" name="color" class="form-control <?= \Altum\Alerts::has_field_errors('color') ? 'is-invalid' : null ?>" value="" placeholder="<?= l('admin_plans.color_placeholder') ?>" />
+                <input type="hidden" id="color" name="color" class="form-control <?= \Altum\Alerts::has_field_errors('color') ? 'is-invalid' : null ?>" value="" placeholder="<?= l('admin_plans.color_placeholder') ?>" data-color-picker data-color-picker-has-clear="true" />
                 <?= \Altum\Alerts::output_field_error('color') ?>
                 <small class="form-text text-muted"><?= l('admin_plans.color_help') ?></small>
+            </div>
+
+            <div class="form-group">
+                <label for="suggested_plan_id"><i class="fas fa-fw fa-sm fa-arrow-up text-muted mr-1"></i> <?= l('admin_plans.suggested_plan_id') ?></label>
+                <select id="suggested_plan_id" name="suggested_plan_id" class="custom-select">
+                    <option value=""><?= l('global.none') ?></option>
+                    <?php foreach($data->plans as $plan): ?>
+                        <option value="<?= $plan->plan_id ?>"><?= $plan->name ?></option>
+                    <?php endforeach ?>
+                </select>
+                <small class="form-text text-muted"><?= l('admin_plans.suggested_plan_id_help') ?></small>
+            </div>
+
+            <div class="form-group">
+                <label for="suggested_plan_code_id"><i class="fas fa-fw fa-sm fa-tag text-muted mr-1"></i> <?= l('admin_plans.suggested_plan_code_id') ?></label>
+                <select id="suggested_plan_code_id" name="suggested_plan_code_id" class="custom-select">
+                    <option value=""><?= l('global.none') ?></option>
+                    <?php foreach($data->codes as $code): ?>
+                        <option value="<?= $code->code_id ?>"><?= $code->code . ' - ' . $code->discount . '%' ?></option>
+                    <?php endforeach ?>
+                </select>
+                <small class="form-text text-muted"><?= l('admin_plans.suggested_plan_code_id_help') ?></small>
             </div>
 
             <div class="form-group">
@@ -249,7 +320,7 @@
                 <div class="form-group">
                     <label for="biolinks_limit"><?= l('admin_plans.plan.biolinks_limit') ?></label>
                     <input type="number" id="biolinks_limit" name="biolinks_limit" min="-1" class="form-control" value="0" required="required" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.biolinks_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.biolinks_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
@@ -261,7 +332,7 @@
                 <div class="form-group">
                     <label for="links_limit"><?= l('admin_plans.plan.links_limit') ?></label>
                     <input type="number" id="links_limit" name="links_limit" min="-1" class="form-control" value="0" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.links_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.links_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
@@ -272,31 +343,31 @@
                 <div class="form-group">
                     <label for="files_limit"><?= l('admin_plans.plan.files_limit') ?></label>
                     <input type="number" id="files_limit" name="files_limit" min="-1" class="form-control" value="0" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.files_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.files_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
                     <label for="vcards_limit"><?= l('admin_plans.plan.vcards_limit') ?></label>
                     <input type="number" id="vcards_limit" name="vcards_limit" min="-1" class="form-control" value="0" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.vcards_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.vcards_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
                     <label for="events_limit"><?= l('admin_plans.plan.events_limit') ?></label>
                     <input type="number" id="events_limit" name="events_limit" min="-1" class="form-control" value="0" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.events_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.events_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
                     <label for="static_limit"><?= l('admin_plans.plan.static_limit') ?></label>
                     <input type="number" id="static_limit" name="static_limit" min="-1" class="form-control" value="0" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.static_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.static_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
                     <label for="domains_limit"><?= l('admin_plans.plan.domains_limit') ?></label>
                     <input type="number" id="domains_limit" name="domains_limit" min="-1" class="form-control" value="0" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.domains_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.domains_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <?php if(\Altum\Plugin::is_active('payment-blocks')): ?>
@@ -348,7 +419,7 @@
                         <label for="images_api"><?= l('admin_plans.plan.images_api') ?></label>
                         <select id="images_api" name="images_api" class="custom-select">
                             <?php foreach(require \Altum\Plugin::get('aix')->path . 'includes/ai_image_models.php' as $key => $value): ?>
-                                <option value="<?= $key ?>" <?= $data->user->plan_settings->images_api == $key ? 'selected="selected"' : null ?>><?= $value['name'] ?></option>
+                                <option value="<?= $key ?>"><?= $value['name'] ?></option>
                             <?php endforeach ?>
                         </select>
                         <small class="form-text text-muted"><?= l('admin_plans.plan.images_api_help') ?></small>
@@ -614,6 +685,12 @@
                     <div><small class="form-text text-muted"><?= l('admin_plans.plan.dofollow_is_enabled_help') ?></small></div>
                 </div>
 
+                <div class="form-group custom-control custom-switch">
+                    <input id="branded_button_is_enabled" name="branded_button_is_enabled" type="checkbox" class="custom-control-input">
+                    <label class="custom-control-label" for="branded_button_is_enabled"><?= l('admin_plans.plan.branded_button_is_enabled') ?></label>
+                    <div><small class="form-text text-muted"><?= l('admin_plans.plan.branded_button_is_enabled_help') ?></small></div>
+                </div>
+
                 <div <?= !\Altum\Plugin::is_active('pwa') ? 'data-toggle="tooltip" title="' . sprintf(l('admin_plugins.no_access'), \Altum\Plugin::get('pwa')->name ?? 'pwa') . '"' : null ?>>
                     <div class="form-group custom-control custom-switch">
                         <input id="custom_pwa_is_enabled" name="custom_pwa_is_enabled" type="checkbox" class="custom-control-input" <?= !\Altum\Plugin::is_active('pwa') ? 'disabled="disabled"' : null ?>>
@@ -712,4 +789,8 @@
 
     </div>
 </div>
+
+<?= include_view(THEME_PATH . 'views/partials/scroll_top_bottom.php', ['top_selector' => '.admin-content', 'bottom_selector' => 'footer']) ?>
+<?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>
+<?php include_view(THEME_PATH . 'views/partials/color_picker_js.php') ?>
 

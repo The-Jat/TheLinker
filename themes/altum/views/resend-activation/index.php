@@ -3,12 +3,12 @@
 <?= \Altum\Alerts::output_alerts() ?>
 
 <h1 class="h5"><?= l('resend_activation.header') ?></h1>
-<p class="text-muted"><?= l('resend_activation.subheader') ?></p>
+<p class="text-muted font-size-little-small"><?= l('resend_activation.subheader') ?></p>
 
 <form action="" method="post" class="mt-4" role="form">
     <div class="form-group">
         <label for="email"><?= l('global.email') ?></label>
-        <input id="email" type="email" name="email" class="form-control <?= \Altum\Alerts::has_field_errors('email') ? 'is-invalid' : null ?>" value="<?= $data->values['email'] ?>" required="required" autofocus="autofocus" />
+        <input id="email" type="email" name="email" class="form-control <?= \Altum\Alerts::has_field_errors('email') ? 'is-invalid' : null ?>" value="<?= $data->values['email'] ?>" placeholder="<?= l('global.email_placeholder') ?>" required="required" autofocus="autofocus" />
         <?= \Altum\Alerts::output_field_error('email') ?>
     </div>
 

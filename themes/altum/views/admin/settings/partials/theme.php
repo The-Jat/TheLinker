@@ -27,7 +27,7 @@ $fonts = [
 ];
 ?>
 
-<div>
+<div id="theme">
     <ul class="nav nav-pills d-flex flex-fill flex-column flex-lg-row mb-3" role="tablist">
         <li class="nav-item flex-fill text-center" role="presentation">
             <a class="nav-link active" id="pills-light-tab" data-toggle="pill" href="#pills-light" role="tab" aria-controls="pills-light" aria-selected="true">
@@ -205,11 +205,11 @@ $fonts = [
                 </div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#<?= $mode . '_advanced_container' ?>" aria-expanded="false" aria-controls="<?= $mode . '_advanced_container' ?>">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#<?= $mode . '_advanced_container' ?>" aria-expanded="false" aria-controls="<?= $mode . '_advanced_container' ?>">
                 <i class="fas fa-fw fa-paintbrush fa-sm mr-1"></i> <?= l('admin_settings.theme.advanced_coloring') ?>
             </button>
 
-            <div class="collapse" id="<?= $mode . '_advanced_container' ?>">
+            <div class="collapse" data-parent="#theme" id="<?= $mode . '_advanced_container' ?>">
                 <h2 class="h6"><?= l('admin_settings.theme.primary') ?></h2>
                 <p class="text-muted"><?= l('admin_settings.theme.primary_help') ?></p>
 
@@ -414,11 +414,11 @@ $fonts = [
                 </div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#<?= $mode . '_advanced_container' ?>" aria-expanded="false" aria-controls="<?= $mode . '_advanced_container' ?>">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#<?= $mode . '_advanced_container' ?>" aria-expanded="false" aria-controls="<?= $mode . '_advanced_container' ?>">
                 <i class="fas fa-fw fa-paintbrush fa-sm mr-1"></i> <?= l('admin_settings.theme.advanced_coloring') ?>
             </button>
 
-            <div class="collapse" id="<?= $mode . '_advanced_container' ?>">
+            <div class="collapse" data-parent="#theme" id="<?= $mode . '_advanced_container' ?>">
                 <h2 class="h6"><?= l('admin_settings.theme.primary') ?></h2>
                 <p class="text-muted"><?= l('admin_settings.theme.primary_help') ?></p>
 

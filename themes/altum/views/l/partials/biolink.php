@@ -14,7 +14,7 @@
 <div id="backdrop" class="link-body-backdrop" style="<?= $data->link->design->backdrop_style ?>"></div>
 
 <div class="container animate__animated animate__fadeIn <?= isset($_GET['preview']) ? 'container-disabled-simple' : null ?>">
-    <?php require THEME_PATH . 'views/l/partials/biolink_scroll_buttons.php' ?>
+    <?php require THEME_PATH . 'views/l/partials/biolink_top_left_buttons.php' ?>
     <?php require THEME_PATH . 'views/l/partials/biolink_share.php' ?>
 
     <div class="row d-flex justify-content-center text-center">
@@ -41,7 +41,7 @@
                             /* :) */
                         }
                         /* Detect extra details about the user */
-                        $whichbrowser = new \WhichBrowser\Parser($_SERVER['HTTP_USER_AGENT']);
+                        $whichbrowser = get_whichbrowser();
                         $os_name = $whichbrowser->os->name ?? null;
                         $browser_name = $whichbrowser->browser->name ?? null;
                         $browser_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? mb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
@@ -149,7 +149,7 @@
 <?php if(settings()->links->biolinks_report_is_enabled): ?>
     <div id="info" class="link-info">
         <a href="<?= url('contact?subject=' . urlencode(sprintf(l('link.biolink.report.subject'), remove_url_protocol_from_url($data->link->full_url))) . '&message=' . urlencode(l('link.biolink.report.message'))) ?>" target="_blank" data-toggle="tooltip" title="<?= l('link.biolink.report') ?>">
-            <i class="fas fa-fw fa-xs fa-flag"></i>
+            <i class="fas fa-fw fa-xs fa-exclamation-triangle"></i>
         </a>
     </div>
 <?php endif ?>
@@ -160,7 +160,7 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
+
     /* Background backdrop fix on modal */
     let backdrop_filter = null;
     $('.modal').on('show.bs.modal', function () {

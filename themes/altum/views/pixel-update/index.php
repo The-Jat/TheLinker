@@ -1,6 +1,5 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-
 <div class="container">
     <?= \Altum\Alerts::output_alerts() ?>
 
@@ -34,10 +33,10 @@
 
                 <div class="form-group">
                     <label for="type"><i class="fas fa-fw fa-adjust fa-sm text-muted mr-1"></i> <?= l('global.type') ?></label>
-                    <div class="row btn-group-toggle" data-toggle="buttons">
+                    <div class="row btn-group-toggle m-n2" data-toggle="buttons">
                         <?php foreach(require APP_PATH . 'includes/pixels.php' as $pixel_key => $pixel): ?>
-                            <div class="col-12 col-lg-4">
-                                <label class="btn btn-light btn-block text-truncate <?= $data->pixel->type == $pixel_key ? 'active"' : null?>">
+                            <div class="p-2 col-12 col-lg-4">
+                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->pixel->type == $pixel_key ? 'active"' : null?>">
                                     <input type="radio" name="type" value="<?= $pixel_key ?>" class="custom-control-input" <?= $data->pixel->type == $pixel_key ? 'checked="checked"' : null?> required="required" />
                                     <i class="<?= $pixel['icon'] ?> fa-fw fa-sm mr-1" style="color: <?= $pixel['color'] ?>"></i> <?= $pixel['name'] ?>
                                 </label>

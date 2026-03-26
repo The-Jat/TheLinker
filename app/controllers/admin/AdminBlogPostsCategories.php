@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -71,8 +71,8 @@ class AdminBlogPostsCategories extends Controller {
     public function bulk() {
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('admin/blog-posts-categories');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -95,6 +95,8 @@ class AdminBlogPostsCategories extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
@@ -109,7 +111,7 @@ class AdminBlogPostsCategories extends Controller {
             }
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -129,7 +131,7 @@ class AdminBlogPostsCategories extends Controller {
         }
 
         if(!$blog_posts_category = db()->where('blog_posts_category_id', $blog_posts_category_id)->getOne('blog_posts_categories', ['blog_posts_category_id', 'title'])) {
-            redirect('admin/blog-posts-categories');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -30,7 +30,7 @@ class Blog extends Controller {
     public function index() {
 
         if(!settings()->content->blog_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         $language = Language::$name;
@@ -69,7 +69,7 @@ class Blog extends Controller {
             });
 
             if(!$blog_post) {
-                redirect('not-found');
+                throw_404();
             }
 
             /* Transform content if needed */
@@ -134,7 +134,7 @@ class Blog extends Controller {
             });
 
             if(!$blog_posts_category) {
-                redirect('not-found');
+                throw_404();
             }
 
             /* Get the posts */
@@ -283,17 +283,17 @@ class Blog extends Controller {
     public function ratings_ajax() {
 
         if(empty($_POST)) {
-            redirect();
+            throw_404();
         }
 
         if(!settings()->content->blog_is_enabled || !settings()->content->blog_ratings_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Check for any errors */
         $required_fields = ['blog_post_id', 'rating'];
         foreach($required_fields as $field) {
-            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+            if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                 Response::json(l('global.error_message.empty_fields'), 'error');
             }
         }

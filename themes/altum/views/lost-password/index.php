@@ -3,7 +3,7 @@
 <?= \Altum\Alerts::output_alerts() ?>
 
 <h1 class="h5"><?= l('lost_password.header') ?></h1>
-<p class="text-muted"><?= l('lost_password.subheader') ?></p>
+<p class="text-muted font-size-little-small"><?= l('lost_password.subheader') ?></p>
 
 <form action="" method="post" class="mt-4" role="form">
     <div class="form-group">

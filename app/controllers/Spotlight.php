@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -23,13 +23,12 @@ defined('ALTUMCODE') || die();
 class Spotlight extends Controller {
 
     public function index() {
-
         if(!settings()->main->admin_spotlight_is_enabled && !settings()->main->user_spotlight_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
-        if(!empty($_POST)) {
-            redirect();
+        if($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            throw_404();
         }
 
         if(!\Altum\Csrf::check('global_token')) {
@@ -491,6 +490,11 @@ class Spotlight extends Controller {
                     $available_pages[] = [
                         'name' => l('global.menu.admin') . ' - ' . l('admin_taxes.title'),
                         'url' => 'admin/taxes'
+                    ];
+
+                    $available_pages[] = [
+                        'name' => l('global.menu.admin') . ' - ' . l('admin_taxes_import.title'),
+                        'url' => 'admin/taxes-import'
                     ];
 
                     $available_pages[] = [

@@ -19,21 +19,29 @@ defined('ALTUMCODE') || die();
 return [
     'standard' => [
         'color' => '#0ea5e9',
+        'background_color' => '#e0f4fd',
+        'dark_background' => '#062535',
         'icon' => 'fas fa-icons',
     ],
 
     'advanced' => [
         'color' => '#6366f1',
+        'background_color' => '#eef0ff',
+        'dark_background' => '#1b1d4f',
         'icon' => 'fas fa-magic',
     ],
 
     'payments' => [
         'color' => '#10b981',
+        'background_color' => '#e6faf3',
+        'dark_background' => '#052c22',
         'icon' => 'fas fa-hand-holding-usd',
     ],
 
     'embeds' => [
         'color' => '#d946ef',
+        'background_color' => '#f9e6fd',
+        'dark_background' => '#3a0945',
         'icon' => 'fas fa-flask',
     ],
 ];

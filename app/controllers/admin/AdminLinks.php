@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -80,8 +80,8 @@ class AdminLinks extends Controller {
         //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('admin/links');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -102,6 +102,8 @@ class AdminLinks extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
@@ -112,7 +114,7 @@ class AdminLinks extends Controller {
             }
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -132,7 +134,7 @@ class AdminLinks extends Controller {
         }
 
         if(!$link = db()->where('link_id', $link_id)->getOne('links', ['link_id', 'url'])) {
-            redirect('admin/links');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
@@ -149,8 +151,8 @@ class AdminLinks extends Controller {
 
     public function transfer() {
 
-        if(empty($_POST)) {
-            redirect('admin/links');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         $link_id = (int) $_POST['link_id'];
@@ -163,15 +165,15 @@ class AdminLinks extends Controller {
         }
 
         if(!$link = db()->where('link_id', $link_id)->getOne('links', ['link_id', 'user_id', 'url'])) {
-            redirect('admin/links');
+            throw_404();
         }
 
         if(!$current_user = db()->where('user_id', $link->user_id)->getOne('users', ['user_id', 'email'])) {
-            redirect('admin/links');
+            throw_404();
         }
 
         if(!$new_user = db()->where('email', $_POST['email'])->getOne('users', ['user_id', 'email'])) {
-            redirect('admin/links');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
@@ -208,7 +210,7 @@ class AdminLinks extends Controller {
         }
 
         if(!$link = db()->where('link_id', $link_id)->getOne('links', ['link_id', 'type', 'is_verified'])) {
-            redirect('admin/links');
+            throw_404();
         }
 
         if($link->type != 'biolink') {

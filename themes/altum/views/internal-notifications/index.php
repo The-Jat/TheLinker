@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    <?php if(count($data->internal_notifications)): ?>
+    <?php if (!empty($data->internal_notifications)): ?>
         <div class="card mb-5">
             <div class="card-body py-2">
                 <div>

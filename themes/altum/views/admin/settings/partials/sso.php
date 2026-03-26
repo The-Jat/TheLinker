@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div>
+<div id="sso">
     <div class="form-group custom-control custom-switch">
         <input id="is_enabled" name="is_enabled" type="checkbox" class="custom-control-input" <?= settings()->sso->is_enabled ? 'checked="checked"' : null?>>
         <label class="custom-control-label" for="is_enabled"><?= l('admin_settings.sso.is_enabled') ?></label>
@@ -36,7 +36,7 @@
                     <i class="fas fa-fw fa-pencil fa-sm mr-1"></i> <?= l('global.update') ?>
                 </button>
 
-                <div class="collapse" id="<?= 'container_' . md5($website->id) ?>">
+                <div class="collapse" data-parent="#sso" id="<?= 'container_' . md5($website->id) ?>">
                     <div class="form-group">
                         <label for="<?= 'name[' . $website->id . ']' ?>"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('global.name') ?></label>
                         <input id="<?= 'name[' . $website->id . ']' ?>" type="text" name="name[<?= $website->id ?>]" class="form-control" value="<?= $website->name ?>" required="required" />
@@ -106,15 +106,15 @@
             <small class="form-text text-muted"><?= l('global.icon_help') ?></small>
         </div>
 
-        <button type="button" data-remove="request" class="btn btn-block btn-outline-danger"><i class="fas fa-fw fa-times"></i> <?= l('global.delete') ?></button>
+        <button type="button" data-remove class="btn btn-block btn-outline-danger"><i class="fas fa-fw fa-times"></i> <?= l('global.delete') ?></button>
     </div>
 </template>
 
 <?php ob_start() ?>
 <script>
     'use strict';
-    
-/* add new request header */
+
+    /* add new */
     let add = event => {
         let type = event.currentTarget.getAttribute('data-add');
         let clone = document.querySelector(`#template_${type}`).content.cloneNode(true);
@@ -129,7 +129,7 @@
         element.addEventListener('click', add);
     })
 
-    /* remove request header */
+    /* remove */
     let remove = event => {
         event.currentTarget.closest('.website').remove();
 
@@ -173,13 +173,14 @@
 <script src="<?= ASSETS_FULL_URL . 'js/libraries/sortable.js?v=' . PRODUCT_CODE ?>"></script>
 <script>
     'use strict';
-    
+
     let sortable = Sortable.create(document.getElementById('websites'), {
         animation: 150,
         handle: '.drag',
         onUpdate: event => {
 
-            /* :) */
+            /* Refresh tooltips */
+            tooltips_initiate();
 
         }
     });

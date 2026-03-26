@@ -72,13 +72,4 @@ class Response {
         die();
     }
 
-
-    public static function simple_json($response) {
-
-        echo json_encode($response);
-
-        die();
-
-    }
-
 }

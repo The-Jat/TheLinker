@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,7 +25,7 @@ class SplashPages extends Controller {
     public function index() {
 
         if(!settings()->links->splash_page_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
@@ -71,14 +71,14 @@ class SplashPages extends Controller {
     public function bulk() {
 
         if(!settings()->links->splash_page_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('splash-pages');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -101,12 +101,14 @@ class SplashPages extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
                     /* Team checks */
                     if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.splash_pages')) {
-                        Alerts::add_info(l('global.info_message.team_no_access'));
+                        Alerts::add_error(l('global.info_message.team_no_access'));
                         redirect('splash-pages');
                     }
 
@@ -132,19 +134,19 @@ class SplashPages extends Controller {
     public function delete() {
 
         if(!settings()->links->splash_page_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.splash_pages')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('splash-pages');
         }
 
-        if(empty($_POST)) {
-            redirect('splash-pages');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         $splash_page_id = (int) $_POST['splash_page_id'];
@@ -156,7 +158,7 @@ class SplashPages extends Controller {
         }
 
         if(!$splash_page = db()->where('splash_page_id', $splash_page_id)->where('user_id', $this->user->user_id)->getOne('splash_pages', ['splash_page_id', 'name'])) {
-            redirect('splash-pages');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

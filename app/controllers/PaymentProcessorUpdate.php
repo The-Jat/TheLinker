@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,14 +25,20 @@ class PaymentProcessorUpdate extends Controller {
     public function index() {
 
         if(!\Altum\Plugin::is_active('payment-blocks')) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('update.payment_processors')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
+            redirect('payment-processors');
+        }
+
+        /* Check for the plan limit */
+        $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `payment_processors` WHERE `user_id` = {$this->user->user_id}")->fetch_object()->total ?? 0;
+        if($this->user->plan_settings->payment_processors_limit != -1 && $total_rows > $this->user->plan_settings->payment_processors_limit) {
             redirect('payment-processors');
         }
 
@@ -46,41 +52,63 @@ class PaymentProcessorUpdate extends Controller {
         if(!empty($_POST)) {
             $settings = [];
 
-            $_POST['name'] = trim(query_clean($_POST['name']));
-            $_POST['processor'] = isset($_POST['processor']) && in_array($_POST['processor'], ['paypal', 'stripe', 'crypto_com', 'razorpay', 'paystack', 'mollie']) ? query_clean($_POST['processor']) : 'https://';
+            $_POST['name'] = input_clean($_POST['name'], 64);
+            $_POST['processor'] = isset($_POST['processor']) && in_array($_POST['processor'], include \Altum\Plugin::get('payment-blocks')->path . 'payment_blocks_payment_processors.php') ? query_clean($_POST['processor']) : 'https://';
 
             switch($_POST['processor']) {
                 case 'paypal':
                     $settings['mode'] = $_POST['mode'] = in_array($_POST['mode'], ['live', 'sandbox']) ? $_POST['mode'] : 'live';
-                    $settings['client_id'] = $_POST['client_id'] = input_clean($_POST['client_id']);
-                    $settings['secret'] = $_POST['secret'] = input_clean($_POST['secret']);
+                    $settings['client_id'] = $_POST['client_id'] = input_clean($_POST['client_id'], 512);
+                    $settings['secret'] = $_POST['secret'] = input_clean($_POST['secret'], 512);
                     break;
 
                 case 'stripe':
-                    $settings['publishable_key'] = $_POST['publishable_key'] = input_clean($_POST['publishable_key']);
-                    $settings['secret_key'] = $_POST['secret_key'] = input_clean($_POST['secret_key']);
-                    $settings['webhook_secret'] = $_POST['webhook_secret'] = input_clean($_POST['webhook_secret']);
+                    $settings['publishable_key'] = $_POST['publishable_key'] = input_clean($_POST['publishable_key'], 512);
+                    $settings['secret_key'] = $_POST['secret_key'] = input_clean($_POST['secret_key'], 512);
+                    $settings['webhook_secret'] = $_POST['webhook_secret'] = input_clean($_POST['webhook_secret'], 512);
                     break;
 
                 case 'crypto_com':
-                    $settings['publishable_key'] = $_POST['publishable_key'] = input_clean($_POST['publishable_key']);
-                    $settings['secret_key'] = $_POST['secret_key'] = input_clean($_POST['secret_key']);
-                    $settings['webhook_secret'] = $_POST['webhook_secret'] = input_clean($_POST['webhook_secret']);
+                    $settings['publishable_key'] = $_POST['publishable_key'] = input_clean($_POST['publishable_key'], 512);
+                    $settings['secret_key'] = $_POST['secret_key'] = input_clean($_POST['secret_key'], 512);
+                    $settings['webhook_secret'] = $_POST['webhook_secret'] = input_clean($_POST['webhook_secret'], 512);
                     break;
 
                 case 'paystack':
-                    $settings['public_key'] = $_POST['public_key'] = input_clean($_POST['public_key']);
-                    $settings['secret_key'] = $_POST['secret_key'] = input_clean($_POST['secret_key']);
+                    $settings['public_key'] = $_POST['public_key'] = input_clean($_POST['public_key'], 512);
+                    $settings['secret_key'] = $_POST['secret_key'] = input_clean($_POST['secret_key'], 512);
                     break;
 
                 case 'razorpay':
-                    $settings['key_id'] = $_POST['key_id'] = input_clean($_POST['key_id']);
-                    $settings['key_secret'] = $_POST['key_secret'] = input_clean($_POST['key_secret']);
-                    $settings['webhook_secret'] = $_POST['webhook_secret'] = input_clean($_POST['webhook_secret']);
+                    $settings['key_id'] = $_POST['key_id'] = input_clean($_POST['key_id'], 512);
+                    $settings['key_secret'] = $_POST['key_secret'] = input_clean($_POST['key_secret'], 512);
+                    $settings['webhook_secret'] = $_POST['webhook_secret'] = input_clean($_POST['webhook_secret'], 512);
                     break;
 
                 case 'mollie':
-                    $settings['api_key'] = $_POST['api_key'] = input_clean($_POST['api_key']);
+                    $settings['api_key'] = $_POST['api_key'] = input_clean($_POST['api_key'], 512);
+                    break;
+
+                case 'plisio':
+                    $settings['secret_key'] = $_POST['secret_key'] = input_clean($_POST['secret_key']);
+                    $settings['accepted_cryptocurrencies'] = $_POST['accepted_cryptocurrencies'] = isset($_POST['accepted_cryptocurrencies']) ?
+                        array_filter($_POST['accepted_cryptocurrencies'], function($cryptocurrency) {
+                            return in_array($cryptocurrency, settings()->plisio->accepted_cryptocurrencies);
+                        }) : [];
+                    $settings['default_cryptocurrency'] = $_POST['default_cryptocurrency'] = isset($_POST['default_cryptocurrency']) && in_array($_POST['default_cryptocurrency'], $_POST['accepted_cryptocurrencies']) ? $_POST['default_cryptocurrency'] : reset($_POST['accepted_cryptocurrencies']);
+
+                    break;
+
+                case 'plisio_whitelabel':
+                    foreach(settings()->plisio_whitelabel->accepted_cryptocurrencies ?? [] as $cryptocurrency) {
+                        $settings[$cryptocurrency . '_wallet'] = $_POST[$cryptocurrency . '_wallet'] = input_clean($_POST[$cryptocurrency . '_wallet'], 512);
+                    }
+                    $settings['default_cryptocurrency'] = $_POST['default_cryptocurrency'] = isset($_POST['default_cryptocurrency']) && in_array($_POST['default_cryptocurrency'], (settings()->plisio_whitelabel->accepted_cryptocurrencies ?? [])) ? $_POST['default_cryptocurrency'] : null;
+
+                    break;
+
+                case 'offline_payment':
+                    $settings['instructions'] = $_POST['instructions'] = input_clean($_POST['instructions'], 1024);
                     break;
             }
 
@@ -89,7 +117,7 @@ class PaymentProcessorUpdate extends Controller {
             /* Check for any errors */
             $required_fields = ['name'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }

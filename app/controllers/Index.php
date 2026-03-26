@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -16,6 +16,7 @@
 
 namespace Altum\Controllers;
 
+use Altum\Cache;
 use Altum\Models\Domain;
 
 defined('ALTUMCODE') || die();
@@ -27,6 +28,11 @@ class Index extends Controller {
         /* Custom index redirect if set */
         if(!empty(settings()->main->index_url)) {
             header('Location: ' . settings()->main->index_url); die();
+        }
+
+        /* Opengraph image */
+        if(settings()->main->opengraph) {
+            \Altum\Meta::set_social_image(\Altum\Uploads::get_full_url('opengraph') . settings()->main->opengraph);
         }
 
         /* Plans View */

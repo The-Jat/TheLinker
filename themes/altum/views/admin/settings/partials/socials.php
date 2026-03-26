@@ -1,11 +1,11 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div>
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#footer_container" aria-expanded="false" aria-controls="footer_container">
+<div id="socials">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#footer_container" aria-expanded="false" aria-controls="footer_container">
         <i class="fas fa-fw fa-bars fa-sm mr-1"></i> <?= l('admin_settings.socials.footer') ?>
     </button>
 
-    <div class="collapse" id="footer_container">
+    <div class="collapse" data-parent="#socials" id="footer_container">
         <?php foreach(require APP_PATH . 'includes/admin_socials.php' AS $key => $value): ?>
             <div class="form-group">
                 <label for="<?= $key ?>"><i class="<?= $value['icon'] ?> fa-fw fa-sm mr-1 text-muted"></i> <?= $value['name'] ?></label>
@@ -21,11 +21,11 @@
         <?php endforeach ?>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#share_buttons_container" aria-expanded="false" aria-controls="share_buttons_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#share_buttons_container" aria-expanded="false" aria-controls="share_buttons_container">
         <i class="fas fa-fw fa-external-link-alt fa-sm mr-1"></i> <?= l('admin_settings.socials.share_buttons') ?>
     </button>
 
-    <div class="collapse" id="share_buttons_container">
+    <div class="collapse" data-parent="#socials" id="share_buttons_container">
         <?php
         $social_share_buttons = [
             'facebook' => 'Facebook',

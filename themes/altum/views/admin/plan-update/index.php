@@ -64,12 +64,13 @@
             <div class="form-group">
                 <label for="description"><i class="fas fa-fw fa-sm fa-pen text-muted mr-1"></i> <?= l('global.description') ?></label>
                 <div class="input-group">
-                    <input type="text" id="description" name="description" class="form-control <?= \Altum\Alerts::has_field_errors('description') ? 'is-invalid' : null ?>" value="<?= $data->plan->description ?>" maxlength="256" />
+                    <input type="text" id="description" name="description" class="form-control <?= \Altum\Alerts::has_field_errors('description') ? 'is-invalid' : null ?>" value="<?= e($data->plan->description) ?>" maxlength="512" />
                     <div class="input-group-append">
                         <button class="btn btn-dark" type="button" data-toggle="collapse" data-target="#description_translate_container" aria-expanded="false" aria-controls="description_translate_container" data-tooltip title="<?= l('global.translate') ?>" data-tooltip-hide-on-click><i class="fas fa-fw fa-sm fa-language"></i></button>
                     </div>
                 </div>
                 <?= \Altum\Alerts::output_field_error('description') ?>
+                <small class="form-text text-muted" data-toggle="tooltip" title="<?= l('admin_global.html_info_tooltip') ?>"><?= l('admin_global.html_info') ?></small>
             </div>
 
             <div class="collapse" id="description_translate_container">
@@ -81,22 +82,41 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text"><?= $language_name ?></span>
                                 </div>
-                                <input type="text" id="<?= 'translation_' . $language_name . '_description' ?>" name="<?= 'translations[' . $language_name . '][description]' ?>" value="<?= $data->plan->translations->{$language_name}->description ?? null ?>" class="form-control" maxlength="256" />
+                                <input type="text" id="<?= 'translation_' . $language_name . '_description' ?>" name="<?= 'translations[' . $language_name . '][description]' ?>" value="<?= e($data->plan->translations->{$language_name}->description ?? null) ?>" class="form-control" maxlength="512" />
                             </div>
                         </div>
                     <?php endforeach ?>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="tag"><i class="fas fa-fw fa-sm fa-tag text-muted mr-1"></i> <?= l('admin_plans.tag') ?></label>
-                <div class="input-group">
-                    <input type="text" id="tag" name="tag" class="form-control <?= \Altum\Alerts::has_field_errors('tag') ? 'is-invalid' : null ?>" value="<?= $data->plan->settings->tag ?? null ?>" maxlength="64" />
-                    <div class="input-group-append">
-                        <button class="btn btn-dark" type="button" data-toggle="collapse" data-target="#tag_translate_container" aria-expanded="false" aria-controls="tag_translate_container" data-tooltip title="<?= l('global.translate') ?>" data-tooltip-hide-on-click><i class="fas fa-fw fa-sm fa-language"></i></button>
+            <div class="row">
+                <div class="col-12 col-lg-6">
+                    <div class="form-group">
+                        <label for="tag"><i class="fas fa-fw fa-sm fa-tag text-muted mr-1"></i> <?= l('admin_plans.tag') ?></label>
+                        <div class="input-group">
+                            <input type="text" id="tag" name="tag" class="form-control <?= \Altum\Alerts::has_field_errors('tag') ? 'is-invalid' : null ?>" value="<?= $data->plan->settings->tag ?? null ?>" maxlength="64" />
+                            <div class="input-group-append">
+                                <button class="btn btn-dark" type="button" data-toggle="collapse" data-target="#tag_translate_container" aria-expanded="false" aria-controls="tag_translate_container" data-tooltip title="<?= l('global.translate') ?>" data-tooltip-hide-on-click><i class="fas fa-fw fa-sm fa-language"></i></button>
+                            </div>
+                        </div>
+                        <?= \Altum\Alerts::output_field_error('tag') ?>
+                        <small class="form-text text-muted"><?= l('admin_plans.tag_help') ?></small>
                     </div>
                 </div>
-                <?= \Altum\Alerts::output_field_error('tag') ?>
+
+                <div class="col-6 col-lg-3">
+                    <div class="form-group">
+                        <label for="tag_background_color"><i class="fas fa-fw fa-palette fa-sm text-muted mr-1"></i> <?= l('admin_plans.tag_background_color') ?></label>
+                        <input type="hidden" id="tag_background_color" name="tag_background_color" class="form-control" value="<?= $data->plan->additional_settings->tag_background_color ?? '' ?>" data-color-picker data-color-picker-has-clear="true" />
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-3">
+                    <div class="form-group">
+                        <label for="tag_text_color"><i class="fas fa-fw fa-palette fa-sm text-muted mr-1"></i> <?= l('admin_plans.tag_text_color') ?></label>
+                        <input type="hidden" id="tag_text_color" name="tag_text_color" class="form-control" value="<?= $data->plan->additional_settings->tag_text_color ?? '' ?>" data-color-picker data-color-picker-has-clear="true" />
+                    </div>
+                </div>
             </div>
 
             <div class="collapse" id="tag_translate_container">
@@ -156,6 +176,7 @@
                 <div class="form-group">
                     <label for="order"><i class="fas fa-fw fa-sm fa-sort text-muted mr-1"></i> <?= l('global.order') ?></label>
                     <input id="order" type="number" min="0"  name="order" class="form-control" value="<?= $data->plan->order ?>" />
+                    <small class="form-text text-muted"><?= l('global.order_int_help') ?></small>
                 </div>
 
                 <div class="form-group">
@@ -264,9 +285,31 @@
 
             <div class="form-group">
                 <label for="color"><i class="fas fa-fw fa-sm fa-palette text-muted mr-1"></i> <?= l('admin_plans.color') ?></label>
-                <input type="text" id="color" name="color" class="form-control <?= \Altum\Alerts::has_field_errors('color') ? 'is-invalid' : null ?>" value="<?= $data->plan->color ?>" placeholder="<?= l('admin_plans.color_placeholder') ?>" />
+                <input type="hidden" id="color" name="color" class="form-control <?= \Altum\Alerts::has_field_errors('color') ? 'is-invalid' : null ?>" value="<?= $data->plan->color ?>" placeholder="<?= l('admin_plans.color_placeholder') ?>" data-color-picker data-color-picker-has-clear="true" />
                 <?= \Altum\Alerts::output_field_error('color') ?>
                 <small class="form-text text-muted"><?= l('admin_plans.color_help') ?></small>
+            </div>
+
+            <div class="form-group">
+                <label for="suggested_plan_id"><i class="fas fa-fw fa-sm fa-arrow-up text-muted mr-1"></i> <?= l('admin_plans.suggested_plan_id') ?></label>
+                <select id="suggested_plan_id" name="suggested_plan_id" class="custom-select">
+                    <option value="" <?= $data->plan->additional_settings->suggested_plan_id == '' ? 'selected="selected"' : null ?>><?= l('global.none') ?></option>
+                    <?php foreach($data->plans as $plan): ?>
+                    <option value="<?= $plan->plan_id ?>" <?= $data->plan->additional_settings->suggested_plan_id == $plan->plan_id ? 'selected="selected"' : null ?> <?= $data->plan->plan_id == 'guest' ? 'disabled="disabled"' : null ?>><?= $plan->name ?></option>
+                    <?php endforeach ?>
+                </select>
+                <small class="form-text text-muted"><?= l('admin_plans.suggested_plan_id_help') ?></small>
+            </div>
+
+            <div class="form-group">
+                <label for="suggested_plan_code_id"><i class="fas fa-fw fa-sm fa-tag text-muted mr-1"></i> <?= l('admin_plans.suggested_plan_code_id') ?></label>
+                <select id="suggested_plan_code_id" name="suggested_plan_code_id" class="custom-select">
+                    <option value="" <?= $data->plan->additional_settings->suggested_plan_code_id == '' ? 'selected="selected"' : null ?>><?= l('global.none') ?></option>
+                    <?php foreach($data->codes as $code): ?>
+                        <option value="<?= $code->code_id ?>" <?= $data->plan->additional_settings->suggested_plan_code_id == $code->code_id ? 'selected="selected"' : null ?> <?= $data->plan->plan_id == 'guest' ? 'disabled="disabled"' : null ?>><?= $code->code . ' - ' . $code->discount . '%' ?></option>
+                    <?php endforeach ?>
+                </select>
+                <small class="form-text text-muted"><?= l('admin_plans.suggested_plan_code_id_help') ?></small>
             </div>
 
             <div class="form-group">
@@ -329,7 +372,7 @@
                 <div class="form-group">
                     <label for="biolinks_limit"><?= l('admin_plans.plan.biolinks_limit') ?></label>
                     <input type="number" id="biolinks_limit" name="biolinks_limit" min="-1" class="form-control" value="<?= $data->plan->settings->biolinks_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.biolinks_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.biolinks_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
@@ -341,7 +384,7 @@
                 <div class="form-group">
                     <label for="links_limit"><?= l('admin_plans.plan.links_limit') ?></label>
                     <input type="number" id="links_limit" name="links_limit" min="-1" class="form-control" value="<?= $data->plan->settings->links_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.links_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.links_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
@@ -352,31 +395,31 @@
                 <div class="form-group">
                     <label for="files_limit"><?= l('admin_plans.plan.files_limit') ?></label>
                     <input type="number" id="files_limit" name="files_limit" min="-1" class="form-control" value="<?= $data->plan->settings->files_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.files_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.files_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
                     <label for="vcards_limit"><?= l('admin_plans.plan.vcards_limit') ?></label>
                     <input type="number" id="vcards_limit" name="vcards_limit" min="-1" class="form-control" value="<?= $data->plan->settings->vcards_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.vcards_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.vcards_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
                     <label for="events_limit"><?= l('admin_plans.plan.events_limit') ?></label>
                     <input type="number" id="events_limit" name="events_limit" min="-1" class="form-control" value="<?= $data->plan->settings->events_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.events_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.events_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
                     <label for="static_limit"><?= l('admin_plans.plan.static_limit') ?></label>
                     <input type="number" id="static_limit" name="static_limit" min="-1" class="form-control" value="<?= $data->plan->settings->static_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.static_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.static_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
                     <label for="domains_limit"><?= l('admin_plans.plan.domains_limit') ?></label>
                     <input type="number" id="domains_limit" name="domains_limit" min="-1" class="form-control" value="<?= $data->plan->settings->domains_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.domains_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.domains_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <?php if(\Altum\Plugin::is_active('payment-blocks')): ?>
@@ -694,6 +737,12 @@
                     <div><small class="form-text text-muted"><?= l('admin_plans.plan.dofollow_is_enabled_help') ?></small></div>
                 </div>
 
+                <div class="form-group custom-control custom-switch">
+                    <input id="branded_button_is_enabled" name="branded_button_is_enabled" type="checkbox" class="custom-control-input" <?= $data->plan->settings->branded_button_is_enabled ? 'checked="checked"' : null ?>>
+                    <label class="custom-control-label" for="branded_button_is_enabled"><?= l('admin_plans.plan.branded_button_is_enabled') ?></label>
+                    <div><small class="form-text text-muted"><?= l('admin_plans.plan.branded_button_is_enabled_help') ?></small></div>
+                </div>
+
                 <div <?= !\Altum\Plugin::is_active('pwa') ? 'data-toggle="tooltip" title="' . sprintf(l('admin_plugins.no_access'), \Altum\Plugin::get('pwa')->name ?? 'pwa') . '"' : null ?>>
                     <div class="form-group custom-control custom-switch">
                         <input id="custom_pwa_is_enabled" name="custom_pwa_is_enabled" type="checkbox" class="custom-control-input" <?= $data->plan->settings->custom_pwa_is_enabled ? 'checked="checked"' : null ?> <?= !\Altum\Plugin::is_active('pwa') ? 'disabled="disabled"' : null ?>>
@@ -774,14 +823,14 @@
 
                 <div class="form-group">
                     <label for="active_notification_handlers_per_resource_limit"><?= l('admin_plans.plan.active_notification_handlers_per_resource_limit') ?></label>
-                    <input type="number" id="active_notification_handlers_per_resource_limit" name="active_notification_handlers_per_resource_limit" min="-1" class="form-control" value="<?= $data->plan->settings->active_notification_handlers_per_resource_limit ?>" />
+                    <input type="number" id="active_notification_handlers_per_resource_limit" name="active_notification_handlers_per_resource_limit" min="-1" class="form-control" value="<?= $data->plan->settings->active_notification_handlers_per_resource_limit ?>" <?= $data->plan_id == 'guest' ? 'disabled="disabled"' : null ?> />
                     <small class="form-text text-muted"><?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <?php foreach(array_keys(require APP_PATH . 'includes/notification_handlers.php') as $notification_handler): ?>
                     <div class="form-group">
                         <label for="<?= 'notification_handlers_' . $notification_handler . '_limit' ?>"><?= l('notification_handlers.type_' . $notification_handler) ?></label>
-                        <input type="number" id="<?= 'notification_handlers_' . $notification_handler . '_limit' ?>" name="<?= 'notification_handlers_' . $notification_handler . '_limit' ?>" min="-1" class="form-control" value="<?= $data->plan->settings->{'notification_handlers_' . $notification_handler . '_limit'} ?>" />
+                        <input type="number" id="<?= 'notification_handlers_' . $notification_handler . '_limit' ?>" name="<?= 'notification_handlers_' . $notification_handler . '_limit' ?>" min="-1" class="form-control" value="<?= $data->plan->settings->{'notification_handlers_' . $notification_handler . '_limit'} ?>" <?= $data->plan_id == 'guest' ? 'disabled="disabled"' : null ?> />
                         <small class="form-text text-muted"><?= l('admin_plans.plan.unlimited') ?></small>
                     </div>
                 <?php endforeach ?>
@@ -798,3 +847,7 @@
 
     </div>
 </div>
+
+<?= include_view(THEME_PATH . 'views/partials/scroll_top_bottom.php', ['top_selector' => '.admin-content', 'bottom_selector' => 'footer']) ?>
+<?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>
+<?php include_view(THEME_PATH . 'views/partials/color_picker_js.php') ?>

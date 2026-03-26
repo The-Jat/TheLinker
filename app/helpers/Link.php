@@ -67,16 +67,71 @@ class Link {
         return $style;
     }
 
+    public static function get_processed_box_shadow_style($settings) {
+        $style = '';
+
+        if(!isset($settings)) {
+            return $style;
+        }
+
+        if(is_array($settings)) {
+            $settings = (object) $settings;
+        }
+
+        if(empty($settings->border_shadow_style)) {
+            $settings->border_shadow_style = 'subtle';
+        }
+
+        /* Box shadow */
+        if($settings->border_shadow_style !== 'none') {
+            $color = $settings->border_shadow_color ?? '#00000010';
+
+            switch($settings->border_shadow_style) {
+                case 'none':
+                    $shadow = 'none';
+                    break;
+                case 'subtle':
+                    $shadow = '1px 2px 4px rgba(0, 0, 0, 0.04), 1px 2px 5px ' . $color;
+                    break;
+                case 'strong':
+                    $shadow = '1px 10px 15px -3px rgba(0, 0, 0, 0.1), 1px 4px 10px -2px ' . $color;
+                    break;
+                case 'hard':
+                    $shadow = '4px 4px 0 2px ' . $color;
+                    break;
+            }
+
+            $style = "box-shadow: {$shadow};";
+        }
+
+        return $style;
+    }
+
     public static function get_processed_link_style($settings) {
         $class = '';
-        $style =
-            'background: ' . $settings->background_color . ';'
-            . 'color: ' . $settings->text_color . ';'
-            . 'border-width: ' . ($settings->border_width ?? '1') . 'px;'
-            . 'border-color: ' . ($settings->border_color ?? 'transparent') . ';'
-            . 'border-style: ' . ($settings->border_style ?? 'solid') . ';'
-            . 'box-shadow: ' . ($settings->border_shadow_offset_x ?? '0') . 'px ' . ($settings->border_shadow_offset_y ?? '0') . 'px ' . ($settings->border_shadow_blur ?? '20') . 'px ' . ($settings->border_shadow_spread ?? '0') . 'px ' . ($settings->border_shadow_color ?? '#00000010') . ';'
-            . 'text-align: ' . ($settings->text_alignment ?? 'center') . ';';
+        $style = '';
+
+        if(!empty($settings->background_color)) {
+            $style .= 'background:' . $settings->background_color . ';';
+        }
+
+        if(!empty($settings->text_color)) {
+            $style .= 'color:' . $settings->text_color . ';';
+        }
+
+        $style .= 'border-width:' . ($settings->border_width ?? 0) . 'px;';
+
+        if(!empty($settings->border_color)) {
+            $style .= 'border-color:' . $settings->border_color . ';';
+        }
+
+        if(!empty($settings->border_style)) {
+            $style .= 'border-style:' . $settings->border_style . ';';
+        }
+
+        if(!empty($settings->text_alignment)) {
+            $style .= 'text-align:' . $settings->text_alignment . ';';
+        }
 
         /* Animation */
         if(isset($settings->animation)) {
@@ -155,11 +210,45 @@ class Link {
                     $link->settings = (object) array_merge((array) $link->settings, (array) $biolink_theme->settings->biolink_block ?? [], (array) $biolink_theme->settings->biolink_block_paragraph ?? []);
                     break;
 
+                case 'counter':
+                case 'loading':
+                    $biolink_theme->settings->biolink_block->number_color = $biolink_theme->settings->biolink_block->text_color;
+
+                    $link->settings = (object) array_merge((array) $link->settings, (array) $biolink_theme->settings->biolink_block ?? []);
+                    break;
+
+                case 'external_item':
+                    $biolink_theme->settings->biolink_block->price_color = $biolink_theme->settings->biolink_block->text_color;
+                    $biolink_theme->settings->biolink_block->name_color = $biolink_theme->settings->biolink_block->text_color;
+
+                    $link->settings = (object) array_merge((array) $link->settings, (array) $biolink_theme->settings->biolink_block ?? []);
+                    break;
+
+                case 'business_hours':
+                    $biolink_theme->settings->biolink_block->icon_color = $biolink_theme->settings->biolink_block->text_color;
+
+                    $link->settings = (object) array_merge((array) $link->settings, (array) $biolink_theme->settings->biolink_block ?? []);
+                    break;
+
                 default:
                     $link->settings = (object) array_merge((array) $link->settings, (array) $biolink_theme->settings->biolink_block ?? []);
                     break;
             }
         }
+
+        /* Determine the css and styling of the button */
+        $link_style = self::get_processed_link_style($link->settings);
+
+        /* Paragraph do not add subtle shadow on older versions */
+        if($link->type == 'paragraph' && empty($link->settings->border_shadow_style)) {
+            $link_style['style'] .= '';
+        } else {
+            $link_style['style'] .= self::get_processed_box_shadow_style($link->settings);
+        }
+
+        $link->design = new \StdClass();
+        $link->design->link_class = $link_style['class'];
+        $link->design->link_style = $link_style['style'];
 
         /* Require different files for different types of links available */
         switch($link->type) {
@@ -187,14 +276,6 @@ class Link {
             case 'faq':
             case 'list':
             case 'alert':
-
-
-                /* Determine the css and styling of the button */
-                $link_style = self::get_processed_link_style($link->settings);
-
-                $link->design = new \StdClass();
-                $link->design->link_class = $link_style['class'];
-                $link->design->link_style = $link_style['style'];
 
                 /* UTM Parameters */
                 $link->utm_query = null;
@@ -251,92 +332,93 @@ class Link {
 
                 /* Get data about the appointments */
                 if($link->type == 'appointment_calendar') {
-                $available_slots = [];
+                    $available_slots = [];
 
-                $durations = $link->settings->durations ?? [['value' => 30, 'type' => 'minutes']];
-                $minimum_notice_period = $link->settings->minimum_notice_period_value ?? 0;
-                $minimum_notice_unit = $link->settings->minimum_notice_period_type ?? 'minutes';
-                $allowed_days = $link->settings->allowed_scheduling_days_ahead ?? 7;
-                $timezone_string = $link->settings->timezone ?? 'UTC';
-                $timezone = new \DateTimeZone($timezone_string);
+                    $durations = $link->settings->durations ?? [['value' => 30, 'type' => 'minutes']];
+                    $minimum_notice_period = $link->settings->minimum_notice_period_value ?? 0;
+                    $minimum_notice_unit = $link->settings->minimum_notice_period_type ?? 'minutes';
+                    $allowed_days = $link->settings->allowed_scheduling_days_ahead ?? 7;
+                    $timezone_string = $link->settings->timezone ?? 'UTC';
+                    $timezone = new \DateTimeZone($timezone_string);
 
-                $now = new \DateTime('now', $timezone);
-                $min_notice_timestamp = (clone $now)->modify("+{$minimum_notice_period} {$minimum_notice_unit}")->getTimestamp();
+                    $now = new \DateTime('now', $timezone);
+                    $min_notice_timestamp = (clone $now)->modify("+{$minimum_notice_period} {$minimum_notice_unit}")->getTimestamp();
 
-                $raw_available_times = $link->settings->available_times ?? [];
+                    $raw_available_times = $link->settings->available_times ?? [];
 
-                /* Decode booked appointments (stored in UTC) */
-                $scheduled_appointments = db()->where('biolink_block_id', $link->biolink_block_id)->get('data');
-                $booked_slots_by_date = [];
+                    /* Decode booked appointments (stored in UTC) */
+                    $scheduled_appointments = db()->where('biolink_block_id', $link->biolink_block_id)->get('data');
+                    $booked_slots_by_date = [];
 
-                foreach ($scheduled_appointments as $appointment) {
-                    $decoded = json_decode($appointment->data ?? '{}');
+                    foreach ($scheduled_appointments as $appointment) {
+                        $decoded = json_decode($appointment->data ?? '{}');
 
-                    if (!empty($decoded->date) && !empty($decoded->start_time)) {
-                        $utc_datetime = \DateTime::createFromFormat('Y-m-d H:i', "{$decoded->date} {$decoded->start_time}", new \DateTimeZone('UTC'));
-                        if (!$utc_datetime) continue;
+                        if(!empty($decoded->date) && !empty($decoded->start_time)) {
+                            $utc_datetime = \DateTime::createFromFormat('Y-m-d H:i', "{$decoded->date} {$decoded->start_time}", new \DateTimeZone('UTC'));
+                            if(!$utc_datetime) continue;
 
-                        $local_datetime = clone $utc_datetime;
-                        $local_datetime->setTimezone($timezone);
+                            $local_datetime = clone $utc_datetime;
+                            $local_datetime->setTimezone($timezone);
 
-                        $local_date = $local_datetime->format('Y-m-d');
-                        $local_time = $local_datetime->format('H:i');
+                            $local_date = $local_datetime->format('Y-m-d');
+                            $local_time = $local_datetime->format('H:i');
 
-                        $booked_slots_by_date[$local_date][] = $local_time;
-                    }
-                }
-                /* Generate future slots */
-                for ($i = 0; $i < $allowed_days; $i++) {
-                    $current_date = (clone $now)->modify("+$i days");
-                    $date = $current_date->format('Y-m-d');
-                    $weekday = strtolower($current_date->format('l'));
-
-                    $available_for_day = $raw_available_times->{$weekday} ?? [];
-                    if (empty($available_for_day)) continue;
-
-                    /* Determine the latest allowable end time */
-                    $day_end_limit = end($available_for_day);
-                    $day_end_datetime = \DateTime::createFromFormat('Y-m-d H:i', "{$date} {$day_end_limit}", $timezone);
-                    reset($available_for_day);
-
-                    foreach ($available_for_day as $base_start_time) {
-                        foreach ($durations as $duration_config) {
-                            $duration_value = (int) $duration_config->value;
-                            $duration_unit = $duration_config->type;
-
-                            $slot_start = \DateTime::createFromFormat('Y-m-d H:i', "{$date} {$base_start_time}", $timezone);
-                            if (!$slot_start) continue;
-
-                            $slot_end = (clone $slot_start)->modify("+{$duration_value} {$duration_unit}");
-
-                            /* Skip if slot end exceeds the last available time */
-                            if ($slot_end > $day_end_datetime) {
-                                continue;
-                            }
-
-                            /* Skip if slot is too soon (based on minimum notice) */
-                            if ($slot_start->getTimestamp() < $min_notice_timestamp) {
-                                continue;
-                            }
-
-                            $formatted_start = $slot_start->format('H:i');
-                            $formatted_end = $slot_end->format('H:i');
-
-                            $is_booked = in_array($formatted_start, $booked_slots_by_date[$date] ?? []);
-
-                            $available_slots[] = [
-                                'date' => $date,
-                                'start_time' => $formatted_start,
-                                'end_time' => $formatted_end,
-                                'is_booked' => $is_booked,
-                            ];
+                            $booked_slots_by_date[$local_date][] = $local_time;
                         }
                     }
-                }
 
-                $data['available_slots'] = $available_slots;
-                $data['timezone'] = $timezone_string;
-            }
+                    /* Generate future slots */
+                    for ($i = 0; $i < $allowed_days; $i++) {
+                        $current_date = (clone $now)->modify("+$i days");
+                        $date = $current_date->format('Y-m-d');
+                        $weekday = strtolower($current_date->format('l'));
+
+                        $available_for_day = $raw_available_times->{$weekday} ?? [];
+                        if(empty($available_for_day)) continue;
+
+                        /* Determine the latest allowable end time */
+                        $day_end_limit = end($available_for_day);
+                        $day_end_datetime = \DateTime::createFromFormat('Y-m-d H:i', "{$date} {$day_end_limit}", $timezone);
+                        reset($available_for_day);
+
+                        foreach ($available_for_day as $base_start_time) {
+                            foreach ($durations as $duration_config) {
+                                $duration_value = (int) $duration_config->value;
+                                $duration_unit = $duration_config->type;
+
+                                $slot_start = \DateTime::createFromFormat('Y-m-d H:i', "{$date} {$base_start_time}", $timezone);
+                                if(!$slot_start) continue;
+
+                                $slot_end = (clone $slot_start)->modify("+{$duration_value} {$duration_unit}");
+
+                                /* Skip if slot end exceeds the last available time */
+                                if($slot_end > $day_end_datetime) {
+                                    continue;
+                                }
+
+                                /* Skip if slot is too soon (based on minimum notice) */
+                                if($slot_start->getTimestamp() < $min_notice_timestamp) {
+                                    continue;
+                                }
+
+                                $formatted_start = $slot_start->format('H:i');
+                                $formatted_end = $slot_end->format('H:i');
+
+                                $is_booked = in_array($formatted_start, $booked_slots_by_date[$date] ?? []);
+
+                                $available_slots[] = [
+                                    'date' => $date,
+                                    'start_time' => $formatted_start,
+                                    'end_time' => $formatted_end,
+                                    'is_booked' => $is_booked,
+                                ];
+                            }
+                        }
+                    }
+
+                    $data['available_slots'] = $available_slots;
+                    $data['timezone'] = $timezone_string;
+                }
 
                 if($biolink_blocks[$link->type]['type'] == 'default') {
                     $view_path = THEME_PATH . 'views/l/biolink_blocks/' . $link->type . '.php';
@@ -360,7 +442,9 @@ class Link {
 
             case 'avatar':
             case 'image':
+            case 'featured_link':
             case 'image_grid':
+            case 'image_comparison':
             case 'map':
             case 'image_slider':
 
@@ -372,10 +456,24 @@ class Link {
 
                 if($biolink_blocks[$link->type]['type'] == 'default') {
                     $view_path = THEME_PATH . 'views/l/biolink_blocks/' . $link->type . '.php';
-                } elseif($biolink_blocks[$link->type]['type'] == 'pro') {
-                    $view_path = \Altum\Plugin::get('pro-blocks')->path . 'views/l/biolink_blocks/' . $link->type . '.php';
-                } elseif($biolink_blocks[$link->type]['type'] == 'ultimate') {
-                    $view_path = \Altum\Plugin::get('ultimate-blocks')->path . 'views/l/biolink_blocks/' . $link->type . '.php';
+                } else {
+                    $view_path = \Altum\Plugin::get($biolink_blocks[$link->type]['type'] . '-blocks')->path . 'views/l/biolink_blocks/' . $link->type . '.php';
+                }
+
+                break;
+
+            case 'weather':
+
+                /* UTM Parameters */
+                $link->utm_query = null;
+                if($user->plan_settings->utm && $link->utm->medium && $link->utm->source) {
+                    $link->utm_query = '?utm_medium=' . $link->utm->medium . '&utm_source=' . $link->utm->source . '&utm_campaign=' . $link->settings->name;
+                }
+
+                if($biolink_blocks[$link->type]['type'] == 'default') {
+                    $view_path = THEME_PATH . 'views/l/biolink_blocks/' . $link->type . '.php';
+                } else {
+                    $view_path = \Altum\Plugin::get($biolink_blocks[$link->type]['type'] . '-blocks')->path . 'views/l/biolink_blocks/' . $link->type . '.php';
                 }
 
                 break;
@@ -403,6 +501,19 @@ class Link {
 
                 if($data['embed']) {
                     $view_path = THEME_PATH . 'views/l/biolink_blocks/' . $link->type . '.php';
+                }
+
+                break;
+
+            case 'google_form':
+                if (
+                    preg_match('~/forms/d/e/([a-zA-Z0-9_-]+)~', $link->location_url, $match)
+                    || preg_match('~/forms/d/([a-zA-Z0-9_-]+)~', $link->location_url, $match)
+                ) {
+                    $data['form_id'] = $match[1];
+                    $data['embed'] = 'https://docs.google.com/forms/d/e/' . $data['form_id'] . '/viewform?embedded=true';
+
+                    $view_path = \Altum\Plugin::get('pro-blocks')->path . 'views/l/biolink_blocks/' . $link->type . '.php';
                 }
 
                 break;
@@ -600,7 +711,7 @@ class Link {
 
                 $link->location_url = str_replace('https://x.com/', 'https://twitter.com/', $link->location_url);
 
-                if(preg_match('/(https:\/\/twitter\.com)/', $link->location_url)) {
+                if(preg_match('/(https:\/\/twitter\.com)/', $link->location_url) || preg_match('/(https:\/\/x\.com)/', $link->location_url)) {
                     $view_path = \Altum\Plugin::get('pro-blocks')->path . 'views/l/biolink_blocks/' . $link->type . '.php';
                 }
 
@@ -662,6 +773,10 @@ class Link {
 
             case 'custom_html':
             case 'divider':
+            case 'tumblr_post':
+            case 'bluesky_post':
+            case 'canva':
+            case 'code':
 
                 $view_path = \Altum\Plugin::get('pro-blocks')->path . 'views/l/biolink_blocks/' . $link->type . '.php';
 
@@ -684,6 +799,8 @@ class Link {
                 break;
 
             case 'external_item':
+            case 'counter':
+            case 'loading':
 
                 /* Determine the css and styling of the button */
                 $link->design = new \StdClass();

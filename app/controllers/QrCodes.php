@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -28,7 +28,7 @@ class QrCodes extends Controller {
         \Altum\Authentication::guard();
 
         if(!settings()->codes->qr_codes_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Prepare the filtering system */
@@ -85,18 +85,18 @@ class QrCodes extends Controller {
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('create.qr_codes')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('qr-codes');
         }
 
-        if(empty($_POST)) {
-            redirect('qr-codes');
+        if (empty($_POST)) {
+            throw_404();
         }
 
-        /* Make sure that the user didn't exceed the limit */
+        /* Check for the plan limit */
         $total_rows = db()->where('user_id', $this->user->user_id)->getValue('qr_codes', 'COUNT(*)') ?? 0;
         if($this->user->plan_settings->qr_codes_limit != -1 && $total_rows >= $this->user->plan_settings->qr_codes_limit) {
-            Alerts::add_info(l('global.info_message.plan_feature_limit'));
+            Alerts::add_error(l('global.info_message.plan_feature_limit') . (settings()->payment->is_enabled ? ' <a href="' . url('plan') . '" class="font-weight-bold text-reset">' . l('global.info_message.plan_upgrade') . '.</a>' : null));
             redirect('qr-codes');
         }
 
@@ -155,8 +155,8 @@ class QrCodes extends Controller {
         //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('qr-codes');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -177,12 +177,14 @@ class QrCodes extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
                     /* Team checks */
                     if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.qr_codes')) {
-                        Alerts::add_info(l('global.info_message.team_no_access'));
+                        Alerts::add_error(l('global.info_message.team_no_access'));
                         redirect('qr-codes');
                     }
 
@@ -225,15 +227,15 @@ class QrCodes extends Controller {
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.qr_codes')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('qr-codes');
         }
 
-        if(empty($_POST)) {
-            redirect('qr-codes');
+        if (empty($_POST)) {
+            throw_404();
         }
 
-        $qr_code_id = (int) query_clean($_POST['qr_code_id']);
+        $qr_code_id = (int) $_POST['qr_code_id'];
 
         //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Alerts::add_error('Please create an account on the demo to test out this function.');
 
@@ -244,7 +246,7 @@ class QrCodes extends Controller {
 
         /* Make sure the vcard id is created by the logged in user */
         if(!$qr_code = db()->where('qr_code_id', $qr_code_id)->where('user_id', $this->user->user_id)->getOne('qr_codes', ['qr_code_id', 'name'])) {
-            redirect('qr-codes');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

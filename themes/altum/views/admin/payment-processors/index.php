@@ -25,7 +25,7 @@
                     <a href="<?= url('admin/payment-processors?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                     </a>
-                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                     </a>
                 </div>
@@ -66,7 +66,7 @@
                             <label for="processor" class="small"><?= l('payment_processors.processor') ?></label>
                             <select name="processor" id="processor" class="custom-select custom-select-sm">
                                 <option value=""><?= l('global.all') ?></option>
-                                <?php foreach(['paypal', 'stripe', 'crypto_com', 'razorpay', 'paystack', 'mollie'] as $processor): ?>
+                                <?php foreach(include \Altum\Plugin::get('payment-blocks')->path . 'payment_blocks_payment_processors.php' as $processor): ?>
                                     <option value="<?= $processor ?>" <?= isset($data->filters->filters['processor']) && $data->filters->filters['processor'] == $processor ? 'selected="selected"' : null ?>><?= l('pay.custom_plan.' . $processor) ?></option>
                                 <?php endforeach ?>
                             </select>
@@ -190,9 +190,9 @@
 
                     <td class="text-nowrap">
                         <?php if($row->is_enabled == 0): ?>
-                        <span class="badge badge-warning"><i class="fas fa-fw fa-eye-slash"></i> <?= l('global.disabled') ?>
+                        <span class="badge badge-warning"><i class="fas fa-fw fa-sm fa-eye-slash mr-1"></i> <?= l('global.disabled') ?>
                         <?php elseif($row->is_enabled == 1): ?>
-                        <span class="badge badge-success"><i class="fas fa-fw fa-check"></i> <?= l('global.active') ?>
+                        <span class="badge badge-success"><i class="fas fa-fw fa-sm fa-check mr-1"></i> <?= l('global.active') ?>
                         <?php endif ?>
                     </td>
 

@@ -23,7 +23,7 @@
 
                     <div class="form-group">
                         <label for="paragraph_text"><i class="fas fa-fw fa-paragraph fa-sm text-muted mr-1"></i> <?= l('biolink_link.text') ?></label>
-                        <textarea id="paragraph_text" class="form-control quilljs" name="text" maxlength="10000"></textarea>
+                        <textarea id="paragraph_text" class="form-control quilljs" name="text" maxlength="10000"><p class="ql-align-center">&nbsp;</p></textarea>
                     </div>
 
                     <p class="small text-muted"><i class="fas fa-fw fa-sm fa-circle-info mr-1"></i> <?= l('link.create_info') ?></p>
@@ -48,7 +48,7 @@
 
 <script>
     'use strict';
-    
+
 /* find all textareas with the specific class */
     const textarea_elements = document.querySelectorAll('textarea.quilljs');
 

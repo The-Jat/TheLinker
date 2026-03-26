@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -26,7 +26,7 @@ class Contact extends Controller {
     public function index() {
 
         if(!settings()->email_notifications->contact || empty(settings()->email_notifications->emails)) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Initiate captcha */
@@ -43,7 +43,7 @@ class Contact extends Controller {
             /* Check for any errors */
             $required_fields = ['name', 'email', 'subject', 'message'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -83,7 +83,7 @@ class Contact extends Controller {
                         'subject' => $_POST['subject'],
                         'message' => $_POST['message'],
                         'datetime' => get_date(),
-                    ]);
+                    ], signature: true);
                 }
 
                 /* Set a nice success message */

@@ -73,7 +73,10 @@ class User extends Model {
             db()->where('user_id', $user->user_id)->update('users', [
                 'plan_id' => 'free',
                 'plan_settings' => json_encode(settings()->plan_free->settings),
-                'payment_subscription_id' => ''
+                'payment_subscription_id' => '',
+                'payment_processor' => '',
+                'payment_total_amount' => 0,
+                'payment_currency' => '',
             ]);
 
             /* Clear the cache */
@@ -104,7 +107,7 @@ class User extends Model {
                 'email' => $user->email,
                 'name' => $user->name,
                 'datetime' => get_date(),
-            ]);
+            ], signature: true);
         }
 
         /* Run potential hooks */
@@ -126,7 +129,7 @@ class User extends Model {
 
     public function verify_null_password($user_id, $email, $password) {
         if(empty($password)) {
-            $lost_password_code = $lost_password_code ?? md5($email . microtime());
+            $lost_password_code = $lost_password_code ?? md5(uniqid('', true) . random_bytes(16));
             db()->where('user_id', $user_id)->update('users', ['lost_password_code' => $lost_password_code]);
             redirect('reset-password/' . md5($email) . '/' . $lost_password_code);
         }
@@ -157,8 +160,8 @@ class User extends Model {
         $plan_expiration_date = $plan_expiration_date ?? get_date();
         $plan_trial_done = 0;
         $language = \Altum\Language::$name;
-        $api_key = md5($email . microtime() . microtime());
-        $referral_key = md5(rand() . $email . microtime() . $email. microtime());
+        $api_key = bin2hex(random_bytes(16));
+        $referral_key = md5(uniqid('', true) . random_bytes(16));
         $ip = $is_admin_created ? null : get_ip();
 
         /* Detect the location */
@@ -175,7 +178,7 @@ class User extends Model {
         $billing = json_encode(['type' => 'personal', 'name' => '', 'address' => '', 'city' => '', 'county' => '', 'zip' => '', 'country' => $country_code, 'phone' => '', 'tax_id' => '', 'notes' => '']);
 
         /* Detect extra details about the user */
-        $whichbrowser = new \WhichBrowser\Parser($_SERVER['HTTP_USER_AGENT']);
+        $whichbrowser = get_whichbrowser();
         $browser_name = $whichbrowser->browser->name ?? null;
         $os_name = $whichbrowser->os->name ?? null;
         $browser_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? mb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
@@ -189,7 +192,7 @@ class User extends Model {
 
         /* Default preferences */
         $preferences = json_encode([
-            'default_results_per_page' => 100,
+            'default_results_per_page' => settings()->main->default_results_per_page,
             'default_order_type' => 'DESC',
             'links_default_order_by' => 'link_id',
             'qr_codes_default_order_by' => 'qr_code_id',
@@ -270,7 +273,7 @@ class User extends Model {
         $city_name = isset($maxmind) && isset($maxmind['city']) ? $maxmind['city']['names']['en'] : null;
 
         /* Detect extra details about the user */
-        $whichbrowser = new \WhichBrowser\Parser($_SERVER['HTTP_USER_AGENT']);
+        $whichbrowser = get_whichbrowser();
         $browser_name = $whichbrowser->browser->name ?? null;
         $os_name = $whichbrowser->os->name ?? null;
         $browser_language = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? mb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
@@ -406,6 +409,28 @@ class User extends Model {
                 }
 
                 break;
+
+            case 'paddle_billing':
+
+                /* Paddle API setup */
+                $paddle_api_url = 'https://' . (settings()->paddle_billing->mode == 'sandbox' ? 'sandbox-api' : 'api') . '.paddle.com/';
+                $paddle_headers = [
+                    'Authorization' => 'Bearer ' . settings()->paddle_billing->api_key,
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json'
+                ];
+
+                /* Cancel the subscription */
+                $response = \Unirest\Request::post(
+                    $paddle_api_url . 'subscriptions/' . $user->payment_subscription_id . '/cancel',
+                    $paddle_headers,
+                    \Unirest\Request\Body::json([
+                        'effective_from' => 'next_billing_period',
+                    ])
+                );
+
+                break;
+
         }
 
         /* Database query */

@@ -1,11 +1,11 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div>
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#biolinks_container" aria-expanded="false" aria-controls="biolinks_container">
+<div id="links">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#biolinks_container" aria-expanded="false" aria-controls="biolinks_container">
         <i class="fas fa-fw fa-hashtag fa-sm mr-1"></i> <?= l('admin_settings.links.biolinks') ?>
     </button>
 
-    <div class="collapse" id="biolinks_container">
+    <div class="collapse" data-parent="#links" id="biolinks_container">
         <div class="form-group custom-control custom-switch">
             <input id="biolinks_is_enabled" name="biolinks_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->links->biolinks_is_enabled ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="biolinks_is_enabled"><?= l('admin_settings.links.biolinks_is_enabled') ?></label>
@@ -79,7 +79,7 @@
             <label for="branding"><?= l('admin_settings.links.branding') ?></label>
             <textarea id="branding" name="branding" class="form-control"><?= settings()->links->branding ?></textarea>
             <small class="form-text text-muted"><?= l('admin_settings.links.branding_help') ?></small>
-            <small class="form-text text-muted"><?= l('admin_settings.links.branding_help2') ?></small>
+            <small class="form-text text-muted"><?= sprintf(l('global.variables'), '<code data-copy>' . implode('</code> , <code data-copy>',  ['{{WEBSITE_TITLE}}', '{{URL}}', '{{AFFILIATE_URL_TAG}}']) . '</code>') ?></small>
         </div>
 
         <div class="form-group mt-5">
@@ -109,11 +109,11 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#biolinks_fonts_container" aria-expanded="false" aria-controls="biolinks_fonts_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#biolinks_fonts_container" aria-expanded="false" aria-controls="biolinks_fonts_container">
         <i class="fas fa-fw fa-font fa-sm mr-1"></i> <?= l('admin_settings.links.biolinks_fonts') ?>
     </button>
 
-    <div class="collapse" id="biolinks_fonts_container">
+    <div class="collapse" data-parent="#links" id="biolinks_fonts_container">
         <div id="biolinks_fonts">
             <?php foreach(settings()->links->biolinks_fonts ?? [] as $key => $font): ?>
                 <div class="biolinks_font p-3 bg-gray-50 rounded mb-4">
@@ -139,7 +139,7 @@
                         <small class="form-text text-muted"><?= l('admin_settings.links.biolinks_fonts.id_help') ?></small>
                     </div>
 
-                    <div class="collapse" id="<?= 'container_' . md5($font->id) ?>">
+                    <div class="collapse" data-parent="#biolinks_fonts" id="<?= 'container_' . md5($font->id) ?>">
                         <div class="form-group">
                             <label for="<?= 'name[' . $font->id . ']' ?>"><i class="fas fa-fw fa-sm fa-signature text-muted mr-1"></i> <?= l('admin_settings.links.biolinks_fonts.name') ?></label>
                             <input id="<?= 'name[' . $font->id . ']' ?>" type="text" name="name[<?= $font->id ?>]" class="form-control" value="<?= $font->name ?>" required="required" />
@@ -166,11 +166,11 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#links_container" aria-expanded="false" aria-controls="links_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#links_container" aria-expanded="false" aria-controls="links_container">
         <i class="fas fa-fw fa-link fa-sm mr-1"></i> <?= l('admin_settings.links.links') ?>
     </button>
 
-    <div class="collapse" id="links_container">
+    <div class="collapse" data-parent="#links" id="links_container">
         <div class="form-group">
             <label for="random_url_length"><?= l('admin_settings.links.random_url_length') ?></label>
             <input id="random_url_length" type="number" min="4" step="1" name="random_url_length" class="form-control" value="<?= settings()->links->random_url_length ?? 7 ?>" />
@@ -224,7 +224,11 @@
 
         <div class="form-group">
             <label for="blacklisted_domains"><?= l('admin_settings.links.blacklisted_domains') ?></label>
-            <textarea id="blacklisted_domains" class="form-control" name="blacklisted_domains"><?= implode(',', settings()->links->blacklisted_domains) ?></textarea>
+            <?php
+                // Handle empty string or JSON decode
+                $blacklisted_domains = settings()->links->blacklisted_domains ? json_decode(settings()->links->blacklisted_domains, true) : [];
+            ?>
+            <textarea id="blacklisted_domains" class="form-control" name="blacklisted_domains"><?= implode(',', $blacklisted_domains) ?></textarea>
             <small class="form-text text-muted"><?= l('admin_settings.links.blacklisted_domains_help') ?></small>
         </div>
 
@@ -245,11 +249,11 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#splash_pages_container" aria-expanded="false" aria-controls="splash_pages_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#splash_pages_container" aria-expanded="false" aria-controls="splash_pages_container">
         <i class="fas fa-fw fa-droplet fa-sm mr-1"></i> <?= l('admin_settings.links.splash_pages') ?>
     </button>
 
-    <div class="collapse" id="splash_pages_container">
+    <div class="collapse" data-parent="#links" id="splash_pages_container">
         <div class="form-group custom-control custom-switch">
             <input id="splash_page_is_enabled" name="splash_page_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->links->splash_page_is_enabled ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="splash_page_is_enabled"><?= l('admin_settings.links.splash_page_is_enabled') ?></label>
@@ -273,11 +277,11 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#pixels_container" aria-expanded="false" aria-controls="pixels_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#pixels_container" aria-expanded="false" aria-controls="pixels_container">
         <i class="fas fa-fw fa-adjust fa-sm mr-1"></i> <?= l('admin_settings.links.pixels') ?>
     </button>
 
-    <div class="collapse" id="pixels_container">
+    <div class="collapse" data-parent="#links" id="pixels_container">
         <div class="form-group custom-control custom-switch">
             <input id="pixels_is_enabled" name="pixels_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->links->pixels_is_enabled ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="pixels_is_enabled"><?= l('admin_settings.links.pixels_is_enabled') ?></label>
@@ -285,11 +289,11 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#directory_container" aria-expanded="false" aria-controls="directory_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#directory_container" aria-expanded="false" aria-controls="directory_container">
         <i class="fas fa-fw fa-sitemap fa-sm mr-1"></i> <?= l('admin_settings.links.directory') ?>
     </button>
 
-    <div class="collapse" id="directory_container">
+    <div class="collapse" data-parent="#links" id="directory_container">
         <div class="form-group custom-control custom-switch">
             <input id="directory_is_enabled" name="directory_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->links->directory_is_enabled ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="directory_is_enabled"><?= l('admin_settings.links.directory_is_enabled') ?></label>
@@ -313,11 +317,11 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#domains_container" aria-expanded="false" aria-controls="domains_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#domains_container" aria-expanded="false" aria-controls="domains_container">
         <i class="fas fa-fw fa-globe fa-sm mr-1"></i> <?= l('admin_settings.links.domains') ?>
     </button>
 
-    <div class="collapse" id="domains_container">
+    <div class="collapse" data-parent="#links" id="domains_container">
         <div class="form-group custom-control custom-switch">
             <input id="domains_is_enabled" name="domains_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->links->domains_is_enabled ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="domains_is_enabled"><?= l('admin_settings.links.domains_is_enabled') ?></label>
@@ -343,12 +347,12 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#file_size_limits_container" aria-expanded="false" aria-controls="file_size_limits_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#file_size_limits_container" aria-expanded="false" aria-controls="file_size_limits_container">
         <i class="fas fa-fw fa-file fa-sm mr-1"></i> <?= l('admin_settings.links.file_size_limits') ?>
     </button>
 
-    <div class="collapse" id="file_size_limits_container">
-        <?php foreach(['avatar', 'background', 'favicon', 'seo_image', 'thumbnail_image', 'image', 'audio', 'video', 'file', 'product_file', 'static', 'pwa_icon'] as $key): ?>
+    <div class="collapse" data-parent="#links" id="file_size_limits_container">
+        <?php foreach(['avatar', 'background', 'favicon', 'seo_image', 'thumbnail_image', 'image', 'audio', 'video', 'file', 'product_file', 'static', 'pwa_icon', 'branded_button_icon', 'offline_payment_proof'] as $key): ?>
             <div class="form-group">
                 <label for="<?= $key . '_size_limit' ?>"><?= l('admin_settings.links.' . $key . '_size_limit') ?></label>
                 <div class="input-group">
@@ -362,11 +366,11 @@
         <?php endforeach ?>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#others_container" aria-expanded="false" aria-controls="others_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#others_container" aria-expanded="false" aria-controls="others_container">
         <i class="fas fa-fw fa-wrench fa-sm mr-1"></i> <?= l('admin_settings.links.others') ?>
     </button>
 
-    <div class="collapse" id="others_container">
+    <div class="collapse" data-parent="#links" id="others_container">
         <div class="form-group custom-control custom-switch">
             <input id="projects_is_enabled" name="projects_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->links->projects_is_enabled ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="projects_is_enabled"><?= l('admin_settings.links.projects_is_enabled') ?></label>
@@ -394,13 +398,30 @@
             <label for="google_static_maps_api_key"><?= l('admin_settings.links.google_static_maps_api_key') ?></label>
             <input id="google_static_maps_api_key" type="text" name="google_static_maps_api_key" class="form-control" value="<?= settings()->links->google_static_maps_api_key ?>" />
         </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="google_geocoding_is_enabled" name="google_geocoding_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->links->google_geocoding_is_enabled ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="google_geocoding_is_enabled"><?= l('admin_settings.links.google_geocoding_is_enabled') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.links.google_geocoding_is_enabled_help') ?></small>
+        </div>
+
+        <div class="form-group">
+            <label for="google_geocoding_api_key"><?= l('admin_settings.links.google_geocoding_api_key') ?></label>
+            <input id="google_geocoding_api_key" type="text" name="google_geocoding_api_key" class="form-control" value="<?= settings()->links->google_geocoding_api_key ?>" />
+        </div>
+
+        <div class="form-group">
+            <label for="open_meteo_api_key"><?= l('admin_settings.links.open_meteo_api_key') ?></label>
+            <input id="open_meteo_api_key" type="text" name="open_meteo_api_key" class="form-control" value="<?= settings()->links->open_meteo_api_key ?>" />
+            <small class="form-text text-muted"><?= l('admin_settings.links.open_meteo_api_key_help') ?></small>
+        </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#sixsixpusher_container" aria-expanded="false" aria-controls="sixsixpusher_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#sixsixpusher_container" aria-expanded="false" aria-controls="sixsixpusher_container">
         <i class="fas fa-fw fa-rocket fa-sm mr-1"></i> <?= l('admin_settings.links.sixsixpusher') ?>
     </button>
 
-    <div class="collapse" id="sixsixpusher_container">
+    <div class="collapse" data-parent="#links" id="sixsixpusher_container">
         <div class="alert alert-info">
             <i class="fas fa-fw fa-sm fa-info-circle mr-2"></i>
             <?= l('admin_settings.links.sixsixpusher_help') ?>
@@ -422,6 +443,19 @@
             </div>
             <small class="form-text text-muted"><?= l('admin_settings.links.sixsixpusher_service_worker_file_name_help') ?></small>
         </div>
+
+        <?php foreach(['sixsixpusher_service_worker'] as $key): ?>
+            <div class="form-group">
+                <label for="<?= $key . '_size_limit' ?>"><?= l('admin_settings.links.' . $key . '_size_limit') ?></label>
+                <div class="input-group">
+                    <input id="<?= $key . '_size_limit' ?>" type="number" min="0" max="<?= get_max_upload() ?>" step="any" name="<?= $key . '_size_limit' ?>" class="form-control" value="<?= settings()->links->{$key . '_size_limit'} ?>" />
+                    <div class="input-group-append">
+                        <span class="input-group-text"><?= l('global.mb') ?></span>
+                    </div>
+                </div>
+                <small class="form-text text-muted"><?= l('global.accessibility.admin_file_size_limit_help') ?></small>
+            </div>
+        <?php endforeach ?>
 
     </div>
 </div>
@@ -536,9 +570,12 @@
         handle: '.drag',
         onUpdate: event => {
 
-            /* :) */
+            /* Refresh tooltips */
+            tooltips_initiate();
 
         }
     });
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+
+<?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>

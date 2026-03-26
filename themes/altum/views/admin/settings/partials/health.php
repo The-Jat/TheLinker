@@ -15,11 +15,11 @@
         <tr>
             <td>
                 PHP Version
-                <div class="small text-muted">8.3 - 8.4</div>
+                <div class="small text-muted">8.3 - 8.5</div>
             </td>
             <td><?= PHP_VERSION ?></td>
             <td class="text-right">
-                <?php if(version_compare(PHP_VERSION, '8.3.0', '>=') && version_compare(PHP_VERSION, '8.5', '<')): ?>
+                <?php if(version_compare(PHP_VERSION, '8.3.0', '>=') && version_compare(PHP_VERSION, '8.6', '<')): ?>
                     ✅
                 <?php else: ?>
                     ❌

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -16,6 +16,8 @@
 
 namespace Altum\Controllers;
 
+use Altum\PaymentGateways\Plisio;
+
 defined('ALTUMCODE') || die();
 
 class GuestPaymentWebhook extends Controller {
@@ -26,7 +28,7 @@ class GuestPaymentWebhook extends Controller {
             http_response_code(400); die('payment-blocks plugin is disabled.');
         }
 
-        $_GET['processor'] = isset($_GET['processor']) && in_array($_GET['processor'], ['paypal', 'stripe', 'crypto_com', 'razorpay', 'paystack', 'mollie']) ? input_clean($_GET['processor']) : null;
+        $_GET['processor'] = isset($_GET['processor']) && in_array($_GET['processor'], include \Altum\Plugin::get('payment-blocks')->path . 'payment_blocks_payment_processors.php') ? input_clean($_GET['processor']) : null;
         $_GET['payment_processor_id'] = isset($_GET['payment_processor_id']) ? (int) $_GET['payment_processor_id'] : null;
 
 //        if(!$_GET['processor']) {
@@ -129,7 +131,7 @@ class GuestPaymentWebhook extends Controller {
 
                 $payment_id = $session->id;
                 $payment_currency = mb_strtoupper($session->currency);
-                $payment_total_amount = in_array($payment_currency, ['MGA', 'BIF', 'CLP', 'PYG', 'DJF', 'RWF', 'GNF', 'UGX', 'JPY', 'VND', 'VUV', 'XAF', 'KMF', 'KRW', 'XOF', 'XPF']) ? $session->amount_total : $session->amount_total / 100;
+                $payment_total_amount = in_array($payment_currency, get_zero_decimal_currencies_array()) ? $session->amount_total : $session->amount_total / 100;
 
                 /* Metadata */
                 $guest_payment_id = $session->metadata->guest_payment_id;
@@ -230,7 +232,7 @@ class GuestPaymentWebhook extends Controller {
                 }
 
                 $payer_email = $data->data->customer->email;
-                $payer_name = $data->data->customer->first_name . $data->data->customer->last_name;
+                $payer_name = $data->data->customer->first_name . ' ' . $data->data->customer->last_name;
 
                 $payment_id = $data->data->id;
                 $payment_total_amount = $data->data->amount / 100;
@@ -268,6 +270,81 @@ class GuestPaymentWebhook extends Controller {
 
                 /* Metadata */
                 $guest_payment_id = $payment->metadata->guest_payment_id;
+
+                break;
+
+            case 'plisio':
+
+                if(!Plisio::validate_hash($payment_processor->settings->secret_key)) {
+                    die('Invalid request');
+                }
+
+                if($_POST['status'] != 'completed') {
+                    die('Invalid event');
+                }
+
+                $payer_email = '';
+                $payer_name = '';
+
+                $payment_id = trim($_POST['txn_id']);
+                $payment_total_amount = (float) $_POST['source_amount'];
+                $payment_currency = $_POST['source_currency'];
+
+                /* Metadata */
+                $guest_payment_id = $_POST['order_name'];
+
+                break;
+
+            case 'plisio_whitelabel':
+
+                if(!Plisio::validate_hash(settings()->plisio_whitelabel->secret_key)) {
+                    die('Invalid request');
+                }
+
+                if($_POST['status'] != 'completed') {
+                    die('Invalid event');
+                }
+
+                $payer_email = '';
+                $payer_name = '';
+
+                $payment_id = trim($_POST['txn_id']);
+                $payment_total_amount = (float) $_POST['source_amount'];
+                $payment_currency = $_POST['source_currency'];
+
+                $cryptocurrency = $_POST['currency'];
+                $cryptocurrency_amount = (float) $_POST['amount'];
+                $cryptocurrency_amount_minus_fee = $cryptocurrency_amount - ($cryptocurrency_amount * (settings()->plisio_whitelabel->payment_blocks_fee / 100));
+
+                /* Metadata */
+                $guest_payment_id = $_POST['order_name'];
+
+                error_log('[GuestPaymentWebhook] [PlisioWhitelabel]:' . print_r([
+                    'currency' => $cryptocurrency,
+                    'type' => 'cash_out',
+                    'to' => $payment_processor->settings->{$cryptocurrency . '_wallet'},
+                    'amount' => $cryptocurrency_amount_minus_fee,
+                    'feePlan' => 'normal',
+                    'api_key' => settings()->plisio_whitelabel->secret_key,
+                ], true));
+
+                /* Withdraw to the users wallet */
+                try {
+                    $response = \Unirest\Request::get(
+                        Plisio::get_api_url() . 'api/v1/operations/withdraw?' . http_build_query([
+                            'currency' => $cryptocurrency,
+                            'type' => 'cash_out',
+                            'to' => $payment_processor->settings->{$cryptocurrency . '_wallet'},
+                            'amount' => $cryptocurrency_amount_minus_fee,
+                            'feePlan' => 'normal',
+                            'api_key' => settings()->plisio_whitelabel->secret_key,
+                        ]),
+                    );
+                } catch (\Exception $exception) {
+                    error_log('[GuestPaymentWebhook] [PlisioWhitelabel]:' . $exception->getCode() . ':' . $exception->getMessage(), 'error');
+                }
+
+                error_log(print_r($response->body, true));
 
                 break;
 
@@ -340,8 +417,8 @@ class GuestPaymentWebhook extends Controller {
 
         /* Send notifications based on the type of block */
         $email_template = null;
-        $payment_total_amount = l('guests_payments.free', $user->language);
-        $payer_name = $payer_name ?: l('global.none', $user->language);
+        $payment_total_amount = $payment_total_amount ?: l('guests_payments.free', $user->language);
+        $payer_name = trim($payer_name) ?: l('global.none', $user->language);
         $payment_currency = $payment_currency ?: l('global.none', $user->language);
         $payment_processor_type = $payment_processor->processor ?: l('global.none', $user->language);
 
@@ -355,17 +432,32 @@ class GuestPaymentWebhook extends Controller {
                     ],
                     l('global.emails.user_guest_payment_donation.subject', $user->language),
                     [
-                        '{{DONATION_TITLE}}' => $biolink_block->settings->title,
+						'{{NAME}}' => $user->name,
+						'{{DONATION_TITLE}}' => $biolink_block->settings->title,
                         '{{EMAIL}}' => $payer_email,
-                        '{{NAME}}' => $payer_name,
+                        '{{PAYER_NAME}}' => $payer_name,
                         '{{TOTAL_AMOUNT}}' => $payment_total_amount,
                         '{{CURRENCY}}' => $payment_currency,
                         '{{PROCESSOR}}' => $payment_processor ? l('pay.custom_plan.' . $payment_processor->processor, $user->language) : l('global.none', $user->language),
                         '{{MESSAGE}}' => $guest_payment->data->message ?? null,
-                        '{{GUESTS_PAYMENTS_LINK}}' => url('guests-payments'),
+                        '{{GUEST_PAYMENT_LINK}}' => url('guests-payments?guest_payment_id=' . $guest_payment->guest_payment_id),
                     ],
                     l('global.emails.user_guest_payment_donation.body', $user->language)
                 );
+
+                /* Send email notifications to the customer */
+                $customer_email_template = get_email_template(
+                    [
+                        '{{DONATION_TITLE}}' => $biolink_block->settings->title,
+                    ],
+                    l('global.emails.guest_guest_payment_donation.subject', $user->language),
+                    [
+                        '{{NAME}}' => $payer_name,
+                    ],
+                    l('global.emails.guest_guest_payment_donation.body', $user->language)
+                );
+
+                send_mail($guest_payment->email, $customer_email_template->subject, $customer_email_template->body);
 
                 break;
 
@@ -378,13 +470,14 @@ class GuestPaymentWebhook extends Controller {
                     ],
                     l('global.emails.user_guest_payment_product.subject', $user->language),
                     [
+						'{{NAME}}' => $user->name,
                         '{{PRODUCT_TITLE}}' => $biolink_block->settings->title,
                         '{{EMAIL}}' => $guest_payment->email,
-                        '{{NAME}}' => $payer_name,
+						'{{PAYER_NAME}}' => $payer_name,
                         '{{TOTAL_AMOUNT}}' => $payment_total_amount,
                         '{{CURRENCY}}' => $payment_currency,
                         '{{PROCESSOR}}' => $payment_processor ? l('pay.custom_plan.' . $payment_processor->processor, $user->language) : l('global.none', $user->language),
-                        '{{GUESTS_PAYMENTS_LINK}}' => url('guests-payments'),
+                        '{{GUEST_PAYMENT_LINK}}' => url('guests-payments?guest_payment_id=' . $guest_payment->guest_payment_id),
                     ],
                     l('global.emails.user_guest_payment_product.body', $user->language)
                 );
@@ -415,14 +508,15 @@ class GuestPaymentWebhook extends Controller {
                     ],
                     l('global.emails.user_guest_payment_service.subject', $user->language),
                     [
+						'{{NAME}}' => $user->name,
                         '{{SERVICE_TITLE}}' => $biolink_block->settings->title,
                         '{{EMAIL}}' => $guest_payment->email,
-                        '{{NAME}}' => $payer_name,
+						'{{PAYER_NAME}}' => $payer_name,
                         '{{TOTAL_AMOUNT}}' => $payment_total_amount,
                         '{{CURRENCY}}' => $payment_currency,
                         '{{PROCESSOR}}' => $payment_processor ? l('pay.custom_plan.' . $payment_processor->processor, $user->language) : l('global.none', $user->language),
                         '{{MESSAGE}}' => $guest_payment->data->message ?? null,
-                        '{{GUESTS_PAYMENTS_LINK}}' => url('guests-payments'),
+                        '{{GUEST_PAYMENT_LINK}}' => url('guests-payments?guest_payment_id=' . $guest_payment->guest_payment_id),
                     ],
                     l('global.emails.user_guest_payment_service.body', $user->language)
                 );

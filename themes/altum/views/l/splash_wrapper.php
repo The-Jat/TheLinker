@@ -27,12 +27,12 @@
             <link href="<?= \Altum\Uploads::get_full_url('splash_pages') . $data->splash_page->settings->favicon ?>" rel="icon" />
         <?php elseif(!empty($this->link->settings->favicon)): ?>
             <link href="<?= \Altum\Uploads::get_full_url('favicons') . $this->link->settings->favicon ?>" rel="icon" />
-        <?php elseif(!empty(settings()->main->favicon)): ?>
-            <link href="<?= settings()->main->favicon_full_url ?>" rel="icon" />
+        <?php else: ?>
+            <link href="<?= !empty(settings()->main->favicon) ? settings()->main->favicon_full_url : 'data:,' ?>" rel="icon" />
         <?php endif ?>
 
         <link href="<?= ASSETS_FULL_URL . 'css/' . \Altum\ThemeStyle::get_file() . '?v=' . PRODUCT_CODE ?>" id="css_theme_style" rel="stylesheet" media="screen,print">
-        <?php foreach(['custom.css', 'link-custom.css'] as $file): ?>
+        <?php foreach(['custom.' . (DEBUG ? null : 'min.') . 'css', 'link-custom.' . (DEBUG ? null : 'min.') . 'css'] as $file): ?>
             <link href="<?= ASSETS_FULL_URL . 'css/' . $file . '?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
         <?php endforeach ?>
 
@@ -73,7 +73,7 @@
 
     <?php require THEME_PATH . 'views/partials/js_global_variables.php' ?>
 
-    <?php foreach(['libraries/jquery.min.js', 'libraries/popper.min.js', 'libraries/bootstrap.min.js', 'custom.js'] as $file): ?>
+    <?php foreach(['libraries/jquery.min.js', 'libraries/popper.min.js', 'libraries/bootstrap.min.js', 'custom.' . (DEBUG ? null : 'min.') . 'js'] as $file): ?>
         <script src="<?= ASSETS_FULL_URL ?>js/<?= $file ?>?v=<?= PRODUCT_CODE ?>"></script>
     <?php endforeach ?>
 

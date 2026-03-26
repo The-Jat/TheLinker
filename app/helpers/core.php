@@ -99,3 +99,7 @@ function is_logged_in() {
 function user() {
     return \Altum\Authentication::$user;
 }
+
+function throw_404() {
+    throw new \Altum\NotFoundException();
+}

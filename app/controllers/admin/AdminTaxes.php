@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -23,6 +23,10 @@ defined('ALTUMCODE') || die();
 class AdminTaxes extends Controller {
 
     public function index() {
+
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            redirect('admin');
+        }
 
         /* Prepare the filtering system */
         $filters = (new \Altum\Filters(['type', 'value_type', 'billing_type'], ['name', 'description'], ['tax_id', 'name', 'value', 'datetime']));
@@ -72,7 +76,64 @@ class AdminTaxes extends Controller {
 
     }
 
+    public function bulk() {
+
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            redirect('admin');
+        }
+
+        /* Check for any errors */
+        if (empty($_POST)) {
+            throw_404();
+        }
+
+        if(empty($_POST['selected'])) {
+            redirect('admin/taxes');
+        }
+
+        if(!isset($_POST['type'])) {
+            redirect('admin/taxes');
+        }
+
+        //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+        if(!\Altum\Csrf::check()) {
+            Alerts::add_error(l('global.error_message.invalid_csrf_token'));
+        }
+
+        if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+
+            set_time_limit(0);
+
+            session_write_close();
+
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
+            switch($_POST['type']) {
+                case 'delete':
+
+                    foreach($_POST['selected'] as $id) {
+                        db()->where('tax_id', $id)->delete('taxes');
+                    }
+
+                    break;
+            }
+
+            session_start();
+
+            /* Set a nice success message */
+            Alerts::add_success(l('bulk_delete_modal.success_message'));
+
+        }
+
+        redirect('admin/taxes');
+    }
+
     public function delete() {
+
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            redirect('admin');
+        }
 
         $tax_id = isset($this->params[0]) ? (int) $this->params[0] : null;
 
@@ -83,7 +144,7 @@ class AdminTaxes extends Controller {
         }
 
         if(!$tax = db()->where('tax_id', $tax_id)->getOne('taxes', ['tax_id', 'name'])) {
-            redirect('admin/taxes');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

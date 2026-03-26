@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,14 +25,20 @@ class PixelUpdate extends Controller {
     public function index() {
 
         if(!settings()->links->pixels_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('update.pixels')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
+            redirect('pixels');
+        }
+
+        /* Check for the plan limit */
+        $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `pixels` WHERE `user_id` = {$this->user->user_id}")->fetch_object()->total ?? 0;
+        if($this->user->plan_settings->pixels_limit != -1 && $total_rows > $this->user->plan_settings->pixels_limit) {
             redirect('pixels');
         }
 
@@ -43,7 +49,7 @@ class PixelUpdate extends Controller {
         }
 
         if(!empty($_POST)) {
-            $_POST['name'] = trim(query_clean($_POST['name']));
+            $_POST['name'] = input_clean($_POST['name'], 64);
             $_POST['type'] = array_key_exists($_POST['type'], require APP_PATH . 'includes/pixels.php') ? $_POST['type'] : '';
             $_POST['pixel'] = trim(query_clean($_POST['pixel']));
 
@@ -52,7 +58,7 @@ class PixelUpdate extends Controller {
             /* Check for any errors */
             $required_fields = ['name', 'type', 'pixel'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }

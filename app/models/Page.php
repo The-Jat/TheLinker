@@ -32,6 +32,10 @@ class Page extends Model {
         if(is_null($cache_instance->get())) {
             $result = database()->query('SELECT `url`, `title`, `type`, `open_in_new_tab`, `language`, `icon`, `position`, `plans_ids` FROM `pages` WHERE `is_published` = 1 ORDER BY `order`');
 
+            if(!$result) {
+    die(database()->error); // 👈 THIS WILL SHOW REAL ERROR
+}
+
             while($row = $result->fetch_object()) {
                 $row->plans_ids = json_decode($row->plans_ids ?? '');
 

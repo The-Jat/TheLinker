@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -44,6 +44,20 @@ class Link extends Controller {
         $this->link->settings = json_decode($this->link->settings ?? '');
         $this->link->pixels_ids = json_decode($this->link->pixels_ids ?? '[]');
         $this->link->email_reports = json_decode($this->link->email_reports ?? '[]');
+
+        /* Check for the plan limit */
+        $plan_limit = match($this->link->type) {
+            'biolink' => 'biolinks_limit',
+            'link' => 'links_limit',
+            'file' => 'files_limit',
+            'vcard' => 'vcards_limit',
+            'event' => 'events_limit',
+            'static' => 'static_limit',
+        };
+        $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `links` WHERE `user_id` = {$this->user->user_id} AND `type` = '{$this->link->type}'")->fetch_object()->total ?? 0;
+        if($this->user->plan_settings->{$plan_limit} != -1 && $total_rows > $this->user->plan_settings->{$plan_limit}) {
+            redirect('links?type=' . $this->link->type);
+        }
 
         /* Get the current domain if needed */
         $this->link->domain = $this->link->domain_id ? (new Domain())->get_domain_by_domain_id($this->link->domain_id) : null;
@@ -135,7 +149,7 @@ class Link extends Controller {
             case 'statistics':
 
                 if(!$this->user->plan_settings->statistics) {
-                    Alerts::add_info(l('global.info_message.plan_feature_no_access'));
+                    Alerts::add_error(l('global.info_message.plan_feature_no_access'));
                     redirect('links');
                 }
 
@@ -145,13 +159,13 @@ class Link extends Controller {
                     switch($action) {
                         case 'reset':
 
-                            if(empty($_POST)) {
-                                redirect('links');
-                            }
+                            if (empty($_POST)) {
+            throw_404();
+        }
 
                             /* Team checks */
                             if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.links')) {
-                                Alerts::add_info(l('global.info_message.team_no_access'));
+                                Alerts::add_error(l('global.info_message.team_no_access'));
                                 redirect('link/' . $this->link->link_id . '/statistics');
                             }
 
@@ -513,7 +527,9 @@ class Link extends Controller {
 //                                    $statistics[$key][$test] = $row->country_code;
 //                                }
 
-                                $statistics[$key][$row->{$key}] = isset($statistics[$key][$row->{$key}]) ? $statistics[$key][$row->{$key}] + 1 : 1;
+                                $row->{$key} = $row->{$key} ?? '';
+
+                        $statistics[$key][$row->{$key}] = isset($statistics[$key][$row->{$key}]) ? $statistics[$key][$row->{$key}] + 1 : 1;
 
                                 $statistics[$key . '_total_sum']++;
 

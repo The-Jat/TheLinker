@@ -9,7 +9,8 @@
   width: 240px;
   background: var(--gray-50);
   border: 1px solid var(--gray-200);
-  z-index: 9;
+    z-index: 9;
+    border-radius: var(--border-radius);
 }
 .iconpicker-popover.popover.top,
 .iconpicker-popover.popover.topLeftCorner,

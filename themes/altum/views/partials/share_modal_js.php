@@ -17,11 +17,11 @@
 
                 <div data-qr></div>
 
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center flex-wrap gap-3">
                     <?= include_view(THEME_PATH . 'views/partials/share_buttons.php', ['url' => '%s', 'class' => 'btn btn-gray-100', 'print_is_enabled' => false]) ?>
                 </div>
 
-                <div class="form-group mt-3">
+                <div class="form-group mt-4">
                     <div class="input-group">
                         <input id="share_modal_value" type="text" class="form-control" value="%s" onclick="this.select();" readonly="readonly" />
 
@@ -55,7 +55,7 @@
 <script>
     'use strict';
     
-/* On modal show load new data */
+    /* On modal show load new data */
     $('#share_modal').on('show.bs.modal', event => {
         let url = $(event.relatedTarget).data('url');
         let qr = event.currentTarget.querySelector('[data-qr]');

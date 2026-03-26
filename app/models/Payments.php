@@ -54,7 +54,7 @@ class Payments extends Model {
             }
         }
 
-        /* Check for potential paid plans */
+        /* Check for potential trial plans */
         if($payment_total == 0) {
             /* Determine the expiration date of the plan */
             $plan_expiration_date = (new \DateTime())->modify('+' . $plan->trial_days . ' days')->format('Y-m-d H:i:s');
@@ -94,6 +94,14 @@ class Payments extends Model {
             } catch (\Exception $exception) {
                 /* :) */
             }
+        }
+
+        if(empty($payer_email)) {
+            $payer_email = $user->email;
+        }
+
+        if(empty($payer_name)) {
+            $payer_email = $user->name;
         }
 
         $payment_datetime = get_date();
@@ -156,6 +164,7 @@ class Payments extends Model {
             [],
             l('global.emails.user_payment.subject'),
             [
+                '{{PAYMENT_ID}}' => $payment_id,
                 '{{NAME}}' => $user->name,
                 '{{PLAN_NAME}}' => $plan->name,
                 '{{PLAN_EXPIRATION_DATE}}' => \Altum\Date::get($plan_expiration_date, 2),
@@ -192,8 +201,9 @@ class Payments extends Model {
                     '{{DATE}}' => get_date(),
                     '{{DATE_TIMEZONE}}' => \Altum\Date::$default_timezone,
                     '{{CODE}}' => $code ?: l('global.none'),
+                    '{{CODE_DETAILS}}' => $code ? '(-' . $discount_amount . ' ' . $payment_currency . ')' : '',
                     '{{DISCOUNT_AMOUNT}}' => $discount_amount,
-                    '{{PAYMENT_STATUS}}' => l('account_payments.status_approved'),
+                    '{{PAYMENT_STATUS}}' => l('account_payments.status.approved'),
                 ],
                 l('global.emails.admin_new_payment_notification.body')
             );
@@ -219,7 +229,7 @@ class Payments extends Model {
                 'payment_currency' => $payment_currency,
                 'payment_code' => $code->code,
                 'datetime' => $payment_datetime,
-            ]);
+            ], signature: true);
 
         }
 
@@ -268,10 +278,11 @@ class Payments extends Model {
         if(\Altum\Plugin::is_active('affiliate') && settings()->affiliate->is_enabled && $user->referred_by) {
             if((settings()->affiliate->commission_type == 'once' && !$user->referred_by_has_converted) || settings()->affiliate->commission_type == 'forever') {
                 $referral_user = db()->where('user_id', $user->referred_by)->getOne('users', ['user_id', 'email', 'status', 'plan_settings']);
-                $referral_user->plan_settings = json_decode($referral_user->plan_settings);
 
                 /* Make sure the referral user is active and existing */
                 if($referral_user && $referral_user->status == 1) {
+                    $referral_user->plan_settings = json_decode($referral_user->plan_settings);
+
                     $amount = number_format($payment_total * (float) $referral_user->plan_settings->affiliate_commission_percentage / 100, 2, '.', '');
 
                     /* Insert the affiliate commission */

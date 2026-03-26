@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -71,7 +71,7 @@ class LostPassword extends Controller {
 
                 if($user && $user->status != 2) {
                     /* Define some variables */
-                    $lost_password_code = md5($_POST['email'] . microtime());
+                    $lost_password_code = md5(uniqid('', true) . random_bytes(16));
 
                     /* Update the current activation email */
                     db()->where('user_id', $user->user_id)->update('users', ['lost_password_code' => $lost_password_code]);

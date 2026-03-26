@@ -33,3 +33,12 @@ if(LOGGING) {
 }
 
 ini_set('html_errors', 0);
+
+function debug_log($message) {
+    error_log(
+        '[' . date('Y-m-d H:i:s') . '] ' . $message,
+        3,
+        UPLOADS_PATH . 'logs/debug-' . date('Y-m-d') . '.log'
+    );
+}
+

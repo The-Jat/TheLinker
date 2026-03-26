@@ -1,15 +1,25 @@
 <?php defined('ALTUMCODE') || die() ?>
 
 <?php ob_start() ?>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/sortable.js?v=' . PRODUCT_CODE ?>"></script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+
+<?php ob_start() ?>
+<?php if($this->user->plan_settings->biolink_blocks_limit != -1 && $data->link_links_result->num_rows > $this->user->plan_settings->biolink_blocks_limit): ?>
+    <div class="alert alert-danger">
+        <i class="fas fa-fw fa-times-circle text-danger mr-2"></i> <?= sprintf(settings()->payment->is_enabled ? l('global.info_message.plan_feature_limit_removal_with_upgrade') : l('global.info_message.plan_feature_limit_removal'), '<strong>' . $data->link_links_result->num_rows - $this->user->plan_settings->biolink_blocks_limit, mb_strtolower(l('biolinks_blocks.title')) . '</strong>', '<a href="' . url('plan') . '" class="font-weight-bold text-reset">' . l('global.info_message.plan_upgrade') . '</a>') ?>
+    </div>
+<?php endif ?>
+
 <div class="row">
     <div class="col-12 col-xl-6">
 
-        <?php
-        $active_tab = settings()->links->biolinks_default_active_tab ?? 'settings';
-        if(isset($_GET['tab']) && in_array($_GET['tab'], ['settings', 'blocks'])) {
-            $active_tab = $_GET['tab'];
-        }
-        ?>
+		<?php
+		$active_tab = settings()->links->biolinks_default_active_tab ?? 'settings';
+		if(isset($_GET['tab']) && in_array($_GET['tab'], ['settings', 'blocks'])) {
+			$active_tab = $_GET['tab'];
+		}
+		?>
 
         <div class="d-flex flex-column flex-sm-row justify-content-sm-between mb-4">
             <ul class="nav nav-pills biolink-switch-buttons mb-3 mb-lg-0" id="pills-tab" role="tablist">
@@ -47,19 +57,19 @@
                                 <label for="url"><i class="fas fa-fw fa-bolt fa-sm text-muted mr-1"></i> <?= l('link.settings.url') ?></label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <?php if(count($data->domains)): ?>
+										<?php if (!empty($data->domains)): ?>
                                             <select name="domain_id" class="appearance-none custom-select form-control input-group-text">
-                                                <?php if(settings()->links->main_domain_is_enabled || \Altum\Authentication::is_admin()): ?>
+												<?php if(settings()->links->main_domain_is_enabled || \Altum\Authentication::is_admin()): ?>
                                                     <option value=" " <?= $data->link->domain ? 'selected="selected"' : null ?> data-full-url="<?= SITE_URL ?>"><?= remove_url_protocol_from_url(SITE_URL) ?></option>
-                                                <?php endif ?>
+												<?php endif ?>
 
-                                                <?php foreach($data->domains as $row): ?>
+												<?php foreach($data->domains as $row): ?>
                                                     <option value="<?= $row->domain_id ?>" <?= $data->link->domain && $row->domain_id == $data->link->domain->domain_id ? 'selected="selected"' : null ?>  data-full-url="<?= $row->url ?>" data-type="<?= $row->type ?>"><?= remove_url_protocol_from_url($row->url) ?></option>
-                                                <?php endforeach ?>
+												<?php endforeach ?>
                                             </select>
-                                        <?php else: ?>
+										<?php else: ?>
                                             <span class="input-group-text"><?= remove_url_protocol_from_url(SITE_URL) ?></span>
-                                        <?php endif ?>
+										<?php endif ?>
                                     </div>
                                     <input
                                             id="url"
@@ -71,64 +81,64 @@
                                             maxlength="256"
                                             onchange="update_this_value(this, get_slug)"
                                             onkeyup="update_this_value(this, get_slug)"
-                                        <?= !$this->user->plan_settings->custom_url ? 'readonly="readonly"' : null ?>
-                                        <?= $this->user->plan_settings->custom_url ? null : get_plan_feature_disabled_info() ?>
+										<?= !$this->user->plan_settings->custom_url ? 'readonly="readonly"' : null ?>
+										<?= $this->user->plan_settings->custom_url ? null : get_plan_feature_disabled_info() ?>
                                     />
                                 </div>
                                 <small class="form-text text-muted"><?= l('link.settings.url_help') ?></small>
                             </div>
 
-                            <?php if(count($data->domains)): ?>
+							<?php if (!empty($data->domains)): ?>
                                 <div id="is_main_link_wrapper" class="form-group custom-control custom-switch <?= $data->link->domain_id && $data->domains[$data->link->domain_id]->type == '0' ? null : 'd-none' ?>">
                                     <input id="is_main_link" name="is_main_link" type="checkbox" class="custom-control-input" <?= $data->link->domain_id && $data->domains[$data->link->domain_id]->link_id == $data->link->link_id ? 'checked="checked"' : null ?>>
                                     <label class="custom-control-label" for="is_main_link"><?= l('link.settings.is_main_link') ?></label>
                                     <small class="form-text text-muted"><?= l('link.settings.is_main_link_help') ?></small>
                                 </div>
-                            <?php endif ?>
+							<?php endif ?>
 
-                            <?php if(settings()->links->biolinks_themes_is_enabled): ?>
-                                <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="modal" data-target="#biolink_themes_modal" aria-expanded="false" aria-controls="theme_container">
+							<?php if(settings()->links->biolinks_themes_is_enabled): ?>
+                                <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="modal" data-target="#biolink_themes_modal" aria-expanded="false" aria-controls="theme_container">
                                     <i class="fas fa-fw fa-palette fa-sm mr-1"></i> <?= l('link.settings.theme_header') ?>
                                 </button>
 
-                                <div class="collapse" id="theme_container" data-parent="#settings">
+                                <div class="collapse" data-parent="#settings" id="theme_container">
                                     <div class="form-group">
                                         <label><i class="fas fa-fw fa-palette fa-sm text-muted mr-1"></i> <?= l('biolink_themes.id') ?></label>
                                         <input type="hidden" id="biolink_theme_id" name="biolink_theme_id" class="form-control" value="<?= $data->link->biolink_theme_id ?? null ?>" />
                                     </div>
                                 </div>
-                            <?php endif ?>
+							<?php endif ?>
 
-                            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#customizations_container" aria-expanded="false" aria-controls="customizations_container">
+                            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#customizations_container" aria-expanded="false" aria-controls="customizations_container">
                                 <i class="fas fa-fw fa-paint-brush fa-sm mr-1"></i> <?= l('link.settings.customization_header') ?>
                             </button>
 
-                            <div class="collapse" id="customizations_container" data-parent="#settings">
+                            <div class="collapse" data-parent="#settings" id="customizations_container">
                                 <div class="form-group">
                                     <label for="settings_background_type"><i class="fas fa-fw fa-fill fa-sm text-muted mr-1"></i> <?= l('link.settings.background_type') ?></label>
                                     <select id="settings_background_type" name="background_type" class="custom-select">
-                                        <?php foreach($biolink_backgrounds as $key => $value): ?>
+										<?php foreach($biolink_backgrounds as $key => $value): ?>
                                             <option value="<?= $key ?>" <?= $data->link->settings->background_type == $key ? 'selected="selected"' : null?>><?= l('link.settings.background_type_' . $key) ?></option>
-                                        <?php endforeach ?>
+										<?php endforeach ?>
                                     </select>
                                 </div>
 
                                 <div id="background_type_preset" class="row form-group" style="margin-right: -7px; margin-left: -7px;">
-                                    <?php foreach($biolink_backgrounds['preset'] as $key => $value): ?>
+									<?php foreach($biolink_backgrounds['preset'] as $key => $value): ?>
                                         <label for="settings_background_type_preset_<?= $key ?>" class="m-0 col-3 p-2">
                                             <input type="radio" name="background" value="<?= $key ?>" id="settings_background_type_preset_<?= $key ?>" class="d-none" <?= $data->link->settings->background_type == 'preset' && $data->link->settings->background == $key ? 'checked="checked"' : null ?>/>
                                             <div class="link-background-type-preset" style="<?= $value ?>"></div>
                                         </label>
-                                    <?php endforeach ?>
+									<?php endforeach ?>
                                 </div>
 
                                 <div id="background_type_preset_abstract" class="row form-group" style="margin-right: -7px; margin-left: -7px;">
-                                    <?php foreach($biolink_backgrounds['preset_abstract'] as $key => $value): ?>
+									<?php foreach($biolink_backgrounds['preset_abstract'] as $key => $value): ?>
                                         <label for="settings_background_type_preset_abstract_<?= $key ?>" class="m-0 col-3 p-2">
                                             <input type="radio" name="background" value="<?= $key ?>" id="settings_background_type_preset_abstract_<?= $key ?>" class="d-none" <?= $data->link->settings->background_type == 'preset_abstract' && $data->link->settings->background == $key ? 'checked="checked"' : null ?>/>
                                             <div class="link-background-type-preset" style="<?= $value ?>"></div>
                                         </label>
-                                    <?php endforeach ?>
+									<?php endforeach ?>
                                 </div>
 
                                 <div id="background_type_gradient">
@@ -160,13 +170,13 @@
                                                 <input id="background_type_image_input" type="file" name="background" accept="<?= \Altum\Uploads::get_whitelisted_file_extensions_accept('biolink_background') ?>" class="form-control-file altum-file-input" />
                                             </div>
 
-                                            <?php if($data->link->settings->background_type == 'image' && is_string($data->link->settings->background) && !string_ends_with('.mp4', $data->link->settings->background)): ?>
+											<?php if($data->link->settings->background_type == 'image' && is_string($data->link->settings->background) && !string_ends_with('.mp4', $data->link->settings->background)): ?>
                                                 <div class="col-3 d-flex justify-content-center align-items-center">
                                                     <a href="<?= \Altum\Uploads::get_full_url('backgrounds') . $data->link->settings->background ?>" target="_blank" data-toggle="tooltip" title="<?= l('global.view') ?>" data-tooltip-hide-on-click>
                                                         <img id="background_type_image_preview" src="<?= \Altum\Uploads::get_full_url('backgrounds') . $data->link->settings->background ?>" data-default-src="<?= \Altum\Uploads::get_full_url('backgrounds') . $data->link->settings->background ?>" class="altum-file-input-preview rounded" loading="lazy" />
                                                     </a>
                                                 </div>
-                                            <?php endif ?>
+											<?php endif ?>
                                         </div>
                                         <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('biolink_background')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->links->background_size_limit) ?></small>
                                     </div>
@@ -174,15 +184,15 @@
 
                                 <div class="form-group">
                                     <label for="background_attachment"><i class="fas fa-fw fa-print fa-sm text-muted mr-1"></i> <?= l('link.settings.background_attachment') ?></label>
-                                    <div class="row btn-group-toggle" data-toggle="buttons">
-                                        <?php foreach(['scroll', 'fixed'] as $background_attachment): ?>
-                                            <div class="col-6">
-                                                <label class="btn btn-light btn-block text-truncate <?= $data->link->settings->background_attachment == $background_attachment ? 'active"' : null?>">
+                                    <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+										<?php foreach(['scroll', 'fixed'] as $background_attachment): ?>
+                                            <div class="p-2 col-6">
+                                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->link->settings->background_attachment == $background_attachment ? 'active"' : null?>">
                                                     <input type="radio" name="background_attachment" value="<?= $background_attachment ?>" class="custom-control-input" <?= ($data->link->settings->background_attachment ?? null) == $background_attachment ? 'checked="checked"' : null?> />
-                                                    <?= l('link.settings.background_attachment.' . $background_attachment) ?>
+													<?= l('link.settings.background_attachment.' . $background_attachment) ?>
                                                 </label>
                                             </div>
-                                        <?php endforeach ?>
+										<?php endforeach ?>
                                     </div>
                                 </div>
 
@@ -198,40 +208,40 @@
 
                                 <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= settings()->links->favicon_size_limit ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), settings()->links->favicon_size_limit) ?>">
                                     <label for="favicon"><i class="fas fa-fw fa-image fa-sm text-muted mr-1"></i> <?= l('link.settings.favicon') ?></label>
-                                    <?= include_view(THEME_PATH . 'views/partials/custom_file_image_input.php', ['uploads_file_key' => 'favicons', 'file_key' => 'favicon', 'already_existing_image' => $data->link->settings->favicon, 'image_container' => 'favicon', 'input_data' => 'data-crop data-aspect-ratio="1"']) ?>
-                                    <?= \Altum\Alerts::output_field_error('favicon') ?>
+									<?= include_view(THEME_PATH . 'views/partials/custom_file_image_input.php', ['uploads_file_key' => 'favicons', 'file_key' => 'favicon', 'already_existing_image' => $data->link->settings->favicon, 'image_container' => 'favicon', 'input_data' => 'data-crop data-aspect-ratio="1"']) ?>
+									<?= \Altum\Alerts::output_field_error('favicon') ?>
                                     <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('favicons')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->links->favicon_size_limit) ?></small>
                                 </div>
 
                                 <div <?= $this->user->plan_settings->fonts ? null : get_plan_feature_disabled_info() ?>>
                                     <div class="<?= $this->user->plan_settings->fonts ? null : 'container-disabled' ?>">
 
-                                        <?php foreach(settings()->links->biolinks_fonts as $font_key => $font): ?>
-                                            <?php if($font->css_url): ?>
-                                                <?php ob_start() ?>
+										<?php foreach(settings()->links->biolinks_fonts as $font_key => $font): ?>
+											<?php if($font->css_url): ?>
+												<?php ob_start() ?>
                                                 <link href="<?= $font->css_url ?>" rel="stylesheet">
-                                                <?php \Altum\Event::add_content(ob_get_clean(), 'head') ?>
-                                            <?php endif ?>
-                                        <?php endforeach ?>
+												<?php \Altum\Event::add_content(ob_get_clean(), 'head') ?>
+											<?php endif ?>
+										<?php endforeach ?>
 
                                         <div class="form-group">
                                             <label for="settings_font"><i class="fas fa-fw fa-pen-nib fa-sm text-muted mr-1"></i> <?= l('link.settings.font') ?></label>
-                                            <div class="row btn-group-toggle" data-toggle="buttons">
-                                                <?php foreach(settings()->links->biolinks_fonts as $font_key => $font): ?>
-                                                    <div class="col-6 col-lg-4 p-2 h-100">
-                                                        <label class="btn btn-light btn-block text-truncate mb-0 <?= ($data->link->settings->font ?? 'default') == $font_key ? 'active"' : null?>" style="font-family: <?= $font->font_family ?> !important;">
+                                            <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+												<?php foreach(settings()->links->biolinks_fonts as $font_key => $font): ?>
+                                                    <div class="p-2 col-6 col-lg-4 p-2 h-100">
+                                                        <label class="btn btn-light btn-block font-size-small mb-0 text-truncate mb-0 <?= ($data->link->settings->font ?? 'default') == $font_key ? 'active"' : null?>" style="font-family: <?= $font->font_family ?> !important;">
                                                             <input type="radio" name="font" value="<?= $font_key ?>" class="custom-control-input" <?= ($data->link->settings->font ?? 'default') == $font_key ? 'checked="checked"' : null?> required="required" data-font-family="<?= $font->font_family ?>" data-font-css-url="<?= $font->css_url ?>" />
-                                                            <?= $font->name ?>
+															<?= $font->name ?>
                                                         </label>
                                                     </div>
-                                                <?php endforeach ?>
+												<?php endforeach ?>
                                             </div>
                                         </div>
 
                                         <div class="form-group">
                                             <label for="settings_font_size"><i class="fas fa-fw fa-font fa-sm text-muted mr-1"></i> <?= l('link.settings.font_size') ?></label>
                                             <div class="input-group">
-                                                <input id="settings_font_size" type="number" min="14" max="22" name="font_size" class="form-control" value="<?= $data->link->settings->font_size ?>" />
+                                                <input id="settings_font_size" type="number" min="12" max="22" name="font_size" class="form-control" value="<?= $data->link->settings->font_size ?>" />
                                                 <div class="input-group-append">
                                                     <span class="input-group-text">px</span>
                                                 </div>
@@ -242,93 +252,93 @@
 
                                 <div class="form-group">
                                     <label for="settings_width"><i class="fas fa-fw fa-arrows-left-right fa-sm text-muted mr-1"></i> <?= l('link.settings.width') ?></label>
-                                    <div class="row btn-group-toggle" data-toggle="buttons">
-                                        <?php foreach(['6', '8', '10', '12'] as $key): ?>
-                                            <div class="col-12 col-lg-4 p-2 h-100">
-                                                <label class="btn btn-light btn-block text-truncate mb-0 <?= ($data->link->settings->width ?? '8') == $key ? 'active"' : null?>">
+                                    <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+										<?php foreach(['6', '8', '10', '12'] as $key): ?>
+                                            <div class="p-2 col-12 col-lg-4 p-2 h-100">
+                                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate mb-0 <?= ($data->link->settings->width ?? '8') == $key ? 'active"' : null?>">
                                                     <input type="radio" name="width" value="<?= $key ?>" class="custom-control-input" <?= ($data->link->settings->width ?? '8') == $key ? 'checked="checked"' : null?> required="required" />
-                                                    <?= l('link.settings.width.' . $key) ?>
+													<?= l('link.settings.width.' . $key) ?>
                                                 </label>
                                             </div>
-                                        <?php endforeach ?>
+										<?php endforeach ?>
                                     </div>
                                     <small class="form-text text-muted"><?= l('link.settings.width_help') ?></small>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="settings_block_spacing"><i class="fas fa-fw fa-arrows-up-down fa-sm text-muted mr-1"></i> <?= l('link.settings.block_spacing') ?></label>
-                                    <div class="row btn-group-toggle" data-toggle="buttons">
-                                        <?php foreach(['1', '2', '3',] as $key): ?>
-                                            <div class="col-12 col-lg-4 p-2 h-100">
-                                                <label class="btn btn-light btn-block text-truncate mb-0 <?= ($data->link->settings->block_spacing ?? '2') == $key ? 'active"' : null?>">
+                                    <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+										<?php foreach(['1', '2', '3',] as $key): ?>
+                                            <div class="p-2 col-12 col-lg-4 p-2 h-100">
+                                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate mb-0 <?= ($data->link->settings->block_spacing ?? '2') == $key ? 'active"' : null?>">
                                                     <input type="radio" name="block_spacing" value="<?= $key ?>" class="custom-control-input" <?= ($data->link->settings->block_spacing ?? '2') == $key ? 'checked="checked"' : null?> required="required" />
-                                                    <?= l('link.settings.block_spacing.' . $key) ?>
+													<?= l('link.settings.block_spacing.' . $key) ?>
                                                 </label>
                                             </div>
-                                        <?php endforeach ?>
+										<?php endforeach ?>
                                     </div>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="settings_hover_animation"><i class="fas fa-fw fa-arrow-pointer fa-sm text-muted mr-1"></i> <?= l('link.settings.hover_animation') ?></label>
-                                    <div class="row btn-group-toggle" data-toggle="buttons">
-                                        <div class="col-12 col-lg-4 p-2 h-100">
-                                            <label class="btn btn-light btn-block text-truncate mb-0 <?= ($data->link->settings->hover_animation ?? 'smooth') == 'false' ? 'active"' : null?>">
+                                    <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+                                        <div class="p-2 col-12 col-lg-4 p-2 h-100">
+                                            <label class="btn btn-light btn-block font-size-small mb-0 text-truncate mb-0 <?= ($data->link->settings->hover_animation ?? 'smooth') == 'false' ? 'active"' : null?>">
                                                 <input type="radio" name="hover_animation" value="false" class="custom-control-input" <?= ($data->link->settings->hover_animation ?? 'smooth') == 'false' ? 'checked="checked"' : null?> required="required" />
-                                                <?= l('global.none') ?>
+												<?= l('global.none') ?>
                                             </label>
                                         </div>
 
-                                        <?php foreach(['smooth', 'instant',] as $key): ?>
+										<?php foreach(['smooth', 'instant',] as $key): ?>
                                             <div class="col-12 col-lg-4 p-2 h-100">
                                                 <label class="btn btn-light btn-block text-truncate mb-0 <?= ($data->link->settings->hover_animation ?? 'smooth') == $key ? 'active"' : null?>">
                                                     <input type="radio" name="hover_animation" value="<?= $key ?>" class="custom-control-input" <?= ($data->link->settings->hover_animation ?? 'smooth') == $key ? 'checked="checked"' : null?> required="required" />
-                                                    <?= l('link.settings.hover_animation.' . $key) ?>
+													<?= l('link.settings.hover_animation.' . $key) ?>
                                                 </label>
                                             </div>
-                                        <?php endforeach ?>
+										<?php endforeach ?>
                                     </div>
                                 </div>
 
                             </div>
 
-                            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#verified_container" aria-expanded="false" aria-controls="verified_container">
+                            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#verified_container" aria-expanded="false" aria-controls="verified_container">
                                 <i class="fas fa-fw fa-check-circle fa-sm mr-1"></i> <?= l('link.settings.verified_header') ?>
                             </button>
 
-                            <div class="collapse" id="verified_container" data-parent="#settings">
-                                <?php if(!$data->link->is_verified): ?>
+                            <div class="collapse" data-parent="#settings" id="verified_container">
+								<?php if(!$data->link->is_verified): ?>
                                     <div class="alert alert-info">
                                         <i class="fas fa-fw fa-info-circle mr-1"></i>
-                                        <?php if(settings()->email_notifications->contact && !empty(settings()->email_notifications->emails)): ?>
-                                            <?= sprintf(l('link.settings.verified_help'), '<a href="' . url('contact') . '" class="font-weight-bold" target="_blank">', '</a>') ?>
-                                        <?php else: ?>
-                                            <?= sprintf(l('link.settings.verified_help'), '', '') ?>
-                                        <?php endif ?>
+										<?php if(settings()->email_notifications->contact && !empty(settings()->email_notifications->emails)): ?>
+											<?= sprintf(l('link.settings.verified_help'), '<a href="' . url('contact') . '" class="font-weight-bold" target="_blank">', '</a>') ?>
+										<?php else: ?>
+											<?= sprintf(l('link.settings.verified_help'), '', '') ?>
+										<?php endif ?>
                                     </div>
-                                <?php endif ?>
+								<?php endif ?>
 
                                 <div <?= $data->link->is_verified ? null : get_plan_feature_disabled_info(false) ?>>
                                     <div class="<?= $data->link->is_verified ? null : 'container-disabled' ?>">
 
                                         <div class="form-group">
                                             <label for="settings_verified_location"><i class="fas fa-fw fa-check-circle fa-sm text-muted mr-1"></i> <?= l('link.settings.verified_location') ?></label>
-                                            <div class="row btn-group-toggle" data-toggle="buttons">
+                                            <div class="row btn-group-toggle m-n2" data-toggle="buttons">
                                                 <div class="col-12 col-lg-4 p-2 h-100">
-                                                    <label class="btn btn-light btn-block text-truncate mb-0 <?= $data->link->settings->verified_location == '' ? 'active"' : null?>">
+                                                    <label class="btn btn-light btn-block font-size-small mb-0 text-truncate mb-0 <?= $data->link->settings->verified_location == '' ? 'active"' : null?>">
                                                         <input type="radio" name="verified_location" value="" class="custom-control-input" <?= $data->link->settings->verified_location == 'false' ? 'checked="checked"' : null?> />
-                                                        <?= l('global.none') ?>
+														<?= l('global.none') ?>
                                                     </label>
                                                 </div>
 
-                                                <?php foreach(['top', 'bottom',] as $key): ?>
+												<?php foreach(['top', 'bottom',] as $key): ?>
                                                     <div class="col-12 col-lg-4 p-2 h-100">
                                                         <label class="btn btn-light btn-block text-truncate mb-0 <?= $data->link->settings->verified_location == $key ? 'active"' : null?>">
                                                             <input type="radio" name="verified_location" value="<?= $key ?>" class="custom-control-input" <?= $data->link->settings->verified_location == $key ? 'checked="checked"' : null?> />
-                                                            <?= l('link.settings.verified_location.' . $key) ?>
+															<?= l('link.settings.verified_location.' . $key) ?>
                                                         </label>
                                                     </div>
-                                                <?php endforeach ?>
+												<?php endforeach ?>
                                             </div>
                                         </div>
 
@@ -336,11 +346,11 @@
                                 </div>
                             </div>
 
-                            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#branding_container" aria-expanded="false" aria-controls="branding_container">
+                            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#branding_container" aria-expanded="false" aria-controls="branding_container">
                                 <i class="fas fa-fw fa-random fa-sm mr-1"></i> <?= l('link.settings.branding_header') ?>
                             </button>
 
-                            <div class="collapse" id="branding_container" data-parent="#settings">
+                            <div class="collapse" data-parent="#settings" id="branding_container">
                                 <div <?= $this->user->plan_settings->removable_branding ? null : get_plan_feature_disabled_info() ?>>
                                     <div class="<?= $this->user->plan_settings->removable_branding ? null : 'container-disabled' ?>">
                                         <div class="form-group custom-control custom-switch">
@@ -349,8 +359,8 @@
                                                     class="custom-control-input"
                                                     id="display_branding"
                                                     name="display_branding"
-                                                <?= !$this->user->plan_settings->removable_branding ? 'disabled="disabled"': null ?>
-                                                <?= $data->link->settings->display_branding ? 'checked="checked"' : null ?>
+												<?= !$this->user->plan_settings->removable_branding ? 'disabled="disabled"': null ?>
+												<?= $data->link->settings->display_branding ? 'checked="checked"' : null ?>
                                             >
                                             <label class="custom-control-label" for="display_branding"><?= l('link.settings.display_branding') ?></label>
                                         </div>
@@ -381,12 +391,12 @@
                                 </div>
                             </div>
 
-                            <?php if(settings()->links->pixels_is_enabled): ?>
-                                <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#pixels_container" aria-expanded="false" aria-controls="pixels_container">
+							<?php if(settings()->links->pixels_is_enabled): ?>
+                                <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#pixels_container" aria-expanded="false" aria-controls="pixels_container">
                                     <i class="fas fa-fw fa-adjust fa-sm mr-1"></i> <?= l('link.settings.pixels_header') ?>
                                 </button>
 
-                                <div class="collapse" id="pixels_container" data-parent="#settings">
+                                <div class="collapse" data-parent="#settings" id="pixels_container">
                                     <div class="form-group">
                                         <div class="d-flex flex-wrap flex-row justify-content-between">
                                             <label><i class="fas fa-fw fa-sm fa-adjust text-muted mr-1"></i> <?= l('link.settings.pixels_ids') ?></label>
@@ -394,8 +404,8 @@
                                         </div>
 
                                         <div class="row">
-                                            <?php $available_pixels = require APP_PATH . 'includes/pixels.php'; ?>
-                                            <?php foreach($data->pixels as $pixel): ?>
+											<?php $available_pixels = require APP_PATH . 'includes/pixels.php'; ?>
+											<?php foreach($data->pixels as $pixel): ?>
                                                 <div class="col-12 col-lg-6">
                                                     <div class="custom-control custom-checkbox my-2">
                                                         <input id="pixel_id_<?= $pixel->pixel_id ?>" name="pixels_ids[]" value="<?= $pixel->pixel_id ?>" type="checkbox" class="custom-control-input" <?= in_array($pixel->pixel_id, $data->link->pixels_ids) ? 'checked="checked"' : null ?>>
@@ -407,17 +417,17 @@
                                                         </label>
                                                     </div>
                                                 </div>
-                                            <?php endforeach ?>
+											<?php endforeach ?>
                                         </div>
                                     </div>
                                 </div>
-                            <?php endif ?>
+							<?php endif ?>
 
-                            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#utm_container" aria-expanded="false" aria-controls="utm_container">
+                            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#utm_container" aria-expanded="false" aria-controls="utm_container">
                                 <i class="fas fa-fw fa-keyboard fa-sm mr-1"></i> <?= l('link.settings.utm_header') ?>
                             </button>
 
-                            <div class="collapse" id="utm_container" data-parent="#settings">
+                            <div class="collapse" data-parent="#settings" id="utm_container">
                                 <div <?= $this->user->plan_settings->utm ? null : get_plan_feature_disabled_info() ?>>
                                     <div class="<?= $this->user->plan_settings->utm ? null : 'container-disabled' ?>">
                                         <div class="form-group">
@@ -444,11 +454,11 @@
                                 </div>
                             </div>
 
-                            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#protection_container" aria-expanded="false" aria-controls="protection_container">
+                            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#protection_container" aria-expanded="false" aria-controls="protection_container">
                                 <i class="fas fa-fw fa-user-shield fa-sm mr-1"></i> <?= l('link.settings.protection_header') ?>
                             </button>
 
-                            <div class="collapse" id="protection_container" data-parent="#settings">
+                            <div class="collapse" data-parent="#settings" id="protection_container">
 
                                 <div <?= $this->user->plan_settings->password ? null : get_plan_feature_disabled_info() ?>>
                                     <div class="<?= $this->user->plan_settings->password ? null : 'container-disabled' ?>">
@@ -468,8 +478,8 @@
                                                     class="custom-control-input"
                                                     id="sensitive_content"
                                                     name="sensitive_content"
-                                                <?= !$this->user->plan_settings->sensitive_content ? 'disabled="disabled"': null ?>
-                                                <?= $data->link->settings->sensitive_content ? 'checked="checked"' : null ?>
+												<?= !$this->user->plan_settings->sensitive_content ? 'disabled="disabled"': null ?>
+												<?= $data->link->settings->sensitive_content ? 'checked="checked"' : null ?>
                                             >
                                             <label class="custom-control-label" for="sensitive_content"><?= l('link.settings.sensitive_content') ?></label>
                                             <small class="form-text text-muted"><?= l('link.settings.sensitive_content_help') ?></small>
@@ -478,11 +488,11 @@
                                 </div>
                             </div>
 
-                            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#seo_container" aria-expanded="false" aria-controls="seo_container">
+                            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#seo_container" aria-expanded="false" aria-controls="seo_container">
                                 <i class="fas fa-fw fa-search-plus fa-sm mr-1"></i> <?= l('link.settings.seo_header') ?>
                             </button>
 
-                            <div class="collapse" id="seo_container" data-parent="#settings">
+                            <div class="collapse" data-parent="#settings" id="seo_container">
                                 <div <?= $this->user->plan_settings->seo ? null : get_plan_feature_disabled_info() ?>>
                                     <div class="<?= $this->user->plan_settings->seo ? null : 'container-disabled' ?>">
                                         <div class="form-group custom-control custom-switch">
@@ -510,20 +520,30 @@
 
                                         <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= settings()->links->seo_image_size_limit ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), settings()->links->seo_image_size_limit) ?>">
                                             <label for="seo_image"><i class="fas fa-fw fa-image fa-sm text-muted mr-1"></i> <?= l('link.settings.seo_image') ?></label>
-                                            <?= include_view(THEME_PATH . 'views/partials/custom_file_image_input.php', ['uploads_file_key' => 'biolink_seo_image', 'file_key' => 'seo_image', 'already_existing_image' => $data->link->settings->seo->image, 'image_container' => 'seo_image', 'input_data' => 'data-crop data-aspect-ratio="1.91"']) ?>
-                                            <?= \Altum\Alerts::output_field_error('seo_image') ?>
+											<?= include_view(THEME_PATH . 'views/partials/custom_file_image_input.php', ['uploads_file_key' => 'biolink_seo_image', 'file_key' => 'seo_image', 'already_existing_image' => $data->link->settings->seo->image, 'image_container' => 'seo_image', 'input_data' => 'data-crop data-aspect-ratio="1.91"']) ?>
+											<?= \Altum\Alerts::output_field_error('seo_image') ?>
                                             <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('biolink_seo_image')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->links->seo_image_size_limit) ?></small>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="language_code"><i class="fas fa-fw fa-sm fa-language text-muted mr-1"></i> <?= l('link.settings.language_code') ?></label>
+                                            <select id="language_code" name="language_code" class="custom-select">
+                                                <?php foreach(get_locale_languages_array() as $locale => $language): ?>
+                                                    <option value="<?= $locale ?>" <?= ($data->link->settings->language_code ?? (isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? mb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2) : \Altum\Language::$default_code)) == $locale ? 'selected="selected"' : null?>><?= $language ?></option>
+                                                <?php endforeach ?>
+                                            </select>
+                                            <small class="form-text text-muted"><?= l('link.settings.language_code_help') ?></small>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <?php if(\Altum\Plugin::is_active('pwa') && settings()->pwa->is_enabled): ?>
-                                <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#pwa_container" aria-expanded="false" aria-controls="pwa_container">
+							<?php if(\Altum\Plugin::is_active('pwa') && settings()->pwa->is_enabled): ?>
+                                <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#pwa_container" aria-expanded="false" aria-controls="pwa_container">
                                     <i class="fas fa-fw fa-mobile-alt fa-sm mr-1"></i> <?= l('link.settings.pwa_header') ?>
                                 </button>
 
-                                <div class="collapse" id="pwa_container" data-parent="#settings">
+                                <div class="collapse" data-parent="#settings" id="pwa_container">
                                     <div class="alert alert-info">
                                         <i class="fas fa-fw fa-info-circle mr-1"></i> <?= l('link.settings.pwa_help') ?>
                                     </div>
@@ -537,8 +557,8 @@
                                                         class="custom-control-input"
                                                         id="pwa_is_enabled"
                                                         name="pwa_is_enabled"
-                                                    <?= $data->link->settings->pwa_is_enabled ? 'checked="checked"' : null ?>
-                                                    <?= !$this->user->plan_settings->custom_pwa_is_enabled ? 'disabled="disabled"' : null ?>
+													<?= $data->link->settings->pwa_is_enabled ? 'checked="checked"' : null ?>
+													<?= !$this->user->plan_settings->custom_pwa_is_enabled ? 'disabled="disabled"' : null ?>
                                                 >
                                                 <label class="custom-control-label" for="pwa_is_enabled"><?= l('link.settings.pwa_is_enabled') ?></label>
                                             </div>
@@ -549,8 +569,8 @@
                                                         class="custom-control-input"
                                                         id="pwa_display_install_bar"
                                                         name="pwa_display_install_bar"
-                                                    <?= $data->link->settings->pwa_display_install_bar ? 'checked="checked"' : null ?>
-                                                    <?= !$this->user->plan_settings->custom_pwa_is_enabled ? 'disabled="disabled"' : null ?>
+													<?= $data->link->settings->pwa_display_install_bar ? 'checked="checked"' : null ?>
+													<?= !$this->user->plan_settings->custom_pwa_is_enabled ? 'disabled="disabled"' : null ?>
                                                 >
                                                 <label class="custom-control-label" for="pwa_display_install_bar"><?= l('link.settings.pwa_display_install_bar') ?></label>
                                             </div>
@@ -567,8 +587,8 @@
 
                                             <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= settings()->links->pwa_icon_size_limit ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), settings()->links->pwa_icon_size_limit) ?>">
                                                 <label for="pwa_icon"><i class="fas fa-fw fa-image fa-sm text-muted mr-1"></i> <?= l('link.settings.pwa_icon') ?></label>
-                                                <?= include_view(THEME_PATH . 'views/partials/custom_file_image_input.php', ['uploads_file_key' => 'app_icon', 'file_key' => 'pwa_icon', 'already_existing_image' => $data->link->settings->pwa_icon, 'image_container' => 'pwa_icon']) ?>
-                                                <?= \Altum\Alerts::output_field_error('pwa_icon') ?>
+												<?= include_view(THEME_PATH . 'views/partials/custom_file_image_input.php', ['uploads_file_key' => 'app_icon', 'file_key' => 'pwa_icon', 'already_existing_image' => $data->link->settings->pwa_icon, 'image_container' => 'pwa_icon']) ?>
+												<?= \Altum\Alerts::output_field_error('pwa_icon') ?>
                                                 <small class="form-text text-muted"><?= l('link.settings.pwa_icon_help') ?><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('app_icon')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->links->pwa_icon_size_limit) ?></small>
                                             </div>
 
@@ -581,14 +601,58 @@
                                         </div>
                                     </div>
                                 </div>
-                            <?php endif ?>
+							<?php endif ?>
 
-                            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#advanced_container" aria-expanded="false" aria-controls="advanced_container">
+                            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#branded_button_container" aria-expanded="false" aria-controls="branded_button_container">
+                                <i class="fas fa-fw fa-circle fa-sm mr-1"></i> <?= l('link.settings.branded_button_header') ?>
+                            </button>
+
+                            <div class="collapse" data-parent="#settings" id="branded_button_container">
+                                <div <?= !$this->user->plan_settings->branded_button_is_enabled ? get_plan_feature_disabled_info() : null ?>>
+                                    <div class="<?= !$this->user->plan_settings->branded_button_is_enabled ? 'container-disabled' : null ?>">
+                                        <div class="form-group custom-control custom-switch">
+                                            <input
+                                                    type="checkbox"
+                                                    class="custom-control-input"
+                                                    id="branded_button_is_enabled"
+                                                    name="branded_button_is_enabled"
+												<?= $data->link->settings->branded_button_is_enabled ? 'checked="checked"' : null ?>
+												<?= !$this->user->plan_settings->branded_button_is_enabled ? 'disabled="disabled"' : null ?>
+                                            >
+                                            <label class="custom-control-label" for="branded_button_is_enabled"><?= l('link.settings.branded_button_is_enabled') ?></label>
+                                        </div>
+
+                                        <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= settings()->links->favicon_size_limit ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), settings()->links->favicon_size_limit) ?>">
+                                            <label for="branded_button_icon"><i class="fas fa-fw fa-image fa-sm text-muted mr-1"></i> <?= l('link.settings.branded_button_icon') ?></label>
+											<?= include_view(THEME_PATH . 'views/partials/custom_file_image_input.php', ['uploads_file_key' => 'branded_button_icon', 'file_key' => 'branded_button_icon', 'already_existing_image' => $data->link->settings->branded_button_icon, 'image_container' => 'branded_button_icon']) ?>
+											<?= \Altum\Alerts::output_field_error('branded_button_icon') ?>
+                                            <small class="form-text text-muted"><?= l('link.settings.branded_button_icon_help') ?><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('branded_button_icon')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->links->favicon_size_limit) ?></small>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="branded_button_title"><i class="fas fa-fw fa-heading fa-sm text-muted mr-1"></i> <?= l('link.settings.branded_button_title') ?></label>
+                                            <input id="branded_button_title" type="text" class="form-control" name="branded_button_title" value="<?= $data->link->settings->branded_button_title ?? '' ?>" maxlength="64" />
+                                            <small class="form-text text-muted"><?= l('link.settings.branded_button_title_help') ?></small>
+                                        </div>
+
+                                        <div class="form-group" data-character-counter="textarea">
+                                            <label for="branded_button_content" class="d-flex justify-content-between align-items-center">
+                                                <span><i class="fab fa-fw fa-sm fa-html5 text-muted mr-1"></i> <?= l('link.settings.branded_button_content') ?></span>
+                                                <small class="text-muted" data-character-counter-wrapper></small>
+                                            </label>
+                                            <textarea id="branded_button_content" class="form-control" name="branded_button_content" maxlength="10000"><?= $data->link->settings->branded_button_content ?></textarea>
+                                            <small class="form-text text-muted"><?= l('link.settings.branded_button_content_help') ?></small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#advanced_container" aria-expanded="false" aria-controls="advanced_container">
                                 <i class="fas fa-fw fa-user-tie fa-sm mr-1"></i> <?= l('link.settings.advanced_header') ?>
                             </button>
 
-                            <div class="collapse" id="advanced_container" data-parent="#settings">
-                                <?php if(settings()->links->email_reports_is_enabled): ?>
+                            <div class="collapse" data-parent="#settings" id="advanced_container">
+								<?php if(settings()->links->email_reports_is_enabled): ?>
                                     <div <?= $this->user->plan_settings->email_reports_is_enabled ? null : get_plan_feature_disabled_info() ?>>
                                         <div class="form-group <?= $this->user->plan_settings->email_reports_is_enabled ? null : 'container-disabled' ?>">
                                             <div class="d-flex flex-wrap flex-row flex-xl-row justify-content-between">
@@ -598,8 +662,8 @@
                                             <div class="mb-2"><small class="text-muted"><?= l('link.settings.email_reports_is_enabled_help') ?></small></div>
 
                                             <div class="row">
-                                                <?php foreach($data->notification_handlers as $notification_handler): ?>
-                                                    <?php if($notification_handler->type != 'email') continue ?>
+												<?php foreach($data->notification_handlers as $notification_handler): ?>
+													<?php if($notification_handler->type != 'email') continue ?>
                                                     <div class="col-12 col-lg-6">
                                                         <div class="custom-control custom-checkbox my-2">
                                                             <input id="<?= 'email_reports_' . $notification_handler->notification_handler_id ?>" name="email_reports[]" value="<?= $notification_handler->notification_handler_id ?>" type="checkbox" class="custom-control-input" <?= in_array($notification_handler->notification_handler_id, $data->link->email_reports) ? 'checked="checked"' : null ?>>
@@ -609,11 +673,11 @@
                                                             </label>
                                                         </div>
                                                     </div>
-                                                <?php endforeach ?>
+												<?php endforeach ?>
                                             </div>
                                         </div>
                                     </div>
-                                <?php endif ?>
+								<?php endif ?>
 
                                 <div class="form-group custom-control custom-switch">
                                     <input
@@ -621,7 +685,7 @@
                                             class="custom-control-input"
                                             id="share_is_enabled"
                                             name="share_is_enabled"
-                                        <?= $data->link->settings->share_is_enabled ? 'checked="checked"' : null ?>
+										<?= $data->link->settings->share_is_enabled ? 'checked="checked"' : null ?>
                                     >
                                     <label class="custom-control-label" for="share_is_enabled"><?= l('link.settings.share_is_enabled') ?></label>
                                     <small class="form-text text-muted"><?= l('link.settings.share_is_enabled_help') ?></small>
@@ -633,17 +697,17 @@
                                             class="custom-control-input"
                                             id="scroll_buttons_is_enabled"
                                             name="scroll_buttons_is_enabled"
-                                        <?= $data->link->settings->scroll_buttons_is_enabled ? 'checked="checked"' : null ?>
+										<?= $data->link->settings->scroll_buttons_is_enabled ? 'checked="checked"' : null ?>
                                     >
                                     <label class="custom-control-label" for="scroll_buttons_is_enabled"><?= l('link.settings.scroll_buttons_is_enabled') ?></label>
                                     <small class="form-text text-muted"><?= l('link.settings.scroll_buttons_is_enabled_help') ?></small>
                                 </div>
 
-                                <?php if(settings()->links->directory_is_enabled): ?>
-                                    <?php $directory_has_link = false ?>
-                                    <?php if(settings()->email_notifications->contact && !empty(settings()->email_notifications->emails)): ?>
-                                        <?php $directory_has_link = true ?>
-                                    <?php endif ?>
+								<?php if(settings()->links->directory_is_enabled): ?>
+									<?php $directory_has_link = false ?>
+									<?php if(settings()->email_notifications->contact && !empty(settings()->email_notifications->emails) && settings()->links->directory_display != 'all' && !$data->link->is_verified): ?>
+										<?php $directory_has_link = true ?>
+									<?php endif ?>
 
                                     <div <?= settings()->links->directory_display != 'all' && !$data->link->is_verified ? 'data-toggle="tooltip" data-html="true" title="' . l('link.settings.verified_required') . '<br />' . sprintf(l('link.settings.verified_help'), '', '') . '"' : null ?> <?= $directory_has_link ? 'class="cursor-pointer" onclick="window.location.href=\'' . url('contact') . '\'"' : null ?>>
                                         <div class="<?= settings()->links->directory_display != 'all' && !$data->link->is_verified ? 'container-disabled' : null ?>">
@@ -653,16 +717,16 @@
                                                         class="custom-control-input"
                                                         id="directory_is_enabled"
                                                         name="directory_is_enabled"
-                                                    <?= $data->link->directory_is_enabled ? 'checked="checked"' : null ?>
+													<?= $data->link->directory_is_enabled ? 'checked="checked"' : null ?>
                                                 >
                                                 <label class="custom-control-label" for="directory_is_enabled"><?= l('link.settings.directory_is_enabled') ?></label>
                                                 <small class="form-text text-muted"><?= sprintf(l('link.settings.directory_is_enabled_help'), '<a href="' . url('directory') . '">' . l('directory.menu') . '</a>') ?></small>
                                             </div>
                                         </div>
                                     </div>
-                                <?php endif ?>
+								<?php endif ?>
 
-                                <?php if(settings()->links->projects_is_enabled): ?>
+								<?php if(settings()->links->projects_is_enabled): ?>
                                     <div class="form-group">
                                         <div class="d-flex flex-wrap flex-row justify-content-between">
                                             <label for="project_id"><i class="fas fa-fw fa-sm fa-project-diagram text-muted mr-1"></i> <?= l('projects.project_id') ?></label>
@@ -670,14 +734,14 @@
                                         </div>
                                         <select id="project_id" name="project_id" class="custom-select">
                                             <option value=" "><?= l('global.none') ?></option>
-                                            <?php foreach($data->projects as $row): ?>
+											<?php foreach($data->projects as $row): ?>
                                                 <option value="<?= $row->project_id ?>" <?= $data->link->project_id == $row->project_id ? 'selected="selected"' : null?>><?= $row->name ?></option>
-                                            <?php endforeach ?>
+											<?php endforeach ?>
                                         </select>
                                     </div>
-                                <?php endif ?>
+								<?php endif ?>
 
-                                <?php if(settings()->links->splash_page_is_enabled): ?>
+								<?php if(settings()->links->splash_page_is_enabled): ?>
                                     <div <?= $this->user->plan_settings->splash_pages_limit ? null : get_plan_feature_disabled_info() ?>>
                                         <div class="<?= $this->user->plan_settings->splash_pages_limit ? null : 'container-disabled' ?>">
                                             <div class="form-group">
@@ -687,14 +751,14 @@
                                                 </div>
                                                 <select id="splash_page_id" name="splash_page_id" class="custom-select">
                                                     <option value=" "><?= l('global.none') ?></option>
-                                                    <?php foreach($data->splash_pages as $row): ?>
+													<?php foreach($data->splash_pages as $row): ?>
                                                         <option value="<?= $row->splash_page_id ?>" <?= $data->link->splash_page_id == $row->splash_page_id ? 'selected="selected"' : null?>><?= $row->name ?></option>
-                                                    <?php endforeach ?>
+													<?php endforeach ?>
                                                 </select>
                                             </div>
                                         </div>
                                     </div>
-                                <?php endif ?>
+								<?php endif ?>
 
                                 <div <?= $this->user->plan_settings->leap_link ? null : get_plan_feature_disabled_info() ?>>
                                     <div class="<?= $this->user->plan_settings->leap_link ? null : 'container-disabled' ?>">
@@ -728,14 +792,14 @@
                                     </div>
                                 </div>
 
-                                <?php if(settings()->links->sixsixpusher_is_enabled): ?>
-                                <div class="form-group" data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), get_max_upload()) ?>">
-                                    <label for="service_worker"><i class="fas fa-fw fa-sm fa-file text-muted mr-1"></i> <?= l('link.settings.service_worker') ?></label>
-                                    <?= include_view(THEME_PATH . 'views/partials/file_input.php', ['uploads_file_key' => 'service_workers', 'file_key' => 'service_worker', 'already_existing_file' => $data->link->settings->service_worker ?? null, 'is_required' => false]) ?>
-                                    <small class="form-text text-muted"><?= l('link.settings.service_worker_help') ?></small>
-                                    <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('service_workers')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
-                                </div>
-                                <?php endif ?>
+								<?php if(settings()->links->sixsixpusher_is_enabled): ?>
+                                    <div class="form-group" data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), settings()->links->sixsixpusher_service_worker_size_limit) ?>">
+                                        <label for="service_worker"><i class="fas fa-fw fa-sm fa-file text-muted mr-1"></i> <?= l('link.settings.service_worker') ?></label>
+										<?= include_view(THEME_PATH . 'views/partials/file_input.php', ['uploads_file_key' => 'service_workers', 'file_key' => 'service_worker', 'already_existing_file' => $data->link->settings->service_worker ?? null, 'custom_file_full_url' => $data->link->full_url . settings()->links->sixsixpusher_service_worker_file_name . '.js']) ?>
+                                        <small class="form-text text-muted"><?= l('link.settings.service_worker_help') ?></small>
+                                        <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('service_workers')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->links->sixsixpusher_service_worker_size_limit) ?></small>
+                                    </div>
+								<?php endif ?>
                             </div>
 
                             <div class="text-center mt-4">
@@ -749,18 +813,15 @@
 
             <div class="tab-pane fade <?= $active_tab == 'blocks' ? 'show active' : null ?>" id="biolink_blocks" role="tabpanel" aria-labelledby="blocks-tab">
 
-                <?php if($data->link_links_result->num_rows): ?>
-                    <?php while($row = $data->link_links_result->fetch_object()): ?>
-                        <?php if(!isset($data->biolink_blocks[$row->type])) continue; ?>
+				<?php if($data->link_links_result->num_rows): ?>
+					<?php while($row = $data->link_links_result->fetch_object()): ?>
+						<?php if(!isset($data->biolink_blocks[$row->type])) continue; ?>
 
-                        <?php $row->settings = (object) json_decode($row->settings) ?>
-                        <?php
-                        $row->settings->border_shadow_offset_x = $row->settings->border_shadow_offset_x ?? '0';
-                        $row->settings->border_shadow_offset_y = $row->settings->border_shadow_offset_y ?? '0';
-                        $row->settings->border_shadow_blur = $row->settings->border_shadow_blur ?? '20';
-                        $row->settings->border_shadow_spread = $row->settings->border_shadow_spread ?? '0';
-                        $row->settings->border_shadow_color = $row->settings->border_shadow_color ?? '#00000010';
-                        ?>
+						<?php $row->settings = (object) json_decode($row->settings) ?>
+						<?php
+						$row->settings->border_shadow_style = $row->settings->border_shadow_style ?? 'subtle';
+						$row->settings->border_shadow_color = $row->settings->border_shadow_color ?? '#00000010';
+						?>
 
                         <div class="biolink_block card <?= $row->is_enabled ? null : 'custom-row-inactive' ?> mb-4" data-biolink-block-id="<?= $row->biolink_block_id ?>">
                             <div class="card-body">
@@ -788,50 +849,50 @@
                                                    aria-controls="biolink_block_expanded_content_<?= $row->biolink_block_id ?>"
                                                    class="text-truncate"
                                                 >
-                                                    <?php if($row->type == 'paragraph'): ?>
-                                                        <?php $display_dynamic_name = strip_tags($row->settings->{$data->biolink_blocks[$row->type]['display_dynamic_name']}); ?>
-                                                        <strong><?= $display_dynamic_name ?: l('link.biolink.blocks.' . $row->type) ?></strong>
-                                                    <?php else: ?>
-                                                        <strong><?= $data->biolink_blocks[$row->type]['display_dynamic_name'] ? ($row->settings->{$data->biolink_blocks[$row->type]['display_dynamic_name']} ? string_truncate($row->settings->{$data->biolink_blocks[$row->type]['display_dynamic_name']}, 32) : l('link.biolink.blocks.' . $row->type)) : l('link.biolink.blocks.' . $row->type) ?></strong>
-                                                    <?php endif ?>
+													<?php if($row->type == 'paragraph'): ?>
+														<?php $display_dynamic_name = strip_tags($row->settings->{$data->biolink_blocks[$row->type]['display_dynamic_name']}); ?>
+                                                        <span class="font-weight-500"><?= $display_dynamic_name ?: l('link.biolink.blocks.' . $row->type) ?></span>
+													<?php else: ?>
+                                                        <span class="font-weight-500"><?= $data->biolink_blocks[$row->type]['display_dynamic_name'] ? ($row->settings->{$data->biolink_blocks[$row->type]['display_dynamic_name']} ? string_truncate($row->settings->{$data->biolink_blocks[$row->type]['display_dynamic_name']}, 32) : l('link.biolink.blocks.' . $row->type)) : l('link.biolink.blocks.' . $row->type) ?></span>
+													<?php endif ?>
                                                 </a>
                                             </div>
 
                                             <span class="d-flex align-items-center">
-                                            <?php if(!empty($row->location_url)): ?>
-                                                <?php if($parsed_host = parse_url($row->location_url, PHP_URL_HOST)): ?>
-                                                    <img referrerpolicy="no-referrer" src="<?= get_favicon_url_from_domain($parsed_host) ?>" class="img-fluid icon-favicon-small mr-1" loading="lazy" />
-                                                <?php endif ?>
+												<?php if(!empty($row->location_url)): ?>
+													<?php if($parsed_host = parse_url($row->location_url, PHP_URL_HOST)): ?>
+                                                        <img referrerpolicy="no-referrer" src="<?= get_favicon_url_from_domain($parsed_host) ?>" class="img-fluid icon-favicon-small mr-1" loading="lazy" />
+													<?php endif ?>
 
-                                                <span class="d-inline-block text-truncate">
-                                                    <a href="<?= $row->location_url ?>" class="text-muted small" title="<?= $row->location_url ?>" target="_blank" rel="noreferrer"><?= $row->location_url ?></a>
-                                                </span>
-                                            <?php elseif(!empty($row->url)): ?>
-                                                <img referrerpolicy="no-referrer" src="<?= get_favicon_url_from_domain(parse_url(url($row->url))['host']) ?>" class="img-fluid icon-favicon-small mr-1" loading="lazy" />
+                                                    <span class="d-inline-block text-truncate">
+                                                        <a href="<?= $row->location_url ?>" class="text-muted small" title="<?= $row->location_url ?>" target="_blank" rel="noreferrer"><?= $row->location_url ?></a>
+                                                    </span>
+												<?php elseif(!empty($row->url)): ?>
+                                                    <img referrerpolicy="no-referrer" src="<?= get_favicon_url_from_domain(parse_url(url($row->url))['host']) ?>" class="img-fluid icon-favicon-small mr-1" loading="lazy" />
 
-                                                <span class="d-inline-block text-truncate">
-                                                    <a href="<?= url($row->url) ?>" class="text-muted small" title="<?= url($row->url) ?>" target="_blank" rel="noreferrer"><?= url($row->url) ?></a>
-                                                </span>
-                                            <?php endif ?>
+                                                    <span class="d-inline-block text-truncate">
+                                                        <a href="<?= url($row->url) ?>" class="text-muted small" title="<?= url($row->url) ?>" target="_blank" rel="noreferrer"><?= url($row->url) ?></a>
+                                                    </span>
+												<?php endif ?>
                                             </span>
 
                                         </div>
                                     </div>
 
                                     <div class="d-none d-md-flex col-md-3 justify-content-end flex-wrap">
-                                        <?php if($data->biolink_blocks[$row->type]['has_statistics']): ?>
+										<?php if($data->biolink_blocks[$row->type]['has_statistics']): ?>
                                             <a href="<?= url('biolink-block/' . $row->biolink_block_id . '/statistics') ?>">
                                                 <span data-toggle="tooltip" title="<?= l('links.clicks') ?>" class="badge badge-light"><i class="fas fa-fw fa-sm fa-chart-bar mr-1"></i> <?= nr($row->clicks) ?></span>
                                             </a>
-                                        <?php endif ?>
-                                        <?php if($data->biolink_blocks[$row->type]['type'] == 'payment'): ?>
+										<?php endif ?>
+										<?php if($data->biolink_blocks[$row->type]['type'] == 'payment'): ?>
                                             <a href="<?= url('guests-payments?biolink_block_id=' . $row->biolink_block_id) ?>" class="btn btn-sm btn-link text-secondary" data-toggle="tooltip" title="<?= l('guests_payments.link') ?>">
                                                 <i class="fas fa-fw fa-sm fa-coins"></i>
                                             </a>
                                             <a href="<?= url('guests-payments-statistics?biolink_block_id=' . $row->biolink_block_id) ?>" class="btn btn-sm btn-link text-secondary" data-toggle="tooltip" title="<?= l('guests_payments_statistics.link') ?>">
                                                 <i class="fas fa-fw fa-sm fa-chart-pie"></i>
                                             </a>
-                                        <?php endif ?>
+										<?php endif ?>
                                     </div>
 
                                     <div class="col-5 col-md d-flex align-items-center justify-content-end">
@@ -841,7 +902,7 @@
                                                     class="custom-control-input"
                                                     id="biolink_block_is_enabled_<?= $row->biolink_block_id ?>"
                                                     data-row-id="<?= $row->biolink_block_id ?>"
-                                                <?= $row->is_enabled ? 'checked="checked"' : null ?>
+												<?= $row->is_enabled ? 'checked="checked"' : null ?>
                                             >
                                             <label class="custom-control-label" for="biolink_block_is_enabled_<?= $row->biolink_block_id ?>"></label>
                                         </div>
@@ -862,18 +923,18 @@
                                                     <i class="fas fa-fw fa-sm fa-pencil-alt mr-2"></i> <?= l('global.edit') ?>
                                                 </a>
 
-                                                <?php if($data->biolink_blocks[$row->type]['has_statistics']): ?>
+												<?php if($data->biolink_blocks[$row->type]['has_statistics']): ?>
                                                     <a href="<?= url('biolink-block/' . $row->biolink_block_id . '/statistics') ?>" class="dropdown-item"><i class="fas fa-fw fa-sm fa-chart-bar mr-2"></i> <?= l('link.statistics.link') ?></a>
-                                                <?php endif ?>
+												<?php endif ?>
 
-                                                <?php if($data->biolink_blocks[$row->type]['type'] == 'payment'): ?>
+												<?php if($data->biolink_blocks[$row->type]['type'] == 'payment'): ?>
                                                     <a href="<?= url('guests-payments?biolink_block_id=' . $row->biolink_block_id) ?>" class="dropdown-item"><i class="fas fa-fw fa-sm fa-coins mr-2"></i> <?= l('guests_payments.link') ?></a>
                                                     <a href="<?= url('guests-payments-statistics?biolink_block_id=' . $row->biolink_block_id) ?>" class="dropdown-item"><i class="fas fa-fw fa-sm fa-chart-pie mr-2"></i> <?= l('guests_payments_statistics.link') ?></a>
-                                                <?php endif ?>
+												<?php endif ?>
 
-                                                <?php if(in_array($row->type, ['email_collector', 'phone_collector', 'contact_collector'])): ?>
+												<?php if(in_array($row->type, ['email_collector', 'phone_collector', 'contact_collector'])): ?>
                                                     <a href="<?= url('data?biolink_block_id=' . $row->biolink_block_id) ?>" class="dropdown-item"><i class="fas fa-fw fa-sm fa-database mr-2"></i> <?= l('data.link') ?></a>
-                                                <?php endif ?>
+												<?php endif ?>
 
                                                 <a href="<?= $data->link->full_url . '#biolink_block_id_' . $row->biolink_block_id ?>" target="_blank" class="dropdown-item" data-biolink-block-id="<?= $row->biolink_block_id ?>"><i class="fas fa-fw fa-sm fa-external-link-alt mr-2"></i> <?= l('global.view') ?></a>
 
@@ -886,21 +947,21 @@
                                 </div>
 
                                 <div class="collapse mt-3 <?= isset($_GET['biolink_block_id']) && $_GET['biolink_block_id'] == $row->biolink_block_id ? 'show' : null ?>" id="biolink_block_expanded_content_<?= $row->biolink_block_id ?>" data-link-type="<?= $row->type ?>" data-parent="#biolink_blocks">
-                                    <?php require THEME_PATH . 'views/link/settings/biolink_blocks/' . $row->type . '/' . $row->type . '_update_form.php' ?>
+									<?php require THEME_PATH . 'views/link/settings/biolink_blocks/' . $row->type . '/' . $row->type . '_update_form.php' ?>
                                 </div>
                             </div>
                         </div>
 
-                    <?php endwhile ?>
-                <?php else: ?>
+					<?php endwhile ?>
+				<?php else: ?>
 
-                    <?= include_view(THEME_PATH . 'views/partials/no_data.php', [
-                        'filters_get' => $data->filters->get ?? [],
-                        'name' => 'link.biolink_blocks',
-                        'has_secondary_text' => true,
-                    ]); ?>
+					<?= include_view(THEME_PATH . 'views/partials/no_data.php', [
+						'filters_get' => $data->filters->get ?? [],
+						'name' => 'link.biolink_blocks',
+						'has_secondary_text' => true,
+					]); ?>
 
-                <?php endif ?>
+				<?php endif ?>
 
             </div>
         </div>
@@ -918,38 +979,41 @@
     </div>
 </div>
 
-<template id="template_vcard_social">
-    <div class="mb-4">
-        <div class="form-group">
-            <label for=""><i class="fas fa-fw fa-bookmark fa-sm text-muted mr-1"></i> <?= l('biolink_vcard.vcard_social_label') ?></label>
-            <input id="" type="text" name="vcard_social_label[]" class="form-control" maxlength="<?= $data->biolink_blocks['vcard']['fields']['social_label']['max_length'] ?>" required="required" />
+<?php if(settings()->links->available_biolink_blocks->vcard): ?>
+    <template id="template_vcard_social">
+        <div class="mb-4">
+            <div class="form-group">
+                <label for=""><i class="fas fa-fw fa-bookmark fa-sm text-muted mr-1"></i> <?= l('biolink_vcard.vcard_social_label') ?></label>
+                <input id="" type="text" name="vcard_social_label[]" class="form-control" maxlength="<?= $data->biolink_blocks['vcard']['fields']['social_label']['max_length'] ?>" required="required" />
+            </div>
+
+            <div class="form-group">
+                <label for=""><i class="fas fa-fw fa-link fa-sm text-muted mr-1"></i> <?= l('biolink_vcard.vcard_social_value') ?></label>
+                <input id="" type="url" name="vcard_social_value[]" class="form-control" maxlength="<?= $data->biolink_blocks['vcard']['fields']['social_value']['max_length'] ?>" required="required" />
+            </div>
+
+            <button type="button" data-remove="vcard_social" class="btn btn-sm btn-block btn-outline-danger"><i class="fas fa-fw fa-times"></i> <?= l('global.delete') ?></button>
         </div>
+    </template>
 
-        <div class="form-group">
-            <label for=""><i class="fas fa-fw fa-link fa-sm text-muted mr-1"></i> <?= l('biolink_vcard.vcard_social_value') ?></label>
-            <input id="" type="url" name="vcard_social_value[]" class="form-control" maxlength="<?= $data->biolink_blocks['vcard']['fields']['social_value']['max_length'] ?>" required="required" />
+    <template id="template_vcard_phone_numbers">
+        <div class="mb-4">
+            <div class="form-group">
+                <label for=""><i class="fas fa-fw fa-bookmark fa-sm text-muted mr-1"></i> <?= l('biolink_vcard.vcard_phone_number_label') ?></label>
+                <input id="" type="text" name="vcard_phone_number_label[]" class="form-control" maxlength="<?= $data->links_types['vcard']['fields']['phone_number_label']['max_length'] ?>" />
+                <small class="form-text text-muted"><?= l('biolink_vcard.vcard_phone_number_label_help') ?></small>
+            </div>
+
+            <div class="form-group">
+                <label for=""><i class="fas fa-fw fa-phone-square-alt fa-sm text-muted mr-1"></i> <?= l('biolink_vcard.vcard_phone_number_value') ?></label>
+                <input id="" type="text" name="vcard_phone_number_value[]" class="form-control" maxlength="<?= $data->links_types['vcard']['fields']['phone_number_value']['max_length'] ?>" required="required" />
+            </div>
+
+            <button type="button" data-remove="vcard_phone_numbers" class="btn btn-sm btn-block btn-outline-danger"><i class="fas fa-fw fa-times"></i> <?= l('global.delete') ?></button>
         </div>
+    </template>
+<?php endif ?>
 
-        <button type="button" data-remove="vcard_social" class="btn btn-sm btn-block btn-outline-danger"><i class="fas fa-fw fa-times"></i> <?= l('global.delete') ?></button>
-    </div>
-</template>
-
-<template id="template_vcard_phone_numbers">
-    <div class="mb-4">
-        <div class="form-group">
-            <label for=""><i class="fas fa-fw fa-bookmark fa-sm text-muted mr-1"></i> <?= l('biolink_vcard.vcard_phone_number_label') ?></label>
-            <input id="" type="text" name="vcard_phone_number_label[]" class="form-control" maxlength="<?= $data->links_types['vcard']['fields']['phone_number_label']['max_length'] ?>" />
-            <small class="form-text text-muted"><?= l('biolink_vcard.vcard_phone_number_label_help') ?></small>
-        </div>
-
-        <div class="form-group">
-            <label for=""><i class="fas fa-fw fa-phone-square-alt fa-sm text-muted mr-1"></i> <?= l('biolink_vcard.vcard_phone_number_value') ?></label>
-            <input id="" type="text" name="vcard_phone_number_value[]" class="form-control" maxlength="<?= $data->links_types['vcard']['fields']['phone_number_value']['max_length'] ?>" required="required" />
-        </div>
-
-        <button type="button" data-remove="vcard_phone_numbers" class="btn btn-sm btn-block btn-outline-danger"><i class="fas fa-fw fa-times"></i> <?= l('global.delete') ?></button>
-    </div>
-</template>
 <?php $html = ob_get_clean() ?>
 
 
@@ -958,21 +1022,6 @@
 <script src="<?= ASSETS_FULL_URL . 'js/libraries/fontawesome-iconpicker.min.js?v=' . PRODUCT_CODE ?>"></script>
 <script>
     'use strict';
-
-    /* Settings Tab */
-    const container = document.querySelector('.biolink-themes-wrapper');
-    if(container) {
-        const fade_left = document.querySelector('.biolink-themes-wrapper-left');
-        const fade_right = document.querySelector('.biolink-themes-wrapper-right');
-
-        const update_fades = () => {
-            fade_left.style.opacity = container.scrollLeft ? 1 : 0;
-            fade_right.style.opacity = (container.scrollLeft + container.clientWidth + 1 >= container.scrollWidth) ? 0 : 1;
-        };
-
-        container.addEventListener('scroll', update_fades);
-        window.addEventListener('resize', update_fades);
-    }
 
     /* Initiate the color picker */
     let pickr_options = {
@@ -1028,9 +1077,10 @@
     /* Switching themes & previewing */
     let biolink_theme_preview = () => {
         return new Promise((resolve) => {
-            let biolink_theme_id = document.querySelector('input[name="biolink_theme_id"]').value;
+            let biolink_theme_id = document.querySelector('#biolink_theme_id').value;
 
-            console.log(biolink_theme_id);
+            if(!biolink_theme_id) return;
+
             /* Add loader */
             document.querySelector('#biolink_preview_iframe_loading').classList.remove('d-none');
 
@@ -1049,7 +1099,6 @@
                 biolink_preview_iframe.onload = () => {
                     document.querySelector('#biolink_preview_iframe').dispatchEvent(new Event('refreshed'));
                     document.querySelector('#biolink_preview_iframe_loading').classList.add('d-none');
-                    console.log('hehe');
                     resolve();
 
                 }
@@ -1059,9 +1108,11 @@
 
     /* Function to switch theme to custom */
     let set_biolink_theme_id_null = async () => {
-        document.querySelector('input[name="biolink_theme_id"]').value = '';
+        $('input[name="biolink_theme_id"][type="radio"]').prop('checked', false);
+        $('input[name="biolink_theme_id"][type="radio"][value=""]').prop('checked', true);
+        document.querySelector('#biolink_theme_id').value = '';
 
-        await biolink_theme_preview();
+        //await biolink_theme_preview();
     }
 
     /* Display verified */
@@ -1125,7 +1176,8 @@
     /* Fonts size */
     document.querySelector('#settings_font_size').addEventListener('change', async event => {
         let font_size = event.currentTarget.value;
-        $('#biolink_preview_iframe').contents().find('body').css('font-size', `${font_size}px`);
+        const iframe_body = $('#biolink_preview_iframe').contents();
+        iframe_body.find('html').get(0).style.setProperty('font-size', `${font_size}px`, 'important');
         await set_biolink_theme_id_null();
     });
 
@@ -1174,8 +1226,6 @@
     /* Preset background preview */
     $('#background_type_preset input[name="background"]').on('change', async event => {
         await set_biolink_theme_id_null();
-
-        console.log('test');
 
         let preset_style = $(event.currentTarget).parent().find('.link-background-type-preset')[0].getAttribute('style');
         $('#biolink_preview_iframe').contents().find('body').attr('style', preset_style);
@@ -1445,8 +1495,6 @@
     }, (start, end, label) => {});
 </script>
 
-<script src="<?= ASSETS_FULL_URL . 'js/libraries/sortable.js?v=' . PRODUCT_CODE ?>"></script>
-
 <script>
     'use strict';
 
@@ -1477,6 +1525,9 @@
 
             /* Refresh iframe */
             refresh_biolink_preview();
+
+            /* Refresh tooltips */
+            tooltips_initiate();
         }
     });
 
@@ -1492,7 +1543,7 @@
     });
 
     /* When an expanding happens for a link settings */
-    $('[id^="biolink_block_expanded_content"]').on('show.bs.collapse', event => {
+    $('[id^="biolink_block_expanded_content"]').on('shown.bs.collapse', event => {
         let update_form_content = event.currentTarget;
         let link_type = $(update_form_content).data('link-type');
         let biolink_block_id = $(update_form_content.querySelector('input[name="biolink_block_id"]')).val();
@@ -1533,6 +1584,10 @@
 
                 case 'alert':
                     extra_updating_and_potentially_color_inputs = ['text'];
+                    break;
+
+                case 'weather':
+                    extra_updating_and_potentially_color_inputs = ['text', 'description'];
                     break;
 
                 case 'review':
@@ -1579,6 +1634,78 @@
 
                     break;
 
+                case 'counter':
+                    extra_updating_and_potentially_color_inputs = ['number', 'description', 'number_prefix', 'number_suffix'];
+                    break;
+
+                case 'loading':
+                    extra_updating_and_potentially_color_inputs = ['description', 'number_prefix', 'number_suffix'];
+
+                    let number_color_pickr = update_form_content.querySelector(`.number_color_pickr`);
+                    let number_color_input = update_form_content.querySelector(`input[name="number_color"]`);
+
+                    if(number_color_pickr) {
+                        let color_pickr = Pickr.create({
+                            el: number_color_pickr,
+                            default: number_color_input.value,
+                            ...pickr_options
+                        });
+
+                        color_pickr.off().on('change', hsva => {
+                            number_color_input.value = hsva.toHEXA().toString();
+                            biolink_link.find(`[data-number-color]`).css('background-color', hsva.toHEXA().toString());
+                        });
+                    }
+
+                    $(update_form_content.querySelector('input[name="number"]')).off().on('change paste keyup', event => {
+                        let number = event.currentTarget.value;
+                        biolink_link.find('.progress-bar').css('width', number + '%');
+                        biolink_link.find('[data-number]').text(number);
+                    });
+
+                    $(update_form_content.querySelector('input[name="bar_height"]')).off().on('change paste keyup', event => {
+                        let height = event.currentTarget.value;
+                        biolink_link.find('[data-bar-height]').css('height', height + 'px');
+                    });
+
+                    $(update_form_content.querySelector('input[name="bar_is_striped"]')).off().on('change paste keyup', event => {
+                        let is_checked = event.currentTarget.checked;
+
+                        if(is_checked) {
+                            biolink_link.find('.progress-bar')[0].classList.add('progress-bar-striped');
+                        } else {
+                            biolink_link.find('.progress-bar')[0].classList.remove('progress-bar-striped');
+                        }
+                    });
+
+                    $(update_form_content.querySelector('input[name="bar_is_animated"]')).off().on('change paste keyup', event => {
+                        let is_checked = event.currentTarget.checked;
+
+                        if(is_checked) {
+                            biolink_link.find('.progress-bar')[0].classList.add('progress-bar-animated');
+                        } else {
+                            biolink_link.find('.progress-bar')[0].classList.remove('progress-bar-animated');
+                        }
+                    });
+
+                    let bar_color_pickr = update_form_content.querySelector(`.bar_color_pickr`);
+                    let bar_color_input = update_form_content.querySelector(`input[name="bar_color"]`);
+
+                    if(bar_color_pickr) {
+                        let color_pickr = Pickr.create({
+                            el: bar_color_pickr,
+                            default: bar_color_input.value,
+                            ...pickr_options
+                        });
+
+                        color_pickr.off().on('change', hsva => {
+                            bar_color_input.value = hsva.toHEXA().toString();
+                            biolink_link.find(`[data-bar-color]`).css('background-color', hsva.toHEXA().toString());
+                        });
+                    }
+
+                    break;
+
                 case 'paragraph':
                 case 'markdown':
                     extra_updating_and_potentially_color_inputs = ['text'];
@@ -1592,15 +1719,15 @@
 
                         switch (border_radius) {
                             case 'straight':
-                                biolink_link.find('[data-border-avatar-radius]').removeClass('link-avatar-round link-avatar-rounded');
+                                biolink_link.find('[data-border-avatar-radius]').removeClass('link-avatar-round link-avatar-rounded').addClass('link-avatar-straight');
                                 break;
 
                             case 'round':
-                                biolink_link.find('[data-border-avatar-radius]').removeClass('link-avatar-rounded').addClass('link-avatar-round');
+                                biolink_link.find('[data-border-avatar-radius]').removeClass('link-avatar-rounded link-avatar-straight').addClass('link-avatar-round');
                                 break;
 
                             case 'rounded':
-                                biolink_link.find('[data-border-avatar-radius]').removeClass('link-avatar-round').addClass('link-avatar-rounded');
+                                biolink_link.find('[data-border-avatar-radius]').removeClass('link-avatar-round link-avatar-straight').addClass('link-avatar-rounded');
                                 break;
                         }
                     });
@@ -1625,15 +1752,15 @@
 
                         switch (border_radius) {
                             case 'straight':
-                                biolink_link.find('[data-border-avatar-radius]').removeClass('link-avatar-round link-avatar-rounded');
+                                biolink_link.find('[data-border-avatar-radius]').removeClass('link-avatar-round link-avatar-rounded').addClass('link-avatar-straight');
                                 break;
 
                             case 'round':
-                                biolink_link.find('[data-border-avatar-radius]').removeClass('link-avatar-rounded').addClass('link-avatar-round');
+                                biolink_link.find('[data-border-avatar-radius]').removeClass('link-avatar-rounded link-avatar-straight').addClass('link-avatar-round');
                                 break;
 
                             case 'rounded':
-                                biolink_link.find('[data-border-avatar-radius]').removeClass('link-avatar-round').addClass('link-avatar-rounded');
+                                biolink_link.find('[data-border-avatar-radius]').removeClass('link-avatar-round link-avatar-straight').addClass('link-avatar-rounded');
                                 break;
                         }
                     });
@@ -1651,6 +1778,10 @@
                     break;
 
                 case 'big_link':
+                    extra_updating_and_potentially_color_inputs = ['name', 'description'];
+                    break;
+
+                case 'countdown':
                     extra_updating_and_potentially_color_inputs = ['name', 'description'];
                     break;
 
@@ -1720,7 +1851,7 @@
 
                         /* Set the name in the form title */
                         if(item == 'name') {
-                            $(`[data-target="#biolink_block_expanded_content${biolink_block_id}"] > strong`).text(name);
+                            $(`[data-target="#biolink_block_expanded_content_${biolink_block_id}"] > span`).text(item_input.value);
                         }
                     });
                 }
@@ -1770,16 +1901,24 @@
 
             /* Generate box shadow values for the preview */
             let generate_box_shadow = () => {
-                if(biolink_link.find('[data-border-shadow]').length) {
-                    let border_shadow_offset_x = update_form_content.querySelector('input[name="border_shadow_offset_x"]').value;
-                    let border_shadow_offset_y = update_form_content.querySelector('input[name="border_shadow_offset_y"]').value;
-                    let border_shadow_blur = update_form_content.querySelector('input[name="border_shadow_blur"]').value;
-                    let border_shadow_spread = update_form_content.querySelector('input[name="border_shadow_spread"]').value;
-                    let border_shadow_color = update_form_content.querySelector('input[name="border_shadow_color"]').value;
+                let element = biolink_link.find('[data-border-shadow]');
+                if(!element.length) return;
 
-                    biolink_link.find('[data-border-shadow]').css('box-shadow', `${border_shadow_offset_x}px ${border_shadow_offset_y}px ${border_shadow_blur}px ${border_shadow_spread}px ${border_shadow_color}`);
-                }
-            }
+                let border_shadow_style_input = update_form_content.querySelector('input[name="border_shadow_style"]:checked');
+                let border_shadow_style = border_shadow_style_input ? border_shadow_style_input.value : 'subtle';
+                let border_shadow_color = update_form_content.querySelector('input[name="border_shadow_color"]').value;
+
+                let shadow_presets = {
+                    none: 'none',
+                    subtle: `1px 2px 4px rgba(0,0,0,0.04), 1px 2px 5px ${border_shadow_color}`,
+                    strong: `1px 10px 15px -3px rgba(0,0,0,0.1), 1px 4px 10px -2px ${border_shadow_color}`,
+                    hard: `4px 4px 0 2px ${border_shadow_color}`
+                };
+
+                let shadow_value = shadow_presets[border_shadow_style] || shadow_presets.none;
+
+                element.css('box-shadow', shadow_value);
+            };
 
             /* Border shadow color */
             let border_shadow_color_pickr_element = update_form_content.querySelector('.border_shadow_color_pickr');
@@ -1833,15 +1972,15 @@
 
                     switch (border_radius) {
                         case 'straight':
-                            biolink_link.find('[data-border-radius]').removeClass('link-btn-round link-btn-rounded');
+                            biolink_link.find('[data-border-radius]').removeClass('link-btn-round link-btn-rounded').addClass('link-btn-straight');
                             break;
 
                         case 'round':
-                            biolink_link.find('[data-border-radius]').removeClass('link-btn-rounded').addClass('link-btn-round');
+                            biolink_link.find('[data-border-radius]').removeClass('link-btn-rounded link-btn-straight').addClass('link-btn-round');
                             break;
 
                         case 'rounded':
-                            biolink_link.find('[data-border-radius]').removeClass('link-btn-round').addClass('link-btn-rounded');
+                            biolink_link.find('[data-border-radius]').removeClass('link-btn-round link-btn-straight').addClass('link-btn-rounded');
                             break;
                     }
                 });
@@ -1932,7 +2071,7 @@
             schedule_handler();
 
             /* Custom select implementation */
-            $('select:not([multiple="multiple"]):not([class="input-group-text"]):not([class="custom-select custom-select-sm"]):not([class^="ql"]):not([data-is-not-custom-select])').each(function() {
+            $(update_form_content).find('select:not([multiple="multiple"]):not([class="input-group-text"]):not([class="custom-select custom-select-sm"]):not([class^="ql"]):not([data-is-not-custom-select])').each(function() {
                 let $select = $(this);
                 $select.select2({
                     placeholder: <?= json_encode(l('global.no_data')) ?>,
@@ -1956,91 +2095,89 @@
 
 </script>
 
-<script>
-    'use strict';
+<?php if(settings()->links->available_biolink_blocks->vcard): ?>
+    <script>
+        'use strict';
 
-    /* Vcard Social Script */
-    'use strict';
+        /* Vcard Social Script */
+        'use strict';
 
-    /* add new */
-    let vcard_social_add = event => {
-        let biolink_block_id = event.currentTarget.getAttribute('data-biolink-block-id');
-        let clone = document.querySelector(`#template_vcard_social`).content.cloneNode(true);
-        let count = document.querySelectorAll(`[id="vcard_socials_${biolink_block_id}"] .mb-4`).length;
+        /* add new */
+        let vcard_social_add = event => {
+            let biolink_block_id = event.currentTarget.getAttribute('data-biolink-block-id');
+            let clone = document.querySelector(`#template_vcard_social`).content.cloneNode(true);
+            let count = document.querySelectorAll(`[id="vcard_socials_${biolink_block_id}"] .mb-4`).length;
 
-        if(count >= 20) return;
+            if(count >= 20) return;
 
-        clone.querySelector(`input[name="vcard_social_label[]"`).setAttribute('name', `vcard_social_label[${count}]`);
-        clone.querySelector(`input[name="vcard_social_value[]"`).setAttribute('name', `vcard_social_value[${count}]`);
+            clone.querySelector(`input[name="vcard_social_label[]"`).setAttribute('name', `vcard_social_label[${count}]`);
+            clone.querySelector(`input[name="vcard_social_value[]"`).setAttribute('name', `vcard_social_value[${count}]`);
 
-        document.querySelector(`[id="vcard_socials_${biolink_block_id}"]`).appendChild(clone);
+            document.querySelector(`[id="vcard_socials_${biolink_block_id}"]`).appendChild(clone);
+
+            vcard_social_remove_initiator();
+        };
+
+        document.querySelectorAll('[data-add="vcard_social"]').forEach(element => {
+            element.addEventListener('click', vcard_social_add);
+        })
+
+        /* remove */
+        let vcard_social_remove = event => {
+            event.currentTarget.closest('.mb-4').remove();
+        };
+
+        let vcard_social_remove_initiator = () => {
+            document.querySelectorAll('[id^="vcard_socials_"] [data-remove]').forEach(element => {
+                element.removeEventListener('click', vcard_social_remove);
+                element.addEventListener('click', vcard_social_remove)
+            })
+        };
 
         vcard_social_remove_initiator();
-    };
+    </script>
 
-    document.querySelectorAll('[data-add="vcard_social"]').forEach(element => {
-        element.addEventListener('click', vcard_social_add);
-    })
+    <script>
+        'use strict';
+        /* Vcard Phone Numbers */
 
-    /* remove */
-    let vcard_social_remove = event => {
-        event.currentTarget.closest('.mb-4').remove();
-    };
+        /* add new */
+        let vcard_phone_number_add = event => {
+            let biolink_block_id = event.currentTarget.getAttribute('data-biolink-block-id');
+            let clone = document.querySelector(`#template_vcard_phone_numbers`).content.cloneNode(true);
+            let count = document.querySelectorAll(`[id="vcard_phone_numbers_${biolink_block_id}"] .mb-4`).length;
 
-    let vcard_social_remove_initiator = () => {
-        document.querySelectorAll('[id^="vcard_socials_"] [data-remove]').forEach(element => {
-            element.removeEventListener('click', vcard_social_remove);
-            element.addEventListener('click', vcard_social_remove)
+            if(count >= 20) return;
+
+            clone.querySelector(`input[name="vcard_phone_number_label[]"`).setAttribute('name', `vcard_phone_number_label[${count}]`);
+            clone.querySelector(`input[name="vcard_phone_number_value[]"`).setAttribute('name', `vcard_phone_number_value[${count}]`);
+
+            document.querySelector(`[id="vcard_phone_numbers_${biolink_block_id}"]`).appendChild(clone);
+
+            vcard_phone_number_remove_initiator();
+        };
+
+        document.querySelectorAll('[data-add="vcard_phone_numbers"]').forEach(element => {
+            element.addEventListener('click', vcard_phone_number_add);
         })
-    };
 
-    vcard_social_remove_initiator();
-</script>
+        /* remove */
+        let vcard_phone_number_remove = event => {
+            event.currentTarget.closest('.mb-4').remove();
+        };
 
-<script>
-    'use strict';
-
-    /* Vcard Phone Numbers */
-    'use strict';
-
-    /* add new */
-    let vcard_phone_number_add = event => {
-        let biolink_block_id = event.currentTarget.getAttribute('data-biolink-block-id');
-        let clone = document.querySelector(`#template_vcard_phone_numbers`).content.cloneNode(true);
-        let count = document.querySelectorAll(`[id="vcard_phone_numbers_${biolink_block_id}"] .mb-4`).length;
-
-        if(count >= 20) return;
-
-        clone.querySelector(`input[name="vcard_phone_number_label[]"`).setAttribute('name', `vcard_phone_number_label[${count}]`);
-        clone.querySelector(`input[name="vcard_phone_number_value[]"`).setAttribute('name', `vcard_phone_number_value[${count}]`);
-
-        document.querySelector(`[id="vcard_phone_numbers_${biolink_block_id}"]`).appendChild(clone);
+        let vcard_phone_number_remove_initiator = () => {
+            document.querySelectorAll('[id^="vcard_phone_numbers_"] [data-remove]').forEach(element => {
+                element.removeEventListener('click', vcard_phone_number_remove);
+                element.addEventListener('click', vcard_phone_number_remove)
+            })
+        };
 
         vcard_phone_number_remove_initiator();
-    };
-
-    document.querySelectorAll('[data-add="vcard_phone_numbers"]').forEach(element => {
-        element.addEventListener('click', vcard_phone_number_add);
-    })
-
-    /* remove */
-    let vcard_phone_number_remove = event => {
-        event.currentTarget.closest('.mb-4').remove();
-    };
-
-    let vcard_phone_number_remove_initiator = () => {
-        document.querySelectorAll('[id^="vcard_phone_numbers_"] [data-remove]').forEach(element => {
-            element.removeEventListener('click', vcard_phone_number_remove);
-            element.addEventListener('click', vcard_phone_number_remove)
-        })
-    };
-
-    vcard_phone_number_remove_initiator();
-</script>
+    </script>
+<?php endif ?>
 
 <script>
-    'use strict';
-
     /* Live block highlighting */
     'use strict';
 

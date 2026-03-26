@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -79,8 +79,8 @@ class AdminBiolinksBlocks extends Controller {
         //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('admin/biolinks-blocks');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -101,6 +101,8 @@ class AdminBiolinksBlocks extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
@@ -111,7 +113,7 @@ class AdminBiolinksBlocks extends Controller {
             }
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -131,7 +133,7 @@ class AdminBiolinksBlocks extends Controller {
         }
 
         if(!$link = db()->where('biolink_block_id', $biolink_block_id)->getOne('biolinks_blocks', ['biolink_block_id'])) {
-            redirect('admin/biolinks-blocks');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

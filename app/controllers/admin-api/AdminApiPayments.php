@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,6 +25,10 @@ class AdminApiPayments extends Controller {
     use Apiable;
 
     public function index() {
+
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            throw_404();
+        }
 
         $this->verify_request(true);
 
@@ -96,7 +100,10 @@ class AdminApiPayments extends Controller {
                 'currency' => $row->currency,
                 'payment_proof' => $row->payment_proof,
                 'payment_proof_url' => \Altum\Uploads::get_full_url('offline_payment_proofs') . $row->payment_proof_url,
-                'status' => (bool) (int) $row->status,
+                'status' => $row->status,
+                'refunds' => json_decode($row->refunds ?? '[]'),
+                'refunded_total' => (float) $row->refunded_total,
+                'refunded_status' => $row->refunded_status,
                 'datetime' => $row->datetime,
             ];
 
@@ -158,7 +165,10 @@ class AdminApiPayments extends Controller {
             'currency' => $payment->currency,
             'payment_proof' => $payment->payment_proof,
             'payment_proof_url' => \Altum\Uploads::get_full_url('offline_payment_proofs') . $payment->payment_proof_url,
-            'status' => (bool) (int) $payment->status,
+            'status' => $payment->status,
+            'refunds' => json_decode($payment->refunds ?? '[]'),
+            'refunded_total' => (float) $payment->refunded_total,
+            'refunded_status' => $payment->refunded_status,
             'datetime' => $payment->datetime,
         ];
 

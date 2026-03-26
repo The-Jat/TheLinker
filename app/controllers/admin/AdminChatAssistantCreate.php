@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,7 +25,7 @@ class AdminChatAssistantCreate extends Controller {
     public function index() {
 
         if(!\Altum\Plugin::is_active('aix')) {
-            redirect('not-found');
+            throw_404();
         }
 
         if(!empty($_POST)) {
@@ -35,10 +35,21 @@ class AdminChatAssistantCreate extends Controller {
             $_POST['order'] = (int) $_POST['order'] ?? 0;
             $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
 
+            /* Initiate purifier */
+            $purifier_config = \HTMLPurifier_Config::createDefault();
+        $purifier_config->set('Cache.SerializerPath', UPLOADS_PATH . 'cache');
+            $purifier_config->set('HTML.Allowed', 'span[style]');
+            $purifier_config->set('CSS.AllowedProperties', 'color,font-weight,font-style,text-decoration,font-family,background-color,text-transform,margin,padding,text-align');
+            $purifier = new \HTMLPurifier($purifier_config);
+
             /* Translations */
             foreach($_POST['translations'] as $language_name => $array) {
                 foreach($array as $key => $value) {
-                    $_POST['translations'][$language_name][$key] = input_clean($value);
+                    if($key == 'description') {
+                        $_POST['translations'][$language_name][$key] = $purifier->purify(mb_substr($value, 0, 512));
+                    } else {
+                        $_POST['translations'][$language_name][$key] = input_clean($value);
+                    }
                 }
                 if(!array_key_exists($language_name, \Altum\Language::$active_languages)) {
                     unset($_POST['translations'][$language_name]);
@@ -81,11 +92,14 @@ class AdminChatAssistantCreate extends Controller {
             }
         }
 
+        $suggested_next_order_number = db()->orderBy('`order`', 'DESC')->getValue('chats_assistants', '`order`', 1);
+        $suggested_next_order_number = $suggested_next_order_number ? $suggested_next_order_number + 1 : 1;
+
         $values = [
             'name' => $_POST['name'] ?? null,
             'prompt' => $_POST['prompt'] ?? null,
             'translations' => $_POST['translations'] ?? null,
-            'order' => $_POST['order'] ?? 0,
+            'order' => $_POST['order'] ?? $suggested_next_order_number,
             'is_enabled' => $_POST['is_enabled'] ?? 1,
         ];
 

@@ -30,7 +30,7 @@
                     <a href="<?= url('admin/image-optimizer?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                     </a>
-                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                     </a>
                 </div>
@@ -162,9 +162,9 @@
 
                     <td class="text-nowrap">
                         <div class="d-flex">
-                            <a href="<?= \Altum\Uploads::get_full_url($row->path) . $row->file ?>" target="_blank">
+                            <a href="<?= UPLOADS_FULL_URL . $row->path . $row->file ?>" target="_blank">
                                 <img
-                                        src="<?= \Altum\Uploads::get_full_url($row->path) . $row->file ?>"
+                                        src="<?= UPLOADS_FULL_URL . $row->path . $row->file ?>"
                                         referrerpolicy="no-referrer"
                                         loading="lazy"
                                         class="user-avatar rounded-circle mr-3"
@@ -177,7 +177,7 @@
                                 <div>
                                     <span data-file><?= $row->file ?></span>
 
-                                    <a href="<?= \Altum\Uploads::get_full_url($row->path) . $row->file ?>" target="_blank">
+                                    <a href="<?= UPLOADS_FULL_URL . $row->path . $row->file ?>" target="_blank">
                                         <i class="fas fa-fw fa-xs fa-external-link-alt text-muted ml-1"></i>
                                     </a>
                                 </div>

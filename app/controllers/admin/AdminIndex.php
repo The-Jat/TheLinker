@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -60,8 +60,8 @@ class AdminIndex extends Controller {
 
         session_write_close();
 
-        if(!empty($_POST)) {
-            redirect();
+        if($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            throw_404();
         }
 
         set_time_limit(0);

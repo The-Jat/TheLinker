@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<section class="container">
+<div class="container">
     <?= \Altum\Alerts::output_alerts() ?>
 
     <div class="row mb-4">
@@ -17,7 +17,7 @@
         <div class="col-12 col-lg-auto d-flex flex-wrap gap-3 d-print-none">
             <div>
                 <div class="dropdown">
-                    <button type="button" class="btn btn-light dropdown-toggle-simple <?= count($data->data) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
+                    <button type="button" class="btn btn-light dropdown-toggle-simple <?= !empty($data->data) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-download"></i>
                     </button>
 
@@ -28,7 +28,7 @@
                         <a href="<?= url('data?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                         </a>
-                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                         </a>
                     </div>
@@ -37,7 +37,7 @@
 
             <div>
                 <div class="dropdown">
-                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= count($data->data) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
+                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= !empty($data->data) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-filter"></i>
                     </button>
 
@@ -118,7 +118,7 @@
         </div>
     </div>
 
-    <?php if(count($data->data)): ?>
+    <?php if (!empty($data->data)): ?>
         <form id="table" action="<?= SITE_URL . 'data/bulk' ?>" method="post" role="form">
             <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
             <input type="hidden" name="type" value="" data-bulk-type />
@@ -163,9 +163,13 @@
                             </td>
 
                             <td class="text-nowrap">
-                                <a href="<?= url('link/' . $row->link_id . '?tab=blocks&biolink_block_id=' . $row->biolink_block_id . '#biolink_block_expanded_content_' . $row->biolink_block_id) ?>" class="font-weight-bold">
+                                <?php if($row->biolink_block_id): ?>
+                                <a href="<?= url('link/' . $row->link_id . '?tab=blocks&biolink_block_id=' . $row->biolink_block_id . '#biolink_block_expanded_content_' . $row->biolink_block_id) ?>" class="font-weight-500">
                                     <span data-toggle="tooltip" title="<?= $row->settings->name ?? l('global.unknown') ?>"><?= string_truncate($row->settings->name ?? l('global.unknown'), 30) ?></span>
                                 </a>
+                                <?php else: ?>
+                                    <?= l('global.unknown') ?>
+                                <?php endif ?>
                             </td>
 
                             <td class="text-nowrap">
@@ -207,7 +211,7 @@
         ]); ?>
     <?php endif ?>
 
-</section>
+</div>
 
 <?php require THEME_PATH . 'views/partials/js_bulk.php' ?>
 <?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/bulk_delete_modal.php'), 'modals'); ?>

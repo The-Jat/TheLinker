@@ -37,7 +37,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php if(count($data->processors)): ?>
+                <?php if (!empty($data->processors)): ?>
                     <?php foreach ($data->processors as $processor): ?>
                         <tr>
                             <td class="text-nowrap">
@@ -80,7 +80,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php if(count($data->payments_plans)): ?>
+                <?php if (!empty($data->payments_plans)): ?>
                     <?php foreach ($data->payments_plans as $payment_plan): ?>
                         <tr>
                             <td class="text-nowrap">
@@ -123,7 +123,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php if(count($data->types)): ?>
+                <?php if (!empty($data->types)): ?>
                     <?php foreach ($data->types as $type): ?>
                         <tr>
                             <td class="text-nowrap">
@@ -166,7 +166,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php if(count($data->frequencies)): ?>
+                <?php if (!empty($data->frequencies)): ?>
                     <?php foreach ($data->frequencies as $frequency): ?>
                         <tr>
                             <td class="text-nowrap">

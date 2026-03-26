@@ -13,7 +13,7 @@
     <h2 class="small font-weight-bold text-uppercase text-muted mb-3"><i class="fas fa-fw fa-sm fa-share-alt text-primary mr-1"></i> <?= l('tools.share') ?></h2>
     <div class="card">
         <div class="card-body">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center flex-wrap gap-3">
                 <?= include_view(THEME_PATH . 'views/partials/share_buttons.php', ['url' => url(\Altum\Router::$original_request), 'class' => 'btn btn-gray-100', 'copy_to_clipboard' => true]) ?>
             </div>
         </div>

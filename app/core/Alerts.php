@@ -23,64 +23,63 @@ class Alerts {
 
     /* Field errors */
     public static function add_field_error($key, $message) {
-        if(!isset($_SESSION['field_errors'][$key])) {
-            $_SESSION['field_errors'][$key] = [$message];
+        $field_errors = session_get('field_errors', []);
+
+        if (!isset($field_errors[$key])) {
+            $field_errors[$key] = [$message];
         } else {
-            $_SESSION['field_errors'][$key][] = $message;
+            $field_errors[$key][] = $message;
         }
+
+        session_set('field_errors', $field_errors);
     }
 
     public static function has_field_errors($key = null) {
-        if(is_null($key)) {
-            return !empty($_SESSION['field_errors']);
+        $field_errors = session_get('field_errors', []);
+
+        if (is_null($key)) {
+            return !empty($field_errors);
         }
-        else if(is_array($key)) {
-            $has_errors = false;
 
-            foreach($key as $field_name) {
-                /* Regex check if needed */
-                if(strpos($field_name, '*') !== false) {
-
-                    foreach(($_SESSION['field_errors'] ?? []) as $session_field_error_key => $session_field_error_value) {
-                        if(mb_ereg($field_name, $session_field_error_key) && !empty($session_field_error_value)) {
-                            $has_errors = true;
-                            break;
+        if (is_array($key)) {
+            foreach ($key as $field_name) {
+                if (strpos($field_name, '*') !== false) {
+                    foreach ($field_errors as $session_field_error_key => $session_field_error_value) {
+                        if (mb_ereg($field_name, $session_field_error_key) && !empty($session_field_error_value)) {
+                            return true;
                         }
                     }
-
-                }
-
-                /* Exact checks */
-                else {
-                    if(isset($_SESSION['field_errors'][$field_name]) && !empty($_SESSION['field_errors'][$field_name])) {
-                        $has_errors = true;
-                        break;
+                } else {
+                    if (!empty($field_errors[$field_name])) {
+                        return true;
                     }
                 }
-
             }
 
-            return $has_errors;
+            return false;
         }
-        else {
-            return isset($_SESSION['field_errors'][$key]) && !empty($_SESSION['field_errors'][$key]);
-        }
+
+        return !empty($field_errors[$key]);
     }
 
     public static function get_first_field_error($key) {
-        return reset($_SESSION['field_errors'][$key]);
+        $field_errors = session_get('field_errors', []);
+        return isset($field_errors[$key]) ? reset($field_errors[$key]) : null;
     }
 
     public static function output_field_error($key) {
         $output = null;
 
-        if(self::has_field_errors($key)) {
+        if (self::has_field_errors($key)) {
             $output = '<div class="invalid-feedback d-inline-block">' . self::get_first_field_error($key) . '</div>';
 
-            unset($_SESSION['field_errors'][$key]);
+            $field_errors = session_get('field_errors', []);
+            unset($field_errors[$key]);
 
-            if(empty($_SESSION['field_errors'])) {
-                unset($_SESSION['field_errors']);
+            if (empty($field_errors)) {
+                session_unset_key('field_errors');
+            } else {
+                session_set('field_errors', $field_errors);
             }
         }
 
@@ -88,56 +87,73 @@ class Alerts {
     }
 
     public static function clear_field_errors($key = null) {
-        if($key) {
-            unset($_SESSION['field_errors'][$key]);
+        $field_errors = session_get('field_errors', []);
+
+        if ($key) {
+            unset($field_errors[$key]);
+            session_set('field_errors', $field_errors);
         } else {
-            unset($_SESSION['field_errors']);
+            session_unset_key('field_errors');
         }
     }
 
     /* Session alerts */
     public static function add($type, $key, $message) {
-        if(!isset($_SESSION[$type][$key])) {
-            $_SESSION[$type][$key] = [$message];
+        $alerts = session_get($type, []);
+
+        if (!isset($alerts[$key])) {
+            $alerts[$key] = [$message];
         } else {
-            $_SESSION[$type][$key][] = $message;
+            $alerts[$key][] = $message;
         }
+
+        session_set($type, $alerts);
     }
 
-    public static function has($type, $key) {
-        if(is_null($key)) {
-            return isset($_SESSION[$type]) && count($_SESSION[$type]);
-        } else {
-            return isset($_SESSION[$type][$key]);
+    public static function has($type, $key = null) {
+        $alerts = session_get($type, []);
+
+        if (is_null($key)) {
+            return !empty($alerts);
         }
+
+        return isset($alerts[$key]);
     }
 
     public static function get($type, $key) {
-        return $_SESSION[$type][$key];
+        $alerts = session_get($type, []);
+        return $alerts[$key] ?? null;
     }
 
     public static function output_alerts($type = null) {
         $types = is_null($type) ? self::$types : [$type];
         $output = null;
 
-        foreach($types as $type) {
-            if(!isset($_SESSION[$type]) || empty($_SESSION[$type])) {
+        foreach ($types as $type_name) {
+            $alerts = session_get($type_name, []);
+
+            if (empty($alerts)) {
                 continue;
             }
 
-            foreach($_SESSION[$type] as $key => $value) {
-                foreach($value as $message_key => $message) {
-                    $output .= output_alert($type, $message);
+            foreach ($alerts as $key => $messages) {
+                foreach ($messages as $message) {
+                    $output .= output_alert($type_name, $message);
                 }
+                unset($alerts[$key]);
+            }
 
-                unset($_SESSION[$type][$key]);
+            if (empty($alerts)) {
+                session_unset_key($type_name);
+            } else {
+                session_set($type_name, $alerts);
             }
         }
 
         return $output;
     }
 
-    /* Errors */
+    /* Shortcuts */
     public static function add_warning($message, $key = 'warning') {
         self::add('warning', $key, $message);
     }
@@ -154,7 +170,6 @@ class Alerts {
         return self::has('error', $key);
     }
 
-    /* Infos */
     public static function add_info($message, $key = 'info') {
         self::add('info', $key, $message);
     }
@@ -163,16 +178,11 @@ class Alerts {
         return self::has('info', $key);
     }
 
-    /* Successes */
     public static function add_success($message, $key = 'success') {
         self::add('success', $key, $message);
     }
 
     public static function has_successes($key = null) {
         return self::has('success', $key);
-    }
-
-    public static function clear() {
-
     }
 }

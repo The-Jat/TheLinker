@@ -15,6 +15,12 @@
         </div>
     </div>
 
+    <?php if(settings()->tools->popular_widget_is_enabled): ?>
+    <div class="mb-5">
+        <?= $this->views['popular_tools'] ?>
+    </div>
+    <?php endif ?>
+
     <form id="search" action="" method="get" role="form">
         <div class="form-group">
             <input id="search" type="search" name="search" class="form-control form-control-lg" value="" placeholder="<?= l('global.filters.search') ?>" aria-label="<?= l('global.filters.search') ?>" />
@@ -96,7 +102,7 @@
                 </div>
             </div>
 
-            <div id="<?= $tool . '_tools' ?>" class="row collapse" data-category-tools>
+            <div id="<?= $tool . '_tools' ?>" class="row collapse <?= settings()->tools->categories_expanded_is_enabled ? 'show' : null ?>" data-category-tools>
                 <?php echo ${$tool}['enabled_tools_html']; ?>
             </div>
         <?php endforeach ?>

@@ -1,14 +1,14 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div>
+<div id="offload">
     <div <?= !\Altum\Plugin::is_active('offload') ? 'data-toggle="tooltip" title="' . sprintf(l('admin_plugins.no_access'), \Altum\Plugin::get('offload')->name ?? 'offload') . '"' : null ?>>
         <div class="<?= !\Altum\Plugin::is_active('offload') ? 'container-disabled' : null ?>">
 
-            <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#offload_container" aria-expanded="false" aria-controls="offload_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#offload_container" aria-expanded="false" aria-controls="offload_container">
                 <i class="fas fa-fw fa-cloud fa-sm mr-1"></i> <?= l('admin_settings.offload.offload') ?>
             </button>
 
-            <div class="collapse" id="offload_container">
+            <div class="collapse" data-parent="#offload" id="offload_container">
                 <div class="form-group">
                     <label for="uploads_url"><?= l('admin_settings.offload.uploads_url') ?></label>
                     <input id="uploads_url" type="url" name="uploads_url" class="form-control" value="<?= \Altum\Plugin::is_active('offload') ? settings()->offload->uploads_url : null ?>" placeholder="https://example.com/uploads/" />
@@ -64,11 +64,11 @@
                 </div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#cdn_container" aria-expanded="false" aria-controls="cdn_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#cdn_container" aria-expanded="false" aria-controls="cdn_container">
                 <i class="fas fa-fw fa-bolt fa-sm mr-1"></i> <?= l('admin_settings.offload.cdn') ?>
             </button>
 
-            <div class="collapse" id="cdn_container">
+            <div class="collapse" data-parent="#offload" id="cdn_container">
                 <div class="form-group">
                     <label for="cdn_uploads_url"><?= l('admin_settings.offload.cdn_uploads_url') ?></label>
                     <input id="cdn_uploads_url" type="url" name="cdn_uploads_url" class="form-control" value="<?= \Altum\Plugin::is_active('offload') ? settings()->offload->cdn_uploads_url : null ?>" placeholder="https://example.com/uploads/" />

@@ -79,3 +79,14 @@ document.querySelectorAll('form input, form select, form textarea').forEach(fiel
         $(collapse_container).collapse('show');
     });
 });
+
+/* Loader on click */
+document.querySelectorAll('[data-loader-on-click]').forEach(element => {
+    element.addEventListener('click', event => {
+        let button = event.currentTarget;
+
+        button.classList.add('disabled');
+        button.classList.add('container-disabled-simple');
+        button.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
+    });
+});

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -50,12 +50,19 @@ class NotificationHandlers extends Controller {
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/pagination', (array) $this))->run(['paginator' => $paginator]);
 
+        /* Check for the plan limit */
+        $total_notification_handlers = [];
+        $total_notification_handlers_result = database()->query("SELECT COUNT(`type`) AS `total`, `type` FROM `notification_handlers` WHERE `user_id` = {$this->user->user_id} GROUP BY `type`");
+        while($row = $total_notification_handlers_result->fetch_object()) {
+            $total_notification_handlers[$row->type] = $row->total;
+        }
+
         /* Prepare the view */
         $data = [
             'notification_handlers' => $notification_handlers,
-            'total_notification_handlers' => $total_rows,
             'pagination' => $pagination,
             'filters' => $filters,
+            'total_notification_handlers' => $total_notification_handlers,
         ];
 
         $view = new \Altum\View('notification-handlers/index', (array) $this);
@@ -69,8 +76,8 @@ class NotificationHandlers extends Controller {
         \Altum\Authentication::guard();
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('notification-handlers');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -93,12 +100,14 @@ class NotificationHandlers extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
                     /* Team checks */
                     if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.notification_handlers')) {
-                        Alerts::add_info(l('global.info_message.team_no_access'));
+                        Alerts::add_error(l('global.info_message.team_no_access'));
                         redirect('notification-handlers');
 
                     }
@@ -113,7 +122,7 @@ class NotificationHandlers extends Controller {
             }
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -129,15 +138,15 @@ class NotificationHandlers extends Controller {
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.notification_handlers')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('notification-handlers');
         }
 
-        if(empty($_POST)) {
-            redirect('notification-handlers');
+        if (empty($_POST)) {
+            throw_404();
         }
 
-        $notification_handler_id = (int) query_clean($_POST['notification_handler_id']);
+        $notification_handler_id = (int) $_POST['notification_handler_id'];
 
         //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Alerts::add_error('Please create an account on the demo to test out this function.');
 
@@ -147,7 +156,7 @@ class NotificationHandlers extends Controller {
         }
 
         if(!$notification_handler = db()->where('notification_handler_id', $notification_handler_id)->where('user_id', $this->user->user_id)->getOne('notification_handlers', ['notification_handler_id', 'name'])) {
-            redirect('notification-handlers');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

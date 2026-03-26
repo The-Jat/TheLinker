@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,14 +25,14 @@ class ApiDocumentation extends Controller {
     public function index() {
 
         if(!settings()->main->api_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         $endpoint = isset($this->params[0]) ? query_clean(str_replace('-', '_', $this->params[0])) : null;
 
         if($endpoint) {
             if(!file_exists(THEME_PATH . 'views/api-documentation/' . $endpoint . '.php')) {
-                redirect('not-found');
+                throw_404();
             }
 
             $title = match($endpoint) {

@@ -10,7 +10,7 @@ const MYSQL_DEBUG = 0;
 const LOGGING = 1;
 
 /* Enabling the cache will use file caching where implemented for better performance */
-const CACHE = 0;
+const CACHE = 1;
 
 /* Only meant for Demo purposes, don't change :) */
 //ALTUMCODE:DEMO const DEMO = 1;

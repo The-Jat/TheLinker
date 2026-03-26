@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -16,13 +16,15 @@
 
 namespace Altum\Controllers;
 
+use Altum\Meta;
+
 defined('ALTUMCODE') || die();
 
 class Directory extends Controller {
 
     public function index() {
         if(!settings()->links->biolinks_is_enabled || !settings()->links->directory_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         if(settings()->links->directory_access == 'users') {
@@ -76,7 +78,10 @@ class Directory extends Controller {
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/pagination', (array) $this))->run(['paginator' => $paginator]);
 
-        /* Prepare the view */
+		/* Canonical */
+		Meta::set_canonical_url(url('directory') . '?' . http_build_query($filters->get + ['page' => $paginator->getCurrentPage()]));
+
+		/* Prepare the view */
         $data = [
             'links'             => $links,
             'pagination'        => $pagination,

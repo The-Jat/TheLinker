@@ -5,7 +5,7 @@
     <div class="card-body">
         <?php endif ?>
 
-        <?php if(count($data->filters_get ?? [])): ?>
+        <?php if (!empty($data->filters_get ?? [])): ?>
 
             <div class="d-flex flex-column align-items-center justify-content-center py-4">
                 <?= sprintf(file_get_contents(ROOT_PATH . ASSETS_URL_PATH . 'images/no_filtered_data.svg'), 'var(--primary)', 'w-100 mb-4', 'height: 175px;') ?>

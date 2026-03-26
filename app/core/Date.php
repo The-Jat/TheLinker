@@ -135,34 +135,45 @@ class Date {
     }
 
     /* Helper to generate start_date and end_date for datepicker */
-    public static function get_start_end_dates($start_date, $end_date, $current_timezone = '', $wanted_timezone = '') {
+    public static function get_start_end_dates($start_date, $end_date, $current_timezone = '', $wanted_timezone = '', $keep_original_range = false) {
+        $current_timezone = $current_timezone ?: self::$timezone;
+        $wanted_timezone  = $wanted_timezone ?: self::$default_timezone;
 
-        $current_timezone = !$current_timezone ? self::$timezone : $current_timezone;
-        $wanted_timezone = !$wanted_timezone ? self::$default_timezone : $wanted_timezone;
+        $timezone_current = new \DateTimeZone($current_timezone);
+        $timezone_wanted  = new \DateTimeZone($wanted_timezone);
 
-        $return = new \StdClass();
+        $return_object = new \StdClass();
+        $query_format  = 'Y-m-d H:i:s';
 
-        $query_format = 'Y-m-d H:i:s';
+        $is_valid_start_date = $start_date && (self::validate($start_date) || self::validate($start_date, 'Y-m-d H:i:s'));
+        $is_valid_end_date   = $end_date && (self::validate($end_date) || self::validate($end_date, 'Y-m-d H:i:s'));
 
-        if($start_date && $end_date && (self::validate($start_date) || self::validate($start_date, 'Y-m-d H:i:s')) && (self::validate($end_date) || self::validate($end_date, 'Y-m-d H:i:s'))) {
-            
-            $return->start_date = $start_date;
-            $return->end_date = $end_date;
+        if ($is_valid_start_date && $is_valid_end_date) {
+            $return_object->start_date = $start_date;
+            $return_object->end_date = $end_date;
 
-            $return->start_date_query = (new \DateTime($start_date, new \DateTimeZone($current_timezone)))->setTimezone(new \DateTimeZone($wanted_timezone))->format($query_format);
-            $return->end_date_query = (new \DateTime($end_date, new \DateTimeZone($current_timezone)))->setTimezone(new \DateTimeZone($wanted_timezone))->modify('+1 day')->format($query_format);
+            $start_datetime = (new \DateTime($start_date, $timezone_current))->setTimezone($timezone_wanted);
+            $end_datetime = (new \DateTime($end_date, $timezone_current))->setTimezone($timezone_wanted);
+
+            $return_object->start_date_query = $start_datetime->format($query_format);
+            $return_object->end_date_query = $keep_original_range ? $end_datetime->format($query_format) : (clone $end_datetime)->modify('+1 day')->format($query_format);
 
         } else {
-            $return->start_date_query = (new \DateTime('now', new \DateTimeZone($current_timezone)))->setTimezone(new \DateTimeZone($wanted_timezone))->modify('-30 day')->format($query_format);
-            $return->end_date_query = (new \DateTime('now', new \DateTimeZone($current_timezone)))->setTimezone(new \DateTimeZone($wanted_timezone))->modify('+1 day')->format($query_format);
+            $current_datetime = new \DateTime('now', $timezone_current);
 
-            $return->start_date = (new \DateTime('now', new \DateTimeZone($current_timezone)))->setTimezone(new \DateTimeZone($wanted_timezone))->modify('-30 day')->format('Y-m-d');
-            $return->end_date = (new \DateTime('now', new \DateTimeZone($current_timezone)))->setTimezone(new \DateTimeZone($wanted_timezone))->format('Y-m-d');
+            $start_datetime_converted = (clone $current_datetime)->setTimezone($timezone_wanted)->modify('-30 day');
+            $end_datetime_converted = (clone $current_datetime)->setTimezone($timezone_wanted);
+
+            $return_object->start_date_query = $start_datetime_converted->format($query_format);
+            $return_object->end_date_query = $keep_original_range ? $end_datetime_converted->format($query_format) : (clone $end_datetime_converted)->modify('+1 day')->format($query_format);
+
+            $return_object->start_date = $start_datetime_converted->format('Y-m-d');
+            $return_object->end_date = $end_datetime_converted->format('Y-m-d');
         }
 
-        $return->input_date_range = $return->start_date . ',' . $return->end_date;
+        $return_object->input_date_range = $return_object->start_date . ',' . $return_object->end_date;
 
-        return $return;
+        return $return_object;
     }
 
     /* Another helper function, expecting Y-m-d format */
@@ -387,6 +398,10 @@ class Date {
     public static function get_time_until($date) {
 
         $estimate_time = (new \DateTime($date))->getTimestamp() - time();
+
+        if($estimate_time < -5) {
+            return self::get_timeago($date);
+        }
 
         if($estimate_time < 1) {
             return l('global.date.now');

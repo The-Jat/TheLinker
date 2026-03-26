@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -39,6 +39,7 @@ class AdminBiolinkThemeUpdate extends Controller {
             $_POST['name'] = input_clean($_POST['name']);
             $_POST['order'] = (int) $_POST['order'] ?? 0;
             $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
+			$_POST['apply_update_to_existing_biolinks'] = (int) isset($_POST['apply_update_to_existing_biolinks']);
 
             $_POST['additional_custom_css'] = mb_substr(trim($_POST['additional_custom_css']), 0, 10000);
             $_POST['additional_custom_js'] = mb_substr(trim($_POST['additional_custom_js']), 0, 10000);
@@ -74,7 +75,7 @@ class AdminBiolinkThemeUpdate extends Controller {
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
                 $biolink_background = $background_new_name ?? $_POST['biolink_background'] ?? null;
 
-                $settings = json_encode([
+                $settings = [
                     'additional' => [
                         'custom_css' => $_POST['additional_custom_css'] ?? null,
                         'custom_js' => $_POST['additional_custom_js'] ?? null,
@@ -103,10 +104,7 @@ class AdminBiolinkThemeUpdate extends Controller {
                         'border_color' => $_POST['biolink_block_border_color'],
                         'border_radius' => $_POST['biolink_block_border_radius'],
                         'border_style' => $_POST['biolink_block_border_style'],
-                        'border_shadow_offset_x' => $_POST['biolink_block_border_shadow_offset_x'],
-                        'border_shadow_offset_y' => $_POST['biolink_block_border_shadow_offset_y'],
-                        'border_shadow_blur' => $_POST['biolink_block_border_shadow_blur'],
-                        'border_shadow_spread' => $_POST['biolink_block_border_shadow_spread'],
+                        'border_shadow_style' => $_POST['biolink_block_border_shadow_style'],
                         'border_shadow_color' => $_POST['biolink_block_border_shadow_color'],
                     ],
 
@@ -120,21 +118,124 @@ class AdminBiolinkThemeUpdate extends Controller {
                         'text_color' => $_POST['biolink_block_paragraph_text_color'],
                         'background_color' => $_POST['biolink_block_paragraph_background_color'],
                         'border_radius' => $_POST['biolink_block_paragraph_border_radius'],
+                        'border_shadow_style' => $_POST['biolink_block_paragraph_border_shadow_style'],
+                        'border_shadow_color' => $_POST['biolink_block_paragraph_border_shadow_color'],
                     ],
 
                     'biolink_block_heading' => [
                         'text_color' => $_POST['biolink_block_heading_text_color'],
                     ],
-                ]);
+                ];
 
                 /* Database query */
                 db()->where('biolink_theme_id', $biolink_theme_id)->update('biolinks_themes', [
                     'name' => $_POST['name'],
-                    'settings' => $settings,
+                    'settings' => json_encode($settings),
                     'is_enabled' => $_POST['is_enabled'],
                     'order' => $_POST['order'],
                     'last_datetime' => get_date(),
                 ]);
+
+				/* Apply new theme settings to all needed biolink pages & blocks */
+				if($_POST['apply_update_to_existing_biolinks']) {
+					set_time_limit(0);
+					session_write_close();
+
+					$biolinks = db()->where('type', 'biolink')->where('biolink_theme_id', $biolink_theme->biolink_theme_id)->get('links', null, ['link_id', 'settings', 'additional']);
+
+					/* Go through all biolink pages */
+					foreach($biolinks as $link) {
+						$link->settings = json_decode($link->settings ?? '');
+
+						/* Save settings for biolink page */
+						$new_settings = array_merge((array) $link->settings, $settings['biolink']);
+
+						/* Save the additional settings */
+						$additional = json_encode($settings['additional']);
+
+						/* Database query */
+						db()->where('link_id', $link->link_id)->update('links', [
+							'settings' => json_encode($new_settings),
+							'additional' => $additional,
+						]);
+
+						/* Go through all the blocks */
+						$biolink_blocks = require APP_PATH . 'includes/biolink_blocks.php';
+						$themable_blocks = array_keys(array_filter($biolink_blocks, fn($block) => !empty($block['themable'])));
+						$themable_blocks_sql = "'" . implode('\', \'', $themable_blocks) . "'";
+
+						$biolink_blocks_result = database()->query("SELECT `biolink_block_id`, `type`, `settings` FROM `biolinks_blocks` WHERE `link_id` = {$link->link_id} AND `type` IN ({$themable_blocks_sql})");
+
+						while($biolink_block = $biolink_blocks_result->fetch_object()) {
+							$biolink_block->settings = json_decode($biolink_block->settings ?? '');
+
+							switch($biolink_block->type) {
+								case 'socials':
+									$biolink_block->settings = (object) array_merge((array) $biolink_block->settings, (array) $settings['biolink_block_socials'] ?? []);
+									break;
+
+								case 'heading':
+									$biolink_block->settings = (object) array_merge((array) $biolink_block->settings, (array) $settings['biolink_block_heading'] ?? []);
+									break;
+
+								case 'paragraph':
+									$biolink_block->settings = (object) array_merge((array) $biolink_block->settings, (array) $settings['biolink_block'] ?? [], (array) $settings['biolink_block_paragraph'] ?? []);
+									break;
+
+                                case 'counter':
+                                case 'loading':
+                                    $settings['biolink_block']['number_color'] = $settings['biolink_block']['text_color'] ?? null;
+
+                                    $biolink_block->settings = (object) array_merge(
+                                        (array) $biolink_block->settings,
+                                        (array) $settings['biolink_block'] ?? [],
+                                        (array) $settings['biolink_block_counter'] ?? []
+                                    );
+                                    break;
+
+                                case 'external_item':
+                                    $settings['biolink_block']['price_color'] = $settings['biolink_block']['text_color'] ?? null;
+                                    $settings['biolink_block']['name_color']  = $settings['biolink_block']['text_color'] ?? null;
+
+                                    $biolink_block->settings = (object) array_merge(
+                                        (array) $biolink_block->settings,
+                                        (array) $settings['biolink_block'] ?? [],
+                                        (array) $settings['biolink_block_external_item'] ?? []
+                                    );
+                                    break;
+
+                                case 'business_hours':
+                                    $settings['biolink_block']['icon_color'] = $settings['biolink_block']['text_color'] ?? null;
+
+                                    $biolink_block->settings = (object) array_merge(
+                                        (array) $biolink_block->settings,
+                                        (array) $settings['biolink_block'] ?? [],
+                                        (array) $settings['biolink_block_business_hours'] ?? []
+                                    );
+                                    break;
+
+								default:
+									$biolink_block->settings = (object) array_merge((array) $biolink_block->settings, (array) $settings['biolink_block'] ?? []);
+									break;
+							}
+
+							$new_biolink_block_settings = json_encode($biolink_block->settings);
+
+							db()->where('biolink_block_id', $biolink_block->biolink_block_id)->update('biolinks_blocks', [
+								'settings' => $new_biolink_block_settings,
+							]);
+						}
+
+
+						/* Clear the cache */
+						cache()->deleteItem('biolink_blocks?link_id=' . $link->link_id);
+						cache()->deleteItem('link?link_id=' . $link->link_id);
+						cache()->deleteItemsByTag('link_id=' . $link->link_id);
+						cache()->deleteItem('links?user_id=' . $link->user_id);
+					}
+				}
+
+				session_start();
 
                 /* Set a nice success message */
                 Alerts::add_success(sprintf(l('global.success_message.update1'), '<strong>' . $_POST['name'] . '</strong>'));

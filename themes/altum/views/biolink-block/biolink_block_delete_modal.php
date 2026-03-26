@@ -37,7 +37,7 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
+
     /* On modal show load new data */
     $('#biolink_block_delete_modal').on('show.bs.modal', event => {
         let biolink_block_id = $(event.relatedTarget).data('biolink-block-id');
@@ -82,7 +82,11 @@
                         notification_container.innerHTML = '';
 
                         /* Refresh iframe */
-                        refresh_biolink_preview();
+                        //refresh_biolink_preview();
+
+                        /* Remove element from iframe */
+                        let biolink_preview_iframe = $('#biolink_preview_iframe');
+                        biolink_preview_iframe.contents().find(`[data-biolink-block-id="${biolink_block_id}"]`).remove();
                     }, 750);
                 }
             },

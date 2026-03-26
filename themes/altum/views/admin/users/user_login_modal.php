@@ -18,7 +18,7 @@
                 <p class="text-muted"><?= l('admin_user_login_modal.subheader') ?></p>
 
                 <div class="mt-4">
-                    <a href="" id="user_login_modal_url" class="btn btn-lg btn-block btn-primary"><?= l('global.login') ?></a>
+                    <a href="" id="user_login_modal_url" class="btn btn-lg btn-block btn-primary" data-loader-on-click><?= l('global.login') ?></a>
                 </div>
             </div>
 
@@ -29,12 +29,12 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
-/* On modal show load new data */
+
+    /* On modal show load new data */
     $('#user_login_modal').on('show.bs.modal', event => {
         let user_id = $(event.relatedTarget).data('user-id');
 
-        $(event.currentTarget).find('#user_login_modal_url').attr('href', `${url}admin/users/login/${user_id}&global_token=${global_token}`);
+        $(event.currentTarget).find('#user_login_modal_url').attr('href', `${url}admin/users/login/${user_id}?global_token=${global_token}`);
     });
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

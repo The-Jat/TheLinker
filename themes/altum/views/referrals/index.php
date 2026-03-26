@@ -41,12 +41,12 @@
 
     <hr class="border-gray-50 my-4" />
 
-    <h1 class="h4 mb-3"><?= l('referrals.statistics.header') ?></h1>
+    <h2 class="h4 mb-3"><?= l('referrals.statistics.header') ?></h2>
 
-    <div class="row justify-content-between">
+    <div class="row justify-content-between my-n3">
         <div class="col-12 col-lg-6 col-xl p-3">
             <div class="card h-100">
-                <div class="card-body">
+                <div class="card-body d-flex flex-column justify-content-between">
 
                     <div class="d-flex">
                         <span class="text-muted"><?= l('referrals.statistics.referrals') ?></span>
@@ -66,7 +66,7 @@
 
         <div class="col-12 col-lg-6 col-xl p-3">
             <div class="card h-100">
-                <div class="card-body">
+                <div class="card-body d-flex flex-column justify-content-between">
 
                     <div class="d-flex">
                         <span class="text-muted"><?= l('referrals.statistics.converted_referrals') ?></span>
@@ -86,7 +86,7 @@
 
         <div class="col-12 col-lg-6 col-xl p-3">
             <div class="card h-100">
-                <div class="card-body">
+                <div class="card-body d-flex flex-column justify-content-between">
 
                     <div class="d-flex">
                         <span class="text-muted"><?= l('referrals.statistics.pending_affiliate_commissions') ?></span>
@@ -106,7 +106,7 @@
 
         <div class="col-12 col-lg-6 col-xl p-3">
             <div class="card h-100">
-                <div class="card-body">
+                <div class="card-body d-flex flex-column justify-content-between">
 
                     <div class="d-flex">
                         <span class="text-muted"><?= l('referrals.statistics.approved_affiliate_commissions') ?></span>
@@ -127,7 +127,7 @@
 
     <hr class="border-gray-50 my-4" />
 
-    <h1 class="h4"><?= l('referrals.withdraw.header') ?></h1>
+    <h2 class="h4"><?= l('referrals.withdraw.header') ?></h2>
     <p class="text-muted font-size-small"><?= sprintf(l('referrals.withdraw.subheader'), '<strong>' . settings()->affiliate->minimum_withdrawal_amount . ' ' . settings()->payment->default_currency . '</strong>') ?></p>
 
     <div class="card">
@@ -157,7 +157,7 @@
         </div>
     </div>
 
-    <?php if(count($data->affiliate_withdrawals)): ?>
+    <?php if (!empty($data->affiliate_withdrawals)): ?>
         <div class="mt-4">
             <div class="table-responsive table-custom-container">
                 <table class="table table-custom">
@@ -180,9 +180,9 @@
                             </td>
                             <td class="text-nowrap">
                                 <?php if($row->is_paid): ?>
-                                    <span class="badge badge-success"><i class="fas fa-fw fa-check"></i> <?= l('referrals.withdraw.is_paid_paid') ?></span>
+                                    <span class="badge badge-success"><i class="fas fa-fw fa-sm fa-check mr-1"></i> <?= l('referrals.withdraw.is_paid_paid') ?></span>
                                 <?php else: ?>
-                                    <span class="badge badge-warning"><i class="fas fa-fw fa-eye-slash"></i> <?= l('referrals.withdraw.is_paid_pending') ?></span>
+                                    <span class="badge badge-warning"><i class="fas fa-fw fa-sm fa-eye-slash mr-1"></i> <?= l('referrals.withdraw.is_paid_pending') ?></span>
                                 <?php endif ?>
                             </td>
                             <td class="text-nowrap text-muted">

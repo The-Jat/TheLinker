@@ -23,7 +23,7 @@
 
 <?= \Altum\Alerts::output_alerts() ?>
 
-<?php //ALTUMCODE:DEMO if(DEMO) {$data->user->email = 'hidden@demo.com'; $data->user->name = $data->user->ip = 'hidden on demo';} ?>
+<?php //ALTUMCODE:DEMO if(DEMO) {$data->user->email = 'hidden@demo.com'; $data->user->name = $data->user->ip = $data->user->api_key = 'hidden on demo';} ?>
 
 <div class="row">
     <div class="col-xl-4 mb-4">

@@ -21,7 +21,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php if(count($data->continents)): ?>
+                <?php if (!empty($data->continents)): ?>
                     <?php foreach ($data->continents as $continent_code => $total): ?>
                         <tr>
                             <td class="text-nowrap">
@@ -60,7 +60,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php if(count($data->countries)): ?>
+                <?php if (!empty($data->countries)): ?>
                     <?php foreach ($data->countries as $country_code => $total): ?>
                         <tr>
                             <td class="text-nowrap">
@@ -104,7 +104,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <?php if(count($data->cities)): ?>
+                <?php if (!empty($data->cities)): ?>
                     <?php foreach ($data->cities as $concatenated_data => $total): ?>
                         <?php
                         $exploded = explode('#', $concatenated_data);

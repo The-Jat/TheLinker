@@ -32,7 +32,7 @@
                             <label for="link_url"><i class="fas fa-fw fa-bolt fa-sm text-muted mr-1"></i> <?= l('create_link_modal.input.url') ?></label>
                             <div class="input-group">
                                 <div class="input-group-prepend">
-                                    <?php if(count($data->domains)): ?>
+                                    <?php if (!empty($data->domains)): ?>
                                         <select name="domain_id" class="appearance-none custom-select form-control input-group-text">
                                             <?php if(settings()->links->main_domain_is_enabled || \Altum\Authentication::is_admin()): ?>
                                                 <option value=" "><?= remove_url_protocol_from_url(SITE_URL) ?></option>
@@ -103,7 +103,7 @@
                             <label for="biolink_url"><i class="fas fa-fw fa-bolt fa-sm text-muted mr-1"></i> <?= l('link.settings.url') ?></label>
                             <div class="input-group">
                                 <div class="input-group-prepend">
-                                    <?php if(count($data->domains)): ?>
+                                    <?php if (!empty($data->domains)): ?>
                                         <select name="domain_id" class="appearance-none custom-select form-control input-group-text">
                                             <?php if(settings()->links->main_domain_is_enabled || \Altum\Authentication::is_admin()): ?>
                                                 <option value=" "><?= remove_url_protocol_from_url(SITE_URL) ?></option>
@@ -179,7 +179,7 @@
                             <label for="file_url"><i class="fas fa-fw fa-bolt fa-sm text-muted mr-1"></i> <?= l('create_link_modal.input.url') ?></label>
                             <div class="input-group">
                                 <div class="input-group-prepend">
-                                    <?php if(count($data->domains)): ?>
+                                    <?php if (!empty($data->domains)): ?>
                                         <select name="domain_id" class="appearance-none custom-select form-control input-group-text">
                                             <?php if(settings()->links->main_domain_is_enabled || \Altum\Authentication::is_admin()): ?>
                                                 <option value=" "><?= remove_url_protocol_from_url(SITE_URL) ?></option>
@@ -249,7 +249,7 @@
                             <label for="vcard_url"><i class="fas fa-fw fa-bolt fa-sm text-muted mr-1"></i> <?= l('link.settings.url') ?></label>
                             <div class="input-group">
                                 <div class="input-group-prepend">
-                                    <?php if(count($data->domains)): ?>
+                                    <?php if (!empty($data->domains)): ?>
                                         <select name="domain_id" class="appearance-none custom-select form-control input-group-text">
                                             <?php if(settings()->links->main_domain_is_enabled || \Altum\Authentication::is_admin()): ?>
                                                 <option value=" "><?= remove_url_protocol_from_url(SITE_URL) ?></option>
@@ -319,7 +319,7 @@
                             <label for="event_url"><i class="fas fa-fw fa-bolt fa-sm text-muted mr-1"></i> <?= l('link.settings.url') ?></label>
                             <div class="input-group">
                                 <div class="input-group-prepend">
-                                    <?php if(count($data->domains)): ?>
+                                    <?php if (!empty($data->domains)): ?>
                                         <select name="domain_id" class="appearance-none custom-select form-control input-group-text">
                                             <?php if(settings()->links->main_domain_is_enabled || \Altum\Authentication::is_admin()): ?>
                                                 <option value=" "><?= remove_url_protocol_from_url(SITE_URL) ?></option>
@@ -398,7 +398,7 @@
                             <label for="static_url"><i class="fas fa-fw fa-bolt fa-sm text-muted mr-1"></i> <?= l('link.settings.url') ?></label>
                             <div class="input-group">
                                 <div class="input-group-prepend">
-                                    <?php if(count($data->domains)): ?>
+                                    <?php if (!empty($data->domains)): ?>
                                         <select name="domain_id" class="appearance-none custom-select form-control input-group-text">
                                             <?php if(settings()->links->main_domain_is_enabled || \Altum\Authentication::is_admin()): ?>
                                                 <option value=" "><?= remove_url_protocol_from_url(SITE_URL) ?></option>
@@ -490,13 +490,13 @@
     <?php if(
     settings()->links->claim_url_is_enabled
     && isset($_GET['welcome'])
-    && isset($_SESSION['claim_url'])
+    && session_has('claim_url')
     && !empty($this->user->preferences->claim_url)
     ):
     $claim_url = json_encode($this->user->preferences->claim_url);
     $domain_id = !empty($this->user->preferences->domain_id) ? json_encode($this->user->preferences->domain_id) : 'null';
-    unset($_SESSION['claim_url']);
-    unset($_SESSION['domain_id']);
+    session_unset_key('claim_url');
+    session_unset_key('domain_id');
     ?>
     $('#create_<?= settings()->links->claim_url_type ?> input[name="url"]').val(<?= $claim_url ?>);
 

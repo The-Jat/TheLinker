@@ -50,6 +50,9 @@ class Router {
 
         /* Teams */
         'allow_team_access' => null,
+
+		/* Sessions */
+		'allow_sessions' => true,
     ];
     public static $method = 'index';
     public static $data = [];
@@ -71,6 +74,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -80,6 +84,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+					'allow_sessions' => false,
                 ]
             ],
         ],
@@ -542,12 +547,13 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+					'allow_sessions' => false,
                 ]
             ],
 
             /* Common routes */
             'index' => [
-               'controller' => 'Index',
+                'controller' => 'Index',
                 'settings' => [
                     'currency_switcher' => true,
                 ],
@@ -616,6 +622,13 @@ class Router {
 
             'resend-activation' => [
                 'controller' => 'ResendActivation',
+                'settings' => [
+                    'wrapper' => 'basic_wrapper',
+                ]
+            ],
+
+            'sent-activation' => [
+                'controller' => 'SentActivation',
                 'settings' => [
                     'wrapper' => 'basic_wrapper',
                 ]
@@ -716,8 +729,16 @@ class Router {
                 ]
             ],
 
+            'credit-notes' => [
+                'controller' => 'CreditNotes',
+                'settings' => [
+                    'wrapper' => 'invoice/invoice_wrapper',
+                    'allow_team_access' => false,
+                ]
+            ],
+
             'plan' => [
-               'controller' => 'Plan',
+                'controller' => 'Plan',
                 'settings' => [
                     'currency_switcher' => true,
                 ],
@@ -846,6 +867,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => true,
                 ]
             ],
 
@@ -855,6 +877,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => true,
                 ]
             ],
 
@@ -864,6 +887,7 @@ class Router {
                     'allow_team_access' => false,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+					'allow_sessions' => true,
                 ]
             ],
 
@@ -875,6 +899,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -885,6 +910,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -895,6 +921,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -905,6 +932,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -915,6 +943,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -925,6 +954,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -935,6 +965,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -945,6 +976,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -955,6 +987,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -965,6 +998,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -975,6 +1009,18 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
+                ]
+            ],
+
+            'webhook-paddle-billing' => [
+                'controller' => 'WebhookPaddleBilling',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'has_view' => false,
+                    'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
+                    'allow_sessions' => false,
                 ]
             ],
 
@@ -985,6 +1031,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -995,6 +1042,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -1005,6 +1053,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -1015,6 +1064,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -1025,15 +1075,71 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
+                ]
+            ],
+
+            'webhook-klarna' => [
+                'controller' => 'WebhookKlarna',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'has_view' => false,
+                    'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
+                    'allow_sessions' => false,
+                ]
+            ],
+
+            'webhook-plisio' => [
+                'controller' => 'WebhookPlisio',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'has_view' => false,
+                    'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
+                    'allow_sessions' => false,
+                ]
+            ],
+
+            'webhook-plisio-whitelabel' => [
+                'controller' => 'WebhookPlisioWhitelabel',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'has_view' => false,
+                    'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
+                    'allow_sessions' => false,
+                ]
+            ],
+
+            'webhook-revolut' => [
+                'controller' => 'WebhookRevolut',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'has_view' => false,
+                    'no_browser_language_detection' => true,
+                    'allow_indexing' => false,
+                    'allow_sessions' => false,
                 ]
             ],
 
             /* Others */
+            'pwa-splash-generator' => [
+                'controller' => 'PwaSplashGenerator',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'no_browser_language_detection' => true,
+                    'allow_sessions' => false,
+                ]
+            ],
+
             'cookie-consent' => [
                 'controller' => 'CookieConsent',
                 'settings' => [
                     'no_authentication_check' => true,
                     'no_browser_language_detection' => true,
+                    'has_view' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -1043,6 +1149,7 @@ class Router {
                     'no_authentication_check' => true,
                     'no_browser_language_detection' => true,
                     'has_view' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -1053,6 +1160,7 @@ class Router {
                     'has_view' => false,
                     'no_browser_language_detection' => true,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -1062,6 +1170,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'no_browser_language_detection' => true,
+					'allow_sessions' => false,
                 ]
             ],
         ],
@@ -1073,6 +1182,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -1082,6 +1192,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
             'statistics' => [
@@ -1090,6 +1201,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
             'projects' => [
@@ -1098,6 +1210,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
             'pixels' => [
@@ -1106,6 +1219,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
             'splash-pages' => [
@@ -1114,6 +1228,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
             'qr-codes' => [
@@ -1122,6 +1237,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
             'data' => [
@@ -1130,6 +1246,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
             'domains' => [
@@ -1138,6 +1255,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
             'signatures' => [
@@ -1146,6 +1264,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -1156,6 +1275,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
             'teams-member' => [
@@ -1164,6 +1284,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
             'team-members' => [
@@ -1172,6 +1293,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
             'user' => [
@@ -1180,6 +1302,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
             'payments' => [
@@ -1188,6 +1311,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
             'logs' => [
@@ -1196,6 +1320,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
         ],
@@ -1443,6 +1568,10 @@ class Router {
                 'controller' => 'AdminTaxes'
             ],
 
+            'taxes-import' => [
+                'controller' => 'AdminTaxesImport'
+            ],
+
             'tax-create' => [
                 'controller' => 'AdminTaxCreate'
             ],
@@ -1457,6 +1586,10 @@ class Router {
 
             'payments' => [
                 'controller' => 'AdminPayments'
+            ],
+
+            'payment-create' => [
+                'controller' => 'AdminPaymentCreate',
             ],
 
             'statistics' => [
@@ -1554,6 +1687,10 @@ class Router {
                 'controller' => 'AdminInvoice',
             ],
 
+            'credit-notes' => [
+                'controller' => 'AdminCreditNotes',
+            ],
+
             'dynamic-og-images' => [
                 'controller' => 'AdminDynamicOgImages',
             ],
@@ -1570,6 +1707,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -1579,6 +1717,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -1588,6 +1727,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -1597,6 +1737,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -1606,6 +1747,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
 
@@ -1615,6 +1757,7 @@ class Router {
                     'no_authentication_check' => true,
                     'has_view' => false,
                     'allow_indexing' => false,
+					'allow_sessions' => false,
                 ]
             ],
         ],
@@ -1670,7 +1813,7 @@ class Router {
 
         /* Check if the current link accessed is actually the original url or not (multi domain use) */
         $original_url_host = parse_url(url(), PHP_URL_HOST);
-        $request_url_host = input_clean($_SERVER['HTTP_HOST']);
+        $request_url_host = php_sapi_name() == 'cli' ? null : explode(':', $_SERVER['HTTP_HOST'])[0];
 
         if(!empty($request_url_host) && $original_url_host != $request_url_host) {
             if(function_exists('idn_to_utf8')) {
@@ -1723,7 +1866,8 @@ class Router {
                     /* Get data from the database */
                     if(isset(self::$data['domain'])) {
                         if(self::$data['domain']->link_id) {
-                            $link = db()->where('link_id', self::$data['domain']->link_id)->getOne('links');
+                            /* Do not accept parameters on exclusive domain to link types */
+                            $link = false;
                         } else {
                             $link = db()->where('url', self::$params[0])->where('domain_id', self::$data['domain']->domain_id)->getOne('links');
                         }
@@ -1736,18 +1880,6 @@ class Router {
 
                         /* Set some route data */
                         self::$data['link'] = $link;
-
-                        /* Check for 66pusher service worker integration */
-                        // To do add support for custom domains with exclusive links
-                        if(settings()->links->sixsixpusher_is_enabled && isset(self::$params[1]) && self::$params[1] == settings()->links->sixsixpusher_service_worker_file_name . '.js') {
-                            $link->settings = json_decode($link->settings);
-
-                            header('Content-Type: application/javascript');
-                            header('Service-Worker-Allowed: /');
-
-                            include \Altum\Uploads::get_full_path('service_workers') . $link->settings->service_worker;
-                            die();
-                        }
                     }
 
                 } else {
@@ -1825,6 +1957,45 @@ class Router {
 
             }
 
+        }
+
+        /* Check for 66pusher service worker integration */
+        if(
+            isset($link)
+            && $link
+            && settings()->links->sixsixpusher_is_enabled
+            && (
+                /* Exclusive custom domain */
+                (
+                    isset(self::$data['domain'])
+                    && self::$data['domain']->link_id
+                    && isset(self::$params[0])
+                    && self::$params[0] == settings()->links->sixsixpusher_service_worker_file_name . '.js'
+                )
+                ||
+                /* Custom domain, not exclusive */
+                (
+                    isset(self::$data['domain'])
+                    && !self::$data['domain']->link_id
+                    && isset(self::$params[1])
+                    && self::$params[1] == settings()->links->sixsixpusher_service_worker_file_name . '.js'
+                )
+                ||
+                /* No custom domain, not exclusive */
+                (
+                    !isset(self::$data['domain'])
+                    && isset(self::$params[1])
+                    && self::$params[1] == settings()->links->sixsixpusher_service_worker_file_name . '.js'
+                )
+            )
+        ) {
+            $link->settings = json_decode($link->settings);
+
+            header('Content-Type: application/javascript');
+            header('Service-Worker-Allowed: /');
+
+            include \Altum\Uploads::get_full_path('service_workers') . $link->settings->service_worker;
+            die();
         }
 
         /* Check for a custom index url redirect in case there is no link requested  */

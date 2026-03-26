@@ -34,7 +34,7 @@
 
     <div class="row mt-4">
         <div class="<?= settings()->content->blog_columns == 1 ? 'col-12 mb-5' : 'col-12 col-lg-8 mb-lg-0' ?>">
-            <?php if(count($data->blog_posts)): ?>
+            <?php if (!empty($data->blog_posts)): ?>
                 <?php foreach($data->blog_posts as $blog_post): ?>
                     <div class="card mb-4">
                         <div class="card-body">

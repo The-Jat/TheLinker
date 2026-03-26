@@ -1,14 +1,13 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<?php if(!settings()->codes->qr_codes_is_enabled): ?>
-    <div class="alert alert-info">
-        <i class="fas fa-fw fa-info-circle mr-1"></i>
-        <?= sprintf(l('global.info_message.admin_feature_disabled'), url('admin/settings/codes')) ?>
-    </div>
-<?php endif ?>
-
-<section class="container">
+<div class="container">
     <?= \Altum\Alerts::output_alerts() ?>
+
+    <?php if($this->user->plan_settings->qr_codes_limit != -1 && $data->total_qr_codes > $this->user->plan_settings->qr_codes_limit): ?>
+        <div class="alert alert-danger">
+            <i class="fas fa-fw fa-times-circle text-danger mr-2"></i> <?= sprintf(settings()->payment->is_enabled ? l('global.info_message.plan_feature_limit_removal_with_upgrade') : l('global.info_message.plan_feature_limit_removal'), '<strong>' . $data->total_qr_codes - $this->user->plan_settings->qr_codes_limit, mb_strtolower(l('qr_codes.title')) . '</strong>', '<a href="' . url('plan') . '" class="font-weight-bold text-reset">' . l('global.info_message.plan_upgrade') . '</a>') ?>
+        </div>
+    <?php endif ?>
 
     <div class="row mb-4">
         <div class="col-12 col-lg d-flex align-items-center mb-3 mb-lg-0 text-truncate">
@@ -24,7 +23,7 @@
         <div class="col-12 col-lg-auto d-flex flex-wrap gap-3 d-print-none">
             <div>
                 <?php if($this->user->plan_settings->qr_codes_limit != -1 && $data->total_qr_codes >= $this->user->plan_settings->qr_codes_limit): ?>
-                    <button type="button" data-toggle="tooltip" title="<?= l('global.info_message.plan_feature_limit') ?>" class="btn btn-primary disabled">
+                    <button type="button" class="btn btn-primary disabled" <?= get_plan_feature_limit_reached_info() ?>>
                         <i class="fas fa-fw fa-plus-circle fa-sm mr-1"></i> <?= l('qr_codes.create') ?>
                     </button>
                 <?php else: ?>
@@ -36,7 +35,7 @@
 
             <div>
                 <div class="dropdown">
-                    <button type="button" class="btn btn-light dropdown-toggle-simple <?= count($data->qr_codes) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
+                    <button type="button" class="btn btn-light dropdown-toggle-simple <?= !empty($data->qr_codes) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-download"></i>
                     </button>
 
@@ -47,7 +46,7 @@
                         <a href="<?= url('qr-codes?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                         </a>
-                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                         </a>
                     </div>
@@ -56,7 +55,7 @@
 
             <div>
                 <div class="dropdown">
-                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= count($data->qr_codes) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
+                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= !empty($data->qr_codes) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-filter"></i>
                     </button>
 
@@ -85,18 +84,18 @@
                             </div>
 
                             <?php if(settings()->links->projects_is_enabled): ?>
-                            <div class="form-group px-4">
-                                <div class="d-flex justify-content-between">
-                                    <label for="filters_project_id" class="small"><?= l('projects.project_id') ?></label>
-                                    <a href="<?= url('projects') ?>" target="_blank" class="small mb-2"><i class="fas fa-fw fa-sm fa-plus mr-1"></i> <?= l('global.create') ?></a>
+                                <div class="form-group px-4">
+                                    <div class="d-flex justify-content-between">
+                                        <label for="filters_project_id" class="small"><?= l('projects.project_id') ?></label>
+                                        <a href="<?= url('projects') ?>" target="_blank" class="small mb-2"><i class="fas fa-fw fa-sm fa-plus mr-1"></i> <?= l('global.create') ?></a>
+                                    </div>
+                                    <select name="project_id" id="filters_project_id" class="custom-select custom-select-sm">
+                                        <option value=""><?= l('global.all') ?></option>
+                                        <?php foreach($data->projects as $row): ?>
+                                            <option value="<?= $row->project_id ?>" <?= isset($data->filters->filters['project_id']) && $data->filters->filters['project_id'] == $row->project_id ? 'selected="selected"' : null ?>><?= $row->name ?></option>
+                                        <?php endforeach ?>
+                                    </select>
                                 </div>
-                                <select name="project_id" id="filters_project_id" class="custom-select custom-select-sm">
-                                    <option value=""><?= l('global.all') ?></option>
-                                    <?php foreach($data->projects as $row): ?>
-                                        <option value="<?= $row->project_id ?>" <?= isset($data->filters->filters['project_id']) && $data->filters->filters['project_id'] == $row->project_id ? 'selected="selected"' : null ?>><?= $row->name ?></option>
-                                    <?php endforeach ?>
-                                </select>
-                            </div>
                             <?php endif ?>
 
                             <div class="form-group px-4">
@@ -166,7 +165,7 @@
         </div>
     </div>
 
-    <?php if(count($data->qr_codes)): ?>
+    <?php if (!empty($data->qr_codes)): ?>
         <form id="table" action="<?= SITE_URL . 'qr-codes/bulk' ?>" method="post" role="form">
             <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
             <input type="hidden" name="type" value="" data-bulk-type />
@@ -186,7 +185,7 @@
                         <th><?= l('global.name') ?></th>
                         <th><?= l('global.type') ?></th>
                         <?php if(settings()->links->projects_is_enabled): ?>
-                        <th></th>
+                            <th></th>
                         <?php endif ?>
                         <th></th>
                         <th></th>
@@ -212,7 +211,7 @@
 
                                     <div class="d-flex flex-column">
                                         <div>
-                                            <a href="<?= url('qr-code-update/' . $row->qr_code_id) ?>" class="font-weight-bold text-truncate"><?= $row->name ?></a>
+                                            <a href="<?= url('qr-code-update/' . $row->qr_code_id) ?>" class="font-weight-500 text-truncate"><?= $row->name ?></a>
                                         </div>
                                         <?php if($row->type == 'url'): ?>
                                             <div class="d-flex align-items-center">
@@ -231,32 +230,32 @@
                             </td>
 
                             <td class="text-nowrap">
-                            <span class="badge badge-light">
-                                <i class="<?= $data->available_qr_codes[$row->type]['icon'] ?> fa-fw fa-sm mr-1"></i>
-                                <?= l('qr_codes.type.' . $row->type) ?>
-                            </span>
+                                <span class="badge badge-light">
+                                    <i class="<?= $data->available_qr_codes[$row->type]['icon'] ?> fa-fw fa-sm mr-1"></i>
+                                    <?= l('qr_codes.type.' . $row->type) ?>
+                                </span>
                             </td>
 
                             <?php if(settings()->links->projects_is_enabled): ?>
-                            <td class="text-nowrap">
-                                <?php if($row->project_id): ?>
-                                    <a href="<?= url('qr-codes?project_id=' . $row->project_id) ?>" class="text-decoration-none" data-toggle="tooltip" title="<?= l('projects.project_id') ?>">
-                                    <span class="badge badge-light" style="color: <?= $data->projects[$row->project_id]->color ?> !important;">
-                                        <?= $data->projects[$row->project_id]->name ?>
-                                    </span>
-                                    </a>
-                                <?php endif ?>
-                            </td>
+                                <td class="text-nowrap">
+                                    <?php if($row->project_id): ?>
+                                        <a href="<?= url('qr-codes?project_id=' . $row->project_id) ?>" class="text-decoration-none" data-toggle="tooltip" title="<?= l('projects.project_id') ?>">
+                                            <span class="badge badge-light" style="color: <?= $data->projects[$row->project_id]->color ?> !important;">
+                                                <?= $data->projects[$row->project_id]->name ?>
+                                            </span>
+                                        </a>
+                                    <?php endif ?>
+                                </td>
                             <?php endif ?>
 
                             <td class="text-nowrap text-muted">
-                            <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
-                                <i class="fas fa-fw fa-calendar text-muted"></i>
-                            </span>
+                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
+                                    <i class="fas fa-fw fa-calendar text-muted"></i>
+                                </span>
 
                                 <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.last_datetime_tooltip'), ($row->last_datetime ? '<br />' . \Altum\Date::get($row->last_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->last_datetime) . ')</small>' : '<br />' . l('global.na'))) ?>">
-                                <i class="fas fa-fw fa-history text-muted"></i>
-                            </span>
+                                    <i class="fas fa-fw fa-history text-muted"></i>
+                                </span>
                             </td>
 
                             <td>
@@ -289,14 +288,14 @@
     <?php else: ?>
 
         <?= include_view(THEME_PATH . 'views/partials/no_data.php', [
-            'filters_get' => $data->filters->get ?? [],
-            'name' => 'qr_codes',
-            'has_secondary_text' => true,
+                'filters_get' => $data->filters->get ?? [],
+                'name' => 'qr_codes',
+                'has_secondary_text' => true,
         ]); ?>
 
     <?php endif ?>
 
-</section>
+</div>
 
 <?php require THEME_PATH . 'views/qr-codes/js_qr_codes.php' ?>
 <?php require THEME_PATH . 'views/partials/js_bulk.php' ?>

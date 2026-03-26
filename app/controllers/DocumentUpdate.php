@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -27,12 +27,12 @@ class DocumentUpdate extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->documents_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('update.documents')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('dashboard');
         }
 
@@ -40,7 +40,7 @@ class DocumentUpdate extends Controller {
 
         /* Get document details */
         if(!$document = db()->where('document_id', $document_id)->where('user_id', $this->user->user_id)->getOne('documents')) {
-            redirect();
+            throw_404();
         }
 
         $document->settings = json_decode($document->settings ?? '');
@@ -68,7 +68,7 @@ class DocumentUpdate extends Controller {
             /* Check for any errors */
             $required_fields = ['name', 'content'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }

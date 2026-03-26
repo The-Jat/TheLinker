@@ -24,15 +24,15 @@
 
             <div class="form-group">
                 <label for="type"><i class="fas fa-fw fa-fingerprint fa-sm text-muted mr-1"></i> <?= l('global.type') ?></label>
-                <div class="row btn-group-toggle" data-toggle="buttons">
-                    <div class="col-6">
-                        <label class="btn btn-light btn-block text-truncate <?= $data->values['type'] == 'internal' ? 'active"' : null?>">
+                <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+                    <div class="p-2 col-6">
+                        <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->values['type'] == 'internal' ? 'active"' : null?>">
                             <input type="radio" name="type" value="internal" class="custom-control-input" <?= $data->values['type'] == 'internal' ? 'checked="checked"' : null?> required="required" />
                             <i class="fas fa-file fa-fw fa-sm mr-1"></i> <?= l('admin_resources.type_internal') ?>
                         </label>
                     </div>
-                    <div class="col-6">
-                        <label class="btn btn-light btn-block text-truncate <?= $data->values['type'] == 'external' ? 'active"' : null?>">
+                    <div class="p-2 col-6">
+                        <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->values['type'] == 'external' ? 'active"' : null?>">
                             <input type="radio" name="type" value="external" class="custom-control-input" <?= $data->values['type'] == 'external' ? 'checked="checked"' : null?> required="required" />
                             <i class="fas fa-link fa-fw fa-sm mr-1"></i> <?= l('admin_resources.type_external') ?>
                         </label>
@@ -82,23 +82,23 @@
 
             <div class="form-group" data-type="internal">
                 <label for="editor"><i class="fas fa-fw fa-sm fa-newspaper text-muted mr-1"></i> <?= l('admin_resources.editor') ?></label>
-                <div class="row btn-group-toggle" data-toggle="buttons">
-                    <div class="col-12 col-lg-4">
-                        <label class="btn btn-light btn-block text-truncate <?= $data->values['editor'] == 'wysiwyg' ? 'active"' : null?>">
+                <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+                    <div class="p-2 col-12 col-lg-4">
+                        <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->values['editor'] == 'wysiwyg' ? 'active"' : null?>">
                             <input type="radio" name="editor" value="wysiwyg" class="custom-control-input" <?= $data->values['editor'] == 'wysiwyg' ? 'checked="checked"' : null?> required="required" />
                             <i class="fas fa-eye fa-fw fa-sm mr-1"></i> <?= l('admin_resources.editor_wysiwyg') ?>
                         </label>
                     </div>
 
-                    <div class="col-12 col-lg-4">
-                        <label class="btn btn-light btn-block text-truncate <?= $data->values['editor'] == 'blocks' ? 'active"' : null?>">
+                    <div class="p-2 col-12 col-lg-4">
+                        <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->values['editor'] == 'blocks' ? 'active"' : null?>">
                             <input type="radio" name="editor" value="blocks" class="custom-control-input" <?= $data->values['editor'] == 'blocks' ? 'checked="checked"' : null?> required="required" />
                             <i class="fas fa-th-large fa-fw fa-sm mr-1"></i> <?= l('admin_resources.editor_blocks') ?>
                         </label>
                     </div>
 
-                    <div class="col-12 col-lg-4">
-                        <label class="btn btn-light btn-block text-truncate <?= $data->values['editor'] == 'raw' ? 'active"' : null?>">
+                    <div class="p-2 col-12 col-lg-4">
+                        <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->values['editor'] == 'raw' ? 'active"' : null?>">
                             <input type="radio" name="editor" value="raw" class="custom-control-input" <?= $data->values['editor'] == 'raw' ? 'checked="checked"' : null?> required="required" />
                             <i class="fas fa-code fa-fw fa-sm mr-1"></i> <?= l('admin_resources.editor_raw') ?>
                         </label>
@@ -112,7 +112,7 @@
                     <div id="quill"></div>
                 </div>
                 <div class="bg-gray-100 rounded p-3" id="editorjs"></div>
-                <textarea name="content" id="content" class="form-control d-none" style="height: 15rem;"><?= e(bootstrap_to_quilljs($data->values['content'])) ?></textarea>
+                <textarea name="content" id="content" class="form-control d-none" style="height: 15rem;"><?= $data->values['editor'] == 'blocks' ? e(bootstrap_to_quilljs($data->values['content'])) : e($data->values['content']) ?></textarea>
             </div>
 
             <div class="form-group">
@@ -128,23 +128,23 @@
 
             <div class="form-group">
                 <label for="position"><i class="fas fa-fw fa-sm fa-thumbtack text-muted mr-1"></i> <?= l('admin_resources.position') ?></label>
-                <div class="row btn-group-toggle" data-toggle="buttons">
-                    <div class="col-12 col-lg-4">
-                        <label class="btn btn-light btn-block text-truncate <?= $data->values['position'] == 'bottom' ? 'active"' : null?>">
+                <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+                    <div class="p-2 col-12 col-lg-4">
+                        <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->values['position'] == 'bottom' ? 'active"' : null?>">
                             <input type="radio" name="position" value="bottom" class="custom-control-input" <?= $data->values['position'] == 'bottom' ? 'checked="checked"' : null?> required="required" />
                             <i class="fas fa-arrow-down fa-fw fa-sm mr-1"></i> <?= l('admin_resources.position_bottom') ?>
                         </label>
                     </div>
 
-                    <div class="col-12 col-lg-4">
-                        <label class="btn btn-light btn-block text-truncate <?= $data->values['position'] == 'top' ? 'active"' : null?>">
+                    <div class="p-2 col-12 col-lg-4">
+                        <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->values['position'] == 'top' ? 'active"' : null?>">
                             <input type="radio" name="position" value="top" class="custom-control-input" <?= $data->values['position'] == 'top' ? 'checked="checked"' : null?> required="required" />
                             <i class="fas fa-arrow-up fa-fw fa-sm mr-1"></i> <?= l('admin_resources.position_top') ?>
                         </label>
                     </div>
 
-                    <div class="col-12 col-lg-4">
-                        <label class="btn btn-light btn-block text-truncate <?= $data->values['position'] == 'hidden' ? 'active"' : null?>">
+                    <div class="p-2 col-12 col-lg-4">
+                        <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->values['position'] == 'hidden' ? 'active"' : null?>">
                             <input type="radio" name="position" value="hidden" class="custom-control-input" <?= $data->values['position'] == 'hidden' ? 'checked="checked"' : null?> required="required" />
                             <i class="fas fa-eye-slash fa-fw fa-sm mr-1"></i> <?= l('admin_resources.position_hidden') ?>
                         </label>
@@ -157,7 +157,7 @@
                 <label class="custom-control-label" for="is_published"><?= l('admin_resources.is_published') ?></label>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#advanced_container" aria-expanded="false" aria-controls="advanced_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#advanced_container" aria-expanded="false" aria-controls="advanced_container">
                 <i class="fas fa-fw fa-user-tie fa-sm mr-1"></i> <?= l('admin_resources.advanced') ?>
             </button>
 
@@ -181,7 +181,7 @@
                 <div class="form-group">
                     <label for="order"><i class="fas fa-fw fa-sm fa-sort text-muted mr-1"></i> <?= l('global.order') ?></label>
                     <input id="order" type="number" name="order" class="form-control" value="<?= $data->values['order'] ?>" />
-                    <small class="form-text text-muted"><?= l('admin_resources.order_help') ?></small>
+                    <small class="form-text text-muted"><?= l('global.order_int_help') ?></small>
                 </div>
 
                 <div class="form-group">

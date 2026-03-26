@@ -30,11 +30,11 @@
 <script>
     'use strict';
     
-/* On modal show load new data */
+    /* On modal show load new data */
     $('#plugin_uninstall_modal').on('show.bs.modal', event => {
         let plugin_id = $(event.relatedTarget).data('plugin-id');
 
-        $(event.currentTarget).find('#plugin_uninstall_modal_url').attr('href', `${url}admin/plugins/uninstall/${plugin_id}&global_token=${global_token}`);
+        $(event.currentTarget).find('#plugin_uninstall_modal_url').attr('href', `${url}admin/plugins/uninstall/${plugin_id}?global_token=${global_token}`);
     });
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

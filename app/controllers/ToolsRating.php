@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,11 +25,11 @@ class ToolsRating extends Controller {
     public function index() {
 
         if(empty($_POST)) {
-            redirect();
+            throw_404();
         }
 
         if(!settings()->tools->is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         if(settings()->tools->access == 'users') {
@@ -42,7 +42,7 @@ class ToolsRating extends Controller {
         /* Check for any errors */
         $required_fields = ['tool_id', 'rating'];
         foreach($required_fields as $field) {
-            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+            if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                 Response::json(l('global.error_message.empty_fields'), 'error');
             }
         }

@@ -110,7 +110,7 @@ class NotificationHandlers {
                 ])
             );
         } catch (\Exception $exception) {
-            error_log($exception->getMessage());
+            error_log('[Notification Handler][Slack] ' . $exception->getMessage());
         }
     }
 
@@ -134,7 +134,7 @@ class NotificationHandlers {
                 ]
             );
         } catch (\Exception $exception) {
-            error_log($exception->getMessage());
+            error_log('[Notification Handler][Discord] ' . $exception->getMessage());
         }
     }
 
@@ -153,7 +153,7 @@ class NotificationHandlers {
                 ]
             );
         } catch (\Exception $exception) {
-            error_log($exception->getMessage());
+            error_log('[Notification Handler][Google Chat] ' . $exception->getMessage());
         }
     }
 
@@ -177,7 +177,7 @@ class NotificationHandlers {
                 false
             );
         } catch (\Exception $exception) {
-            error_log($exception->getMessage());
+            error_log('[Notification Handler][Telegram] ' . $exception->getMessage());
         }
     }
 
@@ -191,7 +191,7 @@ class NotificationHandlers {
                 \Unirest\Request\Body::json(['text' => $context['message']])
             );
         } catch (\Exception $exception) {
-            error_log($exception->getMessage());
+            error_log('[Notification Handler][Microsoft Teams] ' . $exception->getMessage());
         }
     }
 
@@ -209,7 +209,9 @@ class NotificationHandlers {
 
         try {
             $twitter->post('tweets', ['text' => $context['message']]);
-        } catch (\Exception $exception) {}
+        } catch (\Exception $exception) {
+            error_log('[Notification Handler][X] ' . $exception->getMessage());
+        }
     }
 
     private static function handle_twilio(object $notification_handler, array $context) {
@@ -228,7 +230,7 @@ class NotificationHandlers {
                 ]
             );
         } catch (\Exception $exception) {
-            error_log($exception->getMessage());
+            error_log('[Notification Handler][Twilio SMS] ' . $exception->getMessage());
         }
 
         \Unirest\Request::auth('', '');
@@ -250,7 +252,7 @@ class NotificationHandlers {
                 ]
             );
         } catch (\Exception $exception) {
-            error_log($exception->getMessage());
+            error_log('[Notification Handler][Twilio Call] ' . $exception->getMessage());
         }
 
         \Unirest\Request::auth('', '');
@@ -281,7 +283,7 @@ class NotificationHandlers {
                 ])
             );
         } catch (\Exception $exception) {
-            error_log($exception->getMessage());
+            error_log('[Notification Handler][Whatsapp] ' . $exception->getMessage());
         }
     }
 

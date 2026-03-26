@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,7 +25,7 @@ class Logout extends Controller {
 
         /* Exit admin impersonation */
         if(isset($_GET['admin_impersonate_user'])) {
-            $admin_user_id = $_SESSION['admin_user_id'];
+            $admin_user_id = session_get('admin_user_id');
 
             /* Logout of the current users */
             \Altum\Authentication::logout(false);
@@ -35,8 +35,8 @@ class Logout extends Controller {
             if($admin_user) {
                 /* Login as the admin */
                 session_start();
-                $_SESSION['user_id'] = $admin_user_id;
-                $_SESSION['user_password_hash'] = md5($admin_user->password);
+                session_set('user_id', $admin_user_id);
+                session_set('user_password_hash', md5($admin_user->password));
             }
 
             redirect('admin/users');
@@ -44,7 +44,7 @@ class Logout extends Controller {
 
         /* Exit team delegated access */
         else if(isset($_GET['team'])) {
-            unset($_SESSION['team_id']);
+            session_unset_key('team_id');
             redirect('teams-member');
         }
 

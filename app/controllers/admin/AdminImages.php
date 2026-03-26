@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,7 +25,7 @@ class AdminImages extends Controller {
     public function index() {
 
         if(!\Altum\Plugin::is_active('aix')) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Prepare the filtering system */
@@ -85,8 +85,8 @@ class AdminImages extends Controller {
     public function bulk() {
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('admin/images');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -108,6 +108,8 @@ class AdminImages extends Controller {
             set_time_limit(0);
 
             session_write_close();
+
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
 
             switch($_POST['type']) {
                 case 'delete':
@@ -142,7 +144,7 @@ class AdminImages extends Controller {
             }
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -162,7 +164,7 @@ class AdminImages extends Controller {
         }
 
         if(!$image = db()->where('image_id', $image_id)->getOne('images', ['image_id', 'user_id', 'name', 'image'])) {
-            redirect('admin/images');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -53,9 +53,7 @@ class AdminPageUpdate extends Controller {
             $_POST['content'] = $_POST['editor'] == 'wysiwyg' ? quilljs_to_bootstrap($_POST['content']) : $_POST['content'];
 
             $_POST['plans_ids'] = array_map(
-                function($plan_id) {
-                    return (int) $plan_id;
-                },
+                'intval',
                 array_filter($_POST['plans_ids'] ?? [], function($plan_id) use($plans) {
                     return array_key_exists($plan_id, $plans);
                 })
@@ -81,7 +79,7 @@ class AdminPageUpdate extends Controller {
             /* Check for any errors */
             $required_fields = ['title', 'url'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }

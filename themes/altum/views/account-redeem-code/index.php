@@ -26,7 +26,7 @@
                     <select id="plan_id" name="plan_id" class="custom-select" required="required">
                         <?php foreach($data->plans as $plan): ?>
                             <?php if($plan->status != 1) continue ?>
-                            <option value="<?= $plan->plan_id ?>" <?= $data->values['plan_id'] == $plan->plan_id ? 'selected="selected"' : null ?>><?= $plan->translations->{\Altum\Language::$name}->name ?: $plan->name ?></option>
+                            <option value="<?= $plan->plan_id ?>" <?= $data->values['plan_id'] == $plan->plan_id ? 'selected="selected"' : null ?>><?= ($plan->translations->{\Altum\Language::$name}->name ?? '') ?: $plan->name ?></option>
                         <?php endforeach ?>
                     </select>
                 </div>

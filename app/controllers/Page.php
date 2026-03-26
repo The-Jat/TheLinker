@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -27,7 +27,7 @@ class Page extends Controller {
     public function index() {
 
         if(!settings()->content->pages_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         $url = isset($this->params[0]) ? query_clean($this->params[0]) : null;
@@ -42,24 +42,25 @@ class Page extends Controller {
                 AND `is_published` = 1
             ORDER BY `language` DESC
             ";
+            
         $page = $url ? \Altum\Cache::cache_function_result('page?hash=' . md5($page_query), 'pages', function() use ($page_query) {
             return database()->query($page_query)->fetch_object() ?? null;
         }) : null;
 
         /* Redirect if the page does not exist */
         if(!$page) {
-            redirect('not-found');
+            throw_404();
         }
 
         $page->plans_ids = json_decode($page->plans_ids ?? '');
 
         if(!empty($page->plans_ids)) {
             if(!is_logged_in()) {
-                redirect('not-found');
+                throw_404();
             };
 
             if(!in_array(user()->plan_id, $page->plans_ids)) {
-                redirect('not-found');
+                throw_404();
             }
         }
 

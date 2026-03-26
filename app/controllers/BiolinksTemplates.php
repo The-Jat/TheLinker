@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,14 +25,14 @@ class BiolinksTemplates extends Controller {
     public function index() {
 
         if(!settings()->links->biolinks_is_enabled || !settings()->links->biolinks_templates_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
 
         /* Prepare the filtering system */
         $filters = (new \Altum\Filters([], ['name'], ['biolink_template_id', 'order', 'name']));
-        $filters->set_default_order_by('order', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
+        $filters->set_default_order_by('order', 'ASC');
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
         /* Prepare the paginator */

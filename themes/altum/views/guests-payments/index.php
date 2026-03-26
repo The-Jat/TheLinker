@@ -2,7 +2,7 @@
 
 <?php $payment_processors = require APP_PATH . 'includes/payment_processors.php'; ?>
 
-<section class="container">
+<div class="container">
     <?= \Altum\Alerts::output_alerts() ?>
 
     <div class="row mb-4">
@@ -19,7 +19,7 @@
         <div class="col-12 col-lg-auto d-flex flex-wrap gap-3 d-print-none">
             <div>
                 <div class="dropdown">
-                    <button type="button" class="btn btn-light dropdown-toggle-simple <?= count($data->guests_payments) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
+                    <button type="button" class="btn btn-light dropdown-toggle-simple <?= !empty($data->guests_payments) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-download"></i>
                     </button>
 
@@ -30,7 +30,7 @@
                         <a href="<?= url('guests-payments?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                         </a>
-                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                         </a>
                     </div>
@@ -39,7 +39,7 @@
 
             <div>
                 <div class="dropdown">
-                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= count($data->guests_payments) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
+                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= !empty($data->guests_payments) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-filter"></i>
                     </button>
 
@@ -84,7 +84,7 @@
                                 <label for="processor" class="small"><?= l('guests_payments.processor') ?></label>
                                 <select name="processor" id="processor" class="custom-select custom-select-sm">
                                     <option value=""><?= l('global.all') ?></option>
-                                    <?php foreach(['paypal', 'stripe', 'crypto_com', 'razorpay', 'paystack', 'mollie'] as $processor): ?>
+                                    <?php foreach(include \Altum\Plugin::get('payment-blocks')->path . 'payment_blocks_payment_processors.php' as $processor): ?>
                                         <option value="<?= $processor ?>" <?= isset($data->filters->filters['processor']) && $data->filters->filters['processor'] == $processor ? 'selected="selected"' : null ?>><?= l('pay.custom_plan.' . $processor) ?></option>
                                     <?php endforeach ?>
                                 </select>
@@ -94,8 +94,9 @@
                                 <label for="filters_status" class="small"><?= l('global.status') ?></label>
                                 <select name="status" id="filters_status" class="custom-select custom-select-sm">
                                     <option value=""><?= l('global.all') ?></option>
-                                    <option value="1" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == '1' ? 'selected="selected"' : null ?>><?= l('account_payments.status_approved') ?></option>
-                                    <option value="0" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == '0' ? 'selected="selected"' : null ?>><?= l('account_payments.status_pending') ?></option>
+                                    <option value="1" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == '1' ? 'selected="selected"' : null ?>><?= l('account_payments.status.approved') ?></option>
+                                    <option value="0" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == '0' ? 'selected="selected"' : null ?>><?= l('account_payments.status.pending') ?></option>
+                                    <option value="2" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == '2' ? 'selected="selected"' : null ?>><?= l('account_payments.status.cancelled') ?></option>
                                 </select>
                             </div>
 
@@ -153,7 +154,7 @@
         </div>
     </div>
 
-    <?php if(count($data->guests_payments)): ?>
+    <?php if (!empty($data->guests_payments)): ?>
 
         <form id="table" action="<?= SITE_URL . 'guests-payments/bulk' ?>" method="post" role="form">
             <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
@@ -202,7 +203,7 @@
                             <td class="text-nowrap">
                                 <div class="d-flex flex-column">
                                     <div>
-                                        <a href="<?= url('link/' . $row->link_id . '?tab=blocks&biolink_block_id=' . $row->biolink_block_id . '#biolink_block_expanded_content_' . $row->biolink_block_id) ?>" class="font-weight-bold">
+                                        <a href="<?= url('link/' . $row->link_id . '?tab=blocks&biolink_block_id=' . $row->biolink_block_id . '#biolink_block_expanded_content_' . $row->biolink_block_id) ?>" class="font-weight-500">
                                             <span data-toggle="tooltip" title="<?= $row->settings->name ?? l('global.unknown') ?>"><?= string_truncate($row->settings->name ?? l('global.unknown'), 30) ?></span>
                                         </a>
                                     </div>
@@ -228,7 +229,7 @@
                             <td class="text-nowrap">
                                 <span class="badge badge-light">
                                     <?php if($row->processor): ?>
-                                        <i class="<?= $payment_processors[$row->processor]['icon'] ?> fa-sm fa-fw mr-1" style="color: <?= $payment_processors[$row->processor]['color'] ?>"></i> <?= l('pay.custom_plan.' . $row->processor) ?>
+                                        <i class="<?= $payment_processors[$row->processor]['icon'] ?> fa-sm fa-fw mr-1" style="--brand-color: <?= $payment_processors[$row->processor]['color'] ?>;--brand-color-dark: <?= $payment_processors[$row->processor]['dark_color'] ?>; color: var(--brand-color)" data-custom-colors></i> <?= l('pay.custom_plan.' . $row->processor) ?>
                                     <?php else: ?>
                                         <?= l('global.none') ?>
                                     <?php endif ?>
@@ -236,10 +237,12 @@
                             </td>
 
                             <td class="text-nowrap">
-                                <?php if($row->status): ?>
-                                    <span class="badge badge-success"><?= l('account_payments.status_approved') ?></span>
-                                <?php else: ?>
-                                    <span class="badge badge-warning"><?= l('account_payments.status_pending') ?></span>
+                                <?php if($row->status == 1): ?>
+                                    <span class="badge badge-success"><?= l('account_payments.status.approved') ?></span>
+                                <?php elseif($row->status == 0): ?>
+                                    <span class="badge badge-warning"><?= l('account_payments.status.pending') ?></span>
+								<?php elseif($row->status == 2): ?>
+                                    <span class="badge badge-danger"><?= l('account_payments.status.cancelled') ?></span>
                                 <?php endif ?>
                             </td>
 
@@ -255,7 +258,7 @@
 
                             <td>
                                 <div class="d-flex justify-content-end">
-                                    <?= include_view(THEME_PATH . 'views/guests-payments/guest_payment_dropdown_button.php', ['id' => $row->guest_payment_id]) ?>
+                                    <?= include_view(THEME_PATH . 'views/guests-payments/guest_payment_dropdown_button.php', ['id' => $row->guest_payment_id, 'guest_payment' => $row]) ?>
                                 </div>
                             </td>
                         </tr>
@@ -276,7 +279,7 @@
         ]); ?>
     <?php endif ?>
 
-</section>
+</div>
 
 <?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/universal_delete_modal_form.php', [
     'name' => 'guest_payment',

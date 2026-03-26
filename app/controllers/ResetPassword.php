@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -32,25 +32,25 @@ class ResetPassword extends Controller {
         $md5email = (isset($this->params[0])) ? $this->params[0] : null;
         $lost_password_code = (isset($this->params[1])) ? $this->params[1] : null;
         $redirect = process_and_get_redirect_params() ?? 'dashboard';
-        $welcome = isset($_GET['welcome']) ? '&welcome=' . $_GET['welcome'] : null;
+        $welcome = isset($_GET['welcome']) ? 'welcome=' . $_GET['welcome'] : null;
 
-        if(!$md5email || !$lost_password_code || mb_strlen($lost_password_code) < 1) redirect();
+        if(!$md5email || !$lost_password_code || mb_strlen($lost_password_code) < 1) throw_404();
 
         /* Check if the lost password code is correct */
         $user = db()->where('lost_password_code', $lost_password_code)->getOne('users', ['user_id', 'email', 'name', 'password']);
 
         if(!$user) {
-            redirect('not-found');
+            throw_404();
         }
 
         if(md5($user->email) != $md5email) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Meta */
         Meta::set_robots('noindex');
         Meta::set_canonical_url(url('reset-password'));
-
+        
         /* Disable OG Image */
         if(\Altum\Plugin::is_active('dynamic-og-images') && settings()->dynamic_og_images->is_enabled) {
             \Altum\Plugin\DynamicOgImages::$should_process = false;
@@ -85,8 +85,8 @@ class ResetPassword extends Controller {
                 Alerts::add_success(l('reset_password.success_message'));
 
                 /* Log the user in */
-                $_SESSION['user_id'] = $user->user_id;
-                $_SESSION['user_password_hash'] = md5($new_password);
+                session_set('user_id', $user->user_id);
+                session_set('user_password_hash', md5($new_password));
 
                 (new User())->login_aftermath_update($user->user_id);
                 Alerts::add_info(sprintf(l('login.info_message.logged_in'), $user->name));
@@ -94,7 +94,7 @@ class ResetPassword extends Controller {
                 /* Clear the cache */
                 cache()->deleteItemsByTag('user_id=' . $user->user_id);
 
-                redirect($redirect . $welcome);
+                redirect(append_query_param($redirect, $welcome));
             }
         }
 

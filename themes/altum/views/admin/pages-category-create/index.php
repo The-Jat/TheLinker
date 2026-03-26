@@ -52,7 +52,7 @@
                 <small class="form-text text-muted"><?= l('global.icon_help') ?></small>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#advanced_container" aria-expanded="false" aria-controls="advanced_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#advanced_container" aria-expanded="false" aria-controls="advanced_container">
                 <i class="fas fa-fw fa-user-tie fa-sm mr-1"></i> <?= l('admin_resources.advanced') ?>
             </button>
 
@@ -70,7 +70,7 @@
                 <div class="form-group">
                     <label for="order"><i class="fas fa-fw fa-sm fa-sort text-muted mr-1"></i> <?= l('global.order') ?></label>
                     <input id="order" type="number" name="order" class="form-control" value="<?= $data->values['order'] ?>" />
-                    <small class="form-text text-muted"><?= l('admin_resources.order_help') ?></small>
+                    <small class="form-text text-muted"><?= l('global.order_int_help') ?></small>
                 </div>
             </div>
 

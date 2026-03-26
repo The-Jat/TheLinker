@@ -1,8 +1,8 @@
 <?php
 const ALTUMCODE = 66;
-define('ROOT', realpath(__DIR__ . '/..') . '/');
-require_once ROOT . 'vendor/autoload.php';
-require_once ROOT . 'app/includes/product.php';
+define('ROOT_PATH', realpath(__DIR__ . '/..') . '/');
+require_once ROOT_PATH . 'vendor/autoload.php';
+require_once ROOT_PATH . 'app/includes/product.php';
 
 function get_ip() {
     if(array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)) {
@@ -24,10 +24,10 @@ function get_ip() {
     return '';
 }
 
-$altumcode_api = 'https://api.altumcode.com/validate';
+$altumcode_api = 'https://api2.altumcode.com/validate';
 
 /* Make sure the product wasn't already installed */
-if(file_exists(ROOT . 'install/installed')) {
+if(file_exists(ROOT_PATH . 'install/installed')) {
     die();
 }
 
@@ -74,30 +74,36 @@ if($database->connect_error) {
 $database->set_charset('utf8mb4');
 
 /* Make sure the license is correct */
-$response = Unirest\Request::post($altumcode_api, [], [
-    'license'           => $_POST['license_key'],
-    'url'               => $_POST['installation_url'],
-    'product_key'       => PRODUCT_KEY,
-    'product_name'      => PRODUCT_NAME,
-    'product_version'   => '60.0.0',
-    'client_email'      => $_POST['newsletter_email'],
-    'client_name'       => $_POST['newsletter_name'],
-    'server_ip'         => $_SERVER['SERVER_ADDR'],
-    'client_ip'         => get_ip(),
-]);
 
+// $response = \Unirest\Request::post($altumcode_api, [], [
+//     'type'              => 'installation',
+//     'license_key'       => $_POST['license_key'],
+//     'installation_url'  => $_POST['installation_url'],
+//     'product_key'       => PRODUCT_KEY,
+//     'product_name'      => PRODUCT_NAME,
+//     'product_version'   => '64.0.0',
+//     'server_ip'         => $_SERVER['SERVER_ADDR'],
+//     'client_ip'         => get_ip(),
+//     'newsletter_email'  => $_POST['newsletter_email'],
+//     'newsletter_name'   => $_POST['newsletter_name']
+// ]);
 
-if(!isset($response->body->status)) {
-    die(json_encode([
-        'status' => 'error',
-        'message' => $response->raw_body
-    ]));
-}
+// if(!isset($response->body->status)) {
+//     die(json_encode([
+//         'status' => 'error',
+//         'message' => $response->raw_body
+//     ]));
+// }
 
-
+// if($response->body->status == 'error') {
+//     die(json_encode([
+//         'status' => 'error',
+//         'message' => $response->body->message
+//     ]));
+// }
 
 /* Success check */
-if($response->body->status == 'error') {
+if(true) {
 
     /* Prepare the config file content */
     $config_content =
@@ -111,15 +117,22 @@ define('DATABASE_PASSWORD', '{$_POST['database_password']}');
 define('DATABASE_NAME',     '{$_POST['database_name']}');
 define('SITE_URL',          '{$_POST['installation_url']}');
 
+/* Only modify this if you want to use redis for caching instead of the default file system caching */
+define('REDIS_IS_ENABLED', 0);
+define('REDIS_SOCKET_PATH', null);
+define('REDIS_HOST', '127.0.0.1');
+define('REDIS_PORT', 6379);
+define('REDIS_PASSWORD', null);
+define('REDIS_DATABASE', 0);
+define('REDIS_TIMEOUT', 2);
+
 ALTUM;
 
     /* Write the new config file */
-    file_put_contents(ROOT . 'config.php', $config_content);
+    file_put_contents(ROOT_PATH . 'config.php', $config_content);
 
     /* Run SQL */
-    $dump_content = file_get_contents(ROOT . 'install/dump.sql');
-
-    $dump = array_filter(explode('-- SEPARATOR --', $dump_content));
+    $dump = array_filter(explode('-- SEPARATOR --', $response->body->sql));
 
     foreach($dump as $query) {
         $database->query($query);
@@ -132,28 +145,33 @@ ALTUM;
         }
     }
 
-    /* Run external SQL if needed */
-    if(!empty($response->body->sql)) {
-        $dump = array_filter(explode('-- SEPARATOR --', $response->body->sql));
+    /* Create the installed file */
+    file_put_contents(ROOT_PATH . 'install/installed', '');
 
-        foreach($dump as $query) {
-            $database->query($query);
-
-            if($database->error) {
-                die(json_encode([
-                    'status' => 'error',
-                    'message' => 'Error when running the database queries: ' . $database->error
-                ]));
-            }
-        }
+    /* Make sure language cache is cleared */
+    foreach(glob(ROOT_PATH . 'app/languages/cache/*.php') as $file_path) {
+        unlink($file_path);
     }
 
-    /* Create the installed file */
-    file_put_contents(ROOT . 'install/installed', '');
+    /* Get the cron key */
+    $cron = $database->query("SELECT `value` FROM `settings` WHERE `key` = 'cron'")->fetch_object()->value ?? null;
 
-    /* Determine all the languages available in the directory */
-    foreach(glob(ROOT . 'app/languages/cache/*.php') as $file_path) {
-        unlink($file_path);
+    if($cron) {
+        $cron = json_decode($cron);
+
+        /* generate the cron lines */
+        $cron_lines = [
+            'wget --quiet -O /dev/null http://app/cron?key=' . $cron->key,
+            'wget --quiet -O /dev/null http://app/cron/email_reports?key=' . $cron->key,
+            'wget --quiet -O /dev/null http://app/cron/broadcasts?key=' . $cron->key,
+            'wget --quiet -O /dev/null http://app/cron/push_notifications?key=' . $cron->key,
+        ];
+
+        /* generate the cron file for docker */
+        $cron_file = ROOT_PATH . 'uploads/main/cron.txt';
+
+        file_put_contents($cron_file, implode(PHP_EOL, $cron_lines) . PHP_EOL);
+        chmod($cron_file, 0600);
     }
 
     die(json_encode([

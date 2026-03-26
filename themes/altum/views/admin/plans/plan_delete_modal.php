@@ -30,11 +30,11 @@
 <script>
     'use strict';
     
-/* On modal show load new data */
+    /* On modal show load new data */
     $('#plan_delete_modal').on('show.bs.modal', event => {
         let plan_id = $(event.relatedTarget).data('plan-id');
 
-        $(event.currentTarget).find('#plan_delete_modal_url').attr('href', `${url}admin/plans/delete/${plan_id}&global_token=${global_token}`);
+        $(event.currentTarget).find('#plan_delete_modal_url').attr('href', `${url}admin/plans/delete/${plan_id}?global_token=${global_token}`);
     });
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

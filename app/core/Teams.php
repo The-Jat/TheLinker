@@ -26,9 +26,9 @@ class Teams {
     public static $team_user = null;
 
     public static function initialize() {
-        if(isset($_SESSION['team_id']) && \Altum\Plugin::is_active('teams')) {
+        if(\Altum\Plugin::is_active('teams') && session_has('team_id')) {
             /* Get requested team */
-            self::$team = (new \Altum\Models\Teams())->get_team_by_team_id($_SESSION['team_id']);
+            self::$team = (new \Altum\Models\Teams())->get_team_by_team_id(session_get('team_id'));
 
             if(self::$team) {
                 /* Get team member */

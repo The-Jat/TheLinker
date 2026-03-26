@@ -91,7 +91,7 @@
                     </div>
                 </div>
 
-                <div class="col-12 col-lg-12 mb-4" data-aos="fade-up">
+                <div class="col-12 col-lg-12 mb-4" data-aos="fade-up" data-aos-delay="100">
                     <div class="timeline-item d-flex justify-content-center">
                         <div>
                             <div class="card border-0 bg-primary-100 text-primary mr-4">
@@ -112,7 +112,7 @@
                     </div>
                 </div>
 
-                <div class="col-12 col-lg-12 mb-4" data-aos="fade-up">
+                <div class="col-12 col-lg-12 mb-4" data-aos="fade-up" data-aos-delay="200">
                     <div class="index-timeline-item d-flex justify-content-center">
                         <div>
                             <div class="card border-0 bg-primary-100 text-primary mr-4">
@@ -133,7 +133,7 @@
                     </div>
                 </div>
 
-                <div class="col-12 col-lg-12" data-aos="fade-up">
+                <div class="col-12 col-lg-12" data-aos="fade-up" data-aos-delay="300">
                     <div class="timeline-item d-flex justify-content-center">
                         <div>
                             <div class="card border-0 bg-primary-100 text-primary mr-4">
@@ -165,18 +165,18 @@
                         <div class="col-12 col-lg-5">
                             <div class="text-center text-lg-left mb-4 mb-lg-0">
                                 <h1 class="h2 text-gray-900"><?= l('affiliate.cta.header') ?></h1>
-                                <p class="h6 text-gray-800"><?= l('affiliate.cta.subheader') ?></p>
+                                <p class="h6 text-gray-600"><?= l('affiliate.cta.subheader') ?></p>
                             </div>
                         </div>
 
                         <div class="col-12 col-lg-5 mt-4 mt-lg-0">
                             <div class="text-center text-lg-right">
                                 <?php if(is_logged_in()): ?>
-                                    <a href="<?= url('referrals') ?>" class="btn btn-outline-primary index-button">
+                                    <a href="<?= url('referrals') ?>" class="btn btn-outline-primary badge-pill index-button">
                                         <?= l('referrals.menu') ?> <i class="fas fa-fw fa-arrow-right"></i>
                                     </a>
                                 <?php else: ?>
-                                    <a href="<?= url('register') ?>" class="btn btn-outline-primary index-button">
+                                    <a href="<?= url('register') ?>" class="btn btn-outline-primary badge-pill index-button">
                                         <?= l('index.cta.register') ?> <i class="fas fa-fw fa-arrow-right"></i>
                                     </a>
                                 <?php endif ?>
@@ -225,7 +225,7 @@
 
     <script>
     'use strict';
-    
+
         AOS.init({
             duration: 600
         });

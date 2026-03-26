@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -76,8 +76,8 @@ class AdminPaymentProcessors extends Controller {
     public function bulk() {
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('admin/payment-processors');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -99,6 +99,8 @@ class AdminPaymentProcessors extends Controller {
             set_time_limit(0);
 
             session_write_close();
+
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
 
             switch($_POST['type']) {
                 case 'delete':
@@ -124,7 +126,7 @@ class AdminPaymentProcessors extends Controller {
             }
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -144,7 +146,7 @@ class AdminPaymentProcessors extends Controller {
         }
 
         if(!$payment_processor = db()->where('payment_processor_id', $payment_processor_id)->getOne('payment_processors', ['payment_processor_id', 'user_id', 'name'])) {
-            redirect('admin/payment-processors');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

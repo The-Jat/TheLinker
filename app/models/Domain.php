@@ -42,14 +42,8 @@ class Domain extends Model {
             $where .= " AND `is_enabled` = 1";
 
             /* Get data from the database */
-            $domains_result = database()->query("
-                SELECT 
-                    *
-                FROM 
-                    `domains` 
-                WHERE 
-                    {$where}
-            ");
+            $domains_result = database()->query("SELECT * FROM `domains` WHERE {$where}");
+
             while($row = $domains_result->fetch_object()) {
                 if($row->type == 1 && !in_array($row->domain_id, $user->plan_settings->additional_domains ?? [])) continue;
 

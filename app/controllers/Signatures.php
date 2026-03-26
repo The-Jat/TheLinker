@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,7 +25,7 @@ class Signatures extends Controller {
     public function index() {
 
         if(!\Altum\Plugin::is_active('email-signatures') || !settings()->signatures->is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
@@ -88,25 +88,25 @@ class Signatures extends Controller {
     public function duplicate() {
 
         if(!\Altum\Plugin::is_active('email-signatures') || !settings()->signatures->is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('create.signatures')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('signatures');
         }
 
-        if(empty($_POST)) {
-            redirect('signatures');
+        if (empty($_POST)) {
+            throw_404();
         }
 
-        /* Make sure that the user didn't exceed the limit */
+        /* Check for the plan limit */
         $total_rows = db()->where('user_id', $this->user->user_id)->getValue('signatures', 'COUNT(*)') ?? 0;
         if($this->user->plan_settings->signatures_limit != -1 && $total_rows >= $this->user->plan_settings->signatures_limit) {
-            Alerts::add_info(l('global.info_message.plan_feature_limit'));
+            Alerts::add_error(l('global.info_message.plan_feature_limit') . (settings()->payment->is_enabled ? ' <a href="' . url('plan') . '" class="font-weight-bold text-reset">' . l('global.info_message.plan_upgrade') . '.</a>' : null));
             redirect('signatures');
         }
 
@@ -155,8 +155,8 @@ class Signatures extends Controller {
         \Altum\Authentication::guard();
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('signatures');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -179,12 +179,14 @@ class Signatures extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
                     /* Team checks */
                     if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.signatures')) {
-                        Alerts::add_info(l('global.info_message.team_no_access'));
+                        Alerts::add_error(l('global.info_message.team_no_access'));
                         redirect('signatures');
                     }
 
@@ -199,7 +201,7 @@ class Signatures extends Controller {
             cache()->deleteItem('signatures?user_id=' . $this->user->user_id);
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -211,22 +213,22 @@ class Signatures extends Controller {
     public function delete() {
 
         if(!\Altum\Plugin::is_active('email-signatures') || !settings()->signatures->is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.signatures')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('signatures');
         }
 
-        if(empty($_POST)) {
-            redirect('signatures');
+        if (empty($_POST)) {
+            throw_404();
         }
 
-        $signature_id = (int) query_clean($_POST['signature_id']);
+        $signature_id = (int) $_POST['signature_id'];
 
         //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Alerts::add_error('Please create an account on the demo to test out this function.');
 
@@ -235,7 +237,7 @@ class Signatures extends Controller {
         }
 
         if(!$signature = db()->where('signature_id', $signature_id)->where('user_id', $this->user->user_id)->getOne('signatures', ['signature_id', 'name'])) {
-            redirect('signatures');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

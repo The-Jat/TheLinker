@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div>
+<div id="announcements">
     <ul class="nav nav-pills d-flex flex-fill flex-column flex-lg-row mb-3" role="tablist">
         <li class="nav-item flex-fill text-center" role="presentation">
             <a class="nav-link active" id="pills-guests-tab" data-toggle="pill" href="#pills-guests" role="tab" aria-controls="pills-home" aria-selected="true">

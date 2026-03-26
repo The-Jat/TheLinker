@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -29,12 +29,12 @@ class LinkCreate extends Controller {
         \Altum\Authentication::guard();
 
         if(!settings()->links->shortener_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('create.links')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('links');
         }
 
@@ -42,7 +42,7 @@ class LinkCreate extends Controller {
         $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `links` WHERE `user_id` = {$this->user->user_id}")->fetch_object()->total ?? 0;
 
         if($this->user->plan_settings->links_limit != -1 && $total_rows >= $this->user->plan_settings->links_limit) {
-            Alerts::add_info(l('global.info_message.plan_feature_limit'));
+            Alerts::add_error(l('global.info_message.plan_feature_limit') . (settings()->payment->is_enabled ? ' <a href="' . url('plan') . '" class="font-weight-bold text-reset">' . l('global.info_message.plan_upgrade') . '.</a>' : null));
             redirect('links');
         }
 
@@ -79,9 +79,7 @@ class LinkCreate extends Controller {
 
             /* Pixels */
             $_POST['pixels_ids'] = isset($_POST['pixels_ids']) ? array_map(
-                function($pixel_id) {
-                    return (int) $pixel_id;
-                },
+                'intval',
                 array_filter($_POST['pixels_ids'], function($pixel_id) use($pixels) {
                     return array_key_exists($pixel_id, $pixels);
                 })
@@ -121,29 +119,40 @@ class LinkCreate extends Controller {
                 'app' => null,
             ];
 
-            if($_POST['app_linking_is_enabled']) {
-                $supported_apps = require APP_PATH . 'includes/app_linking.php';
-                foreach($supported_apps as $app_key => $app) {
-                    foreach($app['formats'] as $format => $targets) {
+			if($_POST['app_linking_is_enabled']) {
+				$supported_apps = require APP_PATH . 'includes/app_linking.php';
+				$app_linking_location_url = $_POST['location_url'];
 
-                        if(preg_match('/' . $targets['regex'] . '/', $_POST['location_url'], $match)) {
-                            if(
-                                parse_url($_POST['location_url'], PHP_URL_HOST) === parse_url('https://' . str_replace('%s', 'placeholder', $format), PHP_URL_HOST)
-                            ) {
-                                if(count($match) > 1) {
-                                    array_shift($match);
-                                    $app_linking['ios_location_url'] = vsprintf($targets['iOS'], $match);
-                                    $app_linking['android_location_url'] = vsprintf($targets['Android'], $match);
-                                    $app_linking['app'] = $app_key;
-                                }
+				foreach($supported_apps as $app_key => $app) {
+					foreach($app['formats'] as $format => $targets) {
 
-                                break 2;
-                            }
-                        }
+						if(preg_match('/' . $targets['regex'] . '/', $app_linking_location_url, $match)) {
 
-                    }
-                }
-            }
+							/* Extract and normalize hostnames */
+							$user_host = parse_url($app_linking_location_url, PHP_URL_HOST);
+							$format_host = parse_url('https://' . str_replace('%s', 'placeholder', $format), PHP_URL_HOST);
+
+							/* Remove www. and m. prefixes for more flexible comparison */
+							$user_host = preg_replace('/^(www\.|m\.)/', '', $user_host);
+							$format_host = preg_replace('/^(www\.|m\.)/', '', $format_host);
+
+							/* Compare the normalized hosts */
+							if($user_host === $format_host) {
+
+								if(count($match) > 1) {
+									array_shift($match);
+									$app_linking['ios_location_url'] = vsprintf($targets['iOS'], $match);
+									$app_linking['android_location_url'] = vsprintf($targets['Android'], $match);
+									$app_linking['app'] = $app_key;
+								}
+
+								break 2;
+							}
+						}
+
+					}
+				}
+			}
 
             /* Cloaking */
             $_POST['cloaking_is_enabled'] = (int) isset($_POST['cloaking_is_enabled']);
@@ -166,9 +175,7 @@ class LinkCreate extends Controller {
 
             /* Notification handlers */
             $_POST['email_reports'] = array_map(
-                function($notification_handler_id) {
-                    return (int) $notification_handler_id;
-                },
+                'intval',
                 array_filter($_POST['email_reports'] ?? [], function($notification_handler_id) use ($notification_handlers) {
                     return array_key_exists($notification_handler_id, $notification_handlers);
                 })
@@ -179,7 +186,7 @@ class LinkCreate extends Controller {
             /* Check for any errors */
             $required_fields = $_POST['is_bulk'] ? ['location_urls'] : ['location_url'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }
@@ -324,6 +331,20 @@ class LinkCreate extends Controller {
                         'datetime' => get_date(),
                     ]);
 
+                    /* Send webhook notification if needed */
+                    if(settings()->webhooks->link_new) {
+                        fire_and_forget('post', settings()->webhooks->link_new, [
+                            'user_id' => $this->user->user_id,
+                            'link_id' => $link_id,
+                            'domain_id' =>  $_POST['domain_id'],
+                            'url' => $url,
+                            'location_url' => $_POST['location_url'],
+                            'full_url' => $_POST['domain_id'] ? $domains[$_POST['domain_id']]->url . $url : SITE_URL . $url,
+                            'type' => 'link',
+                            'datetime' => get_date(),
+                        ], signature: true);
+                    }
+
                     /* Set a nice success message */
                     Alerts::add_success(sprintf(l('global.success_message.create1'), '<strong>' . $url . '</strong>'));
 
@@ -344,33 +365,43 @@ class LinkCreate extends Controller {
                             'app' => null,
                         ];
 
-                        if($_POST['app_linking_is_enabled']) {
-                            $supported_apps = require APP_PATH . 'includes/app_linking.php';
-                            foreach($supported_apps as $app_key => $app) {
-                                foreach($app['formats'] as $format => $targets) {
+						if($_POST['app_linking_is_enabled']) {
+							$supported_apps = require APP_PATH . 'includes/app_linking.php';
+							$app_linking_location_url = $_POST['location_url'];
 
-                                    if(preg_match('/' . $targets['regex'] . '/', $location_url, $match)) {
-                                        if(
-                                            str_contains($location_url, str_replace('%s', '', $format)) ||
-                                            str_contains($location_url, preg_replace('/%s.*/', '', $format))
-                                        ) {
-                                            if(count($match) > 1) {
-                                                array_shift($match);
-                                                $app_linking['ios_location_url'] = vsprintf($targets['iOS'], $match);
-                                                $app_linking['android_location_url'] = vsprintf($targets['Android'], $match);
-                                                $app_linking['app'] = $app_key;
-                                            }
+							foreach($supported_apps as $app_key => $app) {
+								foreach($app['formats'] as $format => $targets) {
 
-                                            break 2;
-                                        }
-                                    }
+									if(preg_match('/' . $targets['regex'] . '/', $app_linking_location_url, $match)) {
 
-                                }
-                            }
-                        }
+										/* Extract and normalize hostnames */
+										$user_host = parse_url($app_linking_location_url, PHP_URL_HOST);
+										$format_host = parse_url('https://' . str_replace('%s', 'placeholder', $format), PHP_URL_HOST);
+
+										/* Remove www. and m. prefixes for more flexible comparison */
+										$user_host = preg_replace('/^(www\.|m\.)/', '', $user_host);
+										$format_host = preg_replace('/^(www\.|m\.)/', '', $format_host);
+
+										/* Compare the normalized hosts */
+										if($user_host === $format_host) {
+
+											if(count($match) > 1) {
+												array_shift($match);
+												$app_linking['ios_location_url'] = vsprintf($targets['iOS'], $match);
+												$app_linking['android_location_url'] = vsprintf($targets['Android'], $match);
+												$app_linking['app'] = $app_key;
+											}
+
+											break 2;
+										}
+									}
+
+								}
+							}
+						}
 
                         /* Settings */
-                        $settings = json_encode($settings);
+                        $settings['app_linking'] = $app_linking;
 
                         /* Database query */
                         $link_id = db()->insert('links', [
@@ -385,12 +416,26 @@ class LinkCreate extends Controller {
                             'type' => 'link',
                             'url' => $url,
                             'location_url' => $location_url,
-                            'settings' => $settings,
+                            'settings' => json_encode($settings),
                             'start_date' => $_POST['start_date'],
                             'end_date' => $_POST['end_date'],
                             'is_enabled' => $_POST['is_enabled'],
                             'datetime' => get_date(),
                         ]);
+
+                        /* Send webhook notification if needed */
+                        if(settings()->webhooks->link_new) {
+                            fire_and_forget('post', settings()->webhooks->link_new, [
+                                'user_id' => $this->user->user_id,
+                                'link_id' => $link_id,
+                                'domain_id' =>  $_POST['domain_id'],
+                                'url' => $url,
+                                'location_url' => $location_url,
+                                'full_url' => $_POST['domain_id'] ? $domains[$_POST['domain_id']]->url . $url : SITE_URL . $url,
+                                'type' => 'link',
+                                'datetime' => get_date(),
+                            ], signature: true);
+                        }
 
                         /* Set a nice success message */
                         Alerts::add_success(sprintf(l('global.success_message.create1'), '<strong>' . $url . ' - #' . $i++ . '</strong>'));

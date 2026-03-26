@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -24,6 +24,10 @@ class AdminTaxCreate extends Controller {
 
     public function index() {
 
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            redirect('admin');
+        }
+
         if(!empty($_POST)) {
             /* Filter some of the variables */
             $_POST['name'] = input_clean($_POST['name'], 64);
@@ -33,6 +37,8 @@ class AdminTaxCreate extends Controller {
             $_POST['type'] = in_array($_POST['type'], ['inclusive', 'exclusive']) ? input_clean($_POST['type']) : 'inclusive';
             $_POST['billing_type'] = in_array($_POST['billing_type'], ['personal', 'business', 'both']) ? input_clean($_POST['billing_type']) : 'both';
             $_POST['countries'] = isset($_POST['countries']) ? array_query_clean($_POST['countries']) : null;
+            $_POST['state'] = input_clean($_POST['state'], 64);
+            $_POST['county'] = input_clean($_POST['county'], 64);
 
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
@@ -50,7 +56,9 @@ class AdminTaxCreate extends Controller {
                     'value_type' => $_POST['value_type'],
                     'type' => $_POST['type'],
                     'billing_type' => $_POST['billing_type'],
-                    'countries' => json_encode($_POST['countries']),
+                    'countries' => empty($_POST['countries']) ? null : json_encode($_POST['countries']),
+                    'state' => $_POST['state'],
+                    'county' => $_POST['county'],
                     'datetime' => get_date(),
                 ]);
 

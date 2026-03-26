@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -17,6 +17,8 @@
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+use Altum\Date;
+use Altum\Models\Payments;
 
 defined('ALTUMCODE') || die();
 
@@ -25,7 +27,7 @@ class GuestsPayments extends Controller {
     public function index() {
 
         if(!\Altum\Plugin::is_active('payment-blocks')) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
@@ -81,13 +83,184 @@ class GuestsPayments extends Controller {
 
     }
 
+	public function approve() {
+
+		if(!\Altum\Plugin::is_active('payment-blocks')) {
+			throw_404();
+		}
+
+		/* Team checks */
+		if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('update.guests_payments')) {
+			Alerts::add_error(l('global.info_message.team_no_access'));
+			redirect('guests-payments');
+		}
+
+		if (empty($_POST)) {
+            throw_404();
+        }
+
+		$guest_payment_id = (int) $_POST['guest_payment_id'];
+
+		//ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+		if(!\Altum\Csrf::check()) {
+			Alerts::add_error(l('global.error_message.invalid_csrf_token'));
+			redirect('guests-payments');
+		}
+
+		if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+
+			/* details about the payment */
+			$payment = db()->where('guest_payment_id', $guest_payment_id)->getOne('guests_payments');
+
+			if($payment->status == 1) {
+				redirect('guests-payments');
+			}
+
+			/* Make sure the biolink block still exists */
+			$biolink_block = db()->where('biolink_block_id', $payment->biolink_block_id)->getOne('biolinks_blocks');
+
+			if(!$biolink_block) {
+
+			}
+
+			$biolink_block->settings = json_decode($biolink_block->settings ?? '');
+
+			/* Update the payment */
+			db()->where('guest_payment_id', $guest_payment_id)->update('guests_payments', [
+				'status' => '1',
+			]);
+
+			/* Process it */
+			switch($biolink_block->type) {
+				case 'donation':
+                    /* Send email notifications to the customer */
+                    $customer_email_template = get_email_template(
+                        [
+                            '{{DONATION_TITLE}}' => $biolink_block->settings->title,
+                        ],
+                        l('global.emails.guest_guest_payment_donation.subject'),
+                        [
+                            '{{NAME}}' => $payment->email ?? $payment->name,
+                        ],
+                        l('global.emails.guest_guest_payment_donation.body')
+                    );
+
+                    send_mail($payment->email, $customer_email_template->subject, $customer_email_template->body);
+
+					break;
+
+				case 'product':
+
+					/* Send email notifications to the customer */
+					$customer_email_template = get_email_template(
+						[
+							'{{PRODUCT_TITLE}}' => $biolink_block->settings->title,
+						],
+						l('global.emails.guest_guest_payment_product.subject'),
+						[
+							'{{NAME}}' => $payment->email ?? $payment->name,
+							'{{DOWNLOAD_LINK}}' => url('l/guest-payment-download?guest_payment_id=' . $payment->guest_payment_id . '&key=' . md5($payment->payment_id)),
+						],
+						l('global.emails.guest_guest_payment_product.body')
+					);
+
+					send_mail($payment->email, $customer_email_template->subject, $customer_email_template->body);
+
+					break;
+
+				case 'service':
+
+					/* Send email notifications to the customer */
+					$customer_email_template = get_email_template(
+						[
+							'{{SERVICE_TITLE}}' => $biolink_block->settings->title,
+						],
+						l('global.emails.guest_guest_payment_service.subject'),
+						[
+							'{{NAME}}' => $payment->name,
+						],
+						l('global.emails.guest_guest_payment_service.body')
+					);
+
+					send_mail($payment->email, $customer_email_template->subject, $customer_email_template->body);
+
+					break;
+
+			}
+
+			/* Set a nice success message */
+			Alerts::add_success(l('guest_payment_approve_modal.success_message'));
+
+		}
+
+		redirect('guests-payments');
+	}
+
+	public function cancel() {
+
+		if(!\Altum\Plugin::is_active('payment-blocks')) {
+            throw_404();
+        }
+
+		/* Team checks */
+		if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('update.guests_payments')) {
+			Alerts::add_error(l('global.info_message.team_no_access'));
+			redirect('guests-payments');
+		}
+
+		if (empty($_POST)) {
+            throw_404();
+        }
+
+		$guest_payment_id = (int) $_POST['guest_payment_id'];
+
+		//ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+		if(!\Altum\Csrf::check()) {
+			Alerts::add_error(l('global.error_message.invalid_csrf_token'));
+			redirect('guests-payments');
+		}
+
+		if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
+
+			/* details about the payment */
+			$payment = db()->where('guest_payment_id', $guest_payment_id)->getOne('guests_payments');
+
+			if($payment->status != 0) {
+				redirect('guests-payments');
+			}
+
+			/* Make sure the biolink block still exists */
+			$biolink_block = db()->where('biolink_block_id', $payment->biolink_block_id)->getOne('biolinks_blocks');
+
+			if(!$biolink_block) {
+			}
+
+			/* Update the payment */
+			db()->where('guest_payment_id', $guest_payment_id)->update('guests_payments', [
+				'status' => '2',
+			]);
+
+			/* Set a nice success message */
+			Alerts::add_success(l('guest_payment_cancel_modal.success_message'));
+
+		}
+
+		redirect('guests-payments');
+	}
+
     public function bulk() {
+
+		if(!\Altum\Plugin::is_active('payment-blocks')) {
+			throw_404();
+		}
 
         \Altum\Authentication::guard();
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('guests-payments');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -110,12 +283,14 @@ class GuestsPayments extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
                     /* Team checks */
                     if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.guests_payments')) {
-                        Alerts::add_info(l('global.info_message.team_no_access'));
+                        Alerts::add_error(l('global.info_message.team_no_access'));
                         redirect('guests-payments');
                     }
 
@@ -138,19 +313,23 @@ class GuestsPayments extends Controller {
 
     public function delete() {
 
+		if(!\Altum\Plugin::is_active('payment-blocks')) {
+			throw_404();
+		}
+
         \Altum\Authentication::guard();
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.guests_payments')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('guests-payments');
         }
 
-        if(empty($_POST)) {
-            redirect('guests-payments');
+        if (empty($_POST)) {
+            throw_404();
         }
 
-        $guest_payment_id = (int) query_clean($_POST['guest_payment_id']);
+        $guest_payment_id = (int) $_POST['guest_payment_id'];
 
         //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Alerts::add_error('Please create an account on the demo to test out this function.');
 
@@ -159,7 +338,7 @@ class GuestsPayments extends Controller {
         }
 
         if(!$guest_payment = db()->where('guest_payment_id', $guest_payment_id)->where('user_id', $this->user->user_id)->getOne('guests_payments', ['name', 'guest_payment_id'])) {
-            redirect('guests-payments');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

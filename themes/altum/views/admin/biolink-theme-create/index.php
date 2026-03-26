@@ -20,7 +20,7 @@
 <div class="card <?= \Altum\Alerts::has_field_errors() ? 'border-danger' : null ?>">
     <div class="card-body">
 
-        <form action="" method="post" role="form" enctype="multipart/form-data">
+        <form id="biolink_theme_create" action="" method="post" role="form" enctype="multipart/form-data">
             <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
 
             <div class="form-group">
@@ -31,6 +31,7 @@
             <div class="form-group">
                 <label for="order"><i class="fas fa-fw fa-sm fa-sort text-muted mr-1"></i> <?= l('global.order') ?></label>
                 <input id="order" type="number" name="order" value="<?= $data->values['order'] ?>" class="form-control" />
+                <small class="form-text text-muted"><?= l('global.order_int_help') ?></small>
             </div>
 
             <div class="form-group custom-control custom-switch">
@@ -38,11 +39,11 @@
                 <label class="custom-control-label" for="is_enabled"><?= l('global.status') ?></label>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#biolink_container" aria-expanded="false" aria-controls="biolink_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#biolink_container" aria-expanded="false" aria-controls="biolink_container">
                 <i class="fas fa-fw fa-hashtag fa-sm mr-1"></i> <?= l('admin_biolinks_themes.biolink') ?>
             </button>
 
-            <div class="collapse" id="biolink_container">
+            <div class="collapse" data-parent="#biolink_theme_create" id="biolink_container">
 
                 <div class="form-group">
                     <label for="biolink_background_type"><i class="fas fa-fw fa-fill fa-sm text-muted mr-1"></i> <?= l('link.settings.background_type') ?></label>
@@ -110,10 +111,10 @@
 
                 <div class="form-group">
                     <label for="biolink_width"><i class="fas fa-fw fa-arrows-left-right fa-sm text-muted mr-1"></i> <?= l('link.settings.width') ?></label>
-                    <div class="row btn-group-toggle" data-toggle="buttons">
+                    <div class="row btn-group-toggle m-n2" data-toggle="buttons">
                         <?php foreach(['6', '8', '10', '12'] as $key): ?>
                             <div class="col-12 col-lg-4 p-2 h-100">
-                                <label class="btn btn-light btn-block text-truncate mb-0 <?= ($data->values['biolink_width'] ?? '8') == $key ? 'active"' : null?>">
+                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate mb-0 <?= ($data->values['biolink_width'] ?? '8') == $key ? 'active"' : null?>">
                                     <input type="radio" name="biolink_width" value="<?= $key ?>" class="custom-control-input" <?= ($data->values['biolink_width'] ?? '8') == $key ? 'checked="checked"' : null?> required="required" />
                                     <?= l('link.settings.width.' . $key) ?>
                                 </label>
@@ -125,10 +126,10 @@
 
                 <div class="form-group">
                     <label for="biolink_block_spacing"><i class="fas fa-fw fa-arrows-up-down fa-sm text-muted mr-1"></i> <?= l('link.settings.block_spacing') ?></label>
-                    <div class="row btn-group-toggle" data-toggle="buttons">
+                    <div class="row btn-group-toggle m-n2" data-toggle="buttons">
                         <?php foreach(['1', '2', '3',] as $key): ?>
                             <div class="col-12 col-lg-4 p-2 h-100">
-                                <label class="btn btn-light btn-block text-truncate mb-0 <?= ($data->values['biolink_block_spacing'] ?? '2') == $key ? 'active"' : null?>">
+                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate mb-0 <?= ($data->values['biolink_block_spacing'] ?? '2') == $key ? 'active"' : null?>">
                                     <input type="radio" name="biolink_block_spacing" value="<?= $key ?>" class="custom-control-input" <?= ($data->values['biolink_block_spacing'] ?? '2') == $key ? 'checked="checked"' : null?> required="required" />
                                     <?= l('link.settings.block_spacing.' . $key) ?>
                                 </label>
@@ -139,9 +140,9 @@
 
                 <div class="form-group">
                     <label for="biolink_hover_animation"><i class="fas fa-fw fa-arrow-pointer fa-sm text-muted mr-1"></i> <?= l('link.settings.hover_animation') ?></label>
-                    <div class="row btn-group-toggle" data-toggle="buttons">
+                    <div class="row btn-group-toggle m-n2" data-toggle="buttons">
                         <div class="col-12 col-lg-4 p-2 h-100">
-                            <label class="btn btn-light btn-block text-truncate mb-0 <?= ($data->values['biolink_hover_animation'] ?? 'smooth') == 'false' ? 'active"' : null?>">
+                            <label class="btn btn-light btn-block font-size-small mb-0 text-truncate mb-0 <?= ($data->values['biolink_hover_animation'] ?? 'smooth') == 'false' ? 'active"' : null?>">
                                 <input type="radio" name="biolink_hover_animation" value="false" class="custom-control-input" <?= ($data->values['biolink_hover_animation'] ?? 'smooth') == 'false' ? 'checked="checked"' : null?> required="required" />
                                 <?= l('global.none') ?>
                             </label>
@@ -196,11 +197,11 @@
                 </div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#biolink_block_container" aria-expanded="false" aria-controls="biolink_block_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#biolink_block_container" aria-expanded="false" aria-controls="biolink_block_container">
                 <i class="fas fa-fw fa-table-cells-large fa-sm mr-1"></i> <?= l('admin_biolinks_themes.biolink_block') ?>
             </button>
 
-            <div class="collapse" id="biolink_block_container">
+            <div class="collapse" data-parent="#biolink_theme_create" id="biolink_block_container">
 
                 <div class="form-group">
                     <label for="biolink_block_text_color"><i class="fas fa-fw fa-paint-brush fa-sm text-muted mr-1"></i> <?= l('biolink_link.text_color') ?></label>
@@ -247,24 +248,18 @@
                     </select>
                 </div>
 
-                <div class="form-group" data-range-counter data-range-counter-suffix="px">
-                    <label for="biolink_block_border_shadow_offset_x"><i class="fas fa-fw fa-arrows-alt-v fa-sm text-muted mr-1"></i> <?= l('biolink_link.border_shadow_offset_x') ?></label>
-                    <input id="biolink_block_border_shadow_offset_x" type="range" min="-20" max="20" class="form-control-range" name="biolink_block_border_shadow_offset_x" value="<?= $data->values['biolink_block_border_shadow_offset_x'] ?>" required="required" />
-                </div>
-
-                <div class="form-group" data-range-counter data-range-counter-suffix="px">
-                    <label for="biolink_block_border_shadow_offset_y"><i class="fas fa-fw fa-arrows-alt-v fa-sm text-muted mr-1"></i> <?= l('biolink_link.border_shadow_offset_y') ?></label>
-                    <input id="biolink_block_border_shadow_offset_y" type="range" min="-20" max="20" class="form-control-range" name="biolink_block_border_shadow_offset_y" value="<?= $data->values['biolink_block_border_shadow_offset_y'] ?>" required="required" />
-                </div>
-
-                <div class="form-group" data-range-counter data-range-counter-suffix="px">
-                    <label for="biolink_block_border_shadow_blur"><i class="fas fa-fw fa-arrows-alt fa-sm text-muted mr-1"></i> <?= l('biolink_link.border_shadow_blur') ?></label>
-                    <input id="biolink_block_border_shadow_blur" type="range" min="0" max="20" class="form-control-range" name="biolink_block_border_shadow_blur" value="<?= $data->values['biolink_block_border_shadow_blur'] ?>" required="required" />
-                </div>
-
-                <div class="form-group" data-range-counter data-range-counter-suffix="px">
-                    <label for="biolink_block_border_shadow_spread"><i class="fas fa-fw fa-border-all fa-sm text-muted mr-1"></i> <?= l('biolink_link.border_shadow_spread') ?></label>
-                    <input id="biolink_block_border_shadow_spread" type="range" min="0" max="10" class="form-control-range" name="biolink_block_border_shadow_spread" value="<?= $data->values['biolink_block_border_shadow_spread'] ?>" required="required" />
+                <div class="form-group">
+                    <label for="biolink_block_border_shadow_style"><i class="fas fa-fw fa-cloud-sun fa-sm text-muted mr-1"></i> <?= l('biolink_link.border_shadow_style') ?></label>
+                    <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+                        <?php foreach(['none', 'subtle', 'strong', 'hard'] as $border_shadow_style): ?>
+                            <div class="p-2 col-4">
+                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->values['biolink_block_border_shadow_style'] == $border_shadow_style ? 'active"' : null?>">
+                                    <input type="radio" name="biolink_block_border_shadow_style" value="<?= $border_shadow_style ?>" class="custom-control-input" <?= $data->values['biolink_block_border_shadow_style'] == $border_shadow_style ? 'checked="checked"' : null?> />
+                                    <?= l('biolink_link.border_shadow_style.' . $border_shadow_style) ?>
+                                </label>
+                            </div>
+                        <?php endforeach ?>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -273,11 +268,11 @@
                 </div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#biolink_block_socials_container" aria-expanded="false" aria-controls="biolink_block_socials_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#biolink_block_socials_container" aria-expanded="false" aria-controls="biolink_block_socials_container">
                 <i class="fas fa-fw fa-users fa-sm mr-1"></i> <?= l('admin_biolinks_themes.biolink_block_socials') ?>
             </button>
 
-            <div class="collapse" id="biolink_block_socials_container">
+            <div class="collapse" data-parent="#biolink_theme_create" id="biolink_block_socials_container">
                 <div class="form-group">
                     <label for="biolink_block_socials_color"><i class="fas fa-fw fa-paint-brush fa-sm text-muted mr-1"></i> <?= l('biolink_link.text_color') ?></label>
                     <input id="biolink_block_socials_color" type="hidden" name="biolink_block_socials_color" class="form-control" value="<?= $data->values['biolink_block_socials_color'] ?>" required="required" data-color-picker />
@@ -298,11 +293,11 @@
                 </div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#biolink_block_paragraph_container" aria-expanded="false" aria-controls="biolink_block_paragraph_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#biolink_block_paragraph_container" aria-expanded="false" aria-controls="biolink_block_paragraph_container">
                 <i class="fas fa-fw fa-paragraph fa-sm mr-1"></i> <?= l('admin_biolinks_themes.biolink_block_paragraph') ?>
             </button>
 
-            <div class="collapse" id="biolink_block_paragraph_container">
+            <div class="collapse" data-parent="#biolink_theme_create" id="biolink_block_paragraph_container">
                 <div class="form-group">
                     <label for="biolink_block_paragraph_text_color"><i class="fas fa-fw fa-paint-brush fa-sm text-muted mr-1"></i> <?= l('biolink_link.text_color') ?></label>
                     <input id="biolink_block_paragraph_text_color" type="hidden" name="biolink_block_paragraph_text_color" class="form-control" value="<?= $data->values['biolink_block_paragraph_text_color'] ?>" required="required" data-color-picker />
@@ -321,13 +316,32 @@
                         <option value="rounded" <?= $data->values['biolink_block_paragraph_border_radius'] == 'rounded' ? 'selected="selected"' : null ?>><?= l('biolink_link.border_radius_rounded') ?></option>
                     </select>
                 </div>
+
+                <div class="form-group">
+                    <label for="biolink_block_paragraph_border_shadow_style"><i class="fas fa-fw fa-cloud-sun fa-sm text-muted mr-1"></i> <?= l('biolink_link.border_shadow_style') ?></label>
+                    <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+                        <?php foreach(['none', 'subtle', 'strong', 'hard'] as $border_shadow_style): ?>
+                            <div class="p-2 col-4">
+                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->values['biolink_block_paragraph_border_shadow_style'] == $border_shadow_style ? 'active"' : null?>">
+                                    <input type="radio" name="biolink_block_paragraph_border_shadow_style" value="<?= $border_shadow_style ?>" class="custom-control-input" <?= $data->values['biolink_block_paragraph_border_shadow_style'] == $border_shadow_style ? 'checked="checked"' : null?> />
+                                    <?= l('biolink_link.border_shadow_style.' . $border_shadow_style) ?>
+                                </label>
+                            </div>
+                        <?php endforeach ?>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="biolink_block_paragraph_border_shadow_color"><i class="fas fa-fw fa-fill fa-sm text-muted mr-1"></i> <?= l('biolink_link.border_shadow_color') ?></label>
+                    <input id="biolink_block_paragraph_border_shadow_color" type="hidden" name="biolink_block_paragraph_border_shadow_color" class="form-control" value="<?= $data->values['biolink_block_paragraph_border_shadow_color'] ?>" required="required" data-color-picker />
+                </div>
             </div>
 
-            <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#biolink_block_heading_container" aria-expanded="false" aria-controls="biolink_block_heading_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#biolink_block_heading_container" aria-expanded="false" aria-controls="biolink_block_heading_container">
                 <i class="fas fa-fw fa-heading fa-sm mr-1"></i> <?= l('admin_biolinks_themes.biolink_block_heading') ?>
             </button>
 
-            <div class="collapse" id="biolink_block_heading_container">
+            <div class="collapse" data-parent="#biolink_theme_create" id="biolink_block_heading_container">
                 <div class="form-group">
                     <label for="biolink_block_heading_text_color"><i class="fas fa-fw fa-paint-brush fa-sm text-muted mr-1"></i> <?= l('biolink_link.text_color') ?></label>
                     <input id="biolink_block_heading_text_color" type="hidden" name="biolink_block_heading_text_color" class="form-control" value="<?= $data->values['biolink_block_heading_text_color'] ?>" required="required" data-color-picker />
@@ -368,7 +382,7 @@
 
 <script>
     'use strict';
-    
+
     /* Background Type Handler */
     let biolink_background_type_handler = () => {
         let type = document.querySelector('#biolink_background_type').value;
@@ -392,44 +406,46 @@
 <?php include_view(THEME_PATH . 'views/partials/color_picker_js.php', ['opacity' => true]) ?>
 
 <?php ob_start() ?>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material.min.css">
 <?php \Altum\Event::add_content(ob_get_clean(), 'head') ?>
 
 <?php ob_start() ?>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
 
-    <script>
+<script>
     'use strict';
-    
-        let is_initiated = false;
-        $('#biolink_container').on('shown.bs.collapse', function () {
-            if(is_initiated) return;
 
-            try {
-                let textarea_elements = document.querySelectorAll('textarea[data-code-editor]');
+    let is_initiated = false;
+    $('#biolink_container').on('shown.bs.collapse', function () {
+        if(is_initiated) return;
 
-                textarea_elements.forEach(textarea_element => {
-                    let code_editor_instance = CodeMirror.fromTextArea(textarea_element, {
-                        lineNumbers: true,
-                        lineWrapping: true,
-                        mode: textarea_element.getAttribute("data-mode") || "javascript",
-                        theme: <?= \Altum\ThemeStyle::get() == 'light' ? json_encode('default') : json_encode('material') ?>,
-                        indentUnit: 4,
-                        tabSize: 4,
-                        indentWithTabs: true,
-                        matchBrackets: true,
-                        autoCloseBrackets: true,
-                        styleActiveLine: true,
-                    });
+        try {
+            let textarea_elements = document.querySelectorAll('textarea[data-code-editor]');
+
+            textarea_elements.forEach(textarea_element => {
+                let code_editor_instance = CodeMirror.fromTextArea(textarea_element, {
+                    lineNumbers: true,
+                    lineWrapping: true,
+                    mode: textarea_element.getAttribute("data-mode") || "javascript",
+                    theme: <?= \Altum\ThemeStyle::get() == 'light' ? json_encode('default') : json_encode('material') ?>,
+                    indentUnit: 4,
+                    tabSize: 4,
+                    indentWithTabs: true,
+                    matchBrackets: true,
+                    autoCloseBrackets: true,
+                    styleActiveLine: true,
                 });
-            } catch(error) {
-                /* :) */
-            }
-        })
-    </script>
+            });
+
+            is_initiated = true;
+        } catch(error) {
+            /* :) */
+        }
+    })
+</script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

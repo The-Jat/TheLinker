@@ -9,7 +9,7 @@
 
 <script>
     'use strict';
-    
+
 /* expose cropper initializer globally */
     let initialize_image_cropper = () => {
         let cropper = null;
@@ -60,7 +60,6 @@
         const crop_size_box = document.getElementById('image_cropper_size');
 
         /* handle crop button */
-        /* handle crop button */
         new_crop_button.addEventListener('click', () => {
             if(!cropper || !current_input) return;
 
@@ -83,9 +82,7 @@
                 if(!blob) return;
 
                 /* fix filename when source was svg */
-                const new_file_name = is_svg
-                    ? original_file.name.replace(/\.svg$/i, '.png')
-                    : original_file.name;
+                const new_file_name = is_svg ? original_file.name.replace(/\.svg$/i, '.png') : original_file.name;
 
                 const new_file = new File([blob], new_file_name, {
                     type: export_mime_type,
@@ -112,42 +109,40 @@
                 const file = event.target.files[0];
                 if(!file || !file.type.startsWith('image/')) return;
 
-                const reader = new FileReader();
-                reader.onload = event => {
-                    preview_image.src = event.target.result;
+                const object_url = URL.createObjectURL(file);
+                preview_image.src = object_url;
 
-                    $(cropper_modal).modal('show');
+                $(cropper_modal).modal('show');
 
-                    $(cropper_modal).on('shown.bs.modal', () => {
-                        const aspect_ratio_attr = input.getAttribute('data-aspect-ratio');
-                        const aspect_ratio = aspect_ratio_attr ? parseFloat(aspect_ratio_attr) : NaN;
+                $(cropper_modal).off('shown.bs.modal hidden.bs.modal').on('shown.bs.modal', () => {
+                    const aspect_ratio_attr = input.getAttribute('data-aspect-ratio');
+                    const aspect_ratio = aspect_ratio_attr ? parseFloat(aspect_ratio_attr) : NaN;
 
-                        cropper = new Cropper(preview_image, {
-                            aspectRatio: aspect_ratio,
-                            viewMode: 2,
-                            restore: false,
-                            crop: () => {
-                                /* get cropped box data */
-                                const crop_data = cropper.getData(true);
-
-                                /* update size in modal */
-                                crop_size_box.innerText = '(' + Math.round(crop_data.width) + '×' + Math.round(crop_data.height) + ' px)';
-                            }
-                        });
-
-                    }).on('hidden.bs.modal', () => {
-                        if(cropper) {
-                            cropper.destroy();
-                            cropper = null;
+                    cropper = new Cropper(preview_image, {
+                        aspectRatio: aspect_ratio,
+                        viewMode: 2,
+                        restore: false,
+                        crop: () => {
+                            const crop_data = cropper.getData(true);
+                            crop_size_box.innerText =
+                                '(' + Math.round(crop_data.width) + '×' + Math.round(crop_data.height) + ' px)';
                         }
-                        current_input = null;
-                        crop_size_box.innerText = '';
-                        $(cropper_modal).off('shown.bs.modal hidden.bs.modal');
                     });
+                }).on('hidden.bs.modal', () => {
+                    if(cropper) {
+                        cropper.destroy();
+                        cropper = null;
+                    }
 
-                    current_input = input;
-                };
-                reader.readAsDataURL(file);
+                    URL.revokeObjectURL(object_url);
+                    preview_image.src = '';
+                    current_input = null;
+                    crop_size_box.innerText = '';
+
+                    $(cropper_modal).off('shown.bs.modal hidden.bs.modal');
+                });
+
+                current_input = input;
             };
 
             input.addEventListener('change', input._cropper_handler);

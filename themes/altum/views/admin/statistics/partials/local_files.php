@@ -63,7 +63,7 @@
         <?php //ALTUMCODE:DEMO if(!DEMO): ?>
 
         <?php foreach($data->folders as $folder_name => $stats): ?>
-            <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="<?= '#' . preg_replace('/[^a-zA-Z0-9]/', '_', $folder_name) ?>" aria-expanded="false" aria-controls="<?= preg_replace('/[^a-zA-Z0-9]/', '_', $folder_name) ?>">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="<?= '#' . preg_replace('/[^a-zA-Z0-9]/', '_', $folder_name) ?>" aria-expanded="false" aria-controls="<?= preg_replace('/[^a-zA-Z0-9]/', '_', $folder_name) ?>">
                 <?= $folder_name ?>
 
                 <i class="fas fa-fw fa-xs fa-chevron-right text-muted mx-1"></i>
@@ -78,7 +78,7 @@
             <div class="collapse" id="<?= preg_replace('/[^a-zA-Z0-9]/', '_', $folder_name) ?>">
                 <?php arsort($stats['extensions']); ?>
 
-                <?php if(count($stats['extensions'])): ?>
+                <?php if (!empty($stats['extensions'])): ?>
                     <?php foreach ($stats['extensions'] as $extension => $count): ?>
                         <?php $percentage = $stats['total_files'] > 0 ? round(($count / $stats['total_files']) * 100, 1) : 0; ?>
 

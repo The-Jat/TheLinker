@@ -18,7 +18,7 @@
                 <p class="text-muted"><?= l('bulk_download_modal.subheader') ?></p>
 
                 <div class="mt-4">
-                    <button type="submit" form="table" class="btn btn-lg btn-block btn-primary" onclick="document.querySelector('#table input[data-bulk-type]').value = 'download'">
+                    <button type="submit" name="submit" form="table" class="btn btn-lg btn-block btn-primary" onclick="document.querySelector('#table input[data-bulk-type]').value = 'download'">
                         <?= l('global.download') ?>
                     </button>
                 </div>

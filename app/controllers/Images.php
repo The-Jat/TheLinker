@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -26,7 +26,7 @@ class Images extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->images_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Check for exclusive personal API usage limitation */
@@ -106,8 +106,8 @@ class Images extends Controller {
         //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('images');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -128,12 +128,14 @@ class Images extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
                     /* Team checks */
                     if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.images')) {
-                        Alerts::add_info(l('global.info_message.team_no_access'));
+                        Alerts::add_error(l('global.info_message.team_no_access'));
                         redirect('images');
                     }
 
@@ -165,7 +167,7 @@ class Images extends Controller {
             }
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -179,20 +181,20 @@ class Images extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->images_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.images')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('images');
         }
 
-        if(empty($_POST)) {
-            redirect('images');
+        if (empty($_POST)) {
+            throw_404();
         }
 
-        $image_id = (int) query_clean($_POST['image_id']);
+        $image_id = (int) $_POST['image_id'];
 
         //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Alerts::add_error('Please create an account on the demo to test out this function.');
 
@@ -201,7 +203,7 @@ class Images extends Controller {
         }
 
         if(!$image = db()->where('image_id', $image_id)->where('user_id', $this->user->user_id)->getOne('images', ['image_id', 'name', 'image'])) {
-            redirect('images');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

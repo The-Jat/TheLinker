@@ -10,8 +10,8 @@
 
         <?php if(!empty($data->cloaking->cloaking_favicon)): ?>
             <link href="<?= \Altum\Uploads::get_full_url('favicons') . $data->cloaking->cloaking_favicon ?>" rel="icon" />
-        <?php elseif(!empty(settings()->main->favicon)): ?>
-            <link href="<?= settings()->main->favicon_full_url ?>" rel="icon" />
+        <?php else: ?>
+            <link href="<?= !empty(settings()->main->favicon) ? settings()->main->favicon_full_url : 'data:,' ?>" rel="icon" />
         <?php endif ?>
 
         <?php if(\Altum\Meta::$description): ?>
@@ -32,13 +32,17 @@
     </head>
 
     <body>
-        <?php require THEME_PATH . 'views/partials/cookie_consent.php' ?>
+        <?php $has_pixels = !empty($data->pixels); ?>
+
+        <?php if($has_pixels): ?>
+            <?php require THEME_PATH . 'views/partials/cookie_consent.php' ?>
+        <?php endif ?>
 
         <?php if($data->cloaking): ?>
             <iframe id="iframe" src="<?= $data->location_url ?>" style="position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index: 1;"></iframe>
         <?php endif ?>
 
-        <?= count($data->pixels) ? $this->views['pixels'] : null ?>
+        <?= $has_pixels ? $this->views['pixels'] : null ?>
 
         <?php if(!$data->cloaking): ?>
             <style>
@@ -78,7 +82,7 @@
                 let app_linking_location_url = <?=  json_encode($data->app_linking_location_url ?: null) ?>;
                 let location_url = <?= json_encode($data->location_url) ?>;
 
-                <?php if(settings()->cookie_consent->is_enabled): ?>
+                <?php if($has_pixels && settings()->cookie_consent->is_enabled): ?>
                     window.addEventListener('cc:onFirstConsent', (detail) => {
                         if(app_linking_location_url) window.location = app_linking_location_url;
 
@@ -108,10 +112,10 @@
             <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
         <?php endif ?>
 
-        <?php if(settings()->cookie_consent->is_enabled): ?>
+        <?php if($has_pixels && settings()->cookie_consent->is_enabled): ?>
             <?php require THEME_PATH . 'views/partials/js_global_variables.php' ?>
 
-            <?php foreach(['custom.js'] as $file): ?>
+            <?php foreach(['custom.' . (DEBUG ? null : 'min.') . 'js'] as $file): ?>
                 <script src="<?= ASSETS_FULL_URL ?>js/<?= $file ?>?v=<?= PRODUCT_CODE ?>"></script>
             <?php endforeach ?>
         <?php endif ?>

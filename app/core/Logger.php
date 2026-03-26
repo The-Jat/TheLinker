@@ -35,7 +35,7 @@ class Logger {
         $city_name = isset($maxmind) && isset($maxmind['city']) ? $maxmind['city']['names']['en'] : null;
 
         /* Detect extra details about the user */
-        $whichbrowser = new \WhichBrowser\Parser($_SERVER['HTTP_USER_AGENT']);
+        $whichbrowser = get_whichbrowser();
 
         /* Detect extra details about the user */
         $browser_name = $whichbrowser->browser->name ?? null;

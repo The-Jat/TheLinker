@@ -39,16 +39,16 @@
 
                     <div class="form-group">
                         <label for="image_grid_columns"><i class="fas fa-fw fa-grip fa-sm text-muted mr-1"></i> <?= l('biolink_image_grid.columns') ?></label>
-                        <div class="row btn-group-toggle" data-toggle="buttons">
-                            <div class="col-12 col-lg-6 h-100">
-                                <label class="btn btn-light btn-block text-truncate active">
+                        <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+                            <div class="p-2 col-12 col-lg-6 h-100">
+                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate active">
                                     <input type="radio" name="columns" value="2" class="custom-control-input" checked="checked" required="required" />
                                     2
                                 </label>
                             </div>
 
-                            <div class="col-12 col-lg-6 h-100">
-                                <label class="btn btn-light btn-block text-truncate">
+                            <div class="p-2 col-12 col-lg-6 h-100">
+                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate">
                                     <input type="radio" name="columns" value="3" class="custom-control-input" required="required" />
                                     3
                                 </label>

@@ -49,6 +49,9 @@
     ?>
 
     <small class="form-text <?= $text_class ?>"><?= sprintf(l('admin_settings.cron.last_execution'), isset(settings()->cron->cron_datetime) ? \Altum\Date::get_timeago(settings()->cron->cron_datetime) : l('global.na')) ?></small>
+    <?php if(isset(settings()->cron->cron_datetime)): ?>
+        <small class="form-text text-muted"><?= sprintf(l('admin_settings.cron.last_processing_time'), isset(settings()->cron->cron_datetime_processing) ? nr(settings()->cron->cron_datetime_processing, 8) . ' ' . l('global.date.seconds') : l('global.na')) ?></small>
+    <?php endif ?>
 </div>
 
 <div class="form-group">
@@ -100,6 +103,9 @@
     ?>
 
     <small class="form-text <?= $text_class ?>"><?= sprintf(l('admin_settings.cron.last_execution'), isset(settings()->cron->email_reports_datetime) ? \Altum\Date::get_timeago(settings()->cron->email_reports_datetime) : l('global.na')) ?></small>
+    <?php if(isset(settings()->cron->email_reports_datetime)): ?>
+        <small class="form-text text-muted"><?= sprintf(l('admin_settings.cron.last_processing_time'), isset(settings()->cron->email_reports_datetime_processing) ? nr(settings()->cron->email_reports_datetime_processing, 8) . ' ' . l('global.date.seconds') : l('global.na')) ?></small>
+    <?php endif ?>
 </div>
 
 <div class="form-group">
@@ -119,6 +125,16 @@
             >
                 <i class="fas fa-fw fa-sm fa-copy"></i>
             </button>
+        </div>
+        <div class="input-group-append">
+            <a
+                    href="<?= url('admin/settings/content') ?>"
+                    class="btn btn-light"
+                    data-toggle="tooltip"
+                    title="<?= l('admin_settings.cron.settings') ?>"
+            >
+                <i class="fas fa-fw fa-sm fa-cog"></i>
+            </a>
         </div>
         <div class="input-group-append">
             <a
@@ -151,6 +167,9 @@
     ?>
 
     <small class="form-text <?= $text_class ?>"><?= sprintf(l('admin_settings.cron.last_execution'), isset(settings()->cron->broadcasts_datetime) ? \Altum\Date::get_timeago(settings()->cron->broadcasts_datetime) : l('global.na')) ?></small>
+    <?php if(isset(settings()->cron->broadcasts_datetime)): ?>
+        <small class="form-text text-muted"><?= sprintf(l('admin_settings.cron.last_processing_time'), isset(settings()->cron->broadcasts_datetime_processing) ? nr(settings()->cron->broadcasts_datetime_processing, 8) . ' ' . l('global.date.seconds') : l('global.na')) ?></small>
+    <?php endif ?>
 </div>
 
 <div <?= !\Altum\Plugin::is_active('push-notifications') ? 'data-toggle="tooltip" title="' . sprintf(l('admin_plugins.no_access'), \Altum\Plugin::get('push-notifications')->name ?? 'push-notifications') . '"' : null ?>>
@@ -213,6 +232,9 @@
             ?>
 
             <small class="form-text <?= $text_class ?>"><?= sprintf(l('admin_settings.cron.last_execution'), isset(settings()->cron->push_notifications_datetime) ? \Altum\Date::get_timeago(settings()->cron->push_notifications_datetime) : l('global.na')) ?></small>
+            <?php if(isset(settings()->cron->push_notifications_datetime)): ?>
+                <small class="form-text text-muted"><?= sprintf(l('admin_settings.cron.last_processing_time'), isset(settings()->cron->push_notifications_datetime_processing) ? nr(settings()->cron->push_notifications_datetime_processing, 8) . ' ' . l('global.date.seconds') : l('global.na')) ?></small>
+            <?php endif ?>
         </div>
     </div>
 </div>

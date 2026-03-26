@@ -22,13 +22,17 @@ defined('ALTUMCODE') || die();
 class Affiliate {
 
     public static function initiate() {
-        if(is_logged_in() || !\Altum\Plugin::is_active('affiliate') || (\Altum\Plugin::is_active('affiliate') && !settings()->affiliate->is_enabled)) {
-            return;
-        }
+		if(!\Altum\Plugin::is_active('affiliate') || (\Altum\Plugin::is_active('affiliate') && !settings()->affiliate->is_enabled)) {
+			return;
+		}
 
-        $referral_key = isset($_GET['ref']) ? query_clean($_GET['ref']) : null;
+		$referral_key = isset($_GET['ref']) ? query_clean($_GET['ref']) : null;
 
-        if(!$referral_key) {
+		if(!$referral_key) {
+			return;
+		}
+
+        if(is_logged_in()) {
             return;
         }
 

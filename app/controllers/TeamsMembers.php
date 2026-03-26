@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,13 +25,13 @@ class TeamsMembers extends Controller {
     public function delete() {
 
         if(!\Altum\Plugin::is_active('teams')) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
 
-        if(empty($_POST)) {
-            redirect('teams-system');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         $team_member_id = (int) $_POST['team_member_id'];
@@ -92,13 +92,13 @@ class TeamsMembers extends Controller {
     public function join() {
 
         if(!\Altum\Plugin::is_active('teams')) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
 
-        if(empty($_POST)) {
-            redirect('teams-member');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         $team_member_id = (int) $_POST['team_member_id'];
@@ -138,13 +138,13 @@ class TeamsMembers extends Controller {
     public function login() {
 
         if(!\Altum\Plugin::is_active('teams')) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
 
-        if(empty($_POST)) {
-            redirect('teams-member');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         $team_member_id = (int) $_POST['team_member_id'];
@@ -163,7 +163,7 @@ class TeamsMembers extends Controller {
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
             /* Login the team member */
-            $_SESSION['team_id'] = $team_member->team_id;
+            session_set('team_id', $team_member->team_id);
 
             /* Clear the cache */
             cache()->deleteItem('team_member?team_id=' . $team_member->team_id . '&user_id=' . $team_member->user_id);

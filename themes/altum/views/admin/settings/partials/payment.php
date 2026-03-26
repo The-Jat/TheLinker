@@ -36,6 +36,8 @@
             <label for="default_payment_frequency"><i class="fas fa-fw fa-sm fa-shopping-bag text-muted mr-1"></i> <?= l('admin_settings.payment.default_payment_frequency') ?></label>
             <select id="default_payment_frequency" name="default_payment_frequency" class="custom-select">
                 <option value="monthly" <?= settings()->payment->default_payment_frequency == 'monthly' ? 'selected="selected"' : null ?>><?= l('plan.custom_plan.monthly') ?></option>
+                <option value="quarterly" <?= settings()->payment->default_payment_frequency == 'quarterly' ? 'selected="selected"' : null ?>><?= l('plan.custom_plan.quarterly') ?></option>
+                <option value="biannual" <?= settings()->payment->default_payment_frequency == 'biannual' ? 'selected="selected"' : null ?>><?= l('plan.custom_plan.biannual') ?></option>
                 <option value="annual" <?= settings()->payment->default_payment_frequency == 'annual' ? 'selected="selected"' : null ?>><?= l('plan.custom_plan.annual') ?></option>
                 <option value="lifetime" <?= settings()->payment->default_payment_frequency == 'lifetime' ? 'selected="selected"' : null ?>><?= l('plan.custom_plan.lifetime') ?></option>
             </select>
@@ -47,7 +49,11 @@
                 <div class="currency p-3 bg-gray-50 rounded mb-4">
                     <div class="form-group">
                         <label for="<?= 'code[' . $currency->code . ']' ?>"><i class="fas fa-fw fa-sm fa-fingerprint text-muted mr-1"></i> <?= l('admin_settings.payment.currencies.code') ?></label>
-                        <input id="<?= 'code[' . $currency->code . ']' ?>" type="text" name="code[<?= $currency->code ?>]" minlength="3" maxlength="3" class="form-control" value="<?= $currency->code ?>" placeholder="USD" required="required" />
+                        <select id="<?= 'code[' . $currency->code . ']' ?>" name="code[<?= $currency->code ?>]" class="custom-select" required="required" data-is-not-custom-select>
+                            <?php foreach(get_currencies_array() as $currency_code => $currency_name): ?>
+                                <option value="<?= $currency_code ?>" <?= $currency->code == $currency_code ? 'selected="selected"' : null ?>><?= $currency_code . ' - ' . $currency_name ?></option>
+                            <?php endforeach ?>
+                        </select>
                         <small class="form-text text-muted"><?= l('admin_settings.payment.currencies.code_help') ?></small>
                     </div>
 
@@ -74,6 +80,11 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="<?= 'currency_decimals[' . $currency->code . ']' ?>"><i class="fas fa-fw fa-sm fa-list-ol text-muted mr-1"></i> <?= l('admin_settings.payment.currencies.currency_decimals') ?></label>
+                        <input id="<?= 'currency_decimals[' . $currency->code . ']' ?>" type="number" min="0" max="3" name="currency_decimals[<?= $currency->code ?>]" class="form-control" value="<?= $currency->currency_decimals ?? 2 ?>" required="required" />
+                    </div>
+
+                    <div class="form-group">
                         <label for="<?= 'default_payment_processor[' . $currency->code . ']' ?>"><i class="fas fa-fw fa-sm fa-piggy-bank text-muted mr-1"></i> <?= l('admin_settings.payment.currencies.default_payment_processor') ?></label>
                         <select id="<?= 'default_payment_processor[' . $currency->code . ']' ?>" name="default_payment_processor[<?= $currency->code ?>]" class="custom-select" data-is-not-custom-select>
                             <?php foreach(require APP_PATH . 'includes/payment_processors.php' as $key => $value): ?>
@@ -94,8 +105,18 @@
 
         <div class="form-group">
             <label for="default_currency"><i class="fas fa-fw fa-sm fa-euro-sign text-muted mr-1"></i> <?= l('admin_settings.payment.default_currency') ?></label>
-            <input id="default_currency" type="text" name="default_currency" class="form-control" value="<?= settings()->payment->default_currency ?>" />
+            <select id="default_currency" name="default_currency" class="custom-select" required="required" data-is-not-custom-select>
+                <?php foreach(get_currencies_array() as $currency_code => $currency_name): ?>
+                    <option value="<?= $currency_code ?>" <?= settings()->payment->default_currency == $currency_code ? 'selected="selected"' : null ?>><?= $currency_code . ' - ' . $currency_name ?></option>
+                <?php endforeach ?>
+            </select>
             <small class="form-text text-muted"><?= l('admin_settings.payment.default_currency_help') ?></small>
+        </div>
+
+        <div class="form-group custom-control custom-switch">
+            <input id="auto_currency_detection" name="auto_currency_detection" type="checkbox" class="custom-control-input" <?= settings()->payment->auto_currency_detection ? 'checked="checked"' : null?>>
+            <label class="custom-control-label" for="auto_currency_detection"><i class="fas fa-fw fa-sm fa-globe text-muted mr-1"></i> <?= l('admin_settings.payment.auto_currency_detection') ?></label>
+            <small class="form-text text-muted"><?= l('admin_settings.payment.auto_currency_detection_help') ?></small>
         </div>
 
         <div class="form-group custom-control custom-switch">
@@ -144,6 +165,43 @@
             <input id="currency_exchange_api_key" type="text" name="currency_exchange_api_key" class="form-control" value="<?= settings()->payment->currency_exchange_api_key ?>" />
             <small class="form-text text-muted"><?= l('admin_settings.payment.currency_exchange_api_key_help') ?></small>
         </div>
+
+        <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#plan_features_container" aria-expanded="false" aria-controls="plan_features_container">
+            <i class="fas fa-fw fa-box-open fa-sm mr-1"></i> <?= l('admin_settings.payment.plan_features') ?>
+        </button>
+
+        <div class="collapse" id="plan_features_container">
+            <div class="alert alert-info">
+                <i class="fas fa-fw fa-info-circle fa-sm mr-1"></i> <?= l('admin_settings.payment.plan_features_help') ?>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="h5">&nbsp;</h3>
+
+                <div>
+                    <button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="<?= l('global.select_all') ?>" data-tooltip-hide-on-click onclick="document.querySelectorAll(`[name^='plan_features']`).forEach(element => element.checked ? null : element.checked = true)"><i class="fas fa-fw fa-check-square"></i></button>
+                    <button type="button" class="btn btn-sm btn-light" data-toggle="tooltip" title="<?= l('global.deselect_all') ?>" data-tooltip-hide-on-click onclick="document.querySelectorAll(`[name^='plan_features']`).forEach(element => element.checked ? element.checked = false : null)"><i class="fas fa-fw fa-minus-square"></i></button>
+                </div>
+            </div>
+
+            <div id="plan_features">
+                <?php $features = ((array) (settings()->payment->plan_features ?? [])) + array_fill_keys(require APP_PATH . 'includes/available_plan_features.php', true) ?>
+                <?php $index = 0; ?>
+                <?php foreach($features as $feature => $is_enabled): ?>
+                    <div class="d-flex">
+                        <span class="cursor-grab drag mr-3" data-toggle="tooltip" title="<?= l('global.drag_and_drop') ?>">
+                            <i class="fas fa-fw fa-sm fa-bars text-muted"></i>
+                        </span>
+
+                        <div class="form-group custom-control custom-checkbox" data-plan-feature>
+                            <input id="<?= 'plan_' . $feature ?>" name="plan_features[<?= $index++ ?>]" value="<?= $feature ?>" type="checkbox" class="custom-control-input" <?= $is_enabled ? 'checked="checked"' : null ?>>
+                            <label class="custom-control-label" for="<?= 'plan_' . $feature ?>"><?= l('admin_plans.plan.' . $feature, null, true) ?? $feature ?></label>
+                        </div>
+                    </div>
+                <?php endforeach ?>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -153,7 +211,11 @@
     <div class="currency p-3 bg-gray-50 rounded mb-4">
         <div class="form-group">
             <label for="<?= 'code[]' ?>"><i class="fas fa-fw fa-sm fa-fingerprint text-muted mr-1"></i> <?= l('admin_settings.payment.currencies.code') ?></label>
-            <input id="<?= 'code[]' ?>" type="text" name="code[]" class="form-control" value="" placeholder="USD" required="required" />
+            <select id="<?= 'code[]' ?>" name="code[]" class="custom-select" required="required" data-is-not-custom-select>
+                <?php foreach(get_currencies_array() as $currency_code => $currency_name): ?>
+                    <option value="<?= $currency_code ?>"><?= $currency_code . ' - ' . $currency_name ?></option>
+                <?php endforeach ?>
+            </select>
             <small class="form-text text-muted"><?= l('admin_settings.payment.currencies.code_help') ?></small>
         </div>
 
@@ -187,6 +249,11 @@
                 <option value="left"><?= l('admin_settings.payment.currencies.currency_placement.left') ?></option>
                 <option value="right"><?= l('admin_settings.payment.currencies.currency_placement.right') ?></option>
             </select>
+        </div>
+
+        <div class="form-group">
+            <label for="<?= 'currency_decimals[]' ?>"><i class="fas fa-fw fa-sm fa-list-ol text-muted mr-1"></i> <?= l('admin_settings.payment.currencies.currency_decimals') ?></label>
+            <input id="<?= 'currency_decimals[]' ?>" type="number" min="0" max="3" name="currency_decimals[]" class="form-control" value="2" required="required" />
         </div>
 
         <button type="button" data-remove="request" class="mb-3 btn btn-block btn-outline-danger">
@@ -250,5 +317,30 @@
     }
 
     code_initiator();
+</script>
+<?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+
+<?php ob_start() ?>
+<script src="<?= ASSETS_FULL_URL . 'js/libraries/sortable.js?v=' . PRODUCT_CODE ?>"></script>
+<script>
+    'use strict';
+
+    let sortable = Sortable.create(document.getElementById('plan_features'), {
+        animation: 150,
+        handle: '.drag',
+        onUpdate: event => {
+
+            /* Refresh tooltips */
+            tooltips_initiate();
+
+            document.querySelectorAll('#plan_features > div').forEach((elm, i) => {
+                let input = elm.querySelector('input[type="checkbox"]');
+                if(input) {
+                    input.setAttribute('name', `plan_features[${i}]`);
+                }
+            });
+
+        }
+    });
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

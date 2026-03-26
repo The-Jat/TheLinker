@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -113,14 +113,14 @@ class AdminUsers extends Controller {
 
             /* Login as the new user */
             session_start();
-            $_SESSION['user_id'] = $user->user_id;
-            $_SESSION['user_password_hash'] = md5($user->password);
+            session_set('user_id', $user->user_id);
+            session_set('user_password_hash', md5($user->password));
 
             /* Tell the script that we're actually logged in as an admin in the background */
-            $_SESSION['admin_user_id'] = $this->user->user_id;
+            session_set('admin_user_id', $this->user->user_id);
 
             /* Set a nice success message */
-            Alerts::add_success(sprintf(l('admin_user_login_modal.success_message'), $user->name));
+            Alerts::add_success(sprintf(l('admin_user_login_modal.success_message'), '<strong>' . $user->name . '</strong>'));
 
             redirect('dashboard');
 
@@ -132,8 +132,8 @@ class AdminUsers extends Controller {
     public function bulk() {
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('admin/users');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -155,6 +155,8 @@ class AdminUsers extends Controller {
             set_time_limit(0);
 
             session_write_close();
+
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
 
             switch($_POST['type']) {
                 case 'delete':
@@ -184,7 +186,7 @@ class AdminUsers extends Controller {
 
                         if($user && !$user->status) {
                             /* Generate new email code */
-                            $email_code = md5($user->email . microtime());
+                            $email_code = md5(uniqid('', true) . random_bytes(16));
 
                             /* Update the current activation email */
                             db()->where('user_id', $user->user_id)->update('users', ['email_activation_code' => $email_code]);

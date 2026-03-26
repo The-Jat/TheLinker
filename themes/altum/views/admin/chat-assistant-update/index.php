@@ -81,6 +81,7 @@
                 <label for="order"><i class="fas fa-fw fa-sm fa-sort text-muted mr-1"></i> <?= l('global.order') ?></label>
                 <input id="order" type="number" name="order" value="<?= $data->chat_assistant->order ?>" class="form-control <?= \Altum\Alerts::has_field_errors('order') ? 'is-invalid' : null ?>" />
                 <?= \Altum\Alerts::output_field_error('order') ?>
+                <small class="form-text text-muted"><?= l('global.order_int_help') ?></small>
             </div>
 
             <div class="form-group custom-control custom-switch">

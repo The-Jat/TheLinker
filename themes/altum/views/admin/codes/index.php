@@ -36,7 +36,7 @@
                         <a href="<?= url('admin/codes?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                         </a>
-                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                     </a>
                     </div>
@@ -88,6 +88,7 @@
                                 <select name="order_by" id="filters_order_by" class="custom-select custom-select-sm">
                                     <option value="code_id" <?= $data->filters->order_by == 'code_id' ? 'selected="selected"' : null ?>><?= l('global.id') ?></option>
                                     <option value="datetime" <?= $data->filters->order_by == 'datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_datetime') ?></option>
+                                    <option value="last_datetime" <?= $data->filters->order_by == 'last_datetime' ? 'selected="selected"' : null ?>><?= l('global.filters.order_by_last_datetime') ?></option>
                                     <option value="name" <?= $data->filters->search_by == 'name' ? 'selected="selected"' : null ?>><?= l('global.name') ?></option>
                                     <option value="code" <?= $data->filters->search_by == 'code' ? 'selected="selected"' : null ?>><?= l('admin_codes.code') ?></option>
                                     <option value="days" <?= $data->filters->search_by == 'days' ? 'selected="selected"' : null ?>><?= l('admin_codes.days') ?></option>
@@ -164,6 +165,7 @@
                     <th><?= l('admin_codes.discount') ?></th>
                     <th><?= l('admin_codes.redeemed') ?></th>
                     <th></th>
+                    <th></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -216,6 +218,27 @@
                                 </a>
                             </div>
                         </td>
+
+                        <td class="text-nowrap">
+                            <div class="d-flex align-items-center">
+                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= l('admin_codes.start_datetime'), ($row->start_datetime ? '<br />' . \Altum\Date::get($row->start_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->start_datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->start_datetime) . ')</small>' : '<br />' . l('global.na')) ?>">
+                                    <i class="fas fa-fw fa-hourglass-start text-muted"></i>
+                                </span>
+
+                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= l('admin_codes.end_datetime'), ($row->end_datetime ? '<br />' . \Altum\Date::get($row->end_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->end_datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_time_until($row->end_datetime) . ')</small>' : '<br />' . l('global.na')) ?>">
+                                    <i class="fas fa-fw fa-hourglass-end text-muted"></i>
+                                </span>
+
+                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
+                                    <i class="fas fa-fw fa-calendar text-muted"></i>
+                                </span>
+
+                                <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.last_datetime_tooltip'), ($row->last_datetime ? '<br />' . \Altum\Date::get($row->last_datetime, 2) . '<br /><small>' . \Altum\Date::get($row->last_datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->last_datetime) . ')</small>' : '<br />' . l('global.na'))) ?>">
+                                    <i class="fas fa-fw fa-history text-muted"></i>
+                                </span>
+                            </div>
+                        </td>
+
                         <td>
                             <div class="d-flex justify-content-end">
                                 <?= include_view(THEME_PATH . 'views/admin/codes/admin_code_dropdown_button.php', ['id' => $row->code_id, 'resource_name' => $row->name]) ?>

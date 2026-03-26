@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,6 +25,10 @@ class ApiPayments extends Controller {
     use Apiable;
 
     public function index() {
+
+        if(!settings()->payment->is_enabled) {
+            throw_404();
+        }
 
         $this->verify_request();
 
@@ -87,9 +91,19 @@ class ApiPayments extends Controller {
                 'discount_amount' => (float) $row->discount_amount,
                 'email' => $row->email,
                 'name' => $row->name,
-                'total_amount' => $row->total_amount,
+                'total_amount' => (float) $row->total_amount,
+                'total_amount_default_currency' => (float) $row->total_amount_default_currency,
                 'currency' => $row->currency,
-                'status' => (bool) (int) $row->status,
+                'status' => $row->status,
+                'plan' => json_decode($row->plan ?? ''),
+                'billing' => json_decode($row->billing ?? ''),
+                'business' => json_decode($row->business ?? ''),
+                'taxes_ids' => json_decode($row->taxes_ids ?? ''),
+                'payment_proof' => $row->payment_proof,
+                'payment_proof_url' => $row->payment_proof ? \Altum\Uploads::get_full_url('offline_payment_proofs') . $row->payment_proof_url : null,
+                'refunds' => json_decode($row->refunds ?? '[]'),
+                'refunded_total' => (float) $row->refunded_total,
+                'refunded_status' => $row->refunded_status,
                 'datetime' => $row->datetime,
             ];
 
@@ -142,9 +156,19 @@ class ApiPayments extends Controller {
             'discount_amount' => (float) $payment->discount_amount,
             'email' => $payment->email,
             'name' => $payment->name,
-            'total_amount' => $payment->total_amount,
+            'total_amount' => (float) $payment->total_amount,
+            'total_amount_default_currency' => (float) $payment->total_amount_default_currency,
             'currency' => $payment->currency,
-            'status' => (bool) (int) $payment->status,
+            'status' => $payment->status,
+            'plan' => json_decode($payment->plan ?? ''),
+            'billing' => json_decode($payment->billing ?? ''),
+            'business' => json_decode($payment->business ?? ''),
+            'taxes_ids' => json_decode($payment->taxes_ids ?? ''),
+            'payment_proof' => $payment->payment_proof,
+            'payment_proof_url' => $payment->payment_proof ? \Altum\Uploads::get_full_url('offline_payment_proofs') . $payment->payment_proof_url : null,
+            'refunds' => json_decode($payment->refunds ?? '[]'),
+            'refunded_total' => (float) $payment->refunded_total,
+            'refunded_status' => $payment->refunded_status,
             'datetime' => $payment->datetime,
         ];
 

@@ -29,6 +29,10 @@ class BiolinkBlock extends Model {
         $blocks_with_storage = [
             'image' => [['path' => 'block_images', 'uploaded_file_key' => 'image']],
             'image_grid' => [['path' => 'block_images', 'uploaded_file_key' => 'image']],
+            'image_comparison' => [
+                ['path' => 'block_images', 'uploaded_file_key' => 'before_image'],
+                ['path' => 'block_images', 'uploaded_file_key' => 'after_image'],
+            ],
             'link' => [['path' => 'block_thumbnail_images', 'uploaded_file_key' => 'image']],
             'big_link' => [['path' => 'block_thumbnail_images', 'uploaded_file_key' => 'image']],
             'email_collector' => [['path' => 'block_thumbnail_images', 'uploaded_file_key' => 'image']],
@@ -47,6 +51,7 @@ class BiolinkBlock extends Model {
             'header' => [
                 ['path' => 'avatars', 'uploaded_file_key' => 'avatar'],
                 ['path' => 'backgrounds', 'uploaded_file_key' => 'background'],
+                ['path' => 'files', 'uploaded_file_key' => 'video_file'],
             ],
         ];
 

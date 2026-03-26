@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -24,11 +24,30 @@ class WebhookStripe extends Controller {
 
     public function index() {
 
+        /* Make sure no cache is being used on the endpoint */
+		header('Cache-Control: no-store');
+
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            throw_404();
+        }
+
+        if((strtoupper($_SERVER['REQUEST_METHOD']) != 'POST')) {
+            throw_404();
+        }
+
+        /* Get the headers */
+        $headers = getallheaders();
+
+        /* Get the payload */
+        $payload = trim(@file_get_contents('php://input'));
+
+        /* Log for debugging purposes */
+        debug_log('[' . \Altum\Router::$controller . '] ' . print_r(['headers' => $headers, 'payload' => $payload], true));
+
         /* Initiate Stripe */
         \Stripe\Stripe::setApiKey(settings()->stripe->secret_key);
         \Stripe\Stripe::setApiVersion('2023-10-16');
 
-        $payload = @file_get_contents('php://input');
         $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'];
 
         try {
@@ -82,7 +101,7 @@ class WebhookStripe extends Controller {
                 $payer_name = $session->customer_name;
 
                 $payment_currency = mb_strtoupper($session->currency);
-                $payment_total = in_array($payment_currency, ['MGA', 'BIF', 'CLP', 'PYG', 'DJF', 'RWF', 'GNF', 'UGX', 'JPY', 'VND', 'VUV', 'XAF', 'KMF', 'KRW', 'XOF', 'XPF']) ? $session->amount_paid : $session->amount_paid / 100;
+                $payment_total = in_array($payment_currency, get_zero_decimal_currencies_array()) ? $session->amount_paid : $session->amount_paid / 100;
 
                 /* Process meta data */
                 $metadata = $session->lines->data[0]->metadata;
@@ -96,8 +115,12 @@ class WebhookStripe extends Controller {
                 $taxes_ids = isset($metadata->taxes_ids) ? $metadata->taxes_ids : null;
 
                 /* Vars */
-                $payment_type = $session->subscription ? 'recurring' : 'one_time';
-                $payment_subscription_id = $payment_type == 'recurring' ? $session->subscription : '';
+                $payment_subscription_id =
+                    $session->subscription ??
+                    ($session->parent->subscription_details->subscription ?? null) ??
+                    ($session->lines->data[0]->parent->subscription_item_details->subscription ?? null);
+
+                $payment_type = $payment_subscription_id ? 'recurring' : 'one_time';
 
                 break;
 
@@ -113,7 +136,7 @@ class WebhookStripe extends Controller {
                 $payer_name = $session->customer_details->name;
 
                 $payment_currency = mb_strtoupper($session->currency);
-                $payment_total = in_array($payment_currency, ['MGA', 'BIF', 'CLP', 'PYG', 'DJF', 'RWF', 'GNF', 'UGX', 'JPY', 'VND', 'VUV', 'XAF', 'KMF', 'KRW', 'XOF', 'XPF']) ? $session->amount_total : $session->amount_total / 100;
+                $payment_total = in_array($payment_currency, get_zero_decimal_currencies_array()) ? $session->amount_total : $session->amount_total / 100;
 
                 /* Process meta data */
                 $metadata = $session->metadata;

@@ -5,18 +5,22 @@ $size = 'fa-2x';
 switch ($data->link->settings->size) {
     case 's':
         $size = '';
+        $css_size = 'width: 2.5rem;height: 2.5rem;';
         break;
 
     case 'm':
         $size = 'fa-lg';
+        $css_size = 'width: 2.75rem;height: 2.75rem;';
         break;
 
     case 'l':
         $size = 'fa-2x';
+        $css_size = 'width: 3.25rem;height: 3.25rem;';
         break;
 
     case 'xl':
         $size = 'fa-3x';
+        $css_size = 'width: 4.25rem;height: 4.25rem;';
         break;
 }
 ?>
@@ -26,7 +30,7 @@ switch ($data->link->settings->size) {
         <?php $biolink_socials = require APP_PATH . 'includes/biolink_socials.php'; ?>
         <?php foreach($data->link->settings->socials as $key => $value): ?>
             <?php if($value): ?>
-                <div class="my-2 mx-2 p-2 <?= 'link-btn-' . ($data->link->settings->border_radius ?? 'rounded') ?>" style="background: <?= $data->link->settings->background_color ?: '#FFFFFF00' ?>" data-toggle="tooltip" title="<?= l('biolink_socials.' . $key . '.name') ?>" data-border-radius data-background-color>
+                <div class="my-2 mx-2 p-2 link-socials-button-wrapper <?= 'link-btn-' . ($data->link->settings->border_radius ?? 'rounded') ?>" style="background: <?= $data->link->settings->background_color ?: '#FFFFFF00' ?>; <?= $css_size ?>" data-toggle="tooltip" title="<?= l('biolink_socials.' . $key . '.name') ?>" data-border-radius data-background-color>
                     <a href="<?= sprintf($biolink_socials[$key]['format'], $value) ?>" target="_blank" rel="noreferrer" class="<?= ($data->biolink->settings->hover_animation ?? 'smooth') != 'false' ? 'link-hover-animation-' . ($data->biolink->settings->hover_animation ?? 'smooth') : null ?>">
                         <i class="<?= $biolink_socials[$key]['icon'] ?> <?= $size ?> fa-fw" style="color: <?= $data->link->settings->color ?>" data-color></i>
                     </a>

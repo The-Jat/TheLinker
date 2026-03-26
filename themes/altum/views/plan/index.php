@@ -60,67 +60,51 @@
         <?= $this->views['plans'] ?>
     </div>
 
-    <div class="mt-5">
-        <h1 class="h4"><?= l('plan.why.header') ?></h1>
-
-        <div class="mt-4 row">
-            <div class="col-12 col-lg-4 mb-4 mb-lg-0 icon-zoom-animation">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="d-flex flex-column">
-                            <div class="d-flex justify-content-between">
-                                <span class="h5"><?= l('plan.why.one.header') ?></span>
-
-                                <div class="ml-3">
-                                    <i class="fas fa-fw fa-lg fa-headset text-primary"></i>
-                                </div>
-                            </div>
-
-                            <span class="text-muted"><?= l('plan.why.one.subheader') ?></span>
+    <div class="mt-6 row">
+            <div class="col-12 col-lg-4 p-3" data-aos="fade-up" data-aos-delay="100">
+                <div class="card mb-md-0 h-100 up-animation">
+                    <div class="card-body icon-zoom-animation">
+                        <div class="index-icon-container mb-3">
+                            <i class="fas fa-fw fa-headset text-primary"></i>
                         </div>
+
+                        <h2 class="h6 mb-1"><?= l('plan.why.one.header') ?></h2>
+
+                        <small class="text-muted m-0"><?= l('plan.why.one.subheader') ?></small>
                     </div>
                 </div>
             </div>
 
-            <div class="col-12 col-lg-4 mb-4 mb-lg-0 icon-zoom-animation">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="d-flex flex-column">
-                            <div class="d-flex justify-content-between">
-                                <span class="h5"><?= l('plan.why.two.header') ?></span>
-
-                                <div class="ml-3">
-                                    <i class="fas fa-fw fa-lg fa-eye text-primary"></i>
-                                </div>
-                            </div>
-
-                            <span class="text-muted"><?= l('plan.why.two.subheader') ?></span>
+            <div class="col-12 col-lg-4 p-3" data-aos="fade-up" data-aos-delay="200">
+                <div class="card mb-md-0 h-100 up-animation">
+                    <div class="card-body icon-zoom-animation">
+                        <div class="index-icon-container mb-3">
+                            <i class="fas fa-fw fa-eye text-primary"></i>
                         </div>
+
+                        <h2 class="h6 mb-1"><?= l('plan.why.two.header') ?></h2>
+
+                        <small class="text-muted m-0"><?= l('plan.why.two.subheader') ?></small>
                     </div>
                 </div>
             </div>
 
-            <div class="col-12 col-lg-4 mb-4 mb-lg-0 icon-zoom-animation">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="d-flex flex-column">
-                            <div class="d-flex justify-content-between">
-                                <span class="h5"><?= l('plan.why.three.header') ?></span>
-
-                                <div class="ml-3">
-                                    <i class="fas fa-fw fa-lg fa-bolt text-primary"></i>
-                                </div>
-                            </div>
-
-                            <span class="text-muted"><?= l('plan.why.three.subheader') ?></span>
+            <div class="col-12 col-lg-4 p-3" data-aos="fade-up" data-aos-delay="300">
+                <div class="card mb-md-0 h-100 up-animation">
+                    <div class="card-body icon-zoom-animation">
+                        <div class="index-icon-container mb-3">
+                            <i class="fas fa-fw fa-bolt text-primary"></i>
                         </div>
+
+                        <h2 class="h6 mb-1"><?= l('plan.why.three.header') ?></h2>
+
+                        <small class="text-muted m-0"><?= l('plan.why.three.subheader') ?></small>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="mt-5">
+    <div class="mt-7">
         <h1 class="h4"><?= l('plan.faq.header') ?></h1>
 
         <?php
@@ -145,7 +129,7 @@
                     <div class="card-body">
                         <div class="" id="<?= 'faq_accordion_' . $key ?>">
                             <h3 class="mb-0">
-                                <button class="btn btn-lg font-weight-bold btn-block d-flex justify-content-between text-gray-800 px-0 icon-zoom-animation" type="button" data-toggle="collapse" data-target="<?= '#faq_accordion_answer_' . $key ?>" aria-expanded="true" aria-controls="<?= 'faq_accordion_answer_' . $key ?>">
+                                <button class="btn font-weight-500 btn-block d-flex justify-content-between text-gray-800 px-0 icon-zoom-animation no-focus" type="button" data-toggle="collapse" data-target="<?= '#faq_accordion_answer_' . $key ?>" aria-expanded="true" aria-controls="<?= 'faq_accordion_answer_' . $key ?>">
                                     <span><?= l('plan.faq.' . $key . '.question') ?></span>
 
                                     <span data-icon>
@@ -228,3 +212,6 @@ foreach($plan_language_keys as $key) {
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
 
+<?php ob_start() ?>
+    <link href="<?= ASSETS_FULL_URL . 'css/index-custom.css?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
+<?php \Altum\Event::add_content(ob_get_clean(), 'head') ?>

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -28,19 +28,19 @@ class TranscriptionCreate extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->transcriptions_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('create.transcriptions')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('transcriptions');
         }
 
         /* Check for the plan limit */
         $transcriptions_current_month = db()->where('user_id', $this->user->user_id)->getValue('users', '`aix_transcriptions_current_month`');
         if($this->user->plan_settings->transcriptions_per_month_limit != -1 && $transcriptions_current_month >= $this->user->plan_settings->transcriptions_per_month_limit) {
-            Alerts::add_info(l('global.info_message.plan_feature_limit'));
+            Alerts::add_error(l('global.info_message.plan_feature_limit') . (settings()->payment->is_enabled ? ' <a href="' . url('plan') . '" class="font-weight-bold text-reset">' . l('global.info_message.plan_upgrade') . '.</a>' : null));
             redirect('transcriptions');
         }
 
@@ -81,7 +81,7 @@ class TranscriptionCreate extends Controller {
         //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Response::json('Please create an account on the demo to test out this function.', 'error');
 
         if(empty($_POST)) {
-            redirect();
+            throw_404();
         }
 
         set_time_limit(0);
@@ -89,7 +89,7 @@ class TranscriptionCreate extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->transcriptions_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Team checks */
@@ -117,7 +117,7 @@ class TranscriptionCreate extends Controller {
         /* Check for any errors */
         $required_fields = ['name'];
         foreach($required_fields as $field) {
-            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+            if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                 Response::json(l('global.error_message.empty_fields'), 'error');
             }
         }
@@ -152,7 +152,7 @@ class TranscriptionCreate extends Controller {
         }
 
         /* Generate new name for file */
-        $file_new_name = md5(time() . rand() . rand()) . '.' . $file_extension;
+        $file_new_name = md5(uniqid('', true) . random_bytes(16)) . '.' . $file_extension;
 
         /* Upload the original */
         move_uploaded_file($file_temp, UPLOADS_PATH . Uploads::get_path('transcriptions') . $file_new_name);

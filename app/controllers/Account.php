@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -56,6 +56,7 @@ class Account extends Controller {
                 $_POST['billing_name'] = input_clean($_POST['billing_name'], 128);
                 $_POST['billing_address'] = input_clean($_POST['billing_address'], 128);
                 $_POST['billing_city'] = input_clean($_POST['billing_city'], 64);
+                $_POST['billing_state'] = input_clean($_POST['billing_state'], 64);
                 $_POST['billing_county'] = input_clean($_POST['billing_county'], 64);
                 $_POST['billing_zip'] = input_clean($_POST['billing_zip'], 32);
                 $_POST['billing_country'] = array_key_exists($_POST['billing_country'], get_countries_array()) ? query_clean($_POST['billing_country']) : 'US';
@@ -67,6 +68,7 @@ class Account extends Controller {
                     'name' => $_POST['billing_name'],
                     'address' => $_POST['billing_address'],
                     'city' => $_POST['billing_city'],
+                    'state' => $_POST['billing_state'],
                     'county' => $_POST['billing_county'],
                     'zip' => $_POST['billing_zip'],
                     'country' => $_POST['billing_country'],
@@ -103,8 +105,8 @@ class Account extends Controller {
 
             /* Email shield plugin */
             if(
-                \Altum\Plugin::is_active('email-shield') 
-                && settings()->email_shield->is_enabled 
+                \Altum\Plugin::is_active('email-shield')
+                && settings()->email_shield->is_enabled
                 && !in_array($email_domain, settings()->email_shield->whitelisted_domains ?? [])
                 && !\Altum\Plugin\EmailShield::validate($email_domain)
             ) {
@@ -132,7 +134,7 @@ class Account extends Controller {
             }
 
             if($_POST['twofa_is_enabled'] && $_POST['twofa_token']) {
-                $twofa_check = $twofa->verifyCode($_SESSION['twofa_potential_secret'], $_POST['twofa_token']);
+                $twofa_check = $twofa->verifyCode(session_get('twofa_potential_secret'), $_POST['twofa_token']);
 
                 if(!$twofa_check) {
                     Alerts::add_field_error('twofa_token', l('account.error_message.twofa_check'));
@@ -142,7 +144,7 @@ class Account extends Controller {
                     $twofa_image = $twofa->getQRCodeImageAsDataUri($this->user->email . ' - ' . $this->user->name, $twofa_secret, 400);
 
                 } else {
-                    $twofa_secret = $_SESSION['twofa_potential_secret'];
+                    $twofa_secret = session_get('twofa_potential_secret');
                 }
 
             }
@@ -166,6 +168,9 @@ class Account extends Controller {
                     'referral_key' => $_POST['referral_key'],
                 ]);
 
+                /* Log the action */
+                \Altum\Logger::users($this->user->user_id, 'account.updated');
+
                 /* Set a nice success message */
                 Alerts::add_success(l('account.success_message.account_updated'));
 
@@ -187,7 +192,7 @@ class Account extends Controller {
                 if($_POST['email'] != $this->user->email) {
 
                     if(settings()->users->email_confirmation) {
-                        $email_activation_code = md5($_POST['email'] . microtime());
+                        $email_activation_code = md5(uniqid('', true) . random_bytes(16));
 
                         /* Prepare the email */
                         $email_template = get_email_template(
@@ -276,7 +281,7 @@ class Account extends Controller {
                         'name' => $_POST['name'],
                         'source' => 'account',
                         'datetime' => get_date(),
-                    ]);
+                    ], signature: true);
                 }
 
                 /* Clear the cache */
@@ -288,7 +293,7 @@ class Account extends Controller {
         }
 
         /* Store the potential secret */
-        $_SESSION['twofa_potential_secret'] = $twofa_secret;
+        session_set('twofa_potential_secret', $twofa_secret);
 
         /* Get the account header menu */
         $menu = new \Altum\View('partials/account_header_menu', (array) $this);

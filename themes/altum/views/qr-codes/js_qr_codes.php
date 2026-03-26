@@ -6,7 +6,7 @@
 
 <script>
     'use strict';
-    
+
 /* Code to read the QR and make sure its readable */
     let base64_to_file = (base64_string, filename) => {
         const arr = base64_string.split(',');
@@ -46,7 +46,7 @@
 
 <script>
     'use strict';
-    
+
     /* Vcard Social Script */
     'use strict';
 
@@ -93,7 +93,7 @@
 
 <script>
     'use strict';
-    
+
     /* Vcard Phone Numbers */
     'use strict';
 
@@ -140,7 +140,7 @@
 
 <script>
     'use strict';
-    
+
 type_handler('input[name="type"]', 'data-type');
     document.querySelector('input[name="type"]') && document.querySelectorAll('input[name="type"]').forEach(element => {
         element.addEventListener('change', event => {
@@ -221,6 +221,7 @@ type_handler('input[name="type"]', 'data-type');
 
     /* On change regenerated qr */
     let qr_code_delay_timer = null;
+    let qr_code_slow_notice_timer = null;
 
     let apply_reload_qr_code_event_listeners = () => {
         document.querySelectorAll('[data-reload-qr-code]').forEach(element => {
@@ -251,6 +252,21 @@ type_handler('input[name="type"]', 'data-type');
             document.querySelector('button[type="submit"]').setAttribute('disabled','disabled');
         }
 
+        /* Debounce slow delay */
+        clearTimeout(qr_code_slow_notice_timer);
+
+        /* Show delay message after X seconds */
+        qr_code_slow_notice_timer = setTimeout(() => {
+            let notification_container = document.querySelector('.qr-notification-container');
+
+            display_notifications(
+                    <?= json_encode(l('qr_codes.info_message.slow')) ?>,
+                'info',
+                notification_container
+            );
+        }, 5000);
+
+        /* Debounce request */
         clearTimeout(qr_code_delay_timer);
 
         qr_code_delay_timer = setTimeout(() => {
@@ -260,7 +276,7 @@ type_handler('input[name="type"]', 'data-type');
             let form_data = new FormData(form);
             form_data.delete('qr_code');
 
-            let notification_container = form.querySelector('.notification-container');
+            let notification_container = document.querySelector('.qr-notification-container');
             notification_container.innerHTML = '';
 
             fetch(`${url}qr-code-generator`, {
@@ -269,6 +285,9 @@ type_handler('input[name="type"]', 'data-type');
             })
                 .then(response => response.ok ? response.json() : Promise.reject(response))
                 .then(data => {
+                    /* Stop slow notice */
+                    clearTimeout(qr_code_slow_notice_timer);
+
                     if(data.status == 'error') {
                         display_notifications(data.message, 'error', notification_container);
                     }
@@ -305,7 +324,8 @@ type_handler('input[name="type"]', 'data-type');
                     document.querySelector('#qr_code').classList.remove('qr-code-loading');
                 })
                 .catch(error => {
-                    console.log(error);
+                    /* Stop slow notice */
+                    clearTimeout(qr_code_slow_notice_timer);
                 });
 
         }, 750);
@@ -317,38 +337,35 @@ type_handler('input[name="type"]', 'data-type');
     let convert_svg_qr_code_to_others = (svg_data, type, name, size = 1000) => {
         svg_data = !svg_data && document.querySelector('#download_svg') ? document.querySelector('#download_svg').href : svg_data;
         size = document.querySelector('#size') ? document.querySelector('#size').value : size;
-        let image = new Image;
-        image.crossOrigin = 'anonymous';
 
-        /* Convert SVG data to others */
+        let image = new Image();
+
+        if (!svg_data.startsWith('data:')) {
+            image.crossOrigin = 'anonymous';
+        }
+
         image.onload = function() {
             const aspect_ratio = image.naturalHeight / image.naturalWidth;
             const height = size * aspect_ratio;
 
             let canvas = document.createElement('canvas');
-
             canvas.width = size;
             canvas.height = height;
 
             let context = canvas.getContext('2d');
             context.drawImage(image, 0, 0, size, height);
 
-            type = type == 'jpg' ? 'jpeg' : type;
+            type = type === 'jpg' ? 'jpeg' : type;
             let data = canvas.toDataURL(`image/${type}`, 1);
 
-            /* Download */
             let link = document.createElement('a');
             link.download = name;
-            link.style.opacity = '0';
-            document.body.appendChild(link);
             link.href = data;
             link.click();
-            link.remove();
-        }
+        };
 
-        /* Add SVG data */
-        image.src = svg_data;
-    }
+        image.src = svg_data.startsWith('data:') ? svg_data : (svg_data + (svg_data.indexOf('?') > -1 ? '&' : '?') + 'cache_bust=' + Date.now());
+    };
 
     <?php if(isset($_GET['name'])): ?>
     document.querySelector('select[name="type"]').dispatchEvent(new Event('change'));

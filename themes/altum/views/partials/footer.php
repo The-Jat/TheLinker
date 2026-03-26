@@ -1,17 +1,17 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div class="d-flex flex-column flex-lg-row justify-content-between mb-3">
+<div class="d-flex flex-column flex-lg-row justify-content-between mb-4">
     <div class="mb-3 mb-lg-0">
         <a
-            class="h5 footer-heading"
-            href="<?= url() ?>"
-            data-logo
-            data-light-value="<?= settings()->main->logo_light != '' ? settings()->main->logo_light_full_url : settings()->main->title ?>"
-            data-light-class="<?= settings()->main->logo_light != '' ? 'mb-2 footer-logo' : 'mb-2' ?>"
-            data-light-tag="<?= settings()->main->logo_light != '' ? 'img' : 'span' ?>"
-            data-dark-value="<?= settings()->main->logo_dark != '' ? settings()->main->logo_dark_full_url : settings()->main->title ?>"
-            data-dark-class="<?= settings()->main->logo_dark != '' ? 'mb-2 footer-logo' : 'mb-2' ?>"
-            data-dark-tag="<?= settings()->main->logo_dark != '' ? 'img' : 'span' ?>"
+                class="h5 footer-heading"
+                href="<?= url() ?>"
+                data-logo
+                data-light-value="<?= settings()->main->logo_light != '' ? settings()->main->logo_light_full_url : settings()->main->title ?>"
+                data-light-class="<?= settings()->main->logo_light != '' ? 'mb-2 footer-logo' : 'mb-2' ?>"
+                data-light-tag="<?= settings()->main->logo_light != '' ? 'img' : 'span' ?>"
+                data-dark-value="<?= settings()->main->logo_dark != '' ? settings()->main->logo_dark_full_url : settings()->main->title ?>"
+                data-dark-class="<?= settings()->main->logo_dark != '' ? 'mb-2 footer-logo' : 'mb-2' ?>"
+                data-dark-tag="<?= settings()->main->logo_dark != '' ? 'img' : 'span' ?>"
         >
             <?php if(settings()->main->{'logo_' . \Altum\ThemeStyle::get()} != ''): ?>
                 <img src="<?= settings()->main->{'logo_' . \Altum\ThemeStyle::get() . '_full_url'} ?>" class="mb-2 footer-logo" alt="<?= l('global.accessibility.logo_alt') ?>" />
@@ -19,14 +19,26 @@
                 <span class="mb-2"><?= settings()->main->title ?></span>
             <?php endif ?>
         </a>
-        <div class="text-muted"><?= sprintf(l('global.footer.copyright'), date('Y'), settings()->main->title) ?></div>
+        <div class="text-muted font-size-little-small mt-1"><?= sprintf(l('global.footer.copyright'), date('Y'), settings()->main->title) ?></div>
+
+        <div class="d-flex flex-wrap mt-3 gap-3">
+            <?php foreach(require APP_PATH . 'includes/admin_socials.php' as $key => $value): ?>
+                <?php if(isset(settings()->socials->{$key}) && !empty(settings()->socials->{$key})): ?>
+                    <div class="p-2 footer-social-wrapper" style="background-color: <?= $value['background_color'] ?>;">
+                        <a href="<?= sprintf($value['format'], settings()->socials->{$key}) ?>" target="_blank" rel="noreferrer" data-toggle="tooltip" title="<?= $value['name'] ?>">
+                            <i class="<?= $value['icon'] ?> fa-fw fa-sm" style="color: <?= $value['color'] ?>;"></i>
+                        </a>
+                    </div>
+                <?php endif ?>
+            <?php endforeach ?>
+        </div>
     </div>
 
     <div class="d-flex flex-row flex-truncate">
         <?php if(count(\Altum\Language::$active_languages) > 1): ?>
             <div class="dropdown mr-3 ml-lg-3 mr-lg-0">
                 <button type="button" class="btn btn-link text-decoration-none p-0" id="language_switch" data-tooltip data-tooltip-hide-on-click title="<?= l('global.choose_language') ?>" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i class="fas fa-fw fa-sm fa-language mr-1"></i> <?= \Altum\Language::$name ?>
+                    <i class="fas fa-fw fa-sm fa-language"></i>
                 </button>
 
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="language_switch">
@@ -57,7 +69,7 @@
                 </div>
             </div>
 
-            <?php ob_start() ?>
+        <?php ob_start() ?>
             <script>
                 'use strict';
 
@@ -72,7 +84,7 @@
         <?php if(\Altum\Router::$controller_settings['currency_switcher'] && count((array) settings()->payment->currencies ?? []) > 1): ?>
             <div class="dropdown mr-3 ml-lg-3 mr-lg-0">
                 <button type="button" class="btn btn-link text-decoration-none p-0" id="currency_switch" data-tooltip data-tooltip-hide-on-click title="<?= l('global.choose_currency') ?>" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i class="fas fa-fw fa-sm fa-coins mr-1"></i> <?= currency() ?>
+                    <i class="fas fa-fw fa-sm fa-money-check-alt"></i>
                 </button>
 
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="currency_switch">
@@ -90,7 +102,7 @@
                 </div>
             </div>
 
-            <?php ob_start() ?>
+        <?php ob_start() ?>
             <script>
                 'use strict';
 
@@ -105,11 +117,11 @@
         <?php endif ?>
 
         <?php if(is_logged_in() && ((user()->type == 1 && settings()->main->admin_spotlight_is_enabled) || (settings()->main->user_spotlight_is_enabled && user()->type == 0))): ?>
-        <div class="mr-3 ml-lg-3 mr-lg-0">
-            <button type="button" class="btn btn-link text-decoration-none p-0" data-toggle="tooltip" title="<?= l('global.spotlight.tooltip') ?>" aria-label="<?= l('global.spotlight.tooltip') ?>" onclick="spotlight_display()" data-tooltip-hide-on-click>
-                <i class="fas fa-fw fa-sm fa-search"></i>
-            </button>
-        </div>
+            <div class="mr-3 ml-lg-3 mr-lg-0">
+                <button type="button" class="btn btn-link text-decoration-none p-0" data-toggle="tooltip" title="<?= l('global.spotlight.tooltip') ?>" aria-label="<?= l('global.spotlight.tooltip') ?>" onclick="spotlight_display()" data-tooltip-hide-on-click>
+                    <i class="fas fa-fw fa-sm fa-search"></i>
+                </button>
+            </div>
         <?php endif ?>
 
         <?php if(settings()->main->theme_style_change_is_enabled): ?>
@@ -150,7 +162,7 @@
                 <li class="mb-2 mr-lg-3"><a href="#" data-toggle="modal" data-target="#push_notifications_modal"><?= l('push_notifications_modal.menu') ?></a></li>
             <?php endif ?>
 
-            <?php if(count($data->pages)): ?>
+            <?php if (!empty($data->pages)): ?>
                 <?php foreach($data->pages as $row): ?>
                     <li class="mb-2 mr-lg-3">
                         <a href="<?= $row->url ?>" target="<?= $row->target ?>">
@@ -164,18 +176,5 @@
                 <?php endforeach ?>
             <?php endif ?>
         </ul>
-    </div>
-
-
-    <div class="col-12 col-lg-auto">
-        <div class="d-flex flex-wrap">
-            <?php foreach(require APP_PATH . 'includes/admin_socials.php' as $key => $value): ?>
-                <?php if(isset(settings()->socials->{$key}) && !empty(settings()->socials->{$key})): ?>
-                    <a href="<?= sprintf($value['format'], settings()->socials->{$key}) ?>" class="mr-2 mr-lg-0 ml-lg-2 mb-2" target="_blank" rel="noreferrer" data-toggle="tooltip" title="<?= $value['name'] ?>">
-                        <i class="<?= $value['icon'] ?> fa-fw fa-lg"></i>
-                    </a>
-                <?php endif ?>
-            <?php endforeach ?>
-        </div>
     </div>
 </div>

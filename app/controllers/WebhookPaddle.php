@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -24,9 +24,25 @@ class WebhookPaddle extends Controller {
 
     public function index() {
 
-        if(empty($_POST)) {
-            die();
+        /* Make sure no cache is being used on the endpoint */
+		header('Cache-Control: no-store');
+
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            throw_404();
         }
+
+        if((strtoupper($_SERVER['REQUEST_METHOD']) != 'POST')) {
+            throw_404();
+        }
+
+        /* Get the headers */
+        $headers = getallheaders();
+
+        /* Get the payload */
+        $payload = trim(@file_get_contents('php://input'));
+
+        /* Log for debugging purposes */
+        debug_log('[' . \Altum\Router::$controller . '] ' . print_r(['headers' => $headers, 'payload' => $payload], true));
 
         $public_key = openssl_get_publickey(settings()->paddle->public_key);
 

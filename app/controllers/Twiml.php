@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -23,13 +23,13 @@ class Twiml extends Controller {
     public function index() {
 
         if(!settings()->notification_handlers->twilio_call_is_enabled) {
-            redirect();
+            throw_404();
         }
 
         $language_key = isset($this->params[0]) ? str_replace('-', '_', input_clean($this->params[0])) : null;
 
         if(!$language_key) {
-            redirect();
+            throw_404();
         }
 
         $available_language_keys = [
@@ -39,7 +39,7 @@ class Twiml extends Controller {
         ];
 
         if(!in_array($language_key, $available_language_keys)) {
-            redirect();
+            throw_404();
         }
 
         /* Process parameters */

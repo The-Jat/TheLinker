@@ -41,7 +41,7 @@
 <script>
     'use strict';
     
-/* On modal show load new data */
+    /* On modal show load new data */
     $('<?= '#' . $data->name . '_delete_modal' ?>').on('show.bs.modal', event => {
         let related_target = event.relatedTarget;
         let current_target = event.currentTarget;

@@ -9,6 +9,15 @@
 
         <?php if(\Altum\Plugin::is_active('pwa') && settings()->pwa->is_enabled): ?>
             <meta name="theme-color" content="<?= settings()->pwa->theme_color ?>"/>
+
+            <?php if(settings()->pwa->is_fullscreen ?? true): ?>
+                <meta name="apple-mobile-web-app-capable" content="yes">
+                <meta name="mobile-web-app-capable" content="yes">
+                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+            <?php endif ?>
+
+			<?= pwa_generate_dynamic_splash_screen_links() ?>
+
             <link rel="manifest" href="<?= SITE_URL . UPLOADS_URL_PATH . \Altum\Uploads::get_path('pwa') . 'manifest.json' ?>" />
         <?php endif ?>
 
@@ -40,12 +49,10 @@
             <?php endif ?>
         <?php endif ?>
 
-        <?php if(!empty(settings()->main->favicon)): ?>
-            <link href="<?= settings()->main->favicon_full_url ?>" rel="icon" />
-        <?php endif ?>
+        <link href="<?= !empty(settings()->main->favicon) ? settings()->main->favicon_full_url : 'data:,' ?>" rel="icon" />
 
         <link href="<?= ASSETS_FULL_URL . 'css/' . \Altum\ThemeStyle::get_file() . '?v=' . PRODUCT_CODE ?>" id="css_theme_style" rel="stylesheet" media="screen,print">
-        <?php foreach(['custom.css'] as $file): ?>
+        <?php foreach(['custom.' . (DEBUG ? null : 'min.') . 'css'] as $file): ?>
             <link href="<?= ASSETS_FULL_URL . 'css/' . $file . '?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
         <?php endforeach ?>
 
@@ -102,7 +109,7 @@
 
         <?php require THEME_PATH . 'views/partials/js_global_variables.php' ?>
 
-        <?php foreach(['libraries/jquery.min.js', 'libraries/popper.min.js', 'libraries/bootstrap.min.js', 'custom.js'] as $file): ?>
+        <?php foreach(['libraries/jquery.min.js', 'libraries/popper.min.js', 'libraries/bootstrap.min.js', 'custom.' . (DEBUG ? null : 'min.') . 'js'] as $file): ?>
             <script src="<?= ASSETS_FULL_URL ?>js/<?= $file ?>?v=<?= PRODUCT_CODE ?>"></script>
         <?php endforeach ?>
 

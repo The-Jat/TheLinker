@@ -27,8 +27,8 @@ class CustomHooks {
             $claim_url = get_slug($_GET['claim-url'], '-', false);
             $domain_id = isset($_GET['domain-id']) ? (int) $_GET['domain-id'] : null;
 
-            $_SESSION['claim_url'] = $claim_url;
-            if($domain_id) $_SESSION['domain_id'] = $domain_id;
+            session_set('claim_url', $claim_url);
+            if($domain_id) session_set('domain_id', $domain_id);
         }
 
     }
@@ -36,9 +36,9 @@ class CustomHooks {
     public static function user_finished_registration($data = []) {
 
         /* Update the account preference if needed */
-        if(isset($_GET['claim-url']) || isset($_SESSION['claim_url']) && settings()->links->claim_url_is_enabled) {
-            $claim_url = isset($_GET['claim-url']) ? get_slug($_GET['claim-url'], '-', false) : get_slug($_SESSION['claim_url'], '-', false);
-            $domain_id = isset($_GET['domain-id']) ? (int) $_GET['domain-id'] : (isset($_SESSION['domain_id']) ? (int) $_SESSION['domain_id'] : null);
+        if(isset($_GET['claim-url']) || session_has('claim_url') && settings()->links->claim_url_is_enabled) {
+            $claim_url = isset($_GET['claim-url']) ? get_slug($_GET['claim-url'], '-', false) : get_slug(session_get('claim_url'), '-', false);
+            $domain_id = isset($_GET['domain-id']) ? (int) $_GET['domain-id'] : (session_has('domain_id') ? (int) session_get('domain_id') : null);
 
             if($domain_id) {
                 db()->rawQuery("UPDATE `users` SET `preferences` = JSON_SET(`preferences`, '$.claim_url', ?, '$.domain_id', ?) WHERE `user_id` = ?", [$claim_url, $domain_id, $data['user_id']]);
@@ -136,7 +136,7 @@ class CustomHooks {
         }
 
         if(!settings()->main->api_is_enabled) {
-            $prefixes = array_merge($prefixes, ['api.', 'api_documentation.', 'account_api.']);
+            $prefixes = array_merge($prefixes, ['api.', 'api_documentation.', 'account_api.', 'api_key_regenerate_modal.']);
         }
 
         if(!settings()->internal_notifications->admins_is_enabled) {
@@ -163,6 +163,10 @@ class CustomHooks {
             $prefixes = array_merge($prefixes, ['register.']);
         }
 
+        if(!settings()->users->email_confirmation) {
+            $prefixes = array_merge($prefixes, ['resend_activation.', 'sent_activation.']);
+        }
+
         /* Extended license */
         if(!settings()->payment->is_enabled) {
             $prefixes = array_merge($prefixes, ['plan.', 'pay.', 'pay_thank_you.', 'account_payments.']);
@@ -177,7 +181,7 @@ class CustomHooks {
         }
 
         if(!settings()->payment->is_enabled || !settings()->payment->invoice_is_enabled) {
-            $prefixes = array_merge($prefixes, ['invoice.']);
+            $prefixes = array_merge($prefixes, ['invoice.', 'credit_notes.']);
         }
 
 
@@ -203,6 +207,10 @@ class CustomHooks {
         }
 
         /* Per product features */
+        if(!\Altum\Plugin::is_active('pwa') || !settings()->pwa->is_enabled) {
+            $prefixes = array_merge($prefixes, ['link.settings.pwa_']);
+        }
+
         if(!settings()->tools->is_enabled) {
             $prefixes = array_merge($prefixes, ['tools.']);
         }
@@ -222,12 +230,18 @@ class CustomHooks {
                 'payment_processors.',
                 'payment_processor_create.',
                 'payment_processor_update.',
-                'biolink_donation.',
-                'biolink_product.',
-                'biolink_service.',
             ]);
         } else {
             $prefixes = array_values(array_filter($prefixes, fn($item) => $item !== 'pay.'));
+        }
+
+        foreach(require APP_PATH . 'includes/biolink_blocks.php' as $type => $value) {
+            if(!settings()->links->available_biolink_blocks->{$type}) {
+                $prefixes = array_merge($prefixes, [
+                    'biolink_' . $type . '.',
+                    'link.biolink.blocks.' . $type
+                ]);
+            }
         }
 
         if(!settings()->links->directory_is_enabled) {
@@ -250,7 +264,7 @@ class CustomHooks {
             $prefixes = array_merge($prefixes, ['pixels.', 'pixel_create.', 'pixel_update.']);
         }
 
-        if(!settings()->links->biolinks_is_enabled){
+        if(!settings()->links->biolinks_is_enabled) {
             $prefixes = array_merge($prefixes, ['biolinks_', 'biolink_', 'link.biolink.', 'data.', 'biolink_block_delete.']);
         }
 

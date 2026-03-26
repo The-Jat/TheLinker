@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -25,7 +25,7 @@ class Affiliate extends Controller {
     public function index() {
 
         if(!\Altum\Plugin::is_active('affiliate') || (\Altum\Plugin::is_active('affiliate') && !settings()->affiliate->is_enabled)) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Get the min & max of commission for affiliates */
@@ -38,11 +38,11 @@ class Affiliate extends Controller {
         $maximum_commission = 0;
 
         foreach($plans as $plan) {
+            if(is_null($plan->settings->affiliate_commission_percentage)) continue;
+
             if($plan->settings->affiliate_commission_percentage > $maximum_commission) $maximum_commission = $plan->settings->affiliate_commission_percentage;
             if($plan->settings->affiliate_commission_percentage < $minimum_commission) $minimum_commission = $plan->settings->affiliate_commission_percentage;
         }
-
-        
 
         /* Prepare the view */
         $data = [

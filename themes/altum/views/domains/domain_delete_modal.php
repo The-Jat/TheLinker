@@ -35,7 +35,7 @@
 <script>
     'use strict';
     
-/* On modal show load new data */
+    /* On modal show load new data */
     $('#domain_delete_modal').on('show.bs.modal', event => {
         let domain_id = $(event.relatedTarget).data('domain-id');
 

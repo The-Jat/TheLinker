@@ -2,7 +2,7 @@
 
 <?php $payment_processors = require APP_PATH . 'includes/payment_processors.php'; ?>
 
-<section class="container">
+<div class="container">
     <?= \Altum\Alerts::output_alerts() ?>
 
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
@@ -38,7 +38,7 @@
         </div>
     </div>
 
-    <?php if(count($data->guests_payments)): ?>
+    <?php if (!empty($data->guests_payments)): ?>
         <div class="card">
             <div class="card-body">
                 <div class="chart-container">
@@ -55,7 +55,7 @@
         ]); ?>
 
     <?php endif ?>
-</section>
+</div>
 
 <?php ob_start() ?>
 <link href="<?= ASSETS_FULL_URL . 'css/libraries/daterangepicker.min.css?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
@@ -70,7 +70,7 @@
 
 <script>
     'use strict';
-    
+
 moment.tz.setDefault(<?= json_encode($this->user->timezone) ?>);
 
     /* Daterangepicker */
@@ -82,10 +82,13 @@ moment.tz.setDefault(<?= json_encode($this->user->timezone) ?>);
         ranges: {
             <?= json_encode(l('global.date.today')) ?>: [moment(), moment()],
             <?= json_encode(l('global.date.yesterday')) ?>: [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-            <?= json_encode(l('global.date.last_7_days')) ?>: [moment().subtract(6, 'days'), moment()],
+            <?= json_encode(l('global.date.this_week')) ?>: [moment().startOf('week'), moment().endOf('week')],
+
             <?= json_encode(l('global.date.last_30_days')) ?>: [moment().subtract(29, 'days'), moment()],
-            <?= json_encode(l('global.date.this_month')) ?>: [moment().startOf('month'), moment().endOf('month')],
+                <?= json_encode(l('global.date.this_month')) ?>: [moment().startOf('month'), moment().endOf('month')],
             <?= json_encode(l('global.date.last_month')) ?>: [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                <?= json_encode(l('global.date.this_year')) ?>: [moment().startOf('year'), moment()],
+                <?= json_encode(l('global.date.last_year')) ?>: [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')],
             <?= json_encode(l('global.date.all_time')) ?>: [moment($('#daterangepicker').data('min-date')), moment()]
         },
         alwaysShowCalendars: true,
@@ -104,7 +107,7 @@ moment.tz.setDefault(<?= json_encode($this->user->timezone) ?>);
 
     });
 
-    <?php if(count($data->guests_payments)): ?>
+    <?php if (!empty($data->guests_payments)): ?>
 
     let css = window.getComputedStyle(document.body)
 

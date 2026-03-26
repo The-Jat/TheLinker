@@ -15,7 +15,7 @@
         <div class="col-12 col-lg-auto d-flex flex-wrap gap-3 d-print-none">
             <div>
                 <div class="dropdown">
-                    <button type="button" class="btn btn-light dropdown-toggle-simple <?= count($data->links) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
+                    <button type="button" class="btn btn-light dropdown-toggle-simple <?= !empty($data->links) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-download"></i>
                     </button>
 
@@ -26,7 +26,7 @@
                         <a href="<?= url('directory?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                         </a>
-                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                         </a>
                     </div>
@@ -35,7 +35,7 @@
 
             <div>
                 <div class="dropdown">
-                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= count($data->links) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
+                    <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= !empty($data->links) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-filter"></i>
                     </button>
 
@@ -100,45 +100,55 @@
     </div>
 
     <div>
-        <div class="row">
-            <?php foreach($data->links as $row): ?>
-                <div class="col-lg-6 p-3">
-                    <div class="custom-row">
-                        <div class="row h-100">
-                            <div class="col-xl-2 d-flex align-items-center justify-content-center">
-                                <a href="<?= $row->full_url ?>" target="_blank">
-                                    <img src="<?= $row->settings->favicon ? \Altum\Uploads::get_full_url('favicons') . $row->settings->favicon : ($row->settings->seo->image ? \Altum\Uploads::get_full_url('block_images') . $row->settings->seo->image : get_gravatar('')) ?>" class="link-directory-avatar rounded-circle" />
-                                </a>
-                            </div>
+        <?php if(!empty($data->links)): ?>
+            <div class="row">
+                <?php foreach($data->links as $row): ?>
+                    <div class="col-lg-6 p-3">
+                        <div class="custom-row">
+                            <div class="row h-100">
+                                <div class="col-xl-2 d-flex align-items-center justify-content-center">
+                                    <a href="<?= $row->full_url ?>" target="_blank">
+                                        <img src="<?= $row->settings->favicon ? \Altum\Uploads::get_full_url('favicons') . $row->settings->favicon : ($row->settings->seo->image ? \Altum\Uploads::get_full_url('block_images') . $row->settings->seo->image : get_gravatar('')) ?>" class="link-directory-avatar rounded-circle" />
+                                    </a>
+                                </div>
 
-                            <div class="col-8 d-flex align-items-center">
-                                <div class="d-flex flex-column min-width-0">
-                                    <div class="d-inline-block text-truncate">
-                                        <a href="<?= $row->full_url ?>" target="_blank" class="font-weight-bold text-decoration-none"><?= $row->settings->seo->title ?: $row->url ?></a>
+                                <div class="col-8 d-flex align-items-center">
+                                    <div class="d-flex flex-column min-width-0">
+                                        <div class="d-inline-block text-truncate">
+                                            <a href="<?= $row->full_url ?>" target="_blank" class="font-weight-bold text-decoration-none"><?= $row->settings->seo->title ?: $row->url ?></a>
 
-                                        <?php if($row->is_verified): ?>
-                                            <span data-toggle="tooltip" title="<?= l('link.biolink.verified') ?>"><i class="fas fa-fw fa-xs fa-check-circle" style="color: #0086ff"></i></span>
-                                        <?php endif ?>
-                                    </div>
+                                            <?php if($row->is_verified): ?>
+                                                <span data-toggle="tooltip" title="<?= l('link.biolink.verified') ?>"><i class="fas fa-fw fa-xs fa-check-circle" style="color: #0086ff"></i></span>
+                                            <?php endif ?>
+                                        </div>
 
-                                    <div class="d-flex align-items-center">
-                                        <span class="text-muted text-truncate"><?= $row->settings->seo->meta_description ?? '' ?></span>
+                                        <div class="d-flex align-items-center">
+                                            <span class="text-muted text-truncate"><?= $row->settings->seo->meta_description ?? '' ?></span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div class="col-4 col-xl-2 d-flex justify-content-end align-items-center">
-                                <div>
-                                    <span data-toggle="tooltip" title="<?= l('links.clicks') ?>"><span class="badge badge-light"><i class="fas fa-fw fa-sm fa-chart-bar mr-1"></i> <?= nr($row->clicks) ?></span></span>
+                                <div class="col-4 col-xl-2 d-flex justify-content-end align-items-center">
+                                    <div>
+                                        <span data-toggle="tooltip" title="<?= l('links.clicks') ?>"><span class="badge badge-light"><i class="fas fa-fw fa-sm fa-chart-bar mr-1"></i> <?= nr($row->clicks) ?></span></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            <?php endforeach ?>
-        </div>
+                <?php endforeach ?>
+            </div>
 
-        <div class="mt-3"><?= $data->pagination ?></div>
+            <div class="mt-3"><?= $data->pagination ?></div>
+        <?php else: ?>
+
+            <?= include_view(THEME_PATH . 'views/partials/no_data.php', [
+                    'filters_get' => $data->filters->get ?? [],
+                    'name' => 'directory',
+                    'has_secondary_text' => true,
+            ]); ?>
+
+        <?php endif ?>
     </div>
 </div>
 

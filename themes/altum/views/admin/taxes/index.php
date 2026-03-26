@@ -18,6 +18,12 @@
             </div>
 
             <div class="ml-3">
+                <a href="<?= url('admin/taxes-import') ?>" class="btn btn-outline-primary" data-toggle="tooltip" data-html="true" title="<?= l('admin_taxes_import.menu') ?>">
+                    <i class="fas fa-fw fa-upload fa-sm"></i>
+                </a>
+            </div>
+
+            <div class="ml-3">
                 <div class="dropdown">
                     <button type="button" class="btn btn-gray-300 dropdown-toggle-simple" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                         <i class="fas fa-fw fa-sm fa-download"></i>
@@ -30,9 +36,9 @@
                         <a href="<?= url('admin/taxes?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                             <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                         </a>
-                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
-                        <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
-                    </a>
+                        <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
+                            <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -131,78 +137,115 @@
                     </div>
                 </div>
             </div>
+
+            <div class="ml-3">
+                <button id="bulk_enable" type="button" class="btn btn-gray-300" data-toggle="tooltip" title="<?= l('global.bulk_actions') ?>"><i class="fas fa-fw fa-sm fa-list"></i></button>
+
+                <div id="bulk_group" class="btn-group d-none" role="group">
+                    <div class="btn-group dropdown" role="group">
+                        <button id="bulk_actions" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
+                            <?= l('global.bulk_actions') ?> <span id="bulk_counter" class="d-none"></span>
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="bulk_actions">
+                            <a href="#" class="dropdown-item" data-toggle="modal" data-target="#bulk_delete_modal"><i class="fas fa-fw fa-sm fa-trash-alt mr-2"></i> <?= l('global.delete') ?></a>
+                        </div>
+                    </div>
+
+                    <button id="bulk_disable" type="button" class="btn btn-secondary" data-toggle="tooltip" title="<?= l('global.close') ?>"><i class="fas fa-fw fa-times"></i></button>
+                </div>
+            </div>
         </div>
     </div>
 
     <?= \Altum\Alerts::output_alerts() ?>
 
-    <div class="table-responsive table-custom-container">
-        <table class="table table-custom">
-            <thead>
-            <tr>
-                <th><?= l('admin_taxes.tax') ?></th>
-                <th><?= l('global.details') ?></th>
-                <th><?= l('admin_taxes.billing_type') ?></th>
-                <th></th>
-                <th></th>
-                <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <?php foreach($data->taxes as $row): ?>
+    <form id="table" action="<?= SITE_URL . 'admin/taxes/bulk' ?>" method="post" role="form">
+        <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
+        <input type="hidden" name="type" value="" data-bulk-type />
+        <input type="hidden" name="original_request" value="<?= base64_encode(\Altum\Router::$original_request) ?>" />
+        <input type="hidden" name="original_request_query" value="<?= base64_encode(\Altum\Router::$original_request_query) ?>" />
+
+        <div class="table-responsive table-custom-container">
+            <table class="table table-custom">
+                <thead>
                 <tr>
-                    <td class="text-nowrap">
-                        <div class="d-flex flex-column">
-                            <div><a href="<?= url('admin/tax-update/' . $row->tax_id) ?>"><?= $row->name ?></a></div>
-                            <small class="text-muted" data-toggle="tooltip" title="<?= $row->description ?>"><?= string_truncate($row->description, 30) ?></small>
+                    <th data-bulk-table class="d-none">
+                        <div class="custom-control custom-checkbox">
+                            <input id="bulk_select_all" type="checkbox" class="custom-control-input" />
+                            <label class="custom-control-label" for="bulk_select_all"></label>
                         </div>
-                    </td>
-
-                    <td class="text-nowrap">
-                        <div class="d-flex flex-column">
-                            <span class="badge badge-success"><?= $row->value_type == 'percentage' ? $row->value . '%' : $row->value . ' ' . settings()->payment->default_currency ?></span>
-                            <span class="small text-muted"><?= $row->type == 'inclusive' ? l('admin_taxes.type_inclusive') : l('admin_taxes.type_exclusive') ?></span>
-                        </div>
-                    </td>
-
-                    <td class="text-nowrap">
-                        <?php
-                        $class = match($row->billing_type) {
-                            'business' => 'badge-info',
-                            'personal' => 'badge-light',
-                            'both' => 'badge-primary',
-                        }
-                        ?>
-                        <span class="badge <?= $class ?> w-100">
-                            <?= l('admin_taxes.billing_type_' . $row->billing_type) ?>
-                        </span>
-                    </td>
-
-                    <td class="text-nowrap">
-                        <div class="d-flex align-items-center">
-                            <a href="<?= url('admin/payments?taxes_ids=' . $row->tax_id) ?>" class="mr-2" data-toggle="tooltip" title="<?= l('admin_payments.menu') ?>">
-                                <i class="fas fa-fw fa-credit-card text-muted"></i>
-                            </a>
-                        </div>
-                    </td>
-
-                    <td class="text-nowrap">
-                        <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
-                            <i class="fas fa-fw fa-calendar text-muted"></i>
-                        </span>
-                    </td>
-
-                    <td>
-                        <div class="d-flex justify-content-end">
-                            <?= include_view(THEME_PATH . 'views/admin/taxes/admin_tax_dropdown_button.php', ['id' => $row->tax_id, 'resource_name' => $row->name]) ?>
-                        </div>
-                    </td>
+                    </th>
+                    <th><?= l('admin_taxes.tax') ?></th>
+                    <th><?= l('global.details') ?></th>
+                    <th><?= l('admin_taxes.billing_type') ?></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
                 </tr>
+                </thead>
+                <tbody>
+                <?php foreach($data->taxes as $row): ?>
+                    <tr>
+                        <td data-bulk-table class="d-none">
+                            <div class="custom-control custom-checkbox">
+                                <input id="selected_id_<?= $row->tax_id ?>" type="checkbox" class="custom-control-input" name="selected[]" value="<?= $row->tax_id ?>" />
+                                <label class="custom-control-label" for="selected_id_<?= $row->tax_id ?>"></label>
+                            </div>
+                        </td>
 
-            <?php endforeach ?>
-            </tbody>
-        </table>
-    </div>
+                        <td class="text-nowrap">
+                            <div><a href="<?= url('admin/tax-update/' . $row->tax_id) ?>"><?= $row->name ?></a></div>
+                            <div><small class="text-muted" data-toggle="tooltip" title="<?= $row->description ?>"><?= string_truncate($row->description, 30) ?></small></div>
+                        </td>
+
+                        <td class="text-nowrap">
+                            <div class="d-flex flex-column">
+                                <span class="badge badge-success">
+                                    <?= $row->value_type == 'percentage' ? $row->value . '%' : $row->value . ' ' . settings()->payment->default_currency ?>
+                                    &bull; <?= $row->type == 'inclusive' ? l('admin_taxes.type_inclusive') : l('admin_taxes.type_exclusive') ?>
+                                </span>
+                            </div>
+                        </td>
+
+                        <td class="text-nowrap">
+                            <?php
+                            $class = match($row->billing_type) {
+                                'business' => 'badge-info',
+                                'personal' => 'badge-light',
+                                'both' => 'badge-primary',
+                            }
+                            ?>
+                            <span class="badge <?= $class ?> w-100">
+                                <?= l('admin_taxes.billing_type_' . $row->billing_type) ?>
+                            </span>
+                        </td>
+
+                        <td class="text-nowrap">
+                            <div class="d-flex align-items-center">
+                                <a href="<?= url('admin/payments?taxes_ids=' . $row->tax_id) ?>" class="mr-2" data-toggle="tooltip" title="<?= l('admin_payments.menu') ?>">
+                                    <i class="fas fa-fw fa-credit-card text-muted"></i>
+                                </a>
+                            </div>
+                        </td>
+
+                        <td class="text-nowrap">
+                            <span class="mr-2" data-toggle="tooltip" data-html="true" title="<?= sprintf(l('global.datetime_tooltip'), '<br />' . \Altum\Date::get($row->datetime, 2) . '<br /><small>' . \Altum\Date::get($row->datetime, 3) . '</small>' . '<br /><small>(' . \Altum\Date::get_timeago($row->datetime) . ')</small>') ?>">
+                                <i class="fas fa-fw fa-calendar text-muted"></i>
+                            </span>
+                        </td>
+
+                        <td>
+                            <div class="d-flex justify-content-end">
+                                <?= include_view(THEME_PATH . 'views/admin/taxes/admin_tax_dropdown_button.php', ['id' => $row->tax_id, 'resource_name' => $row->name]) ?>
+                            </div>
+                        </td>
+                    </tr>
+
+                <?php endforeach ?>
+                </tbody>
+            </table>
+        </div>
+    </form>
 
     <div class="mt-3"><?= $data->pagination ?></div>
 
@@ -230,3 +273,6 @@
     </div>
 
 <?php endif ?>
+
+<?php require THEME_PATH . 'views/partials/js_bulk.php' ?>
+<?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/partials/bulk_delete_modal.php', ['subheader' => l('admin_tax_delete_modal.subheader')]), 'modals'); ?>

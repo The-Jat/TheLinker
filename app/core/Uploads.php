@@ -86,7 +86,7 @@ class Uploads {
             $file_temp = $_FILES[$file_key]['tmp_name'];
 
             /* Generate new name for image */
-            $image_new_name = md5(time() . rand() . rand()) . '.' . $file_extension;
+            $image_new_name = md5(uniqid('', true) . random_bytes(16)) . '.' . $file_extension;
 
             /* Try to compress the image */
             if(\Altum\Plugin::is_active('image-optimizer') && settings()->image_optimizer->is_enabled) {
@@ -195,7 +195,7 @@ class Uploads {
             if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
 
                 /* Generate new name for image */
-                $image_new_name = md5(time() . rand() . rand()) . '.' . $file_extension;
+                $image_new_name = md5(uniqid('', true) . random_bytes(16)) . '.' . $file_extension;
 
                 /* Try to compress the image */
                 if(\Altum\Plugin::is_active('image-optimizer') && settings()->image_optimizer->is_enabled) {
@@ -356,7 +356,7 @@ class Uploads {
         }
 
         $file_extension = mb_strtolower(pathinfo($already_existing_file_name, PATHINFO_EXTENSION));
-        $file_new_name = md5(time() . rand()) . '.' . $file_extension;
+        $file_new_name = md5(uniqid('', true) . random_bytes(16)) . '.' . $file_extension;
 
         /* Offload uploading */
         if(\Altum\Plugin::is_active('offload') && settings()->offload->uploads_url) {
@@ -541,7 +541,7 @@ class Uploads {
         }
 
         /* Set temp file path */
-        $temp_file_path = sys_get_temp_dir() . '/' . md5(time() . rand() . rand()) . '.' . $file_extension;
+        $temp_file_path = sys_get_temp_dir() . '/' . md5(uniqid('', true) . random_bytes(16)) . '.' . $file_extension;
 
         /* Check remote content-type header before download (not fully trusted) */
         $curl_handle = curl_init($image_url);

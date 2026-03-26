@@ -8,7 +8,7 @@
                 <div class="d-flex justify-content-between mb-3">
                     <h5 class="modal-title">
                         <i class="fas fa-fw fa-sm fa-circle-plus text-dark mr-2"></i>
-                        <?= l('biolink_link_create.header') ?>
+						<?= l('biolink_link_create.header') ?>
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" title="<?= l('global.close') ?>">
                         <span aria-hidden="true">&times;</span>
@@ -21,40 +21,40 @@
                     </div>
                 </form>
 
-                <?php foreach(require APP_PATH . 'includes/biolink_blocks_categories.php' as $biolink_block_category_key => $biolink_block_category): ?>
-                    <?php $enabled_blocks_html = $disabled_blocks_html = ''; ?>
+				<?php foreach(require APP_PATH . 'includes/biolink_blocks_categories.php' as $biolink_block_category_key => $biolink_block_category): ?>
+					<?php $enabled_blocks_html = $disabled_blocks_html = ''; ?>
 
-                    <?php foreach(require APP_PATH . 'includes/enabled_biolink_blocks.php' as $key => $value): ?>
+					<?php foreach(require APP_PATH . 'includes/enabled_biolink_blocks.php' as $key => $value): ?>
 
-                        <?php if($value['category'] != $biolink_block_category_key) continue ?>
+						<?php if($value['category'] != $biolink_block_category_key) continue ?>
 
-                        <?php ob_start() ?>
-                        <?php if($this->user->plan_settings->enabled_biolink_blocks->{$key}): ?>
+						<?php ob_start() ?>
+						<?php if($this->user->plan_settings->enabled_biolink_blocks->{$key}): ?>
                             <div class="col-12 col-lg-6 p-3" data-block-category="<?= $value['category'] ?>" data-block-id="<?= $key ?>" data-block-name="<?= l('link.biolink.blocks.' . $key) ?>">
                                 <button
-                                    type="button"
-                                    data-dismiss="modal"
-                                    data-toggle="modal"
-                                    data-target="#create_biolink_<?= $key ?>"
-                                    data-tooltip
-                                    title="<?= l('biolink_' . $key . '.subheader') ?>"
-                                    class="btn btn-light btn-block btn-lg text-left d-flex align-items-center"
+                                        type="button"
+                                        data-dismiss="modal"
+                                        data-toggle="modal"
+                                        data-target="#create_biolink_<?= $key ?>"
+                                        data-tooltip
+                                        title="<?= l('biolink_' . $key . '.subheader') ?>"
+                                        class="btn btn-light btn-block btn-lg text-left d-flex align-items-center"
                                 >
                                     <span class="fa-stack fa-stack-small mr-2">
                                         <i class="fas fa-circle fa-stack-2x" style="color: <?= $data->biolink_blocks[$key]['color'] ?>"></i>
                                         <i class="<?= $data->biolink_blocks[$key]['icon'] ?> fa-stack-1x fa-inverse"></i>
                                     </span>
 
-                                    <?= l('link.biolink.blocks.' . $key) ?>
+									<?= l('link.biolink.blocks.' . $key) ?>
                                 </button>
                             </div>
-                            <?php $enabled_blocks_html .= ob_get_clean(); ?>
-                        <?php else: ?>
+							<?php $enabled_blocks_html .= ob_get_clean(); ?>
+						<?php else: ?>
                             <div class="col-12 col-lg-6 p-3" data-block-category="<?= $value['category'] ?>" data-block-id="<?= $key ?>" data-block-name="<?= l('link.biolink.blocks.' . $key) ?>">
                                 <button
-                                    type="button"
-                                    class="btn btn-light btn-block btn-lg disabled text-left"
-                                    <?= get_plan_feature_disabled_info() ?>
+                                        type="button"
+                                        class="btn btn-light btn-block btn-lg disabled text-left"
+									<?= get_plan_feature_disabled_info() ?>
                                 >
                                     <span class="fa-stack fa-stack-small mr-2">
                                         <i class="fas fa-circle fa-stack-2x" style="color: <?= $data->biolink_blocks[$key]['color'] ?>"></i>
@@ -64,13 +64,19 @@
                                     <s><?= l('link.biolink.blocks.' . $key) ?></s>
                                 </button>
                             </div>
-                            <?php $disabled_blocks_html .= ob_get_clean(); ?>
-                        <?php endif ?>
-                    <?php endforeach ?>
+							<?php $disabled_blocks_html .= ob_get_clean(); ?>
+						<?php endif ?>
+					<?php endforeach ?>
 
-                    <?php if($enabled_blocks_html || $disabled_blocks_html): ?>
+					<?php if($enabled_blocks_html || $disabled_blocks_html): ?>
+                    <style>
+                        [data-theme-style='dark'] .biolink-block-category-card {
+                            background: var(--card-dark-bg) !important;
+                        }
+                    </style>
+
                         <div class="mb-4" data-category="<?= $biolink_block_category_key ?>">
-                            <div class="card text-white border-0 mb-3" style="background: <?= $biolink_block_category['color'] ?>">
+                            <div class="biolink-block-category-card card border-0 mb-3" style="--card-dark-bg: <?= $biolink_block_category['dark_background'] ?>;background: <?= $biolink_block_category['background_color'] ?>; color: <?= $biolink_block_category['color'] ?>;">
                                 <div class="card-body d-flex justify-content-between align-items-center">
                                     <div>
                                         <span class="h6"><?= l('biolink_link_create.' . $biolink_block_category_key) ?></span>
@@ -84,12 +90,12 @@
                             </div>
 
                             <div class="row">
-                                <?= $enabled_blocks_html ?>
-                                <?= $disabled_blocks_html ?>
+								<?= $enabled_blocks_html ?>
+								<?= $disabled_blocks_html ?>
                             </div>
                         </div>
-                    <?php endif ?>
-                <?php endforeach ?>
+					<?php endif ?>
+				<?php endforeach ?>
             </div>
         </div>
     </div>
@@ -98,8 +104,13 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
-document.querySelector('#search').addEventListener('submit', event => {
+
+    /* On modal show */
+    $('#biolink_link_create_modal').on('shown.bs.modal', event => {
+        document.querySelector('#biolink_link_create_modal input[name="search"]').focus();
+    });
+
+    document.querySelector('#search').addEventListener('submit', event => {
         event.preventDefault();
     });
 

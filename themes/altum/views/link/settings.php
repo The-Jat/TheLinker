@@ -63,7 +63,7 @@ $settings = require THEME_PATH . 'views/link/settings/' . mb_strtolower($data->l
         }
     }
 
-    <?php if(count($data->domains)): ?>
+    <?php if (!empty($data->domains)): ?>
     /* Is main link handler */
     let is_main_link_handler = () => {
         if(document.querySelector('#is_main_link').checked) {

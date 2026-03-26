@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -26,7 +26,7 @@ class TeamMemberUpdate extends Controller {
     public function index() {
 
         if(!\Altum\Plugin::is_active('teams')) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
@@ -40,6 +40,13 @@ class TeamMemberUpdate extends Controller {
 
         if(!$team = db()->where('team_id', $team_member->team_id)->where('user_id', $this->user->user_id)->getOne('teams')) {
             redirect('teams');
+        }
+
+        /* Check for the plan limit */
+        $total_rows = database()->query("SELECT COUNT(*) AS `total` FROM `teams_members` WHERE `team_id` = {$team->team_id}")->fetch_object()->total ?? 0;
+
+        if($this->user->plan_settings->team_members_limit != -1 && $total_rows > $this->user->plan_settings->team_members_limit) {
+            redirect('team/' . $team->team_id);
         }
 
         $teams_access = require APP_PATH . 'includes/teams_access.php';
@@ -61,7 +68,7 @@ class TeamMemberUpdate extends Controller {
             /* Check for any errors */
             $required_fields = [];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }

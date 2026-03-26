@@ -1,13 +1,14 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<?php if(settings()->main->breadcrumbs_is_enabled): ?>
-    <nav aria-label="breadcrumb">
-        <ol class="custom-breadcrumbs small">
-            <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
-            <li class="active" aria-current="page"><?= l('pages.index.breadcrumb') ?></li>
-        </ol>
-    </nav>
-<?php endif ?>
+<div class="container">
+    <?php if(settings()->main->breadcrumbs_is_enabled): ?>
+        <nav aria-label="breadcrumb">
+            <ol class="custom-breadcrumbs small">
+                <li><a href="<?= url() ?>"><?= l('index.breadcrumb') ?></a> <i class="fas fa-fw fa-angle-right"></i></li>
+                <li class="active" aria-current="page"><?= l('pages.index.breadcrumb') ?></li>
+            </ol>
+        </nav>
+    <?php endif ?>
 
     <div class="d-flex align-items-center">
         <h1 class="h4 m-0"><?= l('pages.header') ?></h1>
@@ -21,7 +22,7 @@
 
     <?php if(count($data->pages_categories) || count($data->popular_pages)): ?>
 
-        <?php if(count($data->pages_categories)): ?>
+        <?php if (!empty($data->pages_categories)): ?>
             <div class="mt-4">
                 <div class="row">
                     <?php foreach($data->pages_categories as $row): ?>
@@ -45,7 +46,7 @@
             </div>
         <?php endif ?>
 
-        <?php if(count($data->popular_pages)): ?>
+        <?php if (!empty($data->popular_pages)): ?>
             <div class="mt-4">
                 <h2 class="h5 mb-4"><?= l('pages.index.popular_pages') ?></h2>
 

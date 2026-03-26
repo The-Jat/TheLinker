@@ -27,6 +27,7 @@ function get_custom_image_if_any($image_key) {
 }
 
 function output_alert($type, $message, $icon = true, $dismissable = true) {
+    if(empty($message)) return;
 
     switch($type) {
         case 'error':
@@ -82,8 +83,8 @@ function get_aws_s3_config() {
 
     if(settings()->offload->provider != 'aws-s3') {
         $aws_s3_config['endpoint'] = settings()->offload->endpoint_url;
-        $aws_s3_config['bucket_endpoint'] = settings()->offload->bucket_endpoint ?? false;
-        $aws_s3_config['use_path_style_endpoint'] = settings()->offload->bucket_endpoint ?? false;
+        $aws_s3_config['bucket_endpoint'] = (bool) (settings()->offload->bucket_endpoint ?? false);
+        $aws_s3_config['use_path_style_endpoint'] = (bool) (settings()->offload->bucket_endpoint ?? false);
     }
 
     return $aws_s3_config;
@@ -120,7 +121,11 @@ function get_user_avatar($avatar, $email) {
     return $avatar ? \Altum\Uploads::get_full_url('users') . $avatar : get_gravatar($email);
 }
 
-function get_gravatar($email, $size = 80, $d = 'identicon', $rating = 'g') {
+function get_gravatar($email, $size = 80, $d = 'identicon', $rating = 'g', $force_gravatar = false) {
+    if(!empty(settings()->main->default_avatar) && !$force_gravatar) {
+        return settings()->main->default_avatar_full_url;
+    }
+
     $url = 'https://www.gravatar.com/avatar/';
     $url .= md5(mb_strtolower(trim($email ?? '')));
     $url .= "?s=$size&d=$d&r=$rating";
@@ -208,6 +213,16 @@ function get_maxmind_reader_city() {
     return $cached = (new \MaxMind\Db\Reader(APP_PATH . 'includes/GeoLite2-City.mmdb'));
 }
 
+function get_whichbrowser() {
+    static $cached = null;
+
+    if($cached !== null) {
+        return $cached;
+    }
+
+    return $cached = (new \WhichBrowser\Parser($_SERVER['HTTP_USER_AGENT']));
+}
+
 function is_https_request() {
     /* Native HTTPS */
     if (!empty($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] === 'on' || $_SERVER['HTTPS'] === '1')) { return true; }
@@ -292,7 +307,8 @@ function get_device_type($user_agent) {
 
 function process_export_json($array_of_objects, $type_array = [], $file_name = 'data') {
 
-    if(isset($_GET['export']) && $_GET['export'] == 'json') {
+
+    if(isset($_GET['export']) && $_GET['export'] == 'json' && user() && user()->plan_settings->export->json) {
         //ALTUMCODE:DEMO if(DEMO) exit('This command is blocked on the demo.');
 
         if(\Altum\Title::get()) $file_name = \Altum\Title::get();
@@ -330,7 +346,7 @@ function json_exporter($array_of_objects, $type = 'basic', $include_keys_array =
 
 function process_export_csv($array, $type_array = [], $file_name = 'data') {
 
-    if(isset($_GET['export']) && $_GET['export'] == 'csv') {
+    if(isset($_GET['export']) && $_GET['export'] == 'csv' && user() && user()->plan_settings->export->csv) {
         //ALTUMCODE:DEMO if(DEMO) exit('This command is blocked on the demo.');
 
         if(\Altum\Title::get()) $file_name = \Altum\Title::get();
@@ -347,7 +363,7 @@ function process_export_csv($array, $type_array = [], $file_name = 'data') {
 
 function process_export_csv_new($array, $item_list, $json_item_list = [], $file_name = 'data') {
 
-    if(isset($_GET['export']) && $_GET['export'] == 'csv') {
+    if(isset($_GET['export']) && $_GET['export'] == 'csv' && user() && user()->plan_settings->export->csv) {
         //ALTUMCODE:DEMO if(DEMO) exit('This command is blocked on the demo.');
 
         if(\Altum\Title::get()) $file_name = \Altum\Title::get();
@@ -363,15 +379,15 @@ function process_export_csv_new($array, $item_list, $json_item_list = [], $file_
 
 function csv_exporter_new($array_of_rows, $field_list, $json_field_list = []) {
 
-    /* helper: flatten any array/stdClass into 'a][b][c' keys, building in-place to avoid copies */
     $flatten_json_inplace = function (&$output_map, $input_data, $parent_keys = []) use (&$flatten_json_inplace) {
         if ($input_data instanceof stdClass) {
             $input_data = (array) $input_data;
         }
         if (is_array($input_data)) {
             foreach ($input_data as $current_key => $current_value) {
-                $new_keys = $parent_keys;
+                $new_keys   = $parent_keys;
                 $new_keys[] = (string) $current_key;
+
                 if (is_array($current_value) || $current_value instanceof stdClass) {
                     $flatten_json_inplace($output_map, $current_value, $new_keys);
                 } else {
@@ -380,11 +396,9 @@ function csv_exporter_new($array_of_rows, $field_list, $json_field_list = []) {
             }
             return;
         }
-        /* scalar-at-root JSON value */
         $output_map[''] = $input_data;
     };
 
-    /* helper: force any value to string safely, only decode if already string */
     $to_string = function ($input_value) {
         if ($input_value === null) {
             return '';
@@ -398,15 +412,12 @@ function csv_exporter_new($array_of_rows, $field_list, $json_field_list = []) {
         if (is_scalar($input_value)) {
             return (string) $input_value;
         }
-        /* arrays/objects become compact json to preserve info */
         return json_encode($input_value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     };
 
-    /* early exit when no JSON columns to keep hot-path minimal */
     $has_json          = !empty($json_field_list);
     $json_field_lookup = $has_json ? array_flip($json_field_list) : [];
 
-    /* pass #1 – discover all JSON sub-keys so we can build the header */
     $json_keys_per_column = [];
     if ($has_json) {
         foreach ($array_of_rows as $row) {
@@ -421,16 +432,13 @@ function csv_exporter_new($array_of_rows, $field_list, $json_field_list = []) {
                 }
             }
         }
-        /* normalise to numerically-indexed arrays; keep insertion-ish order (no sort cost) */
         foreach ($json_keys_per_column as $column => $keys) {
             $json_keys_per_column[$column] = array_keys($keys);
         }
     }
 
-    /* use an in-memory stream */
     $file_pointer = fopen('php://temp', 'r+');
 
-    /* build header */
     $header_row = [];
     foreach ($field_list as $field) {
         if ($has_json && isset($json_field_lookup[$field]) && !empty($json_keys_per_column[$field])) {
@@ -441,16 +449,15 @@ function csv_exporter_new($array_of_rows, $field_list, $json_field_list = []) {
             $header_row[] = $field;
         }
     }
-    fputcsv($file_pointer, $header_row);
 
-    /* data rows */
+    fputcsv($file_pointer, $header_row, ',', '"', '\\');
+
     foreach ($array_of_rows as $row_object) {
-        $row = (array) $row_object;
+        $row     = (array) $row_object;
         $csv_row = [];
 
         foreach ($field_list as $field) {
 
-            /* JSON column */
             if ($has_json && isset($json_field_lookup[$field]) && !empty($json_keys_per_column[$field])) {
 
                 $flat = [];
@@ -463,13 +470,12 @@ function csv_exporter_new($array_of_rows, $field_list, $json_field_list = []) {
                     $csv_row[] = $to_string($raw_value);
                 }
 
-                /* regular column */
             } else {
                 $csv_row[] = $to_string($row[$field] ?? '');
             }
         }
 
-        fputcsv($file_pointer, $csv_row);
+        fputcsv($file_pointer, $csv_row, ',', '"', '\\');
     }
 
     rewind($file_pointer);
@@ -515,6 +521,178 @@ function csv_exporter($array, $type = 'basic', $type_array = []) {
 
 function csv_link_exporter($csv) {
     return 'data:application/csv;charset=utf-8,' . urlencode($csv);
+}
+
+function get_currencies_array() {
+    return [
+        'USD' => 'United States Dollar',
+        'EUR' => 'Euro',
+        'GBP' => 'British Pound Sterling',
+        'CAD' => 'Canadian Dollar',
+        'AUD' => 'Australian Dollar',
+        'JPY' => 'Japanese Yen',
+        'CHF' => 'Swiss Franc',
+        'CNY' => 'Chinese Yuan',
+        'INR' => 'Indian Rupee',
+        'NZD' => 'New Zealand Dollar',
+        'SEK' => 'Swedish Krona',
+        'NOK' => 'Norwegian Krone',
+        'DKK' => 'Danish Krone',
+        'SGD' => 'Singapore Dollar',
+        'HKD' => 'Hong Kong Dollar',
+        'KRW' => 'South Korean Won',
+        'BRL' => 'Brazilian Real',
+        'MXN' => 'Mexican Peso',
+        'ZAR' => 'South African Rand',
+        'RUB' => 'Russian Ruble',
+        'TRY' => 'Turkish Lira',
+        'AED' => 'United Arab Emirates Dirham',
+        'SAR' => 'Saudi Riyal',
+        'PLN' => 'Polish Złoty',
+        'THB' => 'Thai Baht',
+        'IDR' => 'Indonesian Rupiah',
+        'MYR' => 'Malaysian Ringgit',
+        'PHP' => 'Philippine Peso',
+        'VND' => 'Vietnamese Đồng',
+        'ILS' => 'Israeli New Shekel',
+        'EGP' => 'Egyptian Pound',
+        'PKR' => 'Pakistani Rupee',
+        'ARS' => 'Argentine Peso',
+        'CLP' => 'Chilean Peso',
+        'COP' => 'Colombian Peso',
+        'PEN' => 'Peruvian Sol',
+        'NGN' => 'Nigerian Naira',
+        'KES' => 'Kenyan Shilling',
+        'UAH' => 'Ukrainian Hryvnia',
+        'CZK' => 'Czech Koruna',
+        'HUF' => 'Hungarian Forint',
+        'RON' => 'Romanian Leu',
+        'BGN' => 'Bulgarian Lev',
+        'QAR' => 'Qatari Riyal',
+        'KWD' => 'Kuwaiti Dinar',
+        'BHD' => 'Bahraini Dinar',
+        'OMR' => 'Omani Rial',
+        'MAD' => 'Moroccan Dirham',
+        'TWD' => 'New Taiwan Dollar',
+        'LKR' => 'Sri Lankan Rupee',
+        'BDT' => 'Bangladeshi Taka',
+        'MMK' => 'Burmese Kyat',
+        'KHR' => 'Cambodian Riel',
+        'MNT' => 'Mongolian Tögrög',
+        'NPR' => 'Nepalese Rupee',
+        'MZN' => 'Mozambican Metical',
+        'TZS' => 'Tanzanian Shilling',
+        'UGX' => 'Ugandan Shilling',
+        'GHS' => 'Ghanaian Cedi',
+        'DZD' => 'Algerian Dinar',
+        'TND' => 'Tunisian Dinar',
+        'LYD' => 'Libyan Dinar',
+        'ETB' => 'Ethiopian Birr',
+        'XOF' => 'West African CFA Franc',
+        'XAF' => 'Central African CFA Franc',
+        'BWP' => 'Botswana Pula',
+        'MWK' => 'Malawian Kwacha',
+        'ZMW' => 'Zambian Kwacha',
+        'MUR' => 'Mauritian Rupee',
+        'SCR' => 'Seychellois Rupee',
+        'BBD' => 'Barbadian Dollar',
+        'TTD' => 'Trinidad and Tobago Dollar',
+        'JMD' => 'Jamaican Dollar',
+        'BSD' => 'Bahamian Dollar',
+        'FJD' => 'Fijian Dollar',
+        'PGK' => 'Papua New Guinean Kina',
+        'WST' => 'Samoan Tala',
+        'TOP' => 'Tongan Paʻanga',
+        'SBD' => 'Solomon Islands Dollar',
+        'VUV' => 'Vanuatu Vatu',
+        'XCD' => 'East Caribbean Dollar',
+        'MVR' => 'Maldivian Rufiyaa',
+        'BTN' => 'Bhutanese Ngultrum',
+        'AOA' => 'Angolan Kwanza',
+        'MGA' => 'Malagasy Ariary',
+        'CDF' => 'Congolese Franc',
+        'GNF' => 'Guinean Franc',
+        'RWF' => 'Rwandan Franc',
+        'SOS' => 'Somali Shilling',
+        'SDG' => 'Sudanese Pound',
+        'SLE' => 'Sierra Leonean Leone',
+        'SHP' => 'Saint Helena Pound',
+        'GIP' => 'Gibraltar Pound',
+        'FKP' => 'Falkland Islands Pound',
+        'IMP' => 'Isle of Man Pound',
+        'GGP' => 'Guernsey Pound',
+        'JEP' => 'Jersey Pound',
+        'BZD' => 'Belize Dollar',
+        'GYD' => 'Guyanese Dollar',
+        'SRD' => 'Surinamese Dollar',
+        'PAB' => 'Panamanian Balboa',
+        'CRC' => 'Costa Rican Colón',
+        'GTQ' => 'Guatemalan Quetzal',
+        'HNL' => 'Honduran Lempira',
+        'NIO' => 'Nicaraguan Córdoba',
+        'CUP' => 'Cuban Peso',
+        'BND' => 'Brunei Dollar',
+        'LAK' => 'Lao Kip',
+        'KZT' => 'Kazakhstani Tenge',
+        'UZS' => 'Uzbekistani Som',
+        'TJS' => 'Tajikistani Somoni',
+        'AZN' => 'Azerbaijani Manat',
+        'GEL' => 'Georgian Lari',
+        'AMD' => 'Armenian Dram',
+        'BYN' => 'Belarusian Ruble',
+        'MDL' => 'Moldovan Leu',
+        'RSD' => 'Serbian Dinar',
+        'MKD' => 'Macedonian Denar',
+        'ISK' => 'Icelandic Króna',
+        'BAM' => 'Bosnia-Herzegovina Convertible Mark',
+        'ALL' => 'Albanian Lek',
+        'HRK' => 'Croatian Kuna',
+        'SYP' => 'Syrian Pound',
+        'IQD' => 'Iraqi Dinar',
+        'IRR' => 'Iranian Rial',
+        'YER' => 'Yemeni Rial',
+        'AFN' => 'Afghan Afghani',
+        'VED' => 'Venezuelan Digital Bolívar',
+        'VES' => 'Venezuelan Bolívar Soberano',
+        'BMD' => 'Bermudian Dollar',
+        'AWG' => 'Aruban Florin',
+        'ANG' => 'Netherlands Antillean Guilder',
+        'CVE' => 'Cape Verdean Escudo',
+        'STN' => 'São Tomé and Príncipe Dobra',
+        'MRU' => 'Mauritanian Ouguiya',
+        'SZL' => 'Eswatini Lilangeni',
+        'LSL' => 'Lesotho Loti',
+        'TMT' => 'Turkmenistani Manat',
+        'ERN' => 'Eritrean Nakfa',
+        'DJF' => 'Djiboutian Franc',
+        'FOK' => 'Faroese Króna',
+        'KID' => 'Kiribati Dollar',
+        'TVD' => 'Tuvaluan Dollar',
+        'XPF' => 'CFP Franc',
+        'XDR' => 'Special Drawing Rights (IMF)',
+        'ZWL' => 'Zimbabwean Dollar'
+    ];
+}
+
+function get_zero_decimal_currencies_array() {
+    return [
+        'JPY',
+        'KRW',
+        'VND',
+        'VUV',
+        'KMF',
+        'DJF',
+        'XOF',
+        'XPF',
+        'GNF',
+        'RWF',
+        'UGX',
+        'CLP',
+        'PYG',
+        'MGA',
+        'BIF',
+        'XAF',
+    ];
 }
 
 function get_continents_array() {
@@ -1058,6 +1236,97 @@ function get_country_from_country_code($code) {
     return get_countries_no_emoji_array()[$code] ?? $code;
 }
 
+function get_currency_for_country($country_code) {
+    $country_currency_map = [
+        'AF' => 'AFN','AX' => 'EUR','AL' => 'ALL','DZ' => 'DZD','AS' => 'USD','AD' => 'EUR','AO' => 'AOA','AI' => 'XCD',
+        'AQ' => 'USD','AG' => 'XCD','AR' => 'ARS','AM' => 'AMD','AW' => 'AWG','AU' => 'AUD','AT' => 'EUR','AZ' => 'AZN',
+
+        'BS' => 'BSD','BH' => 'BHD','BD' => 'BDT','BB' => 'BBD','BY' => 'BYN','BE' => 'EUR','BZ' => 'BZD','BJ' => 'XOF',
+        'BM' => 'BMD','BT' => 'BTN','BO' => 'BOB','BQ' => 'USD','BA' => 'BAM','BW' => 'BWP','BV' => 'NOK','BR' => 'BRL',
+        'IO' => 'USD','BN' => 'BND','BG' => 'BGN','BF' => 'XOF','BI' => 'BIF',
+
+        'KH' => 'KHR','CM' => 'XAF','CA' => 'CAD','CV' => 'CVE','KY' => 'KYD','CF' => 'XAF','TD' => 'XAF','CL' => 'CLP',
+        'CN' => 'CNY','CX' => 'AUD','CC' => 'AUD','CO' => 'COP','KM' => 'KMF','CD' => 'CDF','CG' => 'XAF','CK' => 'NZD',
+        'CR' => 'CRC','CI' => 'XOF','HR' => 'EUR','CU' => 'CUP','CW' => 'ANG','CY' => 'EUR','CZ' => 'CZK',
+
+        'DK' => 'DKK','DJ' => 'DJF','DM' => 'XCD','DO' => 'DOP',
+
+        'EC' => 'USD','EG' => 'EGP','SV' => 'USD','GQ' => 'XAF','ER' => 'ERN','EE' => 'EUR','SZ' => 'SZL','ET' => 'ETB',
+
+        'FK' => 'FKP','FO' => 'DKK','FJ' => 'FJD','FI' => 'EUR','FR' => 'EUR',
+
+        'GF' => 'EUR','PF' => 'XPF','TF' => 'EUR','GA' => 'XAF','GM' => 'GMD','GE' => 'GEL','DE' => 'EUR','GH' => 'GHS',
+        'GI' => 'GIP','GR' => 'EUR','GL' => 'DKK','GD' => 'XCD','GP' => 'EUR','GU' => 'USD','GT' => 'GTQ','GG' => 'GBP',
+        'GN' => 'GNF','GW' => 'XOF','GY' => 'GYD',
+
+        'HT' => 'HTG','HM' => 'AUD','VA' => 'EUR','HN' => 'HNL','HK' => 'HKD','HU' => 'HUF',
+
+        'IS' => 'ISK','IN' => 'INR','ID' => 'IDR','IR' => 'IRR','IQ' => 'IQD','IE' => 'EUR','IM' => 'GBP','IL' => 'ILS',
+        'IT' => 'EUR',
+
+        'JM' => 'JMD','JP' => 'JPY','JE' => 'GBP','JO' => 'JOD',
+
+        'KZ' => 'KZT','KE' => 'KES','KI' => 'AUD','KP' => 'KPW','KR' => 'KRW','KW' => 'KWD','KG' => 'KGS',
+
+        'LA' => 'LAK','LV' => 'EUR','LB' => 'LBP','LS' => 'LSL','LR' => 'LRD','LY' => 'LYD','LI' => 'CHF','LT' => 'EUR',
+        'LU' => 'EUR',
+
+        'MO' => 'MOP','MG' => 'MGA','MW' => 'MWK','MY' => 'MYR','MV' => 'MVR','ML' => 'XOF','MT' => 'EUR','MH' => 'USD',
+        'MQ' => 'EUR','MR' => 'MRU','MU' => 'MUR','YT' => 'EUR','MX' => 'MXN','FM' => 'USD','MD' => 'MDL','MC' => 'EUR',
+        'MN' => 'MNT','ME' => 'EUR','MS' => 'XCD','MA' => 'MAD','MZ' => 'MZN','MM' => 'MMK',
+
+        'NA' => 'NAD','NR' => 'AUD','NP' => 'NPR','NL' => 'EUR','NC' => 'XPF','NZ' => 'NZD','NI' => 'NIO','NE' => 'XOF',
+        'NG' => 'NGN','NU' => 'NZD','NF' => 'AUD','MK' => 'MKD','MP' => 'USD','NO' => 'NOK',
+
+        'OM' => 'OMR',
+
+        'PK' => 'PKR','PW' => 'USD','PS' => 'ILS','PA' => 'PAB','PG' => 'PGK','PY' => 'PYG','PE' => 'PEN','PH' => 'PHP',
+        'PN' => 'NZD','PL' => 'PLN','PT' => 'EUR','PR' => 'USD',
+
+        'QA' => 'QAR',
+
+        'RE' => 'EUR','RO' => 'RON','RU' => 'RUB','RW' => 'RWF',
+
+        'BL' => 'EUR','SH' => 'SHP','KN' => 'XCD','LC' => 'XCD','MF' => 'EUR','PM' => 'EUR','VC' => 'XCD','WS' => 'WST',
+        'SM' => 'EUR','ST' => 'STN','SA' => 'SAR','SN' => 'XOF','RS' => 'RSD','SC' => 'SCR','SL' => 'SLL','SG' => 'SGD',
+        'SX' => 'ANG','SK' => 'EUR','SI' => 'EUR','SB' => 'SBD','SO' => 'SOS','ZA' => 'ZAR','GS' => 'GBP','SS' => 'SSP',
+        'ES' => 'EUR','LK' => 'LKR','SD' => 'SDG','SR' => 'SRD','SJ' => 'NOK','SE' => 'SEK','CH' => 'CHF','SY' => 'SYP',
+
+        'TW' => 'TWD','TJ' => 'TJS','TZ' => 'TZS','TH' => 'THB','TL' => 'USD','TG' => 'XOF','TK' => 'NZD','TO' => 'TOP',
+        'TT' => 'TTD','TN' => 'TND','TR' => 'TRY','TM' => 'TMT','TC' => 'USD','TV' => 'AUD',
+
+        'UG' => 'UGX','UA' => 'UAH','AE' => 'AED','GB' => 'GBP','US' => 'USD','UM' => 'USD','UY' => 'UYU','UZ' => 'UZS',
+
+        'VU' => 'VUV','VE' => 'VES','VN' => 'VND','VG' => 'USD','VI' => 'USD',
+
+        'WF' => 'XPF','EH' => 'MAD',
+
+        'YE' => 'YER',
+
+        'ZM' => 'ZMW','ZW' => 'ZWL'
+    ];
+
+    $country_code = strtoupper(trim($country_code));
+
+    return $country_currency_map[$country_code] ?? null;
+}
+
+function get_currency_for_continent($continent_code) {
+    $currency_map = [
+        'EU' => 'EUR',
+        'NA' => 'USD',
+        'SA' => 'USD',
+        'AS' => 'USD',
+        'AF' => 'USD',
+        'OC' => 'AUD'
+    ];
+
+    $continent_code = strtoupper(trim($continent_code));
+
+    return $currency_map[$continent_code] ?? null;
+}
+
+
 function get_locale_languages_array() {
     return [
         'ab' => 'Abkhazian',
@@ -1427,6 +1696,16 @@ function hex_to_rgb($hex) {
     return $color;
 }
 
+function append_query_param($string, $param) {
+    $parsed = parse_url($string);
+
+    if(isset($parsed['query'])) {
+        return $string . '&' . $param;
+    } else {
+        return $string . '?' . $param;
+    }
+}
+
 function process_and_get_redirect_params() {
     $redirect = null;
 
@@ -1444,11 +1723,11 @@ function process_and_get_redirect_params() {
         }
 
         if($redirect !== null) {
-            $_SESSION['redirect'] = $redirect;
+            session_set('redirect', $redirect);
         }
     }
 
-    return $redirect ?? $_SESSION['redirect'] ?? null;
+    return $redirect ?? session_get('redirect') ?? null;
 }
 
 function os_name_to_os_key($os_name) {
@@ -1500,10 +1779,21 @@ function get_random_line_from_text($text) {
 function get_plan_feature_limit_info($used, $total, $should_display = true) {
     if(!$should_display) return null;
 
-    $percentage_used = $total == -1 || $total == 0 ? 0 : ($used / $total * 100);
-    $percentage_remaining = $total == -1 ? l('global.unlimited') : nr(100-$percentage_used) . '%';
+    if($total == -1 || $total == 0) {
+        $percentage_used = 0;
+    } else {
+        $percentage_used = ($used / $total * 100);
+        $percentage_used = max(0, min(100, $percentage_used));
+    }
 
-    return sprintf(l('global.info_message.plan_feature_limit_info'), '<strong>' . nr($used) . '</strong>', '<strong>' . ($total == -1 ? l('global.unlimited') : nr($total)) . '</strong>', '<strong>' . $percentage_remaining . '</strong>');
+    $percentage_remaining = $total == -1 ? l('global.unlimited') : nr(100 - $percentage_used) . '%';
+
+    return sprintf(
+        l('global.info_message.plan_feature_limit_info'),
+        '<strong>' . nr($used) . '</strong>',
+        '<strong>' . ($total == -1 ? l('global.unlimited') : nr($total)) . '</strong>',
+        '<strong>' . $percentage_remaining . '</strong>'
+    );
 }
 
 function get_plan_feature_limit_reached_info($has_upgrade_link = true) {
@@ -1536,6 +1826,8 @@ function get_plan_feature_disabled_info($has_upgrade_link = true) {
             onclick="window.location.href=\'' . url('plan') . '\';return false;"
             class="cursor-pointer"    
         ';
+    } else {
+        $onclick_html = 'onclick="event.preventDefault()"';
     }
 
     return <<<ALTUM
@@ -1557,7 +1849,7 @@ function convert_editorjs_json_to_html($json) {
     foreach($object->blocks as $block) {
         switch ($block->type) {
             case 'button':
-                $html .= '<a href="' . $block->data->button_url . '" target="' . $block->data->target . '" class="btn btn-block btn-primary">' . $block->data->label . '</a>';
+                $html .= '<a href="' . $block->data->url . '" target="' . $block->data->target . '" class="btn btn-block btn-primary">' . $block->data->label . '</a>';
                 break;
 
             case 'quote':
@@ -1645,7 +1937,8 @@ function fire_and_forget(
     $params = [],
     $content_type = 'form',
     $custom_headers = [],
-    $wait_for_response = false /* when true, wait for and return raw response */
+    $wait_for_response = false, /* when true, wait for and return raw response */
+    $signature = false, /* when true, append the webhook signature of the site */
 ) {
     $method = strtoupper($method);
 
@@ -1710,6 +2003,28 @@ function fire_and_forget(
         $headers_assoc['Content-Length']   = mb_strlen($body_data);
         $headers_assoc['Accept-Encoding']  = 'deflate, gzip, br, zstd';
         $headers_assoc['User-Agent']       = 'AltumCode.Com/1.0';
+
+        /* Signature headers generation if needed */
+        if($signature && settings()->webhooks->secret_key) {
+            $webhook_id = 'wh_' . bin2hex(random_bytes(16));
+            $timestamp = time();
+            $raw_body = http_build_query(
+                $params,
+                '',
+                '&'
+            );
+
+            /* Signature payload */
+            $signed_payload = $webhook_id . '.' . $timestamp . '.' . $raw_body;
+
+            /* Generate the signature */
+            $signature = base64_encode(hash_hmac('sha256', $signed_payload, settings()->webhooks->secret_key));
+
+            /* Add the headers */
+            $headers_assoc['webhook-id'] = $webhook_id;
+            $headers_assoc['webhook-timestamp'] = $timestamp;
+            $headers_assoc['webhook-signature'] = 'v1,' . $signature;
+        }
     }
 
     /* merge custom headers (overwrites defaults) */

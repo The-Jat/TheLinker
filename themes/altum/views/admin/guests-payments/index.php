@@ -25,7 +25,7 @@
                     <a href="<?= url('admin/guests-payments?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                     </a>
-                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                     </a>
                 </div>
@@ -79,7 +79,7 @@
                             <label for="processor" class="small"><?= l('payment_processors.processor') ?></label>
                             <select name="processor" id="processor" class="custom-select custom-select-sm">
                                 <option value=""><?= l('global.all') ?></option>
-                                <?php foreach(['paypal', 'stripe', 'crypto_com', 'razorpay', 'paystack', 'mollie'] as $processor): ?>
+                                <?php foreach(include \Altum\Plugin::get('payment-blocks')->path . 'payment_blocks_payment_processors.php' as $processor): ?>
                                     <option value="<?= $processor ?>" <?= isset($data->filters->filters['processor']) && $data->filters->filters['processor'] == $processor ? 'selected="selected"' : null ?>><?= l('pay.custom_plan.' . $processor) ?></option>
                                 <?php endforeach ?>
                             </select>
@@ -89,8 +89,8 @@
                             <label for="filters_status" class="small"><?= l('global.status') ?></label>
                             <select name="status" id="filters_status" class="custom-select custom-select-sm">
                                 <option value=""><?= l('global.all') ?></option>
-                                <option value="1" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == '1' ? 'selected="selected"' : null ?>><?= l('account_payments.status_approved') ?></option>
-                                <option value="0" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == '0' ? 'selected="selected"' : null ?>><?= l('account_payments.status_pending') ?></option>
+                                <option value="1" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == '1' ? 'selected="selected"' : null ?>><?= l('account_payments.status.approved') ?></option>
+                                <option value="0" <?= isset($data->filters->filters['status']) && $data->filters->filters['status'] == '0' ? 'selected="selected"' : null ?>><?= l('account_payments.status.pending') ?></option>
                             </select>
                         </div>
 
@@ -233,7 +233,7 @@
                     <td class="text-nowrap">
                         <span class="badge badge-light">
                             <?php if($row->processor): ?>
-                                <i class="<?= $payment_processors[$row->processor]['icon'] ?> fa-sm fa-fw mr-1" style="color: <?= $payment_processors[$row->processor]['color'] ?>"></i> <?= l('pay.custom_plan.' . $row->processor) ?>
+                                <i class="<?= $payment_processors[$row->processor]['icon'] ?> fa-sm fa-fw mr-1" style="--brand-color: <?= $payment_processors[$row->processor]['color'] ?>;--brand-color-dark: <?= $payment_processors[$row->processor]['dark_color'] ?>; color: var(--brand-color)" data-custom-colors></i> <?= l('pay.custom_plan.' . $row->processor) ?>
                             <?php else: ?>
                                 <?= l('global.none') ?>
                             <?php endif ?>
@@ -242,9 +242,9 @@
 
                     <td class="text-nowrap">
                         <?php if($row->status): ?>
-                            <span class="badge badge-success"><?= l('account_payments.status_approved') ?></span>
+                            <span class="badge badge-success"><?= l('account_payments.status.approved') ?></span>
                         <?php else: ?>
-                            <span class="badge badge-warning"><?= l('account_payments.status_pending') ?></span>
+                            <span class="badge badge-warning"><?= l('account_payments.status.pending') ?></span>
                         <?php endif ?>
                     </td>
 

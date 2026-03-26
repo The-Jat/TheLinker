@@ -67,11 +67,11 @@ class Settings extends Model {
 
             /* CDN */
             if(!empty($data->offload->cdn_assets_url)) {
-                $assets_url = $data->offload->cdn_assets_url . ASSETS_URL_PATH;
+                $assets_url = $data->offload->cdn_assets_url;
             }
 
             if(!empty($data->offload->cdn_uploads_url)) {
-                $uploads_url = $data->offload->cdn_uploads_url . UPLOADS_URL_PATH;
+                $uploads_url = $data->offload->cdn_uploads_url;
             }
         }
 

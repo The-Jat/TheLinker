@@ -7,7 +7,7 @@
 
     <div data-image-container="<?= $data->image_container ?>" id="<?= ($data->id ?? $data->file_key) . '_preview' ?>" class="col-3 <?= !empty($data->already_existing_image) ? null : 'd-none' ?>">
         <div class="d-flex justify-content-center align-items-center">
-            <a href="<?= $data->already_existing_image ? \Altum\Uploads::get_full_url($data->uploads_file_key) . $data->already_existing_image : '#' ?>" target="_blank" data-toggle="tooltip" title="<?= l('global.view') ?>" data-tooltip-hide-on-click>
+            <a href="<?= $data->already_existing_image ? (!empty($data->custom_file_full_url) ? $data->custom_file_full_url : \Altum\Uploads::get_full_url($data->uploads_file_key) . $data->already_existing_image) : '#' ?>" target="_blank" data-toggle="tooltip" title="<?= l('global.view') ?>" data-tooltip-hide-on-click>
                 <img src="<?= $data->already_existing_image ? \Altum\Uploads::get_full_url($data->uploads_file_key) . $data->already_existing_image : null ?>" class="altum-file-input-preview rounded <?= !empty($data->already_existing_image) ? null : 'd-none' ?>" loading="lazy" />
             </a>
         </div>

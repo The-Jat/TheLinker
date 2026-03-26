@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -65,8 +65,8 @@ class AdminApiDomains extends Controller {
 
         /* Prepare the filtering system */
         $filters = (new \Altum\Filters([], [], []));
-        $filters->set_default_order_by('domain_id', $this->api_user->preferences->default_order_type ?? settings()->main->default_order_type);
-        $filters->set_default_results_per_page($this->api_user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
+        $filters->set_default_order_by('domain_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
+        $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
         $filters->process();
 
         /* Prepare the paginator */
@@ -81,6 +81,7 @@ class AdminApiDomains extends Controller {
             FROM
                 `domains`
             WHERE
+                1 = 1
                 {$filters->get_sql_where()}
                 {$filters->get_sql_order_by()}
                   
@@ -96,6 +97,7 @@ class AdminApiDomains extends Controller {
                 'host' => $row->host,
                 'custom_index_url' => $row->custom_index_url,
                 'custom_not_found_url' => $row->custom_not_found_url,
+                'type' => $row->type,
                 'is_enabled' => (bool) $row->is_enabled,
                 'last_datetime' => $row->last_datetime,
                 'datetime' => $row->datetime,
@@ -144,6 +146,7 @@ class AdminApiDomains extends Controller {
             'host' => $domain->host,
             'custom_index_url' => $domain->custom_index_url,
             'custom_not_found_url' => $domain->custom_not_found_url,
+            'type' => $domain->type,
             'is_enabled' => (bool) $domain->is_enabled,
             'last_datetime' => $domain->last_datetime,
             'datetime' => $domain->datetime,
@@ -158,7 +161,7 @@ class AdminApiDomains extends Controller {
         /* Check for any errors */
         $required_fields = ['host'];
         foreach($required_fields as $field) {
-            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+            if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                 $this->response_error(l('global.error_message.empty_fields'), 401);
                 break 1;
             }
@@ -210,7 +213,7 @@ class AdminApiDomains extends Controller {
         $domain_id = isset($this->params[0]) ? (int) $this->params[0] : null;
 
         /* Try to get details about the resource id */
-        $domain = db()->where('domain_id', $domain_id)->where('user_id', $this->api_user->user_id)->getOne('domains');
+        $domain = db()->where('domain_id', $domain_id)->getOne('domains');
 
         /* We haven't found the resource */
         if(!$domain) {

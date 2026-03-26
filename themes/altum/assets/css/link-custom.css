@@ -94,26 +94,37 @@
 
 .link-btn-straight {
     border-radius: 0;
+    overflow: hidden;
 }
 
 .link-btn-round {
     border-radius: 50px;
+    overflow: hidden;
+}
+
+.link-btn-round.large, .link-avatar-round.large {
+    border-radius: 25px;
+    overflow: hidden;
 }
 
 .link-btn-rounded {
     border-radius: .4rem;
+    overflow: hidden;
 }
 
 .link-avatar-straight {
     border-radius: 0;
+    overflow: hidden;
 }
 
 .link-avatar-round {
     border-radius: 50rem;
+    overflow: hidden;
 }
 
 .link-avatar-rounded {
-    border-radius: .3rem;
+    border-radius: .4rem;
+    overflow: hidden;
 }
 
 .link-hover-animation-smooth {
@@ -132,17 +143,35 @@
     overflow: hidden;
     width: 100%;
     height: 100%;
-    max-width: 45px;
-    max-height: 45px;
+    max-width: 40px;
+    max-height: 40px;
     position: absolute;
     top: 50%;
-    margin-top: -22.5px;
+    margin-top: -20px;
     margin-left: -4.1rem;
+}
+
+[data-biolink-block-type] .link-btn-image-wrapper.link-btn-round {
+    margin-left: -3.9rem;
 }
 
 [dir="rtl"] .link-btn-image-wrapper {
     margin-left: initial;
     margin-right: -4.1rem;
+}
+
+/* featured link */
+.link-featured-name {
+    font-size: 1.1rem;
+}
+
+.link-featured-image-wrapper {
+    min-height: 5rem;
+}
+
+.link-featured-image {
+    object-fit: cover;
+    max-height: 20rem;
 }
 
 /* Big link */
@@ -152,13 +181,14 @@
 
 .link-big-btn-image-wrapper {
     overflow: hidden;
-    width: 15%;
-    height: auto;
-    max-height: calc(100% - 2rem);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 100%;
+    height: 100%;
+    max-width: 66px;
+    max-height: 66px;
     position: absolute;
+    top: 50%;
+    margin-top: -34px;
+    margin-left: 0;
 }
 
 .link-big-btn-image {
@@ -167,7 +197,7 @@
 }
 
 .link-big-content-wrapper {
-    margin-left: 15%;
+    margin-left: 66px;
     width: 70%;
     padding: 0 1rem;
 }
@@ -181,27 +211,26 @@
     position: relative;
     width: 100%;
     background: transparent;
-    border-radius: .3rem;
     overflow: hidden;
     background-position: center;
     background-size: cover;
 }
 
 .link-grid-image-wrapper-columns-2 {
-    height: 10rem;
+    height: 13rem;
 }
 
 .link-grid-image-wrapper-columns-3 {
-    height: 6rem;
+    height: 8rem;
 }
 
 @media (min-width: 992px) {
     .link-grid-image-wrapper-columns-2 {
-        height: 20rem;
+        height: 18rem;
     }
 
     .link-grid-image-wrapper-columns-3 {
-        height: 10rem;
+        height: 11rem;
     }
 }
 
@@ -229,29 +258,56 @@
     height: auto;
 }
 
+.link-external-item-click-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
 .link-external-item-image {
     width: 100%;
     height: auto;
-    max-height: 10rem;
     object-fit: cover;
+    max-height: 30rem;
+}
+
+@media (min-width: 768px) {
+    .link-external-item-image {
+        max-height: 10rem;
+    }
 }
 
 .link-iframe-round {
-    border-radius: .3rem;
+    border-radius: .4rem;
     overflow:hidden;
     position:relative;
 }
 
 .link-iframe-child-round iframe {
-    border-radius: .3rem;
+    border-radius: .4rem;
 }
 
 .link-round {
-    border-radius: .3rem;
+    border-radius: .4rem;
 }
 
 #links > .row > div:target {
     transform: scale(1.05);
+}
+
+.link-socials-button-wrapper {
+    aspect-ratio: 1 / 1;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.link-socials-button-wrapper a {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* Review */
@@ -346,8 +402,8 @@ form .btn-primary:active {
 
 .share-button {
     border-radius: 50%;
-    min-width: 45px;
-    min-height: 45px;
+    width: 45px;
+    height: 45px;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     background-color: #0003;
@@ -360,6 +416,11 @@ form .btn-primary:active {
     color: white;
 }
 
+.branded-button-icon {
+    width: 20px;
+    height: 20px;
+}
+
 /* Preview highlight */
 [data-biolink-block-id] {
     transition: .3s all;
@@ -370,7 +431,7 @@ form .btn-primary:active {
     background: rgba(255, 255, 255, 0.2) !important;
     border: 2px solid rgba(255, 255, 255, 0.4) !important;
     box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-    border-radius: .3rem;
+    border-radius: .4rem;
 }
 
 /* Header block */
@@ -378,11 +439,10 @@ form .btn-primary:active {
     position: absolute;
 }
 
-/* smaller rounded buttons for some links */
-[data-biolink-block-type="review"] .link-btn-round,
-[data-biolink-block-type="paragraph"] .link-btn-round,
-[data-biolink-block-type="business_hours"] .link-btn-round {
+/* Blocks with cards instead of buttons to have a bit less round edges */
+.card.link-btn-round, .card.link-btn-round img {
     border-radius: 25px;
+    overflow: hidden;
 }
 
 /* paragraph no margin on last one */

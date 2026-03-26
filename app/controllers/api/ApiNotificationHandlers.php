@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -156,14 +156,14 @@ class ApiNotificationHandlers extends Controller {
         /* Check for any errors */
         $required_fields = ['type', 'name'];
         foreach($required_fields as $field) {
-            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+            if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                 $this->response_error(l('global.error_message.empty_fields'), 401);
                 break 1;
             }
         }
 
         $_POST['type'] = array_key_exists($_POST['type'], require APP_PATH . 'includes/notification_handlers.php') ? input_clean($_POST['type']) : null;
-        $_POST['name'] = input_clean($_POST['name']);
+        $_POST['name'] = input_clean($_POST['name'], 128);
 
         /* Check for the plan limit */
         $total_rows = db()->where('user_id', $this->api_user->user_id)->where('type', $_POST['type'])->getValue('notification_handlers', 'count(`notification_handler_id`)');
@@ -243,8 +243,15 @@ class ApiNotificationHandlers extends Controller {
 
         $notification_handler->settings = json_decode($notification_handler->settings ?? '');
 
+        /* Check for the plan limit */
+        $total_rows = db()->where('user_id', $this->api_user->user_id)->where('type', $notification_handler->type)->getValue('notification_handlers', 'count(`notification_handler_id`)');
+
+        if($this->api_user->plan_settings->{'notification_handlers_' . $notification_handler->type . '_limit'} != -1 && $total_rows > $this->api_user->plan_settings->{'notification_handlers_' . $notification_handler->type . '_limit'}) {
+            $this->response_error(sprintf(settings()->payment->is_enabled ? l('global.info_message.plan_feature_limit_removal_with_upgrade') : l('global.info_message.plan_feature_limit_removal'), $total_rows - $this->user->plan_settings->{'notification_handlers_' . $notification_handler->type . '_limit'}, mb_strtolower(l('notification_handlers.title')) . ' (' . l('notification_handlers.type_' . $notification_handler->type) . ')', l('global.info_message.plan_upgrade')), 401);
+        }
+
         $_POST['type'] = in_array($_POST['type'] ?? $notification_handler->type, require APP_PATH . 'includes/notification_handlers.php') ? input_clean($_POST['type']) : null;
-        $_POST['name'] = input_clean($_POST['name'] ?? $notification_handler->name);
+        $_POST['name'] = input_clean($_POST['name'] ?? $notification_handler->name, 128);
         $_POST['is_enabled'] = isset($_POST['is_enabled']) ? (int) $_POST['is_enabled'] : $notification_handler->is_enabled;
 
         $settings = [];

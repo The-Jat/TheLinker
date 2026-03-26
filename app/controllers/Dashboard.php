@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -116,8 +116,8 @@ class Dashboard extends Controller {
 
         \Altum\Authentication::guard();
 
-        if(!empty($_POST)) {
-            redirect();
+        if($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            throw_404();
         }
 
         $start_date_query = (new \DateTime())->modify('-' . (settings()->main->chart_days ?? 30) . ' day')->format('Y-m-d');

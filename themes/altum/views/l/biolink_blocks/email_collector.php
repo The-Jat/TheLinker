@@ -59,7 +59,7 @@
                             <label class="custom-control-label font-weight-normal" for="<?= 'email_collector_agreement_' . $data->link->biolink_block_id ?>">
                                 <?= $data->link->settings->agreement_text ?>
 
-                                <?php if($data->link->settings->show_agreement): ?>
+                                <?php if(!empty($data->link->settings->agreement_url)): ?>
                                     <a href="<?= $data->link->settings->agreement_url ?>" target="_blank"><i class="fas fa-fw fa-sm fa-external-link-alt"></i></a>
                                 <?php endif ?>
                             </label>
@@ -140,7 +140,7 @@
                                     window.location.replace(data.details.thank_you_url);
                                 }
 
-                            }, 750);
+                            }, 3000);
                         }
 
                         /* Reset captcha */

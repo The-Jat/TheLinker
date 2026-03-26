@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -27,6 +27,13 @@ class AdminPlans extends Controller {
 
         $plans = db()->orderBy('`order`', 'ASC')->get('plans');
 
+        foreach($plans as $plan) {
+            $plan->settings = json_decode($plan->settings ?? '');
+            $plan->additional_settings = json_decode($plan->additional_settings ?? '');
+            $plan->translations = json_decode($plan->translations ?? '');
+            $plan->prices = json_decode($plan->prices);
+        }
+
         /* Get usage by users */
         $users_plans = [];
         $total_users = 0;
@@ -35,6 +42,15 @@ class AdminPlans extends Controller {
             $users_plans[$row->plan_id] = $row->total;
             $total_users += $row->total;
         }
+
+        /* Set for exporting */
+        $export_plans = $plans;
+        if(isset(settings()->plan_guest)) $export_plans[] = settings()->plan_guest;
+        $export_plans[] = settings()->plan_free;
+        $export_plans[] = settings()->plan_custom;
+
+        /* Export handler */
+        process_export_json($export_plans, ['plan_id', 'name', 'description', 'prices', 'trial_days', 'taxes_ids', 'color', 'settings', 'translations', 'additional_settings', 'status', 'order', 'datetime']);
 
         /* Main View */
         $data = [
@@ -51,8 +67,8 @@ class AdminPlans extends Controller {
 
     public function duplicate() {
 
-        if(empty($_POST)) {
-            redirect('admin/plans');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         $plan_id = (int) $_POST['plan_id'];
@@ -106,7 +122,7 @@ class AdminPlans extends Controller {
         }
 
         if(!$plan = db()->where('plan_id', $plan_id)->getOne('plans', ['plan_id', 'name'])) {
-            redirect('admin/plans');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

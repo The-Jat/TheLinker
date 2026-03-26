@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -92,7 +92,7 @@ class AdminStatistics extends Controller {
 
         /* List only the main folders inside the base directory */
         foreach (new \DirectoryIterator($base_directory) as $folder_info) {
-            if ($folder_info->isDot() || !$folder_info->isDir()) {
+            if($folder_info->isDot() || !$folder_info->isDir()) {
                 continue;
             }
 
@@ -107,7 +107,7 @@ class AdminStatistics extends Controller {
 
             /* Only iterate files directly inside the current main folder */
             foreach (new \DirectoryIterator($folder_path) as $file_info) {
-                if ($file_info->isDot() || !$file_info->isFile()) {
+                if($file_info->isDot() || !$file_info->isFile()) {
                     continue;
                 }
 
@@ -130,7 +130,7 @@ class AdminStatistics extends Controller {
 
             uasort($folders, function ($folder_a, $folder_b) {
                 /* Sort folders by total_size descending */
-                if ($folder_a['total_size'] == $folder_b['total_size']) {
+                if($folder_a['total_size'] == $folder_b['total_size']) {
                     return 0;
                 }
                 return ($folder_a['total_size'] > $folder_b['total_size']) ? -1 : 1;

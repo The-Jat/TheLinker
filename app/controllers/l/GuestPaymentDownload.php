@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -23,7 +23,7 @@ class GuestPaymentDownload extends Controller {
     public function index() {
 
         if(!\Altum\Plugin::is_active('payment-blocks')) {
-            redirect();
+			throw_404();
         }
 
         $_GET['guest_payment_id'] = (int) $_GET['guest_payment_id'];
@@ -31,22 +31,22 @@ class GuestPaymentDownload extends Controller {
 
         /* Make sure the transaction exists */
         if(!$guest_payment = db()->where('guest_payment_id', $_GET['guest_payment_id'])->getOne('guests_payments')) {
-            redirect();
+			throw_404();
         }
 
         /* Make sure the key is correct */
         if(md5($guest_payment->payment_id) != $_GET['key']) {
-            redirect();
+			throw_404();
         }
 
         /* Get the biolink block */
         if(!$biolink_block = db()->where('biolink_block_id', $guest_payment->biolink_block_id)->getOne('biolinks_blocks')) {
-            redirect();
+			throw_404();
         }
         $biolink_block->settings = json_decode($biolink_block->settings ?? '');
 
         if(!$biolink_block->settings->file) {
-            redirect();
+            throw_404();
         }
 
         /* Download the file */

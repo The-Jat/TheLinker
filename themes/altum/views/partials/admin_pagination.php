@@ -11,7 +11,7 @@
                 </p>
             </div>
 
-            <?php if(count($pages)): ?>
+            <?php if (!empty($pages)): ?>
                 <ul class="pagination align-self-center align-self-lg-auto mb-0 mt-3 mt-lg-0">
                 <?php if($data->paginator->getPrevUrl()): ?>
                     <li class="page-item"><a href="<?= $data->paginator->getPrevUrl(); ?>" class="page-link" aria-label="<?= l('global.pagination.previous') ?>">‹</a></li>

@@ -19,6 +19,7 @@
         let initiate_color_pickers = () => {
             document.querySelectorAll('[data-color-picker]').forEach(element => {
                 let has_input = !element.getAttribute('data-color-picker-no-input');
+                let has_clear = element.getAttribute('data-color-picker-has-clear') && element.getAttribute('data-color-picker-has-clear') == 'true' ? true : false;
                 let has_opacity = <?= json_encode(isset($data->opacity)) ?>;
                 let data_has_opacity = element.getAttribute('data-color-picker-has-opacity');
                 if(data_has_opacity) {
@@ -46,7 +47,7 @@
                             hsva: false,
                             cmyk: false,
                             input: has_input,
-                            clear: false,
+                            clear: has_clear,
                             save: false,
                         }
                     }
@@ -55,6 +56,13 @@
 
                     delay_timer = setTimeout(() => {
                         element.value = hsva.toHEXA();
+                        element.dispatchEvent(new Event('change'));
+                    }, 250);
+                }).on('clear', () => {
+                    if(delay_timer) clearTimeout(delay_timer);
+
+                    delay_timer = setTimeout(() => {
+                        element.value = '';
                         element.dispatchEvent(new Event('change'));
                     }, 250);
                 });

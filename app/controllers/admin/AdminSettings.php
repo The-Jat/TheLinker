@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -17,6 +17,7 @@
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+use Altum\PaymentGateways\Revolut;
 use Altum\Title;
 
 
@@ -106,7 +107,7 @@ class AdminSettings extends Controller {
             }
 
             /* Uploads processing */
-            foreach(['logo_light', 'logo_dark', 'logo_email', 'favicon', 'opengraph'] as $image_key) {
+            foreach(['logo_light', 'logo_dark', 'logo_email', 'favicon', 'opengraph', 'default_avatar'] as $image_key) {
                 settings()->main->{$image_key} = \Altum\Uploads::process_upload(settings()->main->{$image_key}, $image_key, $image_key, $image_key . '_remove', null);
             }
 
@@ -164,7 +165,8 @@ class AdminSettings extends Controller {
                 'not_found_url' => $_POST['not_found_url'],
                 'ai_scraping_is_allowed' => $_POST['ai_scraping_is_allowed'],
                 'se_indexing' => $_POST['se_indexing'],
-                'iframe_embedding' => $_POST['iframe_embedding'],
+				'iframe_embedding' => $_POST['iframe_embedding'],
+				'referrer_policy' => $_POST['referrer_policy'],
                 'display_index_plans' => isset($_POST['display_index_plans']),
                 'display_index_testimonials' => isset($_POST['display_index_testimonials']),
                 'display_index_faq' => isset($_POST['display_index_faq']),
@@ -183,10 +185,10 @@ class AdminSettings extends Controller {
                 'logo_email' => settings()->main->logo_email ?? '',
                 'opengraph' => settings()->main->opengraph ?? '',
                 'favicon' => settings()->main->favicon ?? '',
+                'default_avatar' => settings()->main->default_avatar ?? '',
                 'openai_api_key' => $_POST['openai_api_key'],
                 'openai_model' => $_POST['openai_model'],
                 'force_https_is_enabled' => $_POST['force_https_is_enabled'],
-                'broadcasts_statistics_is_enabled' => isset($_POST['broadcasts_statistics_is_enabled']),
                 'breadcrumbs_is_enabled' => isset($_POST['breadcrumbs_is_enabled']),
                 'display_pagination_when_no_pages' => isset($_POST['display_pagination_when_no_pages']),
                 'chart_cache' => (int) $_POST['chart_cache'],
@@ -212,7 +214,9 @@ class AdminSettings extends Controller {
 
             /* :) */
             $_POST['blacklisted_domains'] = array_filter(array_map('trim', explode(',', $_POST['blacklisted_domains'])));
+            $_POST['blacklisted_ips'] = array_filter(array_map('trim', explode(',', $_POST['blacklisted_ips'])));
             $_POST['blacklisted_countries'] = $_POST['blacklisted_countries'] ?? [];
+            $_POST['login_rememberme_cookie_days'] = (int) max(1, $_POST['login_rememberme_cookie_days']);
 
             $value = json_encode([
                 'email_aliases_is_enabled' => isset($_POST['email_aliases_is_enabled']),
@@ -229,6 +233,7 @@ class AdminSettings extends Controller {
                 'auto_delete_inactive_users' => (int) $_POST['auto_delete_inactive_users'],
                 'user_deletion_reminder' => (int) $_POST['user_deletion_reminder'],
                 'blacklisted_domains' => $_POST['blacklisted_domains'],
+                'blacklisted_ips' => $_POST['blacklisted_ips'],
                 'blacklisted_countries' => $_POST['blacklisted_countries'],
                 'login_lockout_is_enabled' => isset($_POST['login_lockout_is_enabled']),
                 'login_lockout_max_retries' => (int) $_POST['login_lockout_max_retries'] < 1 ? 1 : (int) $_POST['login_lockout_max_retries'],
@@ -269,6 +274,9 @@ class AdminSettings extends Controller {
                 'pages_share_is_enabled' => isset($_POST['pages_share_is_enabled']),
                 'pages_popular_widget_is_enabled' => isset($_POST['pages_popular_widget_is_enabled']),
                 'pages_views_is_enabled' => isset($_POST['pages_views_is_enabled']),
+
+                'broadcasts_statistics_is_enabled' => isset($_POST['broadcasts_statistics_is_enabled']),
+                'broadcasts_emails_per_cron' => max(1, (int) $_POST['broadcasts_emails_per_cron']),
             ]);
 
             $this->update_settings('content', $value);
@@ -284,6 +292,7 @@ class AdminSettings extends Controller {
             /* :) */
             $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
             $_POST['type'] = in_array($_POST['type'], ['one_time', 'recurring', 'both']) ? input_clean($_POST['type']) : 'both';
+            $_POST['auto_currency_detection'] = (int) isset($_POST['auto_currency_detection']);
             $_POST['codes_is_enabled'] = (int) isset($_POST['codes_is_enabled']);
             $_POST['taxes_and_billing_is_enabled'] = (int) isset($_POST['taxes_and_billing_is_enabled']);
             $_POST['invoice_is_enabled'] = (int) isset($_POST['invoice_is_enabled']);
@@ -302,12 +311,29 @@ class AdminSettings extends Controller {
                     'symbol' => $_POST['symbol'][$code],
                     'display_as' => $_POST['display_as'][$code],
                     'currency_placement' => $_POST['currency_placement'][$code],
+                    'currency_decimals' => $_POST['currency_decimals'][$code],
                     'default_payment_processor' => $_POST['default_payment_processor'][$code],
                 ];
             }
 
             if(!array_key_exists($_POST['default_currency'], $currencies)) {
                 $_POST['default_currency'] = array_key_first($currencies);
+            }
+
+            /* Plan Features */
+            $allowed_features = require APP_PATH . 'includes/available_plan_features.php';
+
+            /* Sanitize input - keep only valid features */
+            $_POST['plan_features'] = array_values(array_filter($_POST['plan_features'], fn($item) => in_array($item, $allowed_features)));
+
+            /* Preserve the order of $_POST['plan_features'] */
+            $plan_features = array_fill_keys($_POST['plan_features'], true);
+
+            /* Append missing features at the end with false */
+            foreach ($allowed_features as $feature) {
+                if(!array_key_exists($feature, $plan_features)) {
+                    $plan_features[$feature] = false;
+                }
             }
 
             $value = json_encode([
@@ -317,6 +343,7 @@ class AdminSettings extends Controller {
                 'default_payment_frequency' => $_POST['default_payment_frequency'],
                 'currencies' => $currencies,
                 'default_currency' => $_POST['default_currency'],
+                'auto_currency_detection' => $_POST['auto_currency_detection'],
                 'codes_is_enabled' => $_POST['codes_is_enabled'],
                 'taxes_and_billing_is_enabled' => $_POST['taxes_and_billing_is_enabled'],
                 'invoice_is_enabled' => $_POST['invoice_is_enabled'],
@@ -324,9 +351,152 @@ class AdminSettings extends Controller {
                 'user_plan_expiry_reminder' => (int) $_POST['user_plan_expiry_reminder'],
                 'user_plan_expiry_checker_is_enabled' => isset($_POST['user_plan_expiry_checker_is_enabled']),
                 'currency_exchange_api_key' => $_POST['currency_exchange_api_key'],
+                'plan_features' => $plan_features,
             ]);
 
             $this->update_settings('payment', $value);
+        }
+    }
+
+    public function paddle_billing() {
+        $this->process();
+
+        if(!empty($_POST)) {
+            //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+            /* :) */
+            $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
+
+            $value = json_encode([
+                'is_enabled' => $_POST['is_enabled'],
+                'mode' => $_POST['mode'],
+                'api_key' => $_POST['api_key'],
+                'secret_key' => $_POST['secret_key'],
+                'client_side_token' => $_POST['client_side_token'],
+                'currencies' => $_POST['currencies'] ?? [],
+            ]);
+
+            $this->update_settings('paddle_billing', $value);
+        }
+    }
+
+
+    public function klarna() {
+        $this->process();
+
+        if(!empty($_POST)) {
+            //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+            /* :) */
+            $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
+
+            $value = json_encode([
+                'is_enabled' => $_POST['is_enabled'],
+                'mode' => $_POST['mode'],
+                'username' => $_POST['username'],
+                'password' => $_POST['password'],
+                'currencies' => $_POST['currencies'] ?? [],
+            ]);
+
+            $this->update_settings('klarna', $value);
+        }
+    }
+
+    public function plisio() {
+        $this->process();
+
+        if(!empty($_POST)) {
+
+            //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+            /* :) */
+            $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
+            $_POST['accepted_cryptocurrencies'] = array_filter(array_map('trim', $_POST['accepted_cryptocurrencies']));
+
+            $value = json_encode([
+                'is_enabled' => $_POST['is_enabled'],
+                'secret_key' => $_POST['secret_key'],
+                'accepted_cryptocurrencies' => $_POST['accepted_cryptocurrencies'],
+                'default_cryptocurrency' => $_POST['default_cryptocurrency'],
+                'currencies' => $_POST['currencies'] ?? [],
+            ]);
+
+            $this->update_settings('plisio', $value);
+        }
+    }
+
+    public function plisio_whitelabel() {
+        $this->process();
+
+        if(!empty($_POST)) {
+            //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+            /* :) */
+            $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
+            $_POST['accepted_cryptocurrencies'] = array_filter(array_map('trim', $_POST['accepted_cryptocurrencies']));
+            $_POST['payment_blocks_fee'] = (float) max(0, min($_POST['payment_blocks_fee'], 100));
+
+            $value = json_encode([
+                'is_enabled' => $_POST['is_enabled'],
+                'secret_key' => $_POST['secret_key'],
+                'accepted_cryptocurrencies' => $_POST['accepted_cryptocurrencies'],
+                'default_cryptocurrency' => $_POST['default_cryptocurrency'],
+                'payment_blocks_fee' => $_POST['payment_blocks_fee'],
+                'currencies' => $_POST['currencies'] ?? [],
+            ]);
+
+            $this->update_settings('plisio_whitelabel', $value);
+        }
+    }
+
+    public function revolut() {
+        $this->process();
+
+        if(!empty($_POST)) {
+            //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
+
+            /* :) */
+            $_POST['is_enabled'] = (int) isset($_POST['is_enabled']);
+            $_POST['mode'] = in_array($_POST['mode'], ['live', 'sandbox']) ? input_clean($_POST['mode']) : 'live';
+
+            /* Generate webhook id */
+            if(empty($_POST['webhook_id']) && !empty($_POST['secret_key'])) {
+                try {
+                    $response = \Unirest\Request::post(
+                        ($_POST['mode'] == 'live' ? Revolut::$live_api_url : Revolut::$sandbox_api_url) . 'api/1.0/webhooks',
+                        [
+                            'Authorization' => 'Bearer ' . $_POST['secret_key'],
+                            'Content-Type' => 'application/json',
+                            'Accept' => 'application/json',
+                            'Revolut-Api-Version' => '2024-09-01',
+                        ],
+                        \Unirest\Request\Body::json([
+                            'url' => SITE_URL . 'webhook-revolut',
+                            'events' => [
+                                'ORDER_COMPLETED'
+                            ]
+                        ])
+                    );
+                } catch (\Exception $exception) {
+                    Alerts::add_error($exception->getCode() . ':' . $exception->getMessage());
+                }
+
+                if($response->code == 200) {
+                    $_POST['webhook_id'] = $response->body->id;
+                } else {
+                    Alerts::add_error($response->code . ':' . $response->raw_body);
+                }
+            }
+
+            $value = json_encode([
+                'is_enabled' => $_POST['is_enabled'],
+                'mode' => $_POST['mode'],
+                'secret_key' => $_POST['secret_key'],
+                'webhook_id' => $_POST['webhook_id'],
+                'currencies' => $_POST['currencies'] ?? [],
+            ]);
+
+            $this->update_settings('revolut', $value);
         }
     }
 
@@ -943,7 +1113,7 @@ class AdminSettings extends Controller {
         $this->process();
 
         /* CSV Export */
-        if(isset($_GET['export']) && $_GET['export'] == 'csv') {
+        if(isset($_GET['export']) && $_GET['export'] == 'csv' && user() && user()->plan_settings->export->csv) {
             //ALTUMCODE:DEMO if(DEMO) exit('This command is blocked on the demo.');
 
             header('Content-Disposition: attachment; filename="data.csv";');
@@ -1281,11 +1451,11 @@ class AdminSettings extends Controller {
 
             /* :) */
             $_POST['guests_is_enabled'] = (int) isset($_POST['guests_is_enabled']);
-            $_POST['guests_id'] = md5($_POST['content'] . time());
+            $_POST['guests_id'] = md5(uniqid('', true) . random_bytes(16));
             $_POST['guests_text_color'] = !verify_hex_color($_POST['guests_text_color']) ? '#000000' : $_POST['guests_text_color'];
             $_POST['guests_background_color'] = !verify_hex_color($_POST['guests_background_color']) ? '#ffffff' : $_POST['guests_background_color'];
             $_POST['users_is_enabled'] = (int) isset($_POST['users_is_enabled']);
-            $_POST['users_id'] = md5($_POST['content'] . time());
+            $_POST['users_id'] = md5(uniqid('', true) . random_bytes(16));
             $_POST['users_text_color'] = !verify_hex_color($_POST['users_text_color']) ? '#000000' : $_POST['users_text_color'];
             $_POST['users_background_color'] = !verify_hex_color($_POST['users_background_color']) ? '#ffffff' : $_POST['users_background_color'];
 
@@ -1415,34 +1585,52 @@ class AdminSettings extends Controller {
         if(!empty($_POST)) {
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
-            /* :) */
-            $_POST['wait_for_response_domains'] = array_filter(array_map('trim', explode(',', $_POST['wait_for_response_domains'])));
-            $_POST['user_new'] = input_clean($_POST['user_new']);
-            $_POST['user_update'] = input_clean($_POST['user_update']);
-            $_POST['user_delete'] = input_clean($_POST['user_delete']);
-            $_POST['payment_new'] = input_clean($_POST['payment_new']);
-            $_POST['code_redeemed'] = input_clean($_POST['code_redeemed']);
-            $_POST['contact'] = input_clean($_POST['contact']);
-            $_POST['cron_start'] = input_clean($_POST['cron_start']);
-            $_POST['cron_end'] = input_clean($_POST['cron_end']);
-            $_POST['domain_new'] = input_clean($_POST['domain_new']);
-            $_POST['domain_update'] = input_clean($_POST['domain_update']);
+            /* Regeneration of the secret key processing */
+            if(isset($this->params[0]) && $this->params[0] == 'regenerate') {
+                $secret_key = 'whsec_' . bin2hex(random_bytes(16));
 
-            $value = json_encode([
-                'wait_for_response_domains' => $_POST['wait_for_response_domains'],
-                'user_new' => $_POST['user_new'],
-                'user_update' => $_POST['user_update'],
-                'user_delete' => $_POST['user_delete'],
-                'payment_new' => $_POST['payment_new'],
-                'code_redeemed' => $_POST['code_redeemed'],
-                'contact' => $_POST['contact'],
-                'cron_start' => $_POST['cron_start'],
-                'cron_end' => $_POST['cron_end'],
-                'domain_new' => $_POST['domain_new'],
-                'domain_update' => $_POST['domain_update'],
-            ]);
+                $value = (array) settings()->webhooks;
+                $value['secret_key'] = $secret_key;
+                $value = json_encode($value);
 
-            $this->update_settings('webhooks', $value);
+                $this->update_settings('webhooks', $value);
+            } else {
+
+                /* :) */
+                $clean_fields = [
+                    'secret_key',
+                    'user_new',
+                    'user_update',
+                    'user_delete',
+                    'payment_new',
+                    'code_redeemed',
+                    'contact',
+                    'cron_start',
+                    'cron_end',
+                    'domain_new',
+                    'domain_update',
+                    'link_new',
+                    'link_update',
+                ];
+
+                $value_data = [];
+
+                foreach($clean_fields as $field) {
+                    $_POST[$field] = input_clean($_POST[$field] ?? '');
+                    $value_data[$field] = $_POST[$field];
+                }
+
+                $_POST['wait_for_response_domains'] = array_filter(
+                    array_map('trim', explode(',', $_POST['wait_for_response_domains'] ?? ''))
+                );
+
+                $value_data['wait_for_response_domains'] = $_POST['wait_for_response_domains'];
+
+                $value = json_encode($value_data);
+
+                $this->update_settings('webhooks', $value);
+
+            }
         }
     }
 
@@ -1520,8 +1708,10 @@ class AdminSettings extends Controller {
             settings()->pwa->app_icon_maskable = \Altum\Uploads::process_upload(settings()->pwa->app_icon_maskable, 'app_icon', 'app_icon_maskable', 'app_icon_maskable_remove', null);
 
             $value = [
-                'is_enabled' => isset($_POST['is_enabled']),
-                'display_install_bar' => isset($_POST['display_install_bar']),
+				'is_enabled' => isset($_POST['is_enabled']),
+				'is_fullscreen' => isset($_POST['is_fullscreen']),
+				'dynamic_splash_screen' => isset($_POST['dynamic_splash_screen']),
+				'display_install_bar' => isset($_POST['display_install_bar']),
                 'display_install_bar_for_guests' => isset($_POST['display_install_bar_for_guests']),
                 'display_install_bar_delay' => (int) $_POST['display_install_bar_delay'],
                 'display_install_bar_minimum_pageviews_count' => (int) $_POST['display_install_bar_minimum_pageviews_count'],
@@ -1678,7 +1868,7 @@ class AdminSettings extends Controller {
 
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
-            if(!\Altum\Plugin::is_active('dynamic-og-images')) {
+            if(!\Altum\Plugin::is_active('email-shield')) {
                 redirect('admin/settings/email_shield');
             }
 
@@ -1762,16 +1952,18 @@ class AdminSettings extends Controller {
         if(!empty($_POST) && !empty($_POST['new_license'])) {
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
-            $altumcode_api = 'https://api.altumcode.com/validate';
+            $altumcode_api = 'https://api2.altumcode.com/validate';
 
             /* Make sure the license is correct */
             $response = \Unirest\Request::post($altumcode_api, [], [
-                'type'              => 'update',
-                'license'           => $_POST['new_license'],
-                'url'               => url(),
+                'type'              => 'license-update',
+                'license_key'       => $_POST['new_license'],
+                'installation_url'  => url(),
                 'product_key'       => PRODUCT_KEY,
                 'product_name'      => PRODUCT_NAME,
                 'product_version'   => PRODUCT_VERSION,
+                'server_ip'         => $_SERVER['SERVER_ADDR'],
+                'client_ip'         => get_ip()
             ]);
 
             if($response->body->status == 'error') {
@@ -1806,8 +1998,7 @@ class AdminSettings extends Controller {
         if(!empty($_POST) && !empty($_POST['new_key'])) {
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
-            $altumcode_api = 'https://api.altumcode.com/validate-support-extension';
-            //$altumcode_api = 'http://127.0.0.1/altumcode-api/validate-support-extension';
+            $altumcode_api = 'https://api2.altumcode.com/validate-support-extension';
 
             /* Make sure the license is correct */
             $response = \Unirest\Request::post($altumcode_api, [], [
@@ -1927,6 +2118,7 @@ class AdminSettings extends Controller {
             $_POST['events_is_enabled'] = (int) isset($_POST['events_is_enabled']);
             $_POST['static_is_enabled'] = (int) isset($_POST['static_is_enabled']);
             $_POST['sixsixpusher_is_enabled'] = (int) isset($_POST['sixsixpusher_is_enabled']);
+            $_POST['sixsixpusher_service_worker_size_limit'] = $_POST['sixsixpusher_service_worker_size_limit'] > get_max_upload() || $_POST['sixsixpusher_service_worker_size_limit'] < 0 ? get_max_upload() : (float) $_POST['sixsixpusher_service_worker_size_limit'];
             $_POST['claim_url_is_enabled'] = (int) isset($_POST['claim_url_is_enabled']);
             $_POST['claim_url_type'] = in_array($_POST['claim_url_type'], ['link', 'biolink', 'file', 'vcard', 'event', 'static']) ? $_POST['claim_url_type'] : 'link';
             $_POST['pixels_is_enabled'] = (int) isset($_POST['pixels_is_enabled']);
@@ -1944,6 +2136,7 @@ class AdminSettings extends Controller {
             $_POST['blacklisted_keywords'] = array_filter(array_map('trim', explode(',', $_POST['blacklisted_keywords'])));
             $_POST['google_safe_browsing_is_enabled'] = (int) isset($_POST['google_safe_browsing_is_enabled']);
             $_POST['google_static_maps_is_enabled'] = (int) isset($_POST['google_static_maps_is_enabled']);
+            $_POST['google_geocoding_is_enabled'] = (int) isset($_POST['google_geocoding_is_enabled']);
             $_POST['avatar_size_limit'] = $_POST['avatar_size_limit'] > get_max_upload() || $_POST['avatar_size_limit'] < 0 ? get_max_upload() : (float) $_POST['avatar_size_limit'];
             $_POST['background_size_limit'] = $_POST['background_size_limit'] > get_max_upload() || $_POST['background_size_limit'] < 0 ? get_max_upload() : (float) $_POST['background_size_limit'];
             $_POST['favicon_size_limit'] = $_POST['favicon_size_limit'] > get_max_upload() || $_POST['favicon_size_limit'] < 0 ? get_max_upload() : (float) $_POST['favicon_size_limit'];
@@ -1955,7 +2148,9 @@ class AdminSettings extends Controller {
             $_POST['file_size_limit'] = $_POST['file_size_limit'] > get_max_upload() || $_POST['file_size_limit'] < 0 ? get_max_upload() : (float) $_POST['file_size_limit'];
             $_POST['product_file_size_limit'] = $_POST['product_file_size_limit'] > get_max_upload() || $_POST['product_file_size_limit'] < 0 ? get_max_upload() : (float) $_POST['product_file_size_limit'];
             $_POST['static_size_limit'] = $_POST['static_size_limit'] > get_max_upload() || $_POST['static_size_limit'] < 0 ? get_max_upload() : (float) $_POST['static_size_limit'];
-            $_POST['pwa_icon_size_limit'] = $_POST['pwa_icon_size_limit'] > get_max_upload() || $_POST['pwa_icon_size_limit'] < 0 ? get_max_upload() : (float) $_POST['pwa_icon_size_limit'];
+			$_POST['pwa_icon_size_limit'] = $_POST['pwa_icon_size_limit'] > get_max_upload() || $_POST['pwa_icon_size_limit'] < 0 ? get_max_upload() : (float) $_POST['pwa_icon_size_limit'];
+            $_POST['branded_button_icon_size_limit'] = $_POST['branded_button_icon_size_limit'] > get_max_upload() || $_POST['branded_button_icon_size_limit'] < 0 ? get_max_upload() : (float) $_POST['branded_button_icon_size_limit'];
+            $_POST['offline_payment_proof_size_limit'] = $_POST['offline_payment_proof_size_limit'] > get_max_upload() || $_POST['offline_payment_proof_size_limit'] < 0 ? get_max_upload() : (float) $_POST['offline_payment_proof_size_limit'];
             $_POST['email_reports_is_enabled'] = in_array($_POST['email_reports_is_enabled'], [0, 'weekly', 'monthly']) ? $_POST['email_reports_is_enabled'] : 0;
 
             $available_biolink_blocks = [];
@@ -1978,6 +2173,7 @@ class AdminSettings extends Controller {
             $value = json_encode([
                 'sixsixpusher_is_enabled' => $_POST['sixsixpusher_is_enabled'],
                 'sixsixpusher_service_worker_file_name' => $_POST['sixsixpusher_service_worker_file_name'],
+                'sixsixpusher_service_worker_size_limit' => $_POST['sixsixpusher_service_worker_size_limit'],
                 'available_biolink_blocks' => $available_biolink_blocks,
                 'example_url' => $_POST['example_url'],
                 'random_url_length' => $_POST['random_url_length'],
@@ -2016,6 +2212,9 @@ class AdminSettings extends Controller {
                 'google_safe_browsing_api_key' => $_POST['google_safe_browsing_api_key'],
                 'google_static_maps_is_enabled' => $_POST['google_static_maps_is_enabled'],
                 'google_static_maps_api_key' => $_POST['google_static_maps_api_key'],
+                'google_geocoding_is_enabled' => $_POST['google_geocoding_is_enabled'],
+                'google_geocoding_api_key' => $_POST['google_geocoding_api_key'],
+                'open_meteo_api_key' => $_POST['open_meteo_api_key'],
                 'avatar_size_limit' => $_POST['avatar_size_limit'],
                 'background_size_limit' => $_POST['background_size_limit'],
                 'favicon_size_limit' => $_POST['favicon_size_limit'],
@@ -2027,7 +2226,9 @@ class AdminSettings extends Controller {
                 'file_size_limit' => $_POST['file_size_limit'],
                 'product_file_size_limit' => $_POST['product_file_size_limit'],
                 'static_size_limit' => $_POST['static_size_limit'],
-                'pwa_icon_size_limit' => $_POST['pwa_icon_size_limit'],
+				'pwa_icon_size_limit' => $_POST['pwa_icon_size_limit'],
+				'branded_button_icon_size_limit' => $_POST['branded_button_icon_size_limit'],
+                'offline_payment_proof_size_limit' => $_POST['offline_payment_proof_size_limit'],
                 'email_reports_is_enabled' => $_POST['email_reports_is_enabled'],
             ]);
 
@@ -2071,6 +2272,7 @@ class AdminSettings extends Controller {
                 'ratings_is_enabled' => isset($_POST['ratings_is_enabled']),
                 'similar_widget_is_enabled' => isset($_POST['similar_widget_is_enabled']),
                 'popular_widget_is_enabled' => isset($_POST['popular_widget_is_enabled']),
+                'categories_expanded_is_enabled' => isset($_POST['categories_expanded_is_enabled']),
             ]);
 
             $this->update_settings('tools', $value);
@@ -2139,14 +2341,14 @@ class AdminSettings extends Controller {
 
     public function send_test_email() {
 
-        if(empty($_POST)) {
-            redirect('admin/settings/smtp');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         /* Check for any errors */
         $required_fields = ['email'];
         foreach($required_fields as $field) {
-            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+            if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                 Alerts::add_field_error($field, l('global.error_message.empty_field'));
             }
         }

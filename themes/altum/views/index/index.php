@@ -1,7 +1,7 @@
 <?php defined('ALTUMCODE') || die() ?>
 
 <div class="index-container">
-    <div class="container index-container-content">
+    <div class="container index-container-content index-background">
         <?= \Altum\Alerts::output_alerts() ?>
 
         <div class="row">
@@ -10,7 +10,7 @@
                     <div class="mb-2">
                         <span class="badge badge-pill badge-light">
                             <i class="fas fa-fw fa-star fa-sm text-warning"></i><i class="fas fa-fw fa-star fa-sm text-warning"></i><i class="fas fa-fw fa-star fa-sm text-warning"></i><i class="fas fa-fw fa-star fa-sm text-warning"></i><i class="fas fa-fw fa-star fa-sm text-warning mr-1"></i>
-                            <?= sprintf(l('index.stars'), '<span class="font-weight-bolder">' . nr($data->total_users) . '+</span>') ?>
+                            <?= sprintf(l('index.stars'), '<span class="font-weight-bolder" data-count-up-append="+" data-count-up-number="' . $data->total_users . '">' . nr($data->total_users) . '+</span>') ?>
                         </span>
                     </div>
 
@@ -100,7 +100,7 @@
                                 <div class="mb-3">
                                     <div class="input-group">
                                         <div class="input-group-prepend">
-                                            <?php if(count($data->domains)): ?>
+                                            <?php if (!empty($data->domains)): ?>
                                                 <select id="domain_id" name="domain_id" class="appearance-none custom-select form-control input-group-text h-100">
                                                     <?php if(settings()->links->main_domain_is_enabled): ?>
                                                         <option value=" " data-full-url="<?= SITE_URL ?>"><?= remove_url_protocol_from_url(SITE_URL) ?></option>
@@ -122,7 +122,7 @@
 
                                 <?php ob_start() ?>
                                     <script>
-    'use strict';
+                                        'use strict';
 
                                         let claim_button_default_href = document.querySelector('#claim_button').href;
                                         ['change', 'paste', 'keyup', 'keypress'].forEach(event_type => document.querySelector('#claim_url').addEventListener(event_type, event => {
@@ -614,6 +614,12 @@
 
 <div class="py-3"></div>
 
+
+
+
+
+
+
 <div class="container mt-8">
     <div class="card py-4 index-highly-rounded border-0 bg-gray-900">
         <div class="card-body">
@@ -621,7 +627,7 @@
                 <div class="col-12 col-lg-3 mb-4 mb-lg-0">
                     <div class="text-center d-flex flex-column">
                         <span class="font-weight-bold text-muted mb-3"><?= l('index.stats.links') ?></span>
-                        <span class="h1 text-gradient-primary" style="--gradient-one: var(--purple); --gradient-two: var(--pink);"><?= nr($data->total_links, 0, true, true) . '+' ?></span>
+                        <span class="h1 text-gradient-primary" style="--gradient-one: var(--purple); --gradient-two: var(--pink);" data-count-up-append="+" data-count-up-number="<?= $data->total_links ?>"><?= nr($data->total_links, 0, true, true) . '+' ?></span>
                     </div>
                 </div>
 
@@ -629,7 +635,7 @@
                     <div class="col-12 col-lg-3 mb-4 mb-lg-0">
                         <div class="text-center d-flex flex-column">
                             <span class="font-weight-bold text-muted mb-3"><?= l('index.stats.qr_codes') ?></span>
-                            <span class="h1 text-gradient-primary" style="--gradient-one: var(--teal); --gradient-two: var(--blue);"><?= nr($data->total_qr_codes, 0, true, true) . '+' ?></span>
+                            <span class="h1 text-gradient-primary" style="--gradient-one: var(--teal); --gradient-two: var(--blue);" data-count-up-append="+" data-count-up-number="<?= $data->total_qr_codes ?>"><?= nr($data->total_qr_codes, 0, true, true) . '+' ?></span>
                         </div>
                     </div>
                 <?php endif ?>
@@ -637,7 +643,7 @@
                 <div class="col-12 col-lg-3 mb-4 mb-lg-0">
                     <div class="text-center d-flex flex-column">
                         <span class="font-weight-bold text-muted mb-3"><?= l('index.stats.track_links') ?></span>
-                        <span class="h1 text-gradient-primary" style="--gradient-one: var(--blue); --gradient-two: var(--purple);"><?= nr($data->total_track_links, 0, true, true) . '+' ?></span>
+                        <span class="h1 text-gradient-primary" style="--gradient-one: var(--blue); --gradient-two: var(--purple);" data-count-up-append="+" data-count-up-number="<?= $data->total_track_links ?>"><?= nr($data->total_track_links, 0, true, true) . '+' ?></span>
                     </div>
                 </div>
             </div>
@@ -750,8 +756,8 @@
     <div class="py-3"></div>
 
     <div class="container mt-8">
-        <div class="row align-items-center justify-content-between" data-aos="fade-up">
-            <div class="col-12 col-lg-5 mb-5 mb-lg-0 d-flex flex-column justify-content-center">
+        <div class="row align-items-center justify-content-between">
+            <div class="col-12 col-lg-5 mb-5 mb-lg-0 d-flex flex-column justify-content-center" data-aos="fade-up"">
                 <div class="text-uppercase font-weight-bold text-primary mb-3"><?= l('index.api.name') ?></div>
 
                 <div>
@@ -798,9 +804,9 @@
                 </div>
             </div>
 
-            <div class="col-12 col-lg-6">
+            <div class="col-12 col-lg-6" data-aos="fade-up" data-aos-delay="300">
                 <div class="card rounded-2x bg-dark text-white">
-                    <div class="card-body p-4 text-monospace reveal-effect font-size-small" style="line-height: 1.75">
+                    <div class="card-body p-4 text-monospace reveal-effect text-break font-size-small" style="line-height: 1.75">
                         curl --request POST \<br />
                         --url '<?= SITE_URL ?>api/links' \<br />
                         --header 'Authorization: Bearer <span class="text-primary" <?= is_logged_in() ? 'data-toggle="tooltip" title="' . l('api_documentation.api_key') . '"' : null ?>><?= is_logged_in() ? $this->user->api_key : '{api_key}' ?></span>' \<br />
@@ -891,8 +897,10 @@
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         /* start the animation */
-                        container_node.classList.add('reveal-effect-in');
-                        observer.unobserve(container_node);
+                        setTimeout(() => {
+                            container_node.classList.add('reveal-effect-in');
+                            observer.unobserve(container_node);
+                        }, 200);
                     }
                 });
             };
@@ -912,7 +920,7 @@
 <?php if(settings()->main->display_index_testimonials): ?>
     <div class="py-3"></div>
 
-    <div class="p-4 mt-8">
+    <div class="p-3 p-md-4 mt-8">
         <div class="py-7 bg-primary-100 rounded-2x">
             <div class="container">
                 <div class="text-center">
@@ -944,7 +952,7 @@
 
                                     <p class="mt-5">
                                         <span class="text-gray-800 font-weight-bold text-muted h5">“</span>
-                                        <span><?= l('index.testimonials.' . $value . '.text') ?></span>
+                                        <span class="font-size-little-small"><?= l('index.testimonials.' . $value . '.text') ?></span>
                                         <span class="text-gray-800 font-weight-bold text-muted h5">”</span>
                                     </p>
 
@@ -1003,7 +1011,7 @@
                     <div class="card-body">
                         <div class="" id="<?= 'faq_accordion_' . $key ?>">
                             <h3 class="mb-0">
-                                <button class="btn btn-lg font-weight-bold btn-block d-flex justify-content-between text-gray-800 px-0 icon-zoom-animation" type="button" data-toggle="collapse" data-target="<?= '#faq_accordion_answer_' . $key ?>" aria-expanded="true" aria-controls="<?= 'faq_accordion_answer_' . $key ?>">
+                                <button class="btn btn-lg font-weight-500 btn-block d-flex justify-content-between text-gray-800 px-0 icon-zoom-animation no-focus" type="button" data-toggle="collapse" data-target="<?= '#faq_accordion_answer_' . $key ?>" aria-expanded="true" aria-controls="<?= 'faq_accordion_answer_' . $key ?>">
                                     <span class="text-left"><?= l('index.faq.' . $key . '.question') ?></span>
 
                                     <span data-icon>
@@ -1044,8 +1052,8 @@
 <?php if(settings()->users->register_is_enabled): ?>
     <div class="py-3"></div>
 
-    <div class="container mt-8">
-        <div class="card index-highly-rounded border-0 index-cta py-5 py-lg-6" data-aos="fade-up">
+    <div class="container mt-8" data-aos="fade-up">
+        <div class="card index-highly-rounded border-0 index-cta py-5 py-lg-6">
             <div class="card-body row align-items-center justify-content-center">
                 <div class="col-12 col-lg-5">
                     <div class="text-center text-lg-left mb-4 mb-lg-0">
@@ -1057,11 +1065,11 @@
                 <div class="col-12 col-lg-5 mt-4 mt-lg-0">
                     <div class="text-center text-lg-right">
                         <?php if(is_logged_in()): ?>
-                            <a href="<?= url('dashboard') ?>" class="btn btn-primary zoom-animation">
+                            <a href="<?= url('dashboard') ?>" class="btn btn-light badge-pill zoom-animation-subtle">
                                 <?= l('dashboard.menu') ?> <i class="fas fa-fw fa-arrow-right"></i>
                             </a>
                         <?php else: ?>
-                            <a href="<?= url('register') ?>" class="btn btn-primary zoom-animation">
+                            <a href="<?= url('register') ?>" class="btn btn-light badge-pill zoom-animation-subtle">
                                 <?= l('index.cta.register') ?> <i class="fas fa-fw fa-arrow-right"></i>
                             </a>
                         <?php endif ?>
@@ -1072,7 +1080,7 @@
     </div>
 <?php endif ?>
 
-<?php if(count($data->blog_posts)): ?>
+<?php if (!empty($data->blog_posts)): ?>
     <div class="py-3"></div>
 
     <div class="container mt-8">
@@ -1080,10 +1088,10 @@
             <h2><?= sprintf(l('index.blog.header'), '<span class="text-primary">', '</span>') ?></h2>
         </div>
 
-        <div class="row">
+        <div class="row mx-n2 mx-lg-n4">
             <?php foreach($data->blog_posts as $blog_post): ?>
-                <div class="col-12 col-lg-4 p-4">
-                    <div class="card h-100 zoom-animation-subtle">
+                <div class="col-12 col-lg-4 px-2 py-4 px-lg-4">
+                    <div class="card h-100 zoom-animation-subtle position-relative">
                         <div class="card-body">
                             <?php if($blog_post->image): ?>
                                 <a href="<?= SITE_URL . ($blog_post->language ? \Altum\Language::$active_languages[$blog_post->language] . '/' : null) . 'blog/' . $blog_post->url ?>" aria-label="<?= $blog_post->title ?>">
@@ -1091,8 +1099,8 @@
                                 </a>
                             <?php endif ?>
 
-                            <a href="<?= SITE_URL . ($blog_post->language ? \Altum\Language::$active_languages[$blog_post->language] . '/' : null) . 'blog/' . $blog_post->url ?>">
-                                <h3 class="h5 card-title mb-2"><?= $blog_post->title ?></h3>
+                            <a href="<?= SITE_URL . ($blog_post->language ? \Altum\Language::$active_languages[$blog_post->language] . '/' : null) . 'blog/' . $blog_post->url ?>" class="stretched-link text-decoration-none">
+                                <h3 class="h5 card-title mb-2 d-inline"><?= $blog_post->title ?></h3>
                             </a>
 
                             <p class="text-muted mb-0"><?= $blog_post->description ?></p>
@@ -1116,7 +1124,66 @@
     'use strict';
 
     AOS.init({
-        duration: 600
+        duration: 650,
+        easing: 'ease-out-cubic',
+        once: true,
+    });
+</script>
+
+<script>
+    let count_up_animation = (element, final_append = '', max_duration = 3000, start_on_view = false) => {
+        let start_time = null;
+        let has_started = false;
+        let target = parseInt(element.getAttribute('data-count-up-number'));
+
+        const ease_out = progress => 1 - Math.pow(1 - progress, 8);
+
+        const step = timestamp => {
+            if (!start_time) start_time = timestamp;
+
+            const elapsed = timestamp - start_time;
+            const progress = Math.min(elapsed / max_duration, 1);
+            const eased = ease_out(progress);
+
+            const value = Math.round(eased * target);
+            element.textContent = nr(value, 0, false, true);
+
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            } else {
+                element.textContent = nr(target, 0, false, true) + final_append;
+            }
+        };
+
+        const start_animation = () => {
+            if (has_started) return;
+            has_started = true;
+            requestAnimationFrame(step);
+        };
+
+        if (!start_on_view) {
+            start_animation();
+            return;
+        }
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+
+                observer.unobserve(element);
+                start_animation();
+            });
+        }, {
+            threshold: 0.3
+        });
+
+        observer.observe(element);
+    };
+
+    document.querySelectorAll('[data-count-up-number]').forEach(element => {
+        let duration = element.getAttribute('data-count-up-duration') || 1500;
+        let final_append = element.getAttribute('data-count-up-append') || '';
+        count_up_animation(element, final_append, duration, true);
     });
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>

@@ -45,11 +45,6 @@ class Controller {
             return;
         }
 
-        /* Dynamic OG images plugin */
-        if(\Altum\Plugin::is_active('dynamic-og-images') && settings()->dynamic_og_images->is_enabled) {
-            \Altum\Plugin\DynamicOgImages::process();
-        }
-
         if(\Altum\Router::$path == '') {
             $meta_content = [];
             if(!settings()->main->se_indexing) $meta_content[] = 'noindex';

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -40,7 +40,7 @@ class Sitemap extends Controller {
             'login',
             'lost-password',
         ];
-        
+
         if(settings()->users->email_confirmation) {
             $sitemap_urls[] = 'resend-activation';
         }
@@ -71,6 +71,10 @@ class Sitemap extends Controller {
 
         if(settings()->content->blog_is_enabled) {
             $sitemap_urls[] = 'blog';
+        }
+
+        if(settings()->links->directory_is_enabled && settings()->links->directory_access == 'everyone') {
+            $sitemap_urls[] = 'directory';
         }
 
         if(settings()->tools->is_enabled && settings()->tools->access == 'everyone') {
@@ -130,13 +134,13 @@ class Sitemap extends Controller {
 
     public function links() {
         if(!settings()->links->biolinks_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Set the header as xml so the browser can read it properly */
         header('Content-Type: text/xml');
 
-        /* How many external users per sitemap page */
+        /* How many per sitemap page */
         $pagination = 10000;
 
         $page = isset($this->params[0]) ? (int) $this->params[0] : null;
@@ -158,7 +162,7 @@ class Sitemap extends Controller {
                     WHERE
                         `users`.`status` = 1
                         AND `links`.`is_enabled` = 1
-                        AND `links`.`type` = 'biolink'
+                        AND `links`.`type` IN ('biolink','static')
                         AND `links`.`domain_id` = 0
                   ")->fetch_object()->total ?? 0;
 

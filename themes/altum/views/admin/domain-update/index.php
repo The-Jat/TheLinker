@@ -66,7 +66,7 @@
                         $dns_records = array_merge($dns_record_a ?: [], $dns_record_cname ?: []);
                         ?>
 
-                        <?php if(count($dns_records)): ?>
+                        <?php if (!empty($dns_records)): ?>
                             <?php foreach($dns_records as $dns_record): ?>
                                 <div class="row">
                                     <div class="col font-weight-bold"><?= l('global.host') ?></div>

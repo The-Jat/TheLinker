@@ -2,7 +2,7 @@
 
 <?php if($this->link->settings->share_is_enabled): ?>
     <div data-toggle="modal" data-target="#share_modal" class="d-flex justify-content-center align-items-center position-absolute share-button-wrapper">
-        <button type="button" class="btn share-button zoom-animation-subtle" data-toggle="tooltip" title="<?= l('global.share') ?>" data-tooltip-hide-on-click>
+        <button type="button" class="btn share-button zoom-animation-subtle d-flex justify-content-center align-items-center" data-toggle="tooltip" title="<?= l('global.share') ?>" data-tooltip-hide-on-click>
             <i class="fas fa-fw fa-share"></i>
         </button>
     </div>
@@ -23,13 +23,13 @@
                         </button>
                     </div>
 
-                    <div class="w-100 mb-3" data-qr="<?= $data->link->full_url ?>"></div>
+                    <div class="w-100 mb-4" data-qr="<?= $data->link->full_url ?>"></div>
 
-                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div class="d-flex align-items-center flex-wrap gap-3">
                         <?= include_view(THEME_PATH . 'views/partials/share_buttons.php', ['url' => $data->link->full_url, 'class' => 'btn btn-gray-100', 'print_is_enabled' => false]) ?>
                     </div>
 
-                    <div class="form-group mt-3">
+                    <div class="form-group mt-4">
                         <div class="input-group">
                             <input id="share" type="text" class="form-control" value="<?= $data->link->full_url ?>" onclick="this.select();" readonly="readonly" />
 

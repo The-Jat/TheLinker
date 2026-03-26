@@ -19,7 +19,7 @@
 
 <?= \Altum\Alerts::output_alerts() ?>
 
-<?php //ALTUMCODE:DEMO if(DEMO) {$data->user->email = 'hidden@demo.com'; $data->user->name = $data->user->ip = 'hidden on demo';} ?>
+<?php //ALTUMCODE:DEMO if(DEMO) {$data->user->email = 'hidden@demo.com'; $data->user->name = $data->user->ip = $data->user->api_key = 'hidden on demo';} ?>
 
 <div class="card <?= \Altum\Alerts::has_field_errors() ? 'border-danger' : null ?>">
     <div class="card-body">
@@ -150,7 +150,7 @@
                 <div class="form-group">
                     <label for="biolinks_limit"><?= l('admin_plans.plan.biolinks_limit') ?></label>
                     <input type="number" id="biolinks_limit" name="biolinks_limit" min="-1" class="form-control" value="<?= $data->user->plan_settings->biolinks_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.biolinks_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.biolinks_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
@@ -162,7 +162,7 @@
                 <div class="form-group">
                     <label for="links_limit"><?= l('admin_plans.plan.links_limit') ?></label>
                     <input type="number" id="links_limit" name="links_limit" min="-1" class="form-control" value="<?= $data->user->plan_settings->links_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.links_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.links_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
@@ -173,31 +173,31 @@
                 <div class="form-group">
                     <label for="files_limit"><?= l('admin_plans.plan.files_limit') ?></label>
                     <input type="number" id="files_limit" name="files_limit" min="-1" class="form-control" value="<?= $data->user->plan_settings->files_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.files_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.files_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
                     <label for="vcards_limit"><?= l('admin_plans.plan.vcards_limit') ?></label>
                     <input type="number" id="vcards_limit" name="vcards_limit" min="-1" class="form-control" value="<?= $data->user->plan_settings->vcards_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.vcards_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.vcards_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
                     <label for="events_limit"><?= l('admin_plans.plan.events_limit') ?></label>
                     <input type="number" id="events_limit" name="events_limit" min="-1" class="form-control" value="<?= $data->user->plan_settings->events_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.events_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.events_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
                     <label for="static_limit"><?= l('admin_plans.plan.static_limit') ?></label>
                     <input type="number" id="static_limit" name="static_limit" min="-1" class="form-control" value="<?= $data->user->plan_settings->static_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.static_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.static_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <div class="form-group">
                     <label for="domains_limit"><?= l('admin_plans.plan.domains_limit') ?></label>
                     <input type="number" id="domains_limit" name="domains_limit" min="-1" class="form-control" value="<?= $data->user->plan_settings->domains_limit ?>" />
-                    <small class="form-text text-muted"><?= l('admin_plans.plan.domains_limit_help') ?></small>
+                    <small class="form-text text-muted"><?= l('admin_plans.plan.domains_limit_help') ?> <?= l('admin_plans.plan.unlimited') ?></small>
                 </div>
 
                 <?php if(\Altum\Plugin::is_active('payment-blocks')): ?>
@@ -515,6 +515,12 @@
                     <div><small class="form-text text-muted"><?= l('admin_plans.plan.dofollow_is_enabled_help') ?></small></div>
                 </div>
 
+                <div class="form-group custom-control custom-switch">
+                    <input id="branded_button_is_enabled" name="branded_button_is_enabled" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->branded_button_is_enabled ? 'checked="checked"' : null ?>>
+                    <label class="custom-control-label" for="branded_button_is_enabled"><?= l('admin_plans.plan.branded_button_is_enabled') ?></label>
+                    <div><small class="form-text text-muted"><?= l('admin_plans.plan.branded_button_is_enabled_help') ?></small></div>
+                </div>
+
                 <div <?= !\Altum\Plugin::is_active('pwa') ? 'data-toggle="tooltip" title="' . sprintf(l('admin_plugins.no_access'), \Altum\Plugin::get('pwa')->name ?? 'pwa') . '"' : null ?>>
                     <div class="form-group custom-control custom-switch">
                         <input id="custom_pwa_is_enabled" name="custom_pwa_is_enabled" type="checkbox" class="custom-control-input" <?= $data->user->plan_settings->custom_pwa_is_enabled ? 'checked="checked"' : null ?> <?= !\Altum\Plugin::is_active('pwa') ? 'disabled="disabled"' : null ?>>
@@ -641,7 +647,7 @@
 
 <script>
     'use strict';
-    
+
 moment.tz.setDefault(<?= json_encode($this->user->timezone) ?>);
 
     let check_plan_id = () => {
@@ -696,3 +702,4 @@ moment.tz.setDefault(<?= json_encode($this->user->timezone) ?>);
 
 </script>
 <?php \Altum\Event::add_content(ob_get_clean(), 'javascript') ?>
+<?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>

@@ -51,11 +51,12 @@
             <?php endforeach ?>
         </div>
 
+        <div class="qr-notification-container"></div>
+
         <div class="row">
             <div class="col-12 col-lg-6 d-print-none mb-5 mb-lg-0">
                 <div class="card">
                     <div class="card-body">
-                        <div class="notification-container"></div>
 
                         <div class="form-group">
                             <label for="name"><i class="fas fa-fw fa-signature fa-sm text-muted mr-1"></i> <?= l('global.name') ?></label>
@@ -471,7 +472,13 @@
 
                             <div class="form-group" data-type="paypal">
                                 <label for="paypal_currency"><i class="fas fa-fw fa-euro-sign fa-sm text-muted mr-1"></i> <?= l('qr_codes.input.paypal_currency') ?></label>
-                                <input type="text" id="paypal_currency" name="paypal_currency" class="form-control <?= \Altum\Alerts::has_field_errors('paypal_currency') ? 'is-invalid' : null ?>" value="<?= $data->qr_code->settings->paypal_currency ?? null ?>" maxlength="<?= $data->available_qr_codes['paypal']['currency']['max_length'] ?>" required="required" data-reload-qr-code />
+                                <select id="paypal_currency" name="paypal_currency" class="custom-select <?= \Altum\Alerts::has_field_errors('paypal_currency') ? 'is-invalid' : null ?>" required="required" data-reload-qr-code>
+    <?php foreach(get_currencies_array() as $currency_code => $currency_name): ?>
+        <option value="<?= $currency_code ?>" <?= ($data->qr_code->settings->paypal_currency ?? null) == $currency_code ? 'selected="selected"' : null ?>>
+            <?= $currency_code . ' - ' . $currency_name ?>
+        </option>
+    <?php endforeach ?>
+</select>
                                 <?= \Altum\Alerts::output_field_error('paypal_currency') ?>
                             </div>
 
@@ -700,15 +707,15 @@
                         <div class="collapse" id="colors_container" data-parent="#form">
                             <div class="form-group">
                                 <label for="foreground_type"><i class="fas fa-fw fa-paint-roller fa-sm text-muted mr-1"></i> <?= l('qr_codes.input.foreground_type') ?></label>
-                                <div class="row btn-group-toggle" data-toggle="buttons">
-                                    <div class="col-6">
-                                        <label class="btn btn-light btn-block text-truncate <?= $data->qr_code->settings->foreground_type == 'color' ? 'active"' : null?>">
+                                <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+                                    <div class="p-2 col-6">
+                                        <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->qr_code->settings->foreground_type == 'color' ? 'active"' : null?>">
                                             <input type="radio" name="foreground_type" value="color" class="custom-control-input" <?= $data->qr_code->settings->foreground_type == 'color' ? 'checked="checked"' : null?> required="required" data-reload-qr-code />
                                             <i class="fas fa-fw fa-eyedropper fa-sm text-muted mr-1"></i> <?= l('qr_codes.input.foreground_type_color') ?>
                                         </label>
                                     </div>
-                                    <div class="col-6">
-                                        <label class="btn btn-light btn-block text-truncate <?= $data->qr_code->settings->foreground_type == 'gradient' ? 'active' : null?>">
+                                    <div class="p-2 col-6">
+                                        <label class="btn btn-light btn-block font-size-small mb-0 text-truncate <?= $data->qr_code->settings->foreground_type == 'gradient' ? 'active' : null?>">
                                             <input type="radio" name="foreground_type" value="gradient" class="custom-control-input" <?= $data->qr_code->settings->foreground_type == 'gradient' ? 'checked="checked"' : null?> required="required" data-reload-qr-code />
                                             <i class="fas fa-fw fa-fill-drip fa-sm text-muted mr-1"></i> <?= l('qr_codes.input.foreground_type_gradient') ?>
                                         </label>
@@ -783,8 +790,8 @@
 
                             <div class="form-group">
                                 <label for="frame"><i class="fas fa-fw fa-qrcode fa-sm text-muted mr-1"></i> <?= l('qr_codes.input.frame') ?></label>
-                                <div class="row btn-group-toggle" data-toggle="buttons">
-                                    <div class="col-6 col-lg-4 mb-3">
+                                <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+                                    <div class="p-2 col-6 col-lg-4 mb-3">
                                         <label class="btn btn-light btn-block d-flex align-items-center justify-content-center <?= !($data->qr_code->settings->frame ?? null) ? 'active"' : null?>" data-toggle="tooltip" data-tooltip-hide-on-click title="<?= l('global.none') ?>" style="height: 125px;">
                                             <input type="radio" name="frame" value="" class="custom-control-input" <?= !($data->qr_code->settings->frame ?? null) ? 'checked="checked"' : null?> required="required" data-reload-qr-code />
                                             <i class="fas fa-fw fa-3x fa-times"></i>
@@ -792,7 +799,7 @@
                                     </div>
 
                                     <?php foreach($data->frames as $key => $frame): ?>
-                                        <div class="col-6 col-lg-4 mb-3">
+                                        <div class="p-2 col-6 col-lg-4 mb-3">
                                             <label class="btn btn-light btn-block d-flex align-items-center justify-content-center <?= ($data->qr_code->settings->frame ?? null) == $key ? 'active"' : null?>" style="height: 125px;">
                                                 <input type="radio" name="frame" value="<?= $key ?>" class="custom-control-input" <?= ($data->qr_code->settings->frame ?? null) == $key ? 'checked="checked"' : null?> required="required" data-reload-qr-code />
                                                 <?= sprintf($frame['svg'], 75, 75 * $frame['frame_height_scale'], 75 / $frame['frame_scale'], 'var(--gray-900)', 75 * $frame['frame_translate_x'], 75 * $frame['frame_translate_y']) ?>
@@ -816,7 +823,7 @@
 
                             <div class="form-group">
                                 <label for="frame_text_font"><i class="fas fa-fw fa-pen-nib fa-sm text-muted mr-1"></i> <?= l('qr_codes.input.frame_text_font') ?></label>
-                                <div class="row btn-group-toggle" data-toggle="buttons">
+                                <div class="row btn-group-toggle m-n2" data-toggle="buttons">
                                     <?php foreach($data->frames_fonts as $font_key => $font): ?>
                                         <div class="col-12 col-lg-4 p-2 h-100">
                                             <label class="btn btn-light btn-block text-truncate <?= ($data->qr_code->settings->frame_text_font ?? array_key_first($data->frames_fonts)) == $font_key ? 'active"' : null?>" style="font-family: <?= $font['font-family'] ?> !important;">
@@ -932,7 +939,7 @@
                                     <?php endforeach ?>
                                 </select>
                             </div>
-                            
+
                             <?php if(settings()->links->projects_is_enabled): ?>
                                 <div class="form-group">
                                     <div class="d-flex flex-wrap flex-row justify-content-between">

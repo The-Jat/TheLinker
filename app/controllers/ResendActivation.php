@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -29,7 +29,7 @@ class ResendActivation extends Controller {
         \Altum\Authentication::guard('guest');
 
         if(!settings()->users->email_confirmation) {
-            redirect('not-found');
+            throw_404();
         }
 
         $redirect = process_and_get_redirect_params() ?? 'dashboard';
@@ -37,8 +37,10 @@ class ResendActivation extends Controller {
 
         /* Default values */
         $values = [
-            'email' => ''
+            'email' => $_POST['email'] ?? $_GET['email'] ?? '',
         ];
+
+        $values['email'] = input_clean_email($values['email']);
 
         /* Initiate captcha */
         $captcha = new Captcha();
@@ -75,7 +77,7 @@ class ResendActivation extends Controller {
 
                 if($user && !$user->status) {
                     /* Generate new email code */
-                    $email_code = md5($_POST['email'] . microtime());
+                    $email_code = md5(uniqid('', true) . random_bytes(16));
 
                     /* Update the current activation email */
                     db()->where('user_id', $user->user_id)->update('users', ['email_activation_code' => $email_code]);
@@ -99,8 +101,9 @@ class ResendActivation extends Controller {
                     Logger::users($user->user_id, 'resend_activation.request_sent');
                 }
 
-                /* Set a nice success message */
-                Alerts::add_success(l('resend_activation.success_message'));
+                /* Redirect to email verify */
+                session_set('sent_activation_email', $_POST['email']);
+                redirect('sent-activation?email=' . $_POST['email']);
             }
         }
 

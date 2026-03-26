@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div class="container col-lg-8">
+<div class="container">
     <?php if(settings()->main->breadcrumbs_is_enabled): ?>
         <nav aria-label="breadcrumb">
             <ol class="custom-breadcrumbs small">
@@ -51,7 +51,7 @@
     <?php if(settings()->content->pages_share_is_enabled): ?>
         <div class="card mt-4">
             <div class="card-body">
-                <div class="d-flex align-items-center justify-content-between flex-wrap">
+                <div class="d-flex align-items-center flex-wrap gap-3">
                     <?= include_view(THEME_PATH . 'views/partials/share_buttons.php', ['url' => url(\Altum\Router::$original_request), 'class' => 'btn btn-gray-100', 'copy_to_clipboard' => true]) ?>
                 </div>
             </div>

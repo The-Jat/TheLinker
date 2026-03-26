@@ -28,6 +28,23 @@ class Link extends Model {
         /* Try to check if the user posts exists via the cache */
         $cache_instance = cache()->getItem('links?user_id=' . $user_id);
 
+        $query = "SELECT `links`.*, `domains`.`scheme`, `domains`.`host`, `domains`.`link_id` as `domain_link_id` 
+          FROM `links` 
+          LEFT JOIN `domains` ON `links`.`domain_id` = `domains`.`domain_id` 
+          WHERE `links`.`user_id` = {$user_id}";
+
+$links_result = database()->query($query);
+
+if (!$links_result) {
+    error_log('SQL Error: ' . database()->error . ' Query: ' . $query);
+    return [];  // Return an empty array or handle the error gracefully.
+}
+
+while ($row = $links_result->fetch_object()) {
+    $row->full_url = $row->domain_id ? $row->scheme . $row->host . '/' . ($row->domain_link_id == $row->link_id ? null : $row->url) : SITE_URL . $row->url;
+    $links[$row->link_id] = $row;
+}
+
         /* Set cache if not existing */
         if(is_null($cache_instance->get())) {
 
@@ -83,7 +100,8 @@ class Link extends Model {
 
             \Altum\Uploads::delete_uploaded_file($link->settings->favicon, 'favicons');
             \Altum\Uploads::delete_uploaded_file($link->settings->seo->image, 'block_images');
-            \Altum\Uploads::delete_uploaded_file($link->settings->pwa_icon, 'app_icon');
+			\Altum\Uploads::delete_uploaded_file($link->settings->pwa_icon, 'app_icon');
+			\Altum\Uploads::delete_uploaded_file($link->settings->branded_button_icon, 'branded_button_icon');
 
             if($link->settings->background_type == 'image' && !$link->biolink_theme_id) {
                 \Altum\Uploads::delete_uploaded_file($link->settings->background, 'backgrounds');

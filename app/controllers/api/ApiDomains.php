@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -28,7 +28,7 @@ class ApiDomains extends Controller {
     public function index() {
 
         if(!settings()->links->domains_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         $this->verify_request();
@@ -170,7 +170,7 @@ class ApiDomains extends Controller {
         /* Check for any errors */
         $required_fields = ['host'];
         foreach($required_fields as $field) {
-            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+            if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                 $this->response_error(l('global.error_message.empty_fields'), 401);
                 break 1;
             }
@@ -241,7 +241,7 @@ class ApiDomains extends Controller {
                 'domain_id' => $domain_id,
                 'host' => $_POST['host'],
                 'datetime' => get_date(),
-            ]);
+            ], signature: true);
         }
 
         /* Prepare the data */
@@ -262,6 +262,13 @@ class ApiDomains extends Controller {
     }
 
     private function patch() {
+
+        /* Check for the plan limit */
+        $total_rows = db()->where('user_id', $this->api_user->user_id)->getValue('domains', 'count(`domain_id`)');
+
+        if($this->api_user->plan_settings->domains_limit != -1 && $total_rows > $this->api_user->plan_settings->domains_limit) {
+            $this->response_error(sprintf(settings()->payment->is_enabled ? l('global.info_message.plan_feature_limit_removal_with_upgrade') : l('global.info_message.plan_feature_limit_removal'), $total_rows - $this->user->plan_settings->domains_limit, mb_strtolower(l('domains.title')), l('global.info_message.plan_upgrade')), 401);
+        }
 
         $domain_id = isset($this->params[0]) ? (int) $this->params[0] : null;
 
@@ -344,7 +351,7 @@ class ApiDomains extends Controller {
                 'old_host' => $domain->host,
                 'new_host' => $_POST['host'],
                 'datetime' => get_date(),
-            ]);
+            ], signature: true);
         }
 
         /* Prepare the data */

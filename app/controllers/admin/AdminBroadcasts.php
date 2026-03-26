@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -76,8 +76,8 @@ class AdminBroadcasts extends Controller {
 
     public function get_segment_count() {
 
-        if(!empty($_POST)) {
-            redirect();
+        if($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            throw_404();
         }
 
         \Altum\Authentication::guard();
@@ -212,8 +212,8 @@ class AdminBroadcasts extends Controller {
 
     public function duplicate() {
 
-        if(empty($_POST)) {
-            redirect('admin/broadcasts');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         $broadcast_id = (int) $_POST['broadcast_id'];
@@ -256,8 +256,8 @@ class AdminBroadcasts extends Controller {
     public function bulk() {
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('admin/broadcasts');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -280,6 +280,8 @@ class AdminBroadcasts extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
@@ -290,7 +292,7 @@ class AdminBroadcasts extends Controller {
             }
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -310,7 +312,7 @@ class AdminBroadcasts extends Controller {
         }
 
         if(!$broadcast = db()->where('broadcast_id', $broadcast_id)->getOne('broadcasts', ['broadcast_id'])) {
-            redirect('admin/broadcasts');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

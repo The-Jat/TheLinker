@@ -191,3 +191,149 @@ function get_website_certificate($url, $port = 443, $enabled = false) {
         return null;
     }
 }
+
+function get_rdap_dns_map() {
+	$cache_file = UPLOADS_PATH . 'cache/rdap_dns.json';
+
+	/* Cache for 30 days */
+	if (!file_exists($cache_file) || filemtime($cache_file) < time() - 2592000) {
+		$json = file_get_contents('https://data.iana.org/rdap/dns.json');
+
+		if($json) {
+			file_put_contents($cache_file, $json);
+		}
+	}
+
+	$data = json_decode(file_get_contents($cache_file), true);
+	if (!is_array($data)) {
+		return [];
+	}
+
+	$map = [];
+
+	foreach ($data['services'] as $service) {
+		$tlds      = $service[0];
+		$endpoints = $service[1];
+
+		if (empty($endpoints)) {
+			continue;
+		}
+
+		$endpoint = rtrim($endpoints[0], '/');
+
+		foreach ($tlds as $tld) {
+			$map[strtolower($tld)] = $endpoint;
+		}
+	}
+
+	return $map;
+}
+
+function get_domain_info_rdap($rdap_server, $domain) {
+	$rdap_url = $rdap_server . '/domain/' . urlencode($domain);
+
+	$headers = [
+		'Accept'     => 'application/rdap+json',
+	];
+
+    try {
+        $response = \Unirest\Request::get($rdap_url, $headers);
+    } catch (\Unirest\Exception $exception) {
+        return null;
+    }
+
+	if ($response->code !== 200) {
+		return null;
+	}
+
+	$rdap_data = json_decode($response->raw_body, true);
+	if (!is_array($rdap_data)) {
+		return null;
+	}
+
+	$start_datetime   = null;
+	$updated_datetime = null;
+	$end_datetime     = null;
+	$registrar        = null;
+	$nameservers      = [];
+
+	/* registration / last changed / expiration */
+	if (!empty($rdap_data['events']) && is_array($rdap_data['events'])) {
+		foreach ($rdap_data['events'] as $event) {
+			if (empty($event['eventAction']) || empty($event['eventDate'])) {
+				continue;
+			}
+
+			$event_action = $event['eventAction'];
+
+			try {
+				$dt = new DateTime($event['eventDate']);
+				$dt->setTimezone(new DateTimeZone('UTC'));
+				$event_date = $dt->format('Y-m-d H:i:s');
+			} catch (Exception $e) {
+				continue;
+			}
+
+			if ($event_action === 'registration') {
+				$start_datetime = $event_date;
+
+			} elseif ($event_action === 'expiration') {
+				$end_datetime = $event_date;
+
+			} elseif ($event_action === 'last changed') {
+				$updated_datetime = $event_date;
+
+			} elseif ($event_action === 'last update of RDAP database' && $updated_datetime === null) {
+				$updated_datetime = $event_date;
+			}
+		}
+	}
+
+	/* Registrar */
+	if (!empty($rdap_data['entities']) && is_array($rdap_data['entities'])) {
+		foreach ($rdap_data['entities'] as $entity) {
+
+			if (empty($entity['roles']) || !is_array($entity['roles'])) {
+				continue;
+			}
+
+			if (!in_array('registrar', $entity['roles'], true)) {
+				continue;
+			}
+
+			if (!empty($entity['vcardArray'][1]) && is_array($entity['vcardArray'][1])) {
+				foreach ($entity['vcardArray'][1] as $vcard_item) {
+					// vcard item format: [ 'fn', {props}, 'text', 'GoDaddy.com, LLC' ]
+					if (!is_array($vcard_item) || count($vcard_item) < 4) {
+						continue;
+					}
+
+					if ($vcard_item[0] === 'fn') {
+						$registrar = $vcard_item[3];
+						break 2; // found registrar, break out of both loops
+					}
+				}
+			}
+		}
+	}
+
+	/* Nameservers */
+	if (!empty($rdap_data['nameservers']) && is_array($rdap_data['nameservers'])) {
+		foreach ($rdap_data['nameservers'] as $nameserver_item) {
+			if (!empty($nameserver_item['ldhName'])) {
+				$nameservers[] = $nameserver_item['ldhName'];
+			} elseif (!empty($nameserver_item['unicodeName'])) {
+				$nameservers[] = $nameserver_item['unicodeName'];
+			}
+		}
+	}
+
+	return [
+		'start_datetime'   => $start_datetime,
+		'updated_datetime' => $updated_datetime,
+		'end_datetime'     => $end_datetime,
+		'registrar'        => $registrar,
+		'nameservers'      => $nameservers,
+		'raw'              => $rdap_data,
+	];
+}

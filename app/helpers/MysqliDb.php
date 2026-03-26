@@ -604,6 +604,7 @@ class MysqliDb
             if(DEBUG) { echo $this->getLastError(); }
             error_log('Database Query Error: ' . $this->getLastError());
         }
+		if(DEBUG) error_log('DB QUERY:' . db()->getLastQuery());
         /* ALTUMCODE CUSTOM */
 
         $this->_lastQuery = $this->replacePlaceHolders($this->_query, $params);
@@ -687,6 +688,7 @@ class MysqliDb
             if(DEBUG) { echo $this->getLastError(); }
             error_log('Database Query Error: ' . $this->getLastError());
         }
+		if(DEBUG) error_log('DB QUERY:' . db()->getLastQuery());
         /* ALTUMCODE CUSTOM */
 
         $res = $this->_dynamicBindResults($stmt);
@@ -789,6 +791,7 @@ class MysqliDb
             if(DEBUG) { echo $this->getLastError(); }
             error_log('Database Query Error: ' . $this->getLastError());
         }
+		if(DEBUG) error_log('DB QUERY:' . db()->getLastQuery());
         /* ALTUMCODE CUSTOM */
 
         $res = $this->_dynamicBindResults($stmt);
@@ -868,10 +871,13 @@ class MysqliDb
     }
 
     public function insertInChunks($tableName, $insertData, $split = 5000) {
+        $ids = [];
         $chunks = array_chunk($insertData, $split);
         foreach($chunks as $chunk) {
-            $this->insertMulti($tableName, $chunk);
+            $ids = array_merge($ids, $this->insertMulti($tableName, $chunk));
         }
+
+        return $ids;
     }
 
     /**
@@ -975,6 +981,7 @@ class MysqliDb
             if(DEBUG) { echo $this->getLastError(); }
             error_log('Database Query Error: ' . $this->getLastError());
         }
+		if(DEBUG) error_log('DB QUERY:' . db()->getLastQuery());
         /* ALTUMCODE CUSTOM */
 
         $this->count = $stmt->affected_rows;
@@ -1016,6 +1023,7 @@ class MysqliDb
             if(DEBUG) { echo $this->getLastError(); }
             error_log('Database Query Error: ' . $this->getLastError());
         }
+		if(DEBUG) error_log('DB QUERY:' . db()->getLastQuery());
         /* ALTUMCODE CUSTOM */
 
         $this->count = $stmt->affected_rows;
@@ -1605,6 +1613,7 @@ class MysqliDb
             if(DEBUG) { echo $this->getLastError(); }
             error_log('Database Query Error: ' . $this->getLastError());
         }
+		if(DEBUG) error_log('DB QUERY:' . db()->getLastQuery());
         /* ALTUMCODE CUSTOM */
 
         $haveOnDuplicate = !empty ($this->_updateColumns);

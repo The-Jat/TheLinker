@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -42,7 +42,7 @@ class BiolinkBlock extends Controller {
             case 'statistics':
 
                 if(!$this->user->plan_settings->statistics) {
-                    Alerts::add_info(l('global.info_message.plan_feature_no_access'));
+                    Alerts::add_error(l('global.info_message.plan_feature_no_access'));
                     redirect('links');
                 }
 
@@ -52,13 +52,13 @@ class BiolinkBlock extends Controller {
                     switch($action) {
                         case 'reset':
 
-                            if(empty($_POST)) {
-                                redirect('links');
-                            }
+                            if (empty($_POST)) {
+            throw_404();
+        }
 
                             /* Team checks */
                             if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.biolinks_blocks')) {
-                                Alerts::add_info(l('global.info_message.team_no_access'));
+                                Alerts::add_error(l('global.info_message.team_no_access'));
                                 redirect('biolink-block/' . $this->biolink_block->biolink_block_id . '/statistics');
                             }
 
@@ -409,7 +409,9 @@ class BiolinkBlock extends Controller {
                         while($row = $result->fetch_object()) {
                             foreach($statistics_keys as $key) {
 
-                                $statistics[$key][$row->{$key}] = isset($statistics[$key][$row->{$key}]) ? $statistics[$key][$row->{$key}] + 1 : 1;
+                                $row->{$key} = $row->{$key} ?? '';
+
+                        $statistics[$key][$row->{$key}] = isset($statistics[$key][$row->{$key}]) ? $statistics[$key][$row->{$key}] + 1 : 1;
 
                                 $statistics[$key . '_total_sum']++;
 

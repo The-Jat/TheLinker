@@ -15,7 +15,7 @@
         <small class="form-text text-muted"><?= l('admin_settings.aix.input_moderation_is_enabled_help') ?></small>
     </div>
 
-    <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#documents_container" aria-expanded="false" aria-controls="documents_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#documents_container" aria-expanded="false" aria-controls="documents_container">
         <i class="fas fa-fw fa-robot fa-sm mr-1"></i> <?= l('admin_documents.menu') ?>
     </button>
 
@@ -32,7 +32,7 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#images_container" aria-expanded="false" aria-controls="images_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#images_container" aria-expanded="false" aria-controls="images_container">
         <i class="fas fa-fw fa-icons fa-sm mr-1"></i> <?= l('admin_images.menu') ?>
     </button>
 
@@ -54,7 +54,7 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#transcriptions_container" aria-expanded="false" aria-controls="transcriptions_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#transcriptions_container" aria-expanded="false" aria-controls="transcriptions_container">
         <i class="fas fa-fw fa-microphone-alt fa-sm mr-1"></i> <?= l('admin_transcriptions.menu') ?>
     </button>
 
@@ -65,7 +65,7 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#chats_container" aria-expanded="false" aria-controls="chats_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#chats_container" aria-expanded="false" aria-controls="chats_container">
         <i class="fas fa-fw fa-comments fa-sm mr-1"></i> <?= l('admin_chats.menu') ?>
     </button>
 
@@ -98,7 +98,7 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 my-4" type="button" data-toggle="collapse" data-target="#syntheses_container" aria-expanded="false" aria-controls="syntheses_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 my-4" type="button" data-toggle="collapse" data-target="#syntheses_container" aria-expanded="false" aria-controls="syntheses_container">
         <i class="fas fa-fw fa-voicemail fa-sm mr-1"></i> <?= l('admin_syntheses.menu') ?>
     </button>
 

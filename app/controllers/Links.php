@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -26,6 +26,19 @@ class Links extends Controller {
     public function index() {
 
         \Altum\Authentication::guard();
+
+        /* Check for the plan limit */
+        $total_links = [];
+        $total_links_result = database()->query("SELECT COUNT(`type`) AS `total`, `type` FROM `links` WHERE `user_id` = {$this->user->user_id} GROUP BY `type`");
+        while($row = $total_links_result->fetch_object()) {
+            if(isset($_GET['type']) && $_GET['type'] == $row->type) {
+                $total_links[$row->type] = $row->total;
+            }
+
+            if(!isset($_GET['type'])) {
+                $total_links[$row->type] = $row->total;
+            }
+        }
 
         /* Prepare the filtering system */
         $filters = (new \Altum\Filters(['is_enabled', 'type', 'project_id', 'domain_id', 'pixels_ids'], ['url', 'location_url'], ['link_id', 'last_datetime', 'datetime', 'clicks', 'url'], [], ['pixels_ids' => 'json_contains']));
@@ -92,9 +105,13 @@ class Links extends Controller {
         $this->add_view_content('links_content', $view->run($data));
 
         /* Prepare the view */
+        $data = [
+            'total_links'=> $total_links,
+        ];
+
         $view = new \Altum\View('links/index', (array) $this);
 
-        $this->add_view_content('content', $view->run());
+        $this->add_view_content('content', $view->run($data));
 
     }
 
@@ -105,8 +122,8 @@ class Links extends Controller {
         //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('links');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -127,12 +144,14 @@ class Links extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
                     /* Team checks */
                     if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.links')) {
-                        Alerts::add_info(l('global.info_message.team_no_access'));
+                        Alerts::add_error(l('global.info_message.team_no_access'));
                         redirect('links');
                     }
 
@@ -148,7 +167,7 @@ class Links extends Controller {
             }
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -162,15 +181,15 @@ class Links extends Controller {
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('update.links')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('links');
         }
 
-        if(empty($_POST)) {
-            redirect('links');
+        if (empty($_POST)) {
+            throw_404();
         }
 
-        $link_id = (int) query_clean($_POST['link_id']);
+        $link_id = (int) $_POST['link_id'];
 
         //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Alerts::add_error('Please create an account on the demo to test out this function.');
 
@@ -181,7 +200,7 @@ class Links extends Controller {
 
         /* Make sure the link id is created by the logged in user */
         if(!$link = db()->where('link_id', $link_id)->where('user_id', $this->user->user_id)->getOne('links', ['link_id'])) {
-            redirect('links');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

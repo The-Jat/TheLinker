@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div>
+<div id="pwa">
     <div <?= !\Altum\Plugin::is_active('pwa') ? 'data-toggle="tooltip" title="' . sprintf(l('admin_plugins.no_access'), \Altum\Plugin::get('pwa')->name ?? 'pwa') . '"' : null ?>>
         <div class="<?= !\Altum\Plugin::is_active('pwa') ? 'container-disabled' : null ?>">
             <div class="form-group custom-control custom-switch">
@@ -16,6 +16,18 @@
             <div class="form-group custom-control custom-switch">
                 <input id="display_install_bar_for_guests" name="display_install_bar_for_guests" type="checkbox" class="custom-control-input" <?= \Altum\Plugin::is_active('pwa') && settings()->pwa->display_install_bar_for_guests ? 'checked="checked"' : null?>>
                 <label class="custom-control-label" for="display_install_bar_for_guests"><?= l('admin_settings.pwa.display_install_bar_for_guests') ?></label>
+            </div>
+
+            <div class="form-group custom-control custom-switch">
+                <input id="is_fullscreen" name="is_fullscreen" type="checkbox" class="custom-control-input" <?= \Altum\Plugin::is_active('pwa') && settings()->pwa->is_fullscreen ? 'checked="checked"' : null?>>
+                <label class="custom-control-label" for="is_fullscreen"><?= l('admin_settings.pwa.is_fullscreen') ?></label>
+                <small class="form-text text-muted"><?= l('admin_settings.pwa.is_fullscreen_help') ?></small>
+            </div>
+
+            <div class="form-group custom-control custom-switch">
+                <input id="dynamic_splash_screen" name="dynamic_splash_screen" type="checkbox" class="custom-control-input" <?= \Altum\Plugin::is_active('pwa') && settings()->pwa->dynamic_splash_screen ? 'checked="checked"' : null?>>
+                <label class="custom-control-label" for="dynamic_splash_screen"><?= l('admin_settings.pwa.dynamic_splash_screen') ?></label>
+                <small class="form-text text-muted"><?= l('admin_settings.pwa.dynamic_splash_screen_help') ?></small>
             </div>
 
             <div class="form-group">
@@ -77,6 +89,13 @@
                 <small class="form-text text-muted"><?= l('admin_settings.pwa.theme_color_help') ?></small>
             </div>
 
+
+
+            <div class="form-group custom-control custom-switch">
+                <input id="display_install_bar_for_guests" name="display_install_bar_for_guests" type="checkbox" class="custom-control-input" <?= \Altum\Plugin::is_active('pwa') && settings()->pwa->display_install_bar_for_guests ? 'checked="checked"' : null?>>
+                <label class="custom-control-label" for="display_install_bar_for_guests"><?= l('admin_settings.pwa.display_install_bar_for_guests') ?></label>
+            </div>
+
             <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), get_max_upload()) ?>">
                 <label for="app_icon"><?= l('admin_settings.pwa.app_icon') ?></label>
                 <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'app_icon', 'file_key' => 'app_icon', 'already_existing_image' => settings()->pwa->app_icon]) ?>
@@ -91,11 +110,11 @@
                 <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('app_icon')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
             </div>
 
-            <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#mobile_screenshots_container" aria-expanded="false" aria-controls="mobile_screenshots_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#mobile_screenshots_container" aria-expanded="false" aria-controls="mobile_screenshots_container">
                 <i class="fas fa-fw fa-mobile fa-sm mr-1"></i> <?= l('admin_settings.pwa.mobile_screenshots') ?>
             </button>
 
-            <div class="collapse" id="mobile_screenshots_container">
+            <div class="collapse" data-parent="#pwa" id="mobile_screenshots_container">
                 <div class="alert alert-info"><?= l('admin_settings.pwa.mobile_screenshots_help') ?></div>
                 <div class="alert alert-info"><?= l('admin_settings.pwa.mobile_screenshots_help2') ?></div>
 
@@ -108,11 +127,11 @@
                 <?php endforeach ?>
             </div>
 
-            <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#desktop_screenshots_container" aria-expanded="false" aria-controls="desktop_screenshots_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#desktop_screenshots_container" aria-expanded="false" aria-controls="desktop_screenshots_container">
                 <i class="fas fa-fw fa-desktop fa-sm mr-1"></i> <?= l('admin_settings.pwa.desktop_screenshots') ?>
             </button>
 
-            <div class="collapse" id="desktop_screenshots_container">
+            <div class="collapse" data-parent="#pwa" id="desktop_screenshots_container">
                 <div class="alert alert-info"><?= l('admin_settings.pwa.desktop_screenshots_help') ?></div>
                 <div class="alert alert-info"><?= l('admin_settings.pwa.desktop_screenshots_help2') ?></div>
 
@@ -125,11 +144,11 @@
                 <?php endforeach ?>
             </div>
 
-            <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#shortcuts_container" aria-expanded="false" aria-controls="shortcuts_container">
+            <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#shortcuts_container" aria-expanded="false" aria-controls="shortcuts_container">
                 <i class="fas fa-fw fa-wand-sparkles fa-sm mr-1"></i> <?= l('admin_settings.pwa.shortcuts') ?>
             </button>
 
-            <div class="collapse" id="shortcuts_container">
+            <div class="collapse" data-parent="#pwa" id="shortcuts_container">
                 <?php foreach([1,2,3] as $key): ?>
                     <div class="form-group">
                         <label for="<?= 'shortcut_name_' . $key ?>"><?= sprintf(l('admin_settings.pwa.shortcut_name_x'), $key) ?></label>

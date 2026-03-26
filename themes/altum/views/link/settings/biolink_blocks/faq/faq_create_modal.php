@@ -28,7 +28,7 @@
                     </div>
 
                     <p class="small text-muted"><i class="fas fa-fw fa-sm fa-circle-info mr-1"></i> <?= l('link.create_info') ?></p>
-                    
+
                     <div class="text-center mt-4">
                         <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('link.biolink.create_block') ?></button>
                     </div>
@@ -39,9 +39,17 @@
 </div>
 
 <template id="template_faq_item">
-    <div class="mb-4">
+    <div class="mb-4 p-3 bg-gray-50 rounded">
         <div class="form-group">
-            <label for=""><i class="fas fa-fw fa-signature fa-sm text-muted mr-1"></i> <?= l('biolink_faq.title') ?></label>
+            <div class="d-flex justify-content-between">
+                <label for=""><i class="fas fa-fw fa-signature fa-sm text-muted mr-1"></i> <?= l('biolink_faq.title') ?></label>
+
+                <div>
+                    <span class="custom-row-side-controller-grab drag" data-toggle="tooltip" title="<?= l('global.drag_and_drop') ?>">
+                        <i class="fas fa-fw fa-sm fa-bars text-muted"></i>
+                    </span>
+                </div>
+            </div>
             <input id="" type="text" name="item_title[]" class="form-control" value="" required="required" />
         </div>
 
@@ -67,7 +75,7 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
+
     /* FAQ Script */
     'use strict';
 

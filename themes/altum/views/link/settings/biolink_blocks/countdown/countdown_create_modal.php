@@ -34,16 +34,8 @@
                         />
                     </div>
 
-                    <div class="form-group">
-                        <label for="countdown_theme"><i class="fas fa-fw fa-sun fa-sm text-muted mr-1"></i> <?= l('biolink_countdown.theme') ?></label>
-                        <select id="countdown_theme" name="theme" class="custom-select">
-                            <option value="light"><?= l('global.theme_style_light') ?></option>
-                            <option value="dark"><?= l('global.theme_style_dark') ?></option>
-                        </select>
-                    </div>
-
                     <p class="small text-muted"><i class="fas fa-fw fa-sm fa-circle-info mr-1"></i> <?= l('link.create_info') ?></p>
-                    
+
                     <div class="text-center mt-4">
                         <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('link.biolink.create_block') ?></button>
                     </div>

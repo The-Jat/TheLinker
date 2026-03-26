@@ -5,15 +5,15 @@
 
     <div class="d-print-none">
         <?php if(settings()->main->breadcrumbs_is_enabled): ?>
-<nav aria-label="breadcrumb">
-            <ol class="custom-breadcrumbs small">
-                <li>
-                    <a href="<?= url('payment-processors') ?>"><?= l('payment_processors.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
-                </li>
-                <li class="active" aria-current="page"><?= l('payment_processor_create.breadcrumb') ?></li>
-            </ol>
-        </nav>
-<?php endif ?>
+            <nav aria-label="breadcrumb">
+                <ol class="custom-breadcrumbs small">
+                    <li>
+                        <a href="<?= url('payment-processors') ?>"><?= l('payment_processors.breadcrumb') ?></a><i class="fas fa-fw fa-angle-right"></i>
+                    </li>
+                    <li class="active" aria-current="page"><?= l('payment_processor_create.breadcrumb') ?></li>
+                </ol>
+            </nav>
+        <?php endif ?>
 
         <div class="d-flex align-items-center mb-4">
             <h1 class="h4 text-truncate mb-0 mr-2"><i class="fas fa-fw fa-xs fa-credit-card mr-1"></i> <?= l('payment_processor_create.header') ?></h1>
@@ -34,7 +34,7 @@
                 <div class="form-group">
                     <label for="processor"><i class="fas fa-fw fa-credit-card fa-sm text-muted mr-1"></i> <?= l('payment_processors.processor') ?></label>
                     <select id="processor" name="processor" class="custom-select <?= \Altum\Alerts::has_field_errors('processor') ? 'is-invalid' : null ?>">
-                        <?php foreach(['paypal', 'stripe', 'crypto_com', 'razorpay', 'paystack', 'mollie'] as $processor): ?>
+                        <?php foreach(include \Altum\Plugin::get('payment-blocks')->path . 'payment_blocks_payment_processors.php' as $processor): ?>
                             <option value="<?= $processor ?>" <?= $data->values['processor'] == $processor ? 'selected="selected"' : null ?>><?= l('pay.custom_plan.' . $processor) ?></option>
                         <?php endforeach ?>
                     </select>

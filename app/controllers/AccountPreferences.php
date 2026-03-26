@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -119,6 +119,9 @@ class AccountPreferences extends Controller {
                     'preferences' => $preferences,
                 ]);
 
+                /* Log the action */
+                \Altum\Logger::users($this->user->user_id, 'account_preferences.updated');
+
                 /* Set a nice success message */
                 Alerts::add_success(l('account_preferences.success_message'));
 
@@ -133,7 +136,7 @@ class AccountPreferences extends Controller {
                         'name' => $this->user->name,
                         'source' => 'account_preferences',
                         'datetime' => get_date(),
-                    ]);
+                    ], signature: true);
                 }
 
                 redirect('account-preferences');

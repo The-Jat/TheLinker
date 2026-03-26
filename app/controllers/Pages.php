@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -27,7 +27,7 @@ class Pages extends Controller {
     public function index() {
 
         if(!settings()->content->pages_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Check if the category url is set */
@@ -45,7 +45,7 @@ class Pages extends Controller {
 
             /* Redirect to pages if the category is not found */
             if(!$pages_category) {
-                redirect('not-found');
+                throw_404();
             }
 
             /* Get the pages for this category */

@@ -208,6 +208,11 @@ code {
 /* Tooltip fix */
 .tooltip { top: 0; }
 
+/* Stretched link fix - otherwise leaks on top of dropdown menu */
+.stretched-link::after {
+    z-index: 0 !important;
+}
+
 /* Custom switches */
 .custom-control-label::before {
     border: 0;

@@ -1,0 +1,46 @@
+services:
+  app:
+    build: .
+    container_name: app
+    ports:
+      - '80:80'
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile.cron
+    container_name: cron
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - app
+    command: >
+      sh -c "
+        cd /tmp;
+        while true; do
+          CRON_FILE=/var/www/html/uploads/main/cron.txt
+          if [ -f \"$$CRON_FILE\" ]; then
+            while IFS= read -r line || [ -n \"$$line\" ]; do
+              [ -z \"$$line\" ] && continue
+              sh -c \"$$line\" > /dev/null 2>&1
+            done < \"$$CRON_FILE\"
+          fi
+          sleep 60
+        done
+      "
+
+  db:
+    image: mariadb:10.11
+    container_name: db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: app
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:

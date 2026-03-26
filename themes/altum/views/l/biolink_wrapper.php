@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 <!DOCTYPE html>
-<html lang="<?= \Altum\Language::$default_code ?>" class="link-html" dir="<?= l('direction') ?>">
+<html lang="<?= $this->link->settings->language_code ?? \Altum\Language::$default_code ?>" class="link-html" dir="<?= l('direction') ?>">
     <head>
         <title><?= \Altum\Title::get() ?></title>
         <base href="<?= SITE_URL; ?>">
@@ -15,6 +15,14 @@
                 <link rel="manifest" href="<?= SITE_URL . UPLOADS_URL_PATH . \Altum\Uploads::get_path('pwa') . 'manifest.json' ?>" />
                 <meta name="theme-color" content="<?= settings()->pwa->theme_color ?>"/>
             <?php endif ?>
+
+			<?php if(settings()->pwa->is_fullscreen ?? true): ?>
+                <meta name="apple-mobile-web-app-capable" content="yes">
+                <meta name="mobile-web-app-capable" content="yes">
+                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+			<?php endif ?>
+
+			<?= pwa_generate_dynamic_splash_screen_links() ?>
         <?php endif ?>
 
         <?php if(\Altum\Meta::$description): ?>
@@ -40,13 +48,13 @@
 
         <?php if(!empty($this->link->settings->favicon)): ?>
             <link href="<?= \Altum\Uploads::get_full_url('favicons') . $this->link->settings->favicon ?>" rel="icon" />
-        <?php elseif(!empty(settings()->main->favicon)): ?>
-            <link href="<?= settings()->main->favicon_full_url ?>" rel="icon" />
+        <?php else: ?>
+            <link href="<?= !empty(settings()->main->favicon) ? settings()->main->favicon_full_url : 'data:,' ?>" rel="icon" />
         <?php endif ?>
 
         <?php \Altum\ThemeStyle::$theme = 'light' ?>
         <link href="<?= ASSETS_FULL_URL . 'css/' . \Altum\ThemeStyle::get_file() . '?v=' . PRODUCT_CODE ?>" id="css_theme_style" rel="stylesheet" media="screen,print">
-        <?php foreach(['custom.css', 'link-custom.css', 'animate.min.css'] as $file): ?>
+        <?php foreach(['custom.' . (DEBUG ? null : 'min.') . 'css', 'link-custom.' . (DEBUG ? null : 'min.') . 'css', 'animate.min.css'] as $file): ?>
             <link href="<?= ASSETS_FULL_URL . 'css/' . $file . '?v=' . PRODUCT_CODE ?>" rel="stylesheet" media="screen,print">
         <?php endforeach ?>
 
@@ -118,7 +126,7 @@
 
     <?php require THEME_PATH . 'views/partials/js_global_variables.php' ?>
 
-    <?php foreach(['libraries/jquery.min.js', 'libraries/popper.min.js', 'libraries/bootstrap.min.js', 'custom.js'] as $file): ?>
+    <?php foreach(['libraries/jquery.min.js', 'libraries/popper.min.js', 'libraries/bootstrap.min.js', 'custom.' . (DEBUG ? null : 'min.') . 'js'] as $file): ?>
         <script src="<?= ASSETS_FULL_URL ?>js/<?= $file ?>?v=<?= PRODUCT_CODE ?>"></script>
     <?php endforeach ?>
 

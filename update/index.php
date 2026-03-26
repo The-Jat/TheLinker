@@ -1,10 +1,10 @@
 <?php
 
-define('ROOT', realpath(__DIR__ . '/..') . '/');
-require_once ROOT . 'vendor/autoload.php';
-require_once ROOT . 'app/includes/product.php';
-require_once ROOT . 'config.php';
-require_once ROOT . 'update/info.php';
+define('ROOT_PATH', realpath(__DIR__ . '/..') . '/');
+require_once ROOT_PATH . 'vendor/autoload.php';
+require_once ROOT_PATH . 'app/includes/product.php';
+require_once ROOT_PATH . 'config.php';
+require_once ROOT_PATH . 'update/info.php';
 
 $database = new \mysqli(
     DATABASE_SERVER,

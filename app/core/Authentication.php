@@ -58,11 +58,11 @@ class Authentication {
 
         /* Check the Session */
         if(
-            isset($_SESSION['user_id'])
-            && !empty($_SESSION['user_id'])
-            && $user = (new User())->get_user_by_user_id($_SESSION['user_id'])
+            session_has('user_id')
+            && !empty(session_get('user_id'))
+            && $user = (new User())->get_user_by_user_id(session_get('user_id'))
         ) {
-            if(isset($_SESSION['user_password_hash']) && $_SESSION['user_password_hash'] == md5($user->password ?? '')) {
+            if(session_has('user_password_hash') && session_get('user_password_hash') == md5($user->password ?? '')) {
                 self::$is_logged_in = true;
                 self::$user_id = $user->user_id;
 
@@ -86,9 +86,9 @@ class Authentication {
     }
 
 
-    public static function guard($permission = 'user') {
+    public static function guard($required_permission = 'user') {
 
-        switch ($permission) {
+        switch ($required_permission) {
             case 'guest':
 
                 if(self::check()) {

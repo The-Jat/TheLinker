@@ -3,12 +3,23 @@
 <div class="container my-5 d-flex justify-content-center">
     <div class="col-lg-10">
         <div class="d-print-none d-flex justify-content-between mb-5">
-            <div></div>
+            <div>
+                <?php if(count($data->payment->refunds)): ?>
+                    <a href="<?= url('credit-notes/' . $data->payment->id) ?>" class="btn btn-outline-primary"><i class="fas fa-fw fa-sm fa-clipboard mr-1"></i> <?= l('credit_notes.credit_notes') ?></a>
+                <?php endif ?>
+            </div>
             <button type="button" class="btn btn-primary" onclick="window.print();return false;"><i class="fas fa-fw fa-sm fa-print mr-1"></i> <?= l('invoice.print') ?></button>
         </div>
 
         <div class="card bg-gray-50 border-0">
-            <div class="card-body p-5">
+            <div class="card-body position-relative p-5">
+                <?php if($data->payment->status == 'cancelled'): ?>
+                <div class="position-absolute d-flex align-items-center justify-content-center" style="z-index: 1000; inset: 0;">
+                    <span class="text-danger text-uppercase" style="font-size: 6rem; opacity: .75; transform: rotate(-45deg); font-weight: 600;">
+                        <?= l('account_payments.status.cancelled') ?>
+                    </span>
+                </div>
+                <?php endif ?>
 
                 <div class="row">
                     <div class="col-12 col-md-7 mb-4 mb-md-0">

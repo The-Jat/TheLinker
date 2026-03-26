@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -17,12 +17,17 @@
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+use Altum\Date;
 
 defined('ALTUMCODE') || die();
 
 class AdminCodeCreate extends Controller {
 
     public function index() {
+
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            redirect('admin');
+        }
 
         set_time_limit(0);
 
@@ -41,6 +46,14 @@ class AdminCodeCreate extends Controller {
             $_POST['amount'] = (int) $_POST['amount'];
             $_POST['prefix'] = mb_strtoupper(input_clean($_POST['prefix']));
 
+			$_POST['is_scheduled'] = (int) isset($_POST['is_scheduled']);
+			if($_POST['is_scheduled'] && !empty($_POST['start_datetime']) && !empty($_POST['end_datetime']) && Date::validate($_POST['start_datetime'], 'Y-m-d H:i:s') && Date::validate($_POST['end_datetime'], 'Y-m-d H:i:s')) {
+				$_POST['start_datetime'] = (new \DateTime($_POST['start_datetime'], new \DateTimeZone($this->user->timezone)))->setTimezone(new \DateTimeZone(\Altum\Date::$default_timezone))->format('Y-m-d H:i:s');
+				$_POST['end_datetime'] = (new \DateTime($_POST['end_datetime'], new \DateTimeZone($this->user->timezone)))->setTimezone(new \DateTimeZone(\Altum\Date::$default_timezone))->format('Y-m-d H:i:s');
+			} else {
+				$_POST['start_datetime'] = $_POST['end_datetime'] = null;
+			}
+
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
             if(!\Altum\Csrf::check()) {
@@ -54,8 +67,6 @@ class AdminCodeCreate extends Controller {
 
                 /* Bulk generator */
                 if($_POST['is_bulk']) {
-                    $start_time = microtime(true);
-
                     $codes_batch = [];
 
                     for($i = 0; $i < $_POST['amount']; $i++) {
@@ -68,7 +79,9 @@ class AdminCodeCreate extends Controller {
                             'code' => $code,
                             'discount' => $_POST['discount'],
                             'quantity' => $_POST['quantity'],
-                            'plans_ids' => $plans_ids,
+							'plans_ids' => $plans_ids,
+							'start_datetime' => $_POST['start_datetime'],
+							'end_datetime' => $_POST['end_datetime'],
                             'datetime' => $datetime,
                         ];
                     }
@@ -88,6 +101,8 @@ class AdminCodeCreate extends Controller {
                         'discount' => $_POST['discount'],
                         'quantity' => $_POST['quantity'],
                         'plans_ids' => $plans_ids,
+						'start_datetime' => $_POST['start_datetime'],
+						'end_datetime' => $_POST['end_datetime'],
                         'datetime' => $datetime,
                     ]);
                 }
@@ -101,7 +116,9 @@ class AdminCodeCreate extends Controller {
 
         $values = [
             'type' => $_POST['type'] ?? 'discount',
-            'plans_ids' => $_POST['plans_ids'] ?? array_keys($plans),
+			'plans_ids' => $_POST['plans_ids'] ?? array_keys($plans),
+			'start_datetime' => $_POST['start_datetime'] ?? null,
+			'end_datetime' => $_POST['end_datetime'] ?? null,
         ];
 
         /* Main View */

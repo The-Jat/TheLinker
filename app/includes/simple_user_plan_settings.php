@@ -26,6 +26,7 @@ if(settings()->links->biolinks_is_enabled) {
     $features = array_merge($features, [
         'custom_branding',
         'dofollow_is_enabled',
+		'branded_button_is_enabled',
         'leap_link',
         'seo',
         'fonts',

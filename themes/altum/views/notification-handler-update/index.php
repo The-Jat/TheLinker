@@ -166,7 +166,7 @@
                     <label class="custom-control-label" for="is_enabled"><?= l('notification_handlers.is_enabled') ?></label>
                 </div>
 
-                <button type="submit" name="test" class="btn btn-sm btn-block btn-outline-primary" <?= ($_SESSION['notification_handler_test_' . ($_POST['type'] ?? '')] ?? 0) < 10 ? null : 'disabled="disabled"' ?>><?= l('notification_handlers.test') ?></button>
+                <button type="submit" name="test" class="btn btn-sm btn-block btn-outline-primary" <?= (session_get('notification_handler_test_' . ($_POST['type'] ?? '')) ?? 0) < 10 ? null : 'disabled="disabled"' ?>><?= l('notification_handlers.test') ?></button>
 
                 <button type="submit" name="submit" class="btn btn-block btn-primary mt-3"><?= l('global.update') ?></button>
             </form>
@@ -178,7 +178,7 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
+
 type_handler('select[name="type"]', 'data-type');
     document.querySelector('select[name="type"]') && document.querySelectorAll('select[name="type"]').forEach(element => element.addEventListener('change', () => { type_handler('select[name="type"]', 'data-type'); }));
 </script>

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -48,6 +48,7 @@ class AdminPlanUpdate extends Controller {
 
                 /* Parse the settings of the plan */
                 $plan->settings = json_decode($plan->settings ?? '');
+                $plan->additional_settings = json_decode($plan->additional_settings ?? '');
                 $plan->translations = json_decode($plan->translations ?? '');
                 $plan->prices = json_decode($plan->prices);
 
@@ -63,9 +64,18 @@ class AdminPlanUpdate extends Controller {
 
         }
 
+        /* Additional data */
         $additional_domains = db()->where('is_enabled', 1)->where('type', 1)->get('domains');
         $biolinks_templates = (new \Altum\Models\BiolinksTemplates())->get_biolinks_templates();
         $biolinks_themes = (new \Altum\Models\BiolinksThemes())->get_biolinks_themes();
+
+        /* Get all available plans */
+        $plans = (new \Altum\Models\Plan())->get_plans();
+
+        if(in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            /* Get available codes */
+            $codes = db()->where('type', 'discount')->get('codes');
+        }
 
         if(!empty($_POST)) {
 
@@ -82,10 +92,21 @@ class AdminPlanUpdate extends Controller {
                 $enabled_biolink_blocks[$key] = isset($_POST['enabled_biolink_blocks']) && in_array($key, $_POST['enabled_biolink_blocks']);
             }
 
+            /* Initiate purifier */
+            $purifier_config = \HTMLPurifier_Config::createDefault();
+        $purifier_config->set('Cache.SerializerPath', UPLOADS_PATH . 'cache');
+            $purifier_config->set('HTML.Allowed', 'span[style]');
+            $purifier_config->set('CSS.AllowedProperties', 'color,font-weight,font-style,text-decoration,font-family,background-color,text-transform,margin,padding,text-align');
+            $purifier = new \HTMLPurifier($purifier_config);
+
             /* Translations */
             foreach($_POST['translations'] as $language_name => $array) {
                 foreach($array as $key => $value) {
-                    $_POST['translations'][$language_name][$key] = input_clean($value);
+                    if($key == 'description') {
+                        $_POST['translations'][$language_name][$key] = $purifier->purify(mb_substr($value, 0, 512));
+                    } else {
+                        $_POST['translations'][$language_name][$key] = input_clean($value);
+                    }
                 }
                 if(!array_key_exists($language_name, \Altum\Language::$active_languages)) {
                     unset($_POST['translations'][$language_name]);
@@ -94,6 +115,8 @@ class AdminPlanUpdate extends Controller {
 
             /* Filter variables */
             $_POST['color'] = !verify_hex_color($_POST['color']) ? null : $_POST['color'];
+            $_POST['suggested_plan_id'] = !empty($_POST['suggested_plan_id']) && array_key_exists($_POST['suggested_plan_id'], $plans) ? (int) $_POST['suggested_plan_id'] : null;
+            $_POST['suggested_plan_code_id'] = !empty($_POST['suggested_plan_code_id']) ? (int) $_POST['suggested_plan_code_id'] : null;
 
             $_POST['settings'] = [
                 'url_minimum_characters' => (int) $_POST['url_minimum_characters'],
@@ -125,6 +148,7 @@ class AdminPlanUpdate extends Controller {
                 'leap_link' => isset($_POST['leap_link']),
                 'api_is_enabled' => isset($_POST['api_is_enabled']),
                 'dofollow_is_enabled' => isset($_POST['dofollow_is_enabled']),
+				'branded_button_is_enabled' => isset($_POST['branded_button_is_enabled']),
                 'custom_pwa_is_enabled' => isset($_POST['custom_pwa_is_enabled']),
                 'biolink_blocks_limit' => (int) $_POST['biolink_blocks_limit'],
                 'projects_limit' => (int) $_POST['projects_limit'],
@@ -179,19 +203,31 @@ class AdminPlanUpdate extends Controller {
 
             $_POST['settings']['tag'] = input_clean($_POST['tag'], 64);
 
+            /* Prepare more settings */
+            $_POST['tag_background_color'] = !verify_hex_color($_POST['tag_background_color']) ? null : $_POST['tag_background_color'];
+            $_POST['tag_text_color'] = !verify_hex_color($_POST['tag_text_color']) ? null : $_POST['tag_text_color'];
+
+            /* Additional settings */
+            $additional_settings = [
+                'tag_background_color' => $_POST['tag_background_color'],
+                'tag_text_color' => $_POST['tag_text_color'],
+                'suggested_plan_id' => $_POST['suggested_plan_id'],
+                'suggested_plan_code_id' => $_POST['suggested_plan_code_id'],
+            ];
+
             switch($plan_id) {
 
                 case 'free':
 
                     $_POST['name'] = input_clean($_POST['name'], 64);
-                    $_POST['description'] = input_clean($_POST['description'], 256);
+                    $_POST['description'] = $purifier->purify(mb_substr($_POST['description'], 0, 512));
                     $_POST['price'] = input_clean($_POST['price']);
                     $_POST['status'] = (int) $_POST['status'];
 
                     /* Check for any errors */
                     $required_fields = ['name', 'price'];
                     foreach($required_fields as $field) {
-                        if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                        if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                             Alerts::add_field_error($field, l('global.error_message.empty_field'));
                         }
                     }
@@ -215,7 +251,8 @@ class AdminPlanUpdate extends Controller {
                         'price' => $_POST['price'],
                         'color' => $_POST['color'],
                         'status' => $_POST['status'],
-                        'settings' => $_POST['settings']
+                        'settings' => $_POST['settings'],
+                        'additional_settings' => $additional_settings,
                     ]);
 
                     break;
@@ -223,7 +260,7 @@ class AdminPlanUpdate extends Controller {
                 case 'custom':
 
                     $_POST['name'] = input_clean($_POST['name']);
-                    $_POST['description'] = input_clean($_POST['description']);
+                    $_POST['description'] = $purifier->purify(mb_substr($_POST['description'], 0, 256));
                     $_POST['price'] = input_clean($_POST['price']);
                     $_POST['custom_button_url'] = input_clean($_POST['custom_button_url']);
                     $_POST['status'] = (int) $_POST['status'];
@@ -231,7 +268,7 @@ class AdminPlanUpdate extends Controller {
                     /* Check for any errors */
                     $required_fields = ['name', 'price', 'custom_button_url'];
                     foreach($required_fields as $field) {
-                        if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                        if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                             Alerts::add_field_error($field, l('global.error_message.empty_field'));
                         }
                     }
@@ -246,7 +283,8 @@ class AdminPlanUpdate extends Controller {
                         'custom_button_url' => $_POST['custom_button_url'],
                         'color' => $_POST['color'],
                         'status' => $_POST['status'],
-                        'settings' => $_POST['settings']
+                        'settings' => $_POST['settings'],
+                        'additional_settings' => $additional_settings,
                     ]);
 
                     break;
@@ -254,7 +292,7 @@ class AdminPlanUpdate extends Controller {
                 default:
 
                     $_POST['name'] = input_clean($_POST['name']);
-                    $_POST['description'] = input_clean($_POST['description']);
+                    $_POST['description'] = $purifier->purify(mb_substr($_POST['description'], 0, 256));
                     $_POST['trial_days'] = (int) $_POST['trial_days'];
                     $_POST['status'] = (int) $_POST['status'];
                     $_POST['order'] = (int) $_POST['order'];
@@ -262,28 +300,28 @@ class AdminPlanUpdate extends Controller {
                     $_POST['settings']['custom_redirect_url'] = get_url($_POST['custom_redirect_url']);
 
                     /* Prices */
-                    $prices = [
-                        'monthly' => [],
-                        'quarterly' => [],
-                        'biannual' => [],
-                        'annual' => [],
-                        'lifetime' => [],
-                    ];
+            $prices = [
+                'monthly' => [],
+                'quarterly' => [],
+                'biannual' => [],
+                'annual' => [],
+                'lifetime' => [],
+            ];
 
-                    foreach((array) settings()->payment->currencies as $currency => $currency_data) {
-                        $prices['monthly'][$currency] = (float) $_POST['monthly_price'][$currency];
-                        $prices['quarterly'][$currency] = (float) $_POST['quarterly_price'][$currency];
-                        $prices['biannual'][$currency] = (float) $_POST['biannual_price'][$currency];
-                        $prices['annual'][$currency] = (float) $_POST['annual_price'][$currency];
-                        $prices['lifetime'][$currency] = (float) $_POST['lifetime_price'][$currency];
-                    }
+            foreach((array) settings()->payment->currencies as $currency => $currency_data) {
+                $prices['monthly'][$currency] = (float) $_POST['monthly_price'][$currency];
+                $prices['quarterly'][$currency] = (float) $_POST['quarterly_price'][$currency];
+                $prices['biannual'][$currency] = (float) $_POST['biannual_price'][$currency];
+                $prices['annual'][$currency] = (float) $_POST['annual_price'][$currency];
+                $prices['lifetime'][$currency] = (float) $_POST['lifetime_price'][$currency];
+            }
 
                     $prices = json_encode($prices);
 
                     /* Check for any errors */
                     $required_fields = ['name'];
                     foreach($required_fields as $field) {
-                        if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                        if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                             Alerts::add_field_error($field, l('global.error_message.empty_field'));
                         }
                     }
@@ -338,6 +376,7 @@ class AdminPlanUpdate extends Controller {
                             'color' => $_POST['color'],
                             'status' => $_POST['status'],
                             'order' => $_POST['order'],
+                            'additional_settings' => json_encode($additional_settings),
                         ]);
 
                         /* Clear the cache */
@@ -369,10 +408,12 @@ class AdminPlanUpdate extends Controller {
 
         }
 
-        /* Main View */
+       /* Main View */
         $data = [
             'plan_id' => $plan_id,
             'plan' => $plan,
+            'plans' => $plans,
+            'codes' => $codes ?? null,
             'taxes' => $taxes ?? null,
             'additional_domains' => $additional_domains,
             'biolinks_templates' => $biolinks_templates,

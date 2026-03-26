@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -27,12 +27,12 @@ class TranscriptionUpdate extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->transcriptions_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('update.transcriptions')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('dashboard');
         }
 
@@ -40,7 +40,7 @@ class TranscriptionUpdate extends Controller {
 
         /* Get transcription details */
         if(!$transcription = db()->where('transcription_id', $transcription_id)->where('user_id', $this->user->user_id)->getOne('transcriptions')) {
-            redirect();
+            throw_404();
         }
 
         $transcription->settings = json_decode($transcription->settings ?? '');
@@ -72,7 +72,7 @@ class TranscriptionUpdate extends Controller {
             /* Check for any errors */
             $required_fields = ['name'];
             foreach($required_fields as $field) {
-                if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+                if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                     Alerts::add_field_error($field, l('global.error_message.empty_field'));
                 }
             }

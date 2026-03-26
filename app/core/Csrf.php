@@ -20,37 +20,32 @@ defined('ALTUMCODE') || die();
 
 class Csrf {
 
-    /* CSRF Protection for ajax requests */
     public static function set($name = 'token', $regenerate = false) {
+        $existing_token = session_get($name, null);
+        $new_token = bin2hex(random_bytes(32));
 
-        $token =  md5(time() . rand());
-
-        if(!isset($_SESSION[$name])) {
-            $_SESSION[$name] = $token;
-        } else {
-
-            if($regenerate) $_SESSION[$name] = $token;
-
+        if (is_null($existing_token) || $regenerate) {
+            session_set($name, $new_token);
+			return $new_token;
         }
 
+		return $existing_token;
     }
 
     public static function get($name = 'token') {
-
-        return $_SESSION[$name] ?? false;
-
+        return session_get($name, null) ?? self::set($name);
     }
 
     public static function get_url_query($name = 'token') {
-
-        return '&token=' . self::get($name);
-
+        return '&' . $name . '=' . self::get($name);
     }
 
     public static function check($name = 'token') {
+        $token = self::get($name);
+
         return (
-            (isset($_GET[$name]) && $_GET[$name] == self::get($name)) ||
-            (isset($_POST[$name]) && $_POST[$name] == self::get($name))
+            (isset($_GET[$name]) && hash_equals($token, $_GET[$name])) ||
+            (isset($_POST[$name]) && hash_equals($token, $_POST[$name]))
         );
     }
 

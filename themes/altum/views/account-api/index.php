@@ -31,7 +31,12 @@
                     <div class="form-group <?= $this->user->plan_settings->api_is_enabled ? null : 'container-disabled' ?>">
                         <label for="api_key"><i class="fas fa-fw fa-sm fa-code text-muted mr-1"></i> <?= l('account_api.api_key') ?></label>
                         <div class="input-group">
+                            <?php
+                            //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) $this->user->api_key = 'hidden on demo';
+                            ?>
+
                             <input type="text" id="api_key" name="api_key" value="<?= $this->user->api_key ?>" class="form-control" onclick="this.select();" readonly="readonly" />
+
                             <div class="input-group-append">
                                 <button
                                         id="url_copy"
@@ -47,11 +52,23 @@
                                     <i class="fas fa-fw fa-sm fa-copy"></i>
                                 </button>
                             </div>
+
+                            <div class="input-group-append">
+                                <button
+                                        type="button"
+                                        class="btn btn-light border"
+                                        data-tooltip
+                                        title="<?= l('account_api.button') ?>"
+                                        <?= $this->user->plan_settings->api_is_enabled ? 'data-target="#api_key_regenerate_modal" data-toggle="modal"' : get_plan_feature_disabled_info() ?>
+                                >
+                                    <i class="fas fa-fw fa-sm fa-refresh"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <button type="submit" name="submit" class="btn btn-block btn-outline-secondary" <?= $this->user->plan_settings->api_is_enabled ? null : get_plan_feature_disabled_info() ?>><?= l('account_api.button') ?></button>
+                <?php \Altum\Event::add_content(include_view(THEME_PATH . 'views/account-api/api_key_regenerate_modal.php'), 'modals', 'api_key_regenerate_modal'); ?>
             </form>
 
         </div>
@@ -270,6 +287,7 @@
             </div>
         <?php endif ?>
 
+        <?php if(settings()->payment->is_enabled): ?>
         <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
             <div class="card d-flex flex-row h-100 overflow-hidden">
                 <div class="border-right border-gray-100 px-3 d-flex flex-column justify-content-center">
@@ -283,6 +301,7 @@
                 </div>
             </div>
         </div>
+        <?php endif ?>
 
         <div class="col-12 col-sm-6 col-xl-4 p-3 position-relative">
             <div class="card d-flex flex-row h-100 overflow-hidden">

@@ -121,7 +121,7 @@
 
         <div>
             <div class="dropdown">
-                <button type="button" class="btn btn-light dropdown-toggle-simple <?= count($data->links) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
+                <button type="button" class="btn btn-light dropdown-toggle-simple <?= !empty($data->links) ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip title="<?= l('global.export') ?>" data-tooltip-hide-on-click>
                     <i class="fas fa-fw fa-sm fa-download"></i>
                 </button>
 
@@ -132,7 +132,7 @@
                     <a href="<?= url('links?' . $data->filters->get_get() . '&export=json') ?>" target="_blank" class="dropdown-item <?= $this->user->plan_settings->export->json ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->json ? null : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-code mr-2"></i> <?= sprintf(l('global.export_to'), 'JSON') ?>
                     </a>
-                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : 'disabled pointer-events-all' : get_plan_feature_disabled_info() ?>>
+                    <a href="#" class="dropdown-item <?= $this->user->plan_settings->export->pdf ? null : 'disabled pointer-events-all' ?>" <?= $this->user->plan_settings->export->pdf ? 'onclick="event.preventDefault(); window.print();"' : get_plan_feature_disabled_info() ?>>
                         <i class="fas fa-fw fa-sm fa-file-pdf mr-2"></i> <?= sprintf(l('global.export_to'), 'PDF') ?>
                     </a>
                 </div>
@@ -141,7 +141,7 @@
 
         <div>
             <div class="dropdown">
-                <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= count($data->links) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
+                <button type="button" class="btn <?= $data->filters->has_applied_filters ? 'btn-dark' : 'btn-light' ?> filters-button dropdown-toggle-simple <?= !empty($data->links) || $data->filters->has_applied_filters ? null : 'disabled' ?>" data-toggle="dropdown" data-boundary="viewport" data-tooltip data-html="true" title="<?= l('global.filters.tooltip') ?>" data-tooltip-hide-on-click>
                     <i class="fas fa-fw fa-sm fa-filter"></i>
                 </button>
 
@@ -295,7 +295,7 @@
     </div>
 </div>
 
-<?php if(count($data->links)): ?>
+<?php if (!empty($data->links)): ?>
 
     <form id="table" action="<?= SITE_URL . 'links/bulk' ?>" method="post" role="form">
         <input type="hidden" name="token" value="<?= \Altum\Csrf::get() ?>" />
@@ -333,13 +333,17 @@
                         <td class="text-nowrap">
                             <div class="d-flex align-items-center">
 
+                                <?php if($row->type == 'biolink' && $row->settings->favicon): ?>
+                                    <img src="<?= \Altum\Uploads::get_full_url('favicons') . $row->settings->favicon ?>" class="link-type-icon justify-content-center mr-3 d-flex align-items-center rounded-pill" data-toggle="tooltip" title="<?= l('link.' . $row->type . '.name') ?>" loading="lazy" />
+                                <?php else: ?>
                                 <div class="link-type-icon justify-content-center mr-3 d-flex align-items-center rounded-pill" style="background-color: <?= $data->links_types[$row->type]['color'] ?>" data-toggle="tooltip" title="<?= l('link.' . $row->type . '.name') ?>">
                                     <i class="<?= $data->links_types[$row->type]['icon'] ?> text-white"></i>
                                 </div>
+                                <?php endif ?>
 
                                 <div class="d-flex flex-column min-width-0">
                                     <div class="d-inline-block text-truncate">
-                                        <a href="<?= url('link/' . $row->link_id) ?>" class="font-weight-bold"><?= $row->url ?></a>
+                                        <a href="<?= url('link/' . $row->link_id) ?>" class="font-weight-500"><?= $row->url ?></a>
                                         <?php if($row->type == 'biolink' && $row->is_verified): ?>
                                             <span data-toggle="tooltip" title="<?= l('link.biolink.verified') ?>"><i class="fas fa-fw fa-xs fa-check-circle" style="color: #0086ff"></i></span>
                                         <?php endif ?>

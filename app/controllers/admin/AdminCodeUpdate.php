@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -17,12 +17,17 @@
 namespace Altum\Controllers;
 
 use Altum\Alerts;
+use Altum\Date;
 
 defined('ALTUMCODE') || die();
 
 class AdminCodeUpdate extends Controller {
 
     public function index() {
+
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            redirect('admin');
+        }
 
         $code_id = isset($this->params[0]) ? (int) $this->params[0] : null;
 
@@ -45,6 +50,14 @@ class AdminCodeUpdate extends Controller {
             $_POST['quantity'] = (int) $_POST['quantity'];
             $_POST['code'] = input_clean(get_slug($_POST['code'], '-', false), 32);
 
+			$_POST['is_scheduled'] = (int) isset($_POST['is_scheduled']);
+			if($_POST['is_scheduled'] && !empty($_POST['start_datetime']) && !empty($_POST['end_datetime']) && Date::validate($_POST['start_datetime'], 'Y-m-d H:i:s') && Date::validate($_POST['end_datetime'], 'Y-m-d H:i:s')) {
+				$_POST['start_datetime'] = (new \DateTime($_POST['start_datetime'], new \DateTimeZone($this->user->timezone)))->setTimezone(new \DateTimeZone(\Altum\Date::$default_timezone))->format('Y-m-d H:i:s');
+				$_POST['end_datetime'] = (new \DateTime($_POST['end_datetime'], new \DateTimeZone($this->user->timezone)))->setTimezone(new \DateTimeZone(\Altum\Date::$default_timezone))->format('Y-m-d H:i:s');
+			} else {
+				$_POST['start_datetime'] = $_POST['end_datetime'] = null;
+			}
+
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
 
             if(!\Altum\Csrf::check()) {
@@ -61,7 +74,10 @@ class AdminCodeUpdate extends Controller {
                     'code' => $_POST['code'],
                     'discount' => $_POST['discount'],
                     'quantity' => $_POST['quantity'],
-                    'plans_ids' => json_encode($_POST['plans_ids']),
+					'plans_ids' => json_encode($_POST['plans_ids']),
+					'start_datetime' => $_POST['start_datetime'],
+                    'end_datetime' => $_POST['end_datetime'],
+                    'last_datetime' => get_date(),
                 ]);
 
                 /* Set a nice success message */

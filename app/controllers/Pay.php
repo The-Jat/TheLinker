@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -18,13 +18,12 @@ namespace Altum\Controllers;
 
 use Altum\Alerts;
 use Altum\Models\User;
-use Altum\PaymentGateways\Coinbase;
 use Altum\PaymentGateways\Lemonsqueezy;
-use Altum\PaymentGateways\Paddle;
 use Altum\PaymentGateways\Paystack;
+use Altum\PaymentGateways\Plisio;
+use Altum\PaymentGateways\Revolut;
 use Altum\Response;
 use Altum\Title;
-use Razorpay\Api\Api;
 
 defined('ALTUMCODE') || die();
 
@@ -43,7 +42,7 @@ class Pay extends Controller {
         \Altum\Authentication::guard();
 
         if(!settings()->payment->is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         $payment_processors = require APP_PATH . 'includes/payment_processors.php';
@@ -96,6 +95,17 @@ class Pay extends Controller {
                             unset($this->plan_taxes[$key]);
                         }
 
+                        /* State */
+                        if(!empty($value->state) && $value->state != $this->user->billing->state) {
+                            unset($this->plan_taxes[$key]);
+                        }
+
+                        /* County */
+                        if(!empty($value->county) && $value->county != $this->user->billing->county) {
+                            unset($this->plan_taxes[$key]);
+                        }
+
+                        /* Add the tax */
                         if(isset($this->plan_taxes[$key])) {
                             $this->applied_taxes_ids[] = (int) $value->tax_id;
                         }
@@ -122,7 +132,6 @@ class Pay extends Controller {
         }
 
         /* Form submission processing */
-        /* Make sure that this only runs on user click submit post and not on callbacks / webhooks */
         if(!empty($_POST) && !$this->return_type) {
 
             //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
@@ -134,10 +143,22 @@ class Pay extends Controller {
                 $this->code = database()->query("SELECT * FROM `codes` WHERE `code` = '{$_POST['code']}' AND `redeemed` < `quantity`")->fetch_object();
 
                 if($this->code) {
-                    $this->code->plans_ids = json_decode($this->code->plans_ids ?? '');
+					if($this->code->start_datetime && $this->code->end_datetime && $this->code->start_datetime > date('Y-m-d H:i:s')) {
+						$this->code = null;
+					}
+
+					if($this->code->start_datetime && $this->code->end_datetime && $this->code->end_datetime < date('Y-m-d H:i:s')) {
+						$this->code = null;
+					}
+
+                    $this->code->plans_ids = json_decode($this->code->plans_ids ?? '[]');
 
                     if(db()->where('user_id', $this->user->user_id)->where('code_id', $this->code->code_id)->has('redeemed_codes')) {
                         $this->code = null;
+                    }
+
+                    if(!is_array($this->code->plans_ids)) {
+                        $this->code->plans_ids = [];
                     }
 
                     if(!in_array($this->plan_id, $this->code->plans_ids)) {
@@ -152,7 +173,7 @@ class Pay extends Controller {
             }
 
             /* Process further */
-            if($this->plan->trial_days && !$this->user->plan_trial_done && !isset($_GET['trial_skip'])) {
+            if(!settings()->payment->trial_require_card && $this->plan->trial_days && !$this->user->plan_trial_done && !isset($_GET['trial_skip'])) {
                 /* :) */
             } else if($this->code && $this->code->type == 'redeemable' && in_array($this->plan_id, $this->code->plans_ids)) {
 
@@ -263,11 +284,11 @@ class Pay extends Controller {
                             'code_name' => $this->code->name,
                             'redeemed_days' => $this->code->days,
                             'datetime' => get_date(),
-                        ]);
+                        ], signature: true);
                     }
 
                     /* Send admin notification if enabled */
-                    if (settings()->email_notifications->new_code_redeemed && !empty(settings()->email_notifications->emails)) {
+                    if(settings()->email_notifications->new_code_redeemed && !empty(settings()->email_notifications->emails)) {
 
                         $email_template = get_email_template(
                             [
@@ -310,7 +331,7 @@ class Pay extends Controller {
         $this->payment_return_process();
 
         /* Set a custom title */
-        Title::set(sprintf(l('pay.title'), $this->plan->translations->{\Altum\Language::$name}->name ?? $this->plan->name));
+        Title::set(sprintf(l('pay.title'), ($this->plan->translations->{\Altum\Language::$name}->name ?? '') ?: $this->plan->name));
 
         /* Prepare the view */
         $data = [
@@ -319,6 +340,9 @@ class Pay extends Controller {
             'plan_taxes'        => $this->plan_taxes,
             'payment_processors'=> $payment_processors,
             'payment_extra_data'=> $this->payment_extra_data,
+            'total_users'       => \Altum\Cache::cache_function_result('total_users', [], function() {
+                return db()->getValue('users', 'count(*)');
+            })
         ];
 
         $view = new \Altum\View('pay/index', (array) $this);
@@ -376,6 +400,14 @@ class Pay extends Controller {
             Response::json(l('pay.error_message.code_invalid'), 'error');
         }
 
+		if($code->start_datetime && $code->end_datetime && $code->start_datetime > date('Y-m-d H:i:s')) {
+			Response::json(l('account_redeem_code.error_message.code_invalid'), 'error');
+		}
+
+		if($code->start_datetime && $code->end_datetime && $code->end_datetime < date('Y-m-d H:i:s')) {
+			Response::json(l('account_redeem_code.error_message.code_expired'), 'error');
+		}
+
         $code->plans_ids = json_decode($code->plans_ids ?? '[]');
 
         if(!in_array($_POST['plan_id'], $code->plans_ids)) {
@@ -386,12 +418,18 @@ class Pay extends Controller {
             Response::json(l('pay.error_message.code_used'), 'error');
         }
 
+		/* Display current uses for fomo */
+		$discount_percentage_use_left = number_format(($code->redeemed / $code->quantity) * 100, 2, '.', '');
+
         Response::json(
             sprintf(l('pay.success_message.code'), '<strong>' . $code->discount . '%</strong>'),
             'success',
             [
                 'code' => $code,
-                'submit_text' => $code->type == 'redeemable' ? sprintf(l('pay.custom_plan.code_redeemable'), $code->days) : null
+                'submit_text' => $code->type == 'redeemable' ? sprintf(l('pay.custom_plan.code_redeemable'), $code->days) : null,
+                'discount_text' => $code->type == 'redeemable' ? null : sprintf(l('pay.custom_plan.code_discount'), $code->discount),
+				'discount_usage_text' => $code->type == 'redeemable' || $discount_percentage_use_left <= 30 ? null : sprintf(l('pay.success_message.code_quantity_percentage_used'), nr($discount_percentage_use_left)),
+				'discount_scheduled_end_text' => $code->type == 'redeemable' || empty($code->end_datetime) ? null : sprintf(l('pay.success_message.code_scheduled_end_datetime'), \Altum\Date::get_time_until($code->end_datetime)),
             ]
         );
     }
@@ -420,7 +458,7 @@ class Pay extends Controller {
         $thank_you_url_parameters .= '&user_id=' . $this->user->user_id;
 
         /* Trial */
-        if($this->plan->trial_days && !$this->user->plan_trial_done && !isset($_GET['trial_skip'])) {
+        if(!settings()->payment->trial_require_card && $this->plan->trial_days && !$this->user->plan_trial_done && !isset($_GET['trial_skip'])) {
             $thank_you_url_parameters .= '&trial_days=' . $this->plan->trial_days;
         }
 
@@ -527,9 +565,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format price based on currency */
-        $formatted_price = in_array(currency(), ['JPY', 'TWD', 'HUF'])
-            ? number_format($price_with_taxes, 0, '.', '')
-            : number_format($price_with_taxes, 2, '.', '');
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare redirect query parameters */
         $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
@@ -592,10 +628,8 @@ class Pay extends Controller {
                     \Unirest\Request\Body::json($paypal_order_payload)
                 );
 
-                if ($paypal_response->code >= 400) {
-                    $paypal_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $paypal_response->body->name . ':' . $paypal_response->body->message
-                        : l('pay.error_message.failed_payment');
+                if($paypal_response->code >= 400) {
+                    $paypal_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $paypal_response->body->name . ':' . $paypal_response->body->message : l('pay.error_message.failed_payment');
                     Alerts::add_error($paypal_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                 }
@@ -615,7 +649,7 @@ class Pay extends Controller {
                     $paypal_headers
                 );
 
-                if ($product_response->code == 404) {
+                if($product_response->code == 404) {
                     $product_create_response = \Unirest\Request::post(
                         $paypal_api_url . 'v1/catalogs/products',
                         $paypal_headers,
@@ -626,10 +660,8 @@ class Pay extends Controller {
                         ])
                     );
 
-                    if ($product_create_response->code >= 400) {
-                        $paypal_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                            ? $product_create_response->body->name . ':' . $product_create_response->body->message
-                            : l('pay.error_message.failed_payment');
+                    if($product_create_response->code >= 400) {
+                        $paypal_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $product_create_response->body->name . ':' . $product_create_response->body->message : l('pay.error_message.failed_payment');
                         Alerts::add_error($paypal_error_message);
                         redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                     }
@@ -671,10 +703,8 @@ class Pay extends Controller {
                     ])
                 );
 
-                if ($plan_response->code >= 400) {
-                    $paypal_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $plan_response->body->name . ':' . $plan_response->body->message
-                        : l('pay.error_message.failed_payment');
+                if($plan_response->code >= 400) {
+                    $paypal_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $plan_response->body->name . ':' . $plan_response->body->message : l('pay.error_message.failed_payment');
                     Alerts::add_error($paypal_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                 }
@@ -702,10 +732,8 @@ class Pay extends Controller {
                     ])
                 );
 
-                if ($subscription_response->code >= 400) {
-                    $paypal_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $subscription_response->body->name . ':' . $subscription_response->body->message
-                        : l('pay.error_message.failed_payment');
+                if($subscription_response->code >= 400) {
+                    $paypal_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $subscription_response->body->name . ':' . $subscription_response->body->message : l('pay.error_message.failed_payment');
                     Alerts::add_error($paypal_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                 }
@@ -737,12 +765,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format price for Stripe amount */
-        $stripe_formatted_price = in_array(currency(), [
-            'MGA', 'BIF', 'CLP', 'PYG', 'DJF', 'RWF', 'GNF', 'UGX',
-            'JPY', 'VND', 'VUV', 'XAF', 'KMF', 'KRW', 'XOF', 'XPF'
-        ])
-            ? number_format($price_with_taxes, 0, '.', '')
-            : number_format($price_with_taxes, 2, '.', '') * 100;
+        $stripe_formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '') * 100;
 
         /* Prepare formatted price string for URLs */
         $formatted_price = number_format($price_with_taxes, 2, '.', '');
@@ -772,7 +795,7 @@ class Pay extends Controller {
         ];
 
         /* Add recurring interval for subscription if needed */
-        if ($_POST['payment_type'] === 'recurring') {
+        if($_POST['payment_type'] === 'recurring') {
             $stripe_line_item['price_data']['recurring'] = [
                 'interval' => 'day',
                 'interval_count' => $payment_frequency_days
@@ -791,13 +814,13 @@ class Pay extends Controller {
         ];
 
         /* Add subscription data if payment is recurring */
-        if ($_POST['payment_type'] === 'recurring') {
+        if($_POST['payment_type'] === 'recurring') {
             $stripe_session_data['subscription_data'] = [
                 'metadata' => $stripe_metadata
             ];
 
             /* Apply trial days when requested */
-            if ($trial_days > 0) {
+            if($trial_days > 0) {
                 /* Collects a payment method now, first charge happens after trial ends */
                 $stripe_session_data['subscription_data']['trial_period_days'] = $trial_days;
             }
@@ -812,9 +835,7 @@ class Pay extends Controller {
             $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
             $discount_code_parameter = isset($_GET['code']) ? '&code=' . $_GET['code'] : '';
 
-            $stripe_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                ? $exception->getMessage()
-                : l('pay.error_message.failed_payment');
+            $stripe_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $exception->getMessage() : l('pay.error_message.failed_payment');
             Alerts::add_error($stripe_error_message);
 
             redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
@@ -834,7 +855,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format price */
-        $formatted_price = number_format($price_with_taxes, 2, '.', '');
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare redirect query parameters */
         $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
@@ -870,10 +891,8 @@ class Pay extends Controller {
         );
 
         /* Handle errors */
-        if ($coinbase_response->code >= 400) {
-            $coinbase_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                ? $coinbase_response->body->error->type . ':' . $coinbase_response->body->error->message
-                : l('pay.error_message.failed_payment');
+        if($coinbase_response->code >= 400) {
+            $coinbase_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $coinbase_response->body->error->type . ':' . $coinbase_response->body->error->message : l('pay.error_message.failed_payment');
             Alerts::add_error($coinbase_error_message);
             redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
         }
@@ -885,7 +904,7 @@ class Pay extends Controller {
     private function offline_payment() {
 
         /* Redirect to thank you page if returning from a successful offline payment */
-        if ($this->return_type && $this->payment_processor === 'offline_payment' && $this->return_type === 'success') {
+        if($this->return_type && $this->payment_processor === 'offline_payment' && $this->return_type === 'success') {
             $this->redirect_pay_thank_you();
         }
 
@@ -894,7 +913,7 @@ class Pay extends Controller {
 
         /* Calculate and format the final price */
         $price_with_taxes = $this->calculate_price_with_taxes($price);
-        $formatted_price = number_format($price_with_taxes, 2, '.', '');
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare unique payment id */
         $payment_unique_id = md5(
@@ -914,7 +933,7 @@ class Pay extends Controller {
         $discount_code_parameter = isset($_GET['code']) ? '&code=' . $_GET['code'] : '';
 
         /* Validate uploaded offline payment proof */
-        if (!$offline_payment_proof_provided) {
+        if(!$offline_payment_proof_provided) {
             Alerts::add_error(l('pay.error_message.offline_payment_proof_missing'));
             redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
         }
@@ -929,7 +948,7 @@ class Pay extends Controller {
         );
 
         /* If there are field errors, redirect back */
-        if (Alerts::has_field_errors() && !Alerts::has_errors()) {
+        if(Alerts::has_field_errors() && !Alerts::has_errors()) {
             redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
         }
 
@@ -955,12 +974,12 @@ class Pay extends Controller {
             'total_amount' => $formatted_price,
             'currency' => currency(),
             'payment_proof' => $offline_payment_proof_file,
-            'status' => 0,
+            'status' => 'pending',
             'datetime' => get_date()
         ]);
 
         /* Send admin notification if enabled */
-        if (settings()->email_notifications->new_payment && !empty(settings()->email_notifications->emails)) {
+        if(settings()->email_notifications->new_payment && !empty(settings()->email_notifications->emails)) {
 
             $email_template = get_email_template(
                 [
@@ -985,7 +1004,7 @@ class Pay extends Controller {
                     '{{DATE_TIMEZONE}}' => \Altum\Date::$default_timezone,
                     '{{CODE}}' => $code ?: l('global.none'),
                     '{{DISCOUNT_AMOUNT}}' => $discount_amount,
-                    '{{PAYMENT_STATUS}}' => l('account_payments.status_pending'),
+                    '{{PAYMENT_STATUS}}' => l('account_payments.status.pending'),
                 ],
                 l('global.emails.admin_new_payment_notification.body')
             );
@@ -1010,7 +1029,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format final price */
-        $formatted_price = number_format($price_with_taxes, 2, '.', '');
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare redirect query parameters */
         $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
@@ -1061,10 +1080,8 @@ class Pay extends Controller {
             $payu_response = \OpenPayU_Order::create($payu_order_data);
             $payu_status_description = \OpenPayU_Util::statusDesc($payu_response->getStatus());
 
-            if ($payu_response->getStatus() !== 'SUCCESS') {
-                $payu_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                    ? $payu_status_description
-                    : l('pay.error_message.failed_payment');
+            if($payu_response->getStatus() !== 'SUCCESS') {
+                $payu_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $payu_status_description : l('pay.error_message.failed_payment');
                 Alerts::add_error($payu_error_message);
                 redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
             }
@@ -1088,7 +1105,7 @@ class Pay extends Controller {
                 'taxes_ids' => !empty($this->applied_taxes_ids) ? json_encode($this->applied_taxes_ids) : null,
                 'total_amount' => $formatted_price,
                 'currency' => currency(),
-                'status' => 0,
+                'status' => 'pending',
                 'datetime' => get_date()
             ]);
 
@@ -1096,9 +1113,7 @@ class Pay extends Controller {
             header('Location: ' . $payu_response->getResponse()->redirectUri); die();
 
         } catch (\OpenPayU_Exception $exception) {
-            $payu_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                ? $exception->getMessage()
-                : l('pay.error_message.failed_payment');
+            $payu_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $exception->getMessage() : l('pay.error_message.failed_payment');
             Alerts::add_error($payu_error_message);
             redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
         }
@@ -1113,7 +1128,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format price */
-        $formatted_price = number_format($price_with_taxes, 2, '.', '');
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare redirect query parameters */
         $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
@@ -1149,7 +1164,7 @@ class Pay extends Controller {
             'taxes_ids' => !empty($this->applied_taxes_ids) ? json_encode($this->applied_taxes_ids) : null,
             'total_amount' => $formatted_price,
             'currency' => currency(),
-            'status' => 0,
+            'status' => 'pending',
             'datetime' => get_date()
         ]);
 
@@ -1186,10 +1201,8 @@ class Pay extends Controller {
             $iyzico_options
         );
 
-        if ($iyzico_response->getStatus() !== 'success') {
-            $iyzico_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                ? $iyzico_response->getErrorCode() . ':' . $iyzico_response->getErrorMessage()
-                : l('pay.error_message.failed_payment');
+        if($iyzico_response->getStatus() !== 'success') {
+            $iyzico_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $iyzico_response->getErrorCode() . ':' . $iyzico_response->getErrorMessage() : l('pay.error_message.failed_payment');
             Alerts::add_error($iyzico_error_message);
             redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
         }
@@ -1210,7 +1223,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format price as string with two decimals */
-        $formatted_price = number_format($price_with_taxes, 2, '.', '');
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare redirect query parameters */
         $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
@@ -1246,10 +1259,8 @@ class Pay extends Controller {
                     \Unirest\Request\Body::json($paystack_one_time_payload)
                 );
 
-                if (!$paystack_response->body->status) {
-                    $paystack_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $paystack_response->body->message
-                        : l('pay.error_message.failed_payment');
+                if(!$paystack_response->body->status) {
+                    $paystack_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $paystack_response->body->message : l('pay.error_message.failed_payment');
                     Alerts::add_error($paystack_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                 }
@@ -1276,10 +1287,8 @@ class Pay extends Controller {
                     \Unirest\Request\Body::json($paystack_plan_payload)
                 );
 
-                if (!$paystack_plan_response->body->status) {
-                    $paystack_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $paystack_plan_response->body->message
-                        : l('pay.error_message.failed_payment');
+                if(!$paystack_plan_response->body->status) {
+                    $paystack_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $paystack_plan_response->body->message : l('pay.error_message.failed_payment');
                     Alerts::add_error($paystack_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                 }
@@ -1313,10 +1322,8 @@ class Pay extends Controller {
                     \Unirest\Request\Body::json($paystack_recurring_payload)
                 );
 
-                if (!$paystack_recurring_response->body->status) {
-                    $paystack_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $paystack_recurring_response->body->message
-                        : l('pay.error_message.failed_payment');
+                if(!$paystack_recurring_response->body->status) {
+                    $paystack_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $paystack_recurring_response->body->message : l('pay.error_message.failed_payment');
                     Alerts::add_error($paystack_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                 }
@@ -1339,7 +1346,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format price */
-        $formatted_price = number_format($price_with_taxes, 2, '.', '');
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare redirect query parameters */
         $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
@@ -1405,14 +1412,14 @@ class Pay extends Controller {
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                 }
 
-                /* Define total_count for auto-expiration */
-                $total_count = match ($_POST['payment_frequency']) {
-                    'monthly' => 1200,
-                    'quarterly' => 400,
-                    'biannual' => 600,
-                    'annual' => 100,
-                    default => 1200
-                };
+                /* Define total_count for auto-expiration (10 years default) */
+				$total_count = match ($_POST['payment_frequency']) {
+					'monthly' => 120,
+					'quarterly' => 40,
+					'biannual' => 20,
+					'annual' => 10,
+					default => 120
+				};
 
                 /* Create Razorpay subscription */
                 try {
@@ -1455,7 +1462,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format price to two decimals */
-        $formatted_price = number_format($price_with_taxes, 2, '.', '');
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare redirect query parameters */
         $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
@@ -1488,9 +1495,7 @@ class Pay extends Controller {
                 try {
                     $mollie_payment = $mollie_client->payments->create($mollie_payment_data);
                 } catch (\Exception $exception) {
-                    $mollie_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $exception->getMessage()
-                        : l('pay.error_message.failed_payment');
+                    $mollie_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $exception->getMessage() : l('pay.error_message.failed_payment');
                     Alerts::add_error($mollie_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                 }
@@ -1506,9 +1511,7 @@ class Pay extends Controller {
                         'email' => $this->user->email,
                     ]);
                 } catch (\Exception $exception) {
-                    $mollie_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $exception->getMessage()
-                        : l('pay.error_message.failed_payment');
+                    $mollie_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $exception->getMessage() : l('pay.error_message.failed_payment');
                     Alerts::add_error($mollie_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                 }
@@ -1519,9 +1522,7 @@ class Pay extends Controller {
                         'sequenceType' => 'first'
                     ]));
                 } catch (\Exception $exception) {
-                    $mollie_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $exception->getMessage()
-                        : l('pay.error_message.failed_payment');
+                    $mollie_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $exception->getMessage() : l('pay.error_message.failed_payment');
                     Alerts::add_error($mollie_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                 }
@@ -1541,7 +1542,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Convert price to smallest currency unit (integer) */
-        $final_price_smallest_unit = number_format($price_with_taxes, 2, '.', '') * 100;
+        $formatted_price = number_format($price_with_taxes, 2, '.', '') * 100;
 
         /* Prepare redirect query parameters */
         $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
@@ -1557,7 +1558,7 @@ class Pay extends Controller {
                 /* Prepare Crypto.com payment payload */
                 $crypto_com_payment_payload = [
                     'description' => settings()->business->brand_name . ' - ' . $this->plan->name . ' - ' . l('plan.custom_plan.' . $_POST['payment_frequency']),
-                    'amount' => $final_price_smallest_unit,
+                    'amount' => $formatted_price,
                     'currency' => currency(),
                     'metadata' => json_encode([
                         'user_id' => $this->user->user_id,
@@ -1568,8 +1569,8 @@ class Pay extends Controller {
                         'discount_amount' => $discount_amount,
                         'taxes_ids' => $this->applied_taxes_ids
                     ]),
-                    'return_url' => url('pay/' . $this->plan_id . $this->return_url_parameters('success', $base_amount, $final_price_smallest_unit / 100, $code, $discount_amount)),
-                    'cancel_url' => url('pay/' . $this->plan_id . $this->return_url_parameters('cancel', $base_amount, $final_price_smallest_unit / 100, $code, $discount_amount))
+                    'return_url' => url('pay/' . $this->plan_id . $this->return_url_parameters('success', $base_amount, $formatted_price / 100, $code, $discount_amount)),
+                    'cancel_url' => url('pay/' . $this->plan_id . $this->return_url_parameters('cancel', $base_amount, $formatted_price / 100, $code, $discount_amount))
                 ];
 
                 /* Make payment request to Crypto.com */
@@ -1580,10 +1581,8 @@ class Pay extends Controller {
                 );
 
                 /* Handle errors */
-                if ($crypto_com_response->code >= 400) {
-                    $crypto_com_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $crypto_com_response->body->error->type . ':' . $crypto_com_response->body->error->error_message
-                        : l('pay.error_message.failed_payment');
+                if($crypto_com_response->code >= 400) {
+                    $crypto_com_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $crypto_com_response->body->error->type . ':' . $crypto_com_response->body->error->error_message : l('pay.error_message.failed_payment');
                     Alerts::add_error($crypto_com_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                 }
@@ -1603,7 +1602,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format final price */
-        $formatted_price = number_format($price_with_taxes, 2, '.', '');
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare redirect query parameters */
         $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
@@ -1643,10 +1642,8 @@ class Pay extends Controller {
                 );
 
                 /* Handle Paddle API failure */
-                if (!$paddle_response->body->success) {
-                    $paddle_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $paddle_response->body->error->code . ':' . $paddle_response->body->error->message
-                        : l('pay.error_message.failed_payment');
+                if(!$paddle_response->body->success) {
+                    $paddle_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $paddle_response->body->error->code . ':' . $paddle_response->body->error->message : l('pay.error_message.failed_payment');
                     Alerts::add_error($paddle_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                 }
@@ -1662,6 +1659,131 @@ class Pay extends Controller {
 
     }
 
+    private function paddle_billing() {
+
+        /* Get price details */
+        extract($this->get_price_details());
+
+        /* Apply taxes to base price */
+        $price_with_taxes = $this->calculate_price_with_taxes($price);
+
+        /* Convert to Paddle minor units (cents) */
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '') * 100;
+
+        /* Prepare redirect query parameters */
+        $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
+        $discount_code_parameter = isset($_GET['code']) ? '&code=' . $_GET['code'] : '';
+
+        /* Paddle API setup */
+        $paddle_api_url = 'https://' . (settings()->paddle_billing->mode == 'sandbox' ? 'sandbox-api' : 'api') . '.paddle.com/';
+        $paddle_headers = [
+            'Authorization' => 'Bearer ' . settings()->paddle_billing->api_key,
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json'
+        ];
+
+        /* Prepare metadata for tracking */
+        $metadata = [
+            'user_id' => $this->user->user_id,
+            'plan_id' => $this->plan_id,
+            'payment_frequency' => $_POST['payment_frequency'],
+            'base_amount' => $base_amount,
+            'code' => $code,
+            'discount_amount' => $discount_amount,
+            'taxes_ids' => json_encode($this->applied_taxes_ids),
+            'payment_type' => $_POST['payment_type']
+        ];
+
+        /* Create Product */
+        $product_payload = [
+            'name' => settings()->business->brand_name . ' - ' . $this->plan->name,
+            'description' => l('plan.custom_plan.' . $_POST['payment_frequency']),
+            'tax_category' => 'standard'
+        ];
+
+        $paddle_product_response = \Unirest\Request::post(
+            $paddle_api_url . 'products',
+            $paddle_headers,
+            \Unirest\Request\Body::json($product_payload)
+        );
+
+        if($paddle_product_response->code >= 400) {
+            $paystack_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $paystack_plan_response->body->message : l('pay.error_message.failed_payment');
+            Alerts::add_error($paystack_error_message);
+            redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
+        }
+
+        $paddle_product_id = $paddle_product_response->body->data->id;
+
+        /* Create Price (one-time or recurring) */
+        $price_payload = [
+            'product_id' => $paddle_product_id,
+            'name' => ucfirst($_POST['payment_type']) . ' - ' . $this->plan->name,
+            'description' => l('plan.custom_plan.' . $_POST['payment_frequency']),
+            'unit_price' => [
+                'amount' => (string) $formatted_price,
+                'currency_code' => currency()
+            ],
+            'quantity' => [
+                'minimum' => 1,
+                'maximum' => 1
+            ],
+            'tax_mode' => 'account_setting',
+            'custom_data' => $metadata
+        ];
+
+        if($_POST['payment_type'] == 'recurring') {
+            switch ($_POST['payment_frequency']) {
+                case 'monthly':
+                    $interval = 'month';
+                    $frequency = 1;
+                    break;
+
+                case 'quarterly':
+                    $interval = 'month';
+                    $frequency = 3;
+                    break;
+
+                case 'biannual':
+                    $interval = 'month';
+                    $frequency = 6;
+                    break;
+
+                case 'annual':
+                    $interval = 'year';
+                    $frequency = 1;
+                    break;
+            };
+
+
+            $price_payload['billing_cycle'] = [
+                'interval' => $interval,
+                'frequency' => $frequency,
+            ];
+        }
+
+        $paddle_price_response = \Unirest\Request::post(
+            $paddle_api_url . 'prices',
+            $paddle_headers,
+            \Unirest\Request\Body::json($price_payload)
+        );
+
+        if($paddle_price_response->code >= 400) {
+            $paystack_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $paystack_plan_response->body->message : l('pay.error_message.failed_payment');
+            Alerts::add_error($paystack_error_message);
+            redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
+        }
+
+        $paddle_price_id = $paddle_price_response->body->data->id;
+
+        /* Pass data to view (for overlay checkout) */
+        $this->payment_extra_data = [
+            'payment_processor' => 'paddle_billing',
+            'price_id' => $paddle_price_id,
+            'success_url' => url('pay/' . $this->plan_id . $this->return_url_parameters('success', $base_amount, $formatted_price, $code, $discount_amount)),
+        ];
+    }
+
     private function yookassa() {
 
         /* Initialize YooKassa client */
@@ -1675,7 +1797,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format price to string with two decimals */
-        $formatted_price = number_format($price_with_taxes, 2, '.', '');
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare redirect query parameters */
         $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
@@ -1740,9 +1862,7 @@ class Pay extends Controller {
                     );
 
                 } catch (\Exception $exception) {
-                    $yookassa_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $exception->getMessage()
-                        : l('pay.error_message.failed_payment');
+                    $yookassa_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $exception->getMessage() : l('pay.error_message.failed_payment');
                     Alerts::add_error($yookassa_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
                 }
@@ -1762,7 +1882,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format price */
-        $formatted_price = number_format($price_with_taxes, 2, '.', '');
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare redirect query parameters */
         $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
@@ -1803,10 +1923,8 @@ class Pay extends Controller {
                 );
 
                 /* Handle MercadoPago errors */
-                if ($mercadopago_response->code >= 400) {
-                    $mercadopago_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $mercadopago_response->body->error . ':' . $mercadopago_response->body->message
-                        : l('pay.error_message.failed_payment');
+                if($mercadopago_response->code >= 400) {
+                    $mercadopago_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $mercadopago_response->body->error . ':' . $mercadopago_response->body->message : l('pay.error_message.failed_payment');
 
                     Alerts::add_error($mercadopago_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
@@ -1828,7 +1946,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format price as integer (Midtrans requirement) */
-        $formatted_price = number_format($price_with_taxes, 0, '.', '');
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare redirect query parameters */
         $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
@@ -1878,10 +1996,8 @@ class Pay extends Controller {
                 );
 
                 /* Handle errors */
-                if ($midtrans_response->code >= 400) {
-                    $midtrans_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                        ? $midtrans_response->body->error_messages
-                        : l('pay.error_message.failed_payment');
+                if($midtrans_response->code >= 400) {
+                    $midtrans_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $midtrans_response->body->error_messages : l('pay.error_message.failed_payment');
 
                     Alerts::add_error($midtrans_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
@@ -1902,7 +2018,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format price as integer for API */
-        $formatted_price = number_format($price_with_taxes, 0, '.', '');
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare redirect query parameters */
         $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
@@ -1953,7 +2069,7 @@ class Pay extends Controller {
                     \Unirest\Request\Body::json($flutterwave_payment_payload)
                 );
 
-                if ($flutterwave_response->code >= 400) {
+                if($flutterwave_response->code >= 400) {
                     $flutterwave_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $flutterwave_response->body->message : l('pay.error_message.failed_payment');
                     Alerts::add_error($flutterwave_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
@@ -1979,7 +2095,7 @@ class Pay extends Controller {
                     ]
                 );
 
-                if ($payment_plans_response->code >= 400) {
+                if($payment_plans_response->code >= 400) {
                     $flutterwave_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $payment_plans_response->body->message : l('pay.error_message.failed_payment');
                     Alerts::add_error($flutterwave_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
@@ -1988,13 +2104,13 @@ class Pay extends Controller {
                 /* Find existing plan or create new one */
                 $payment_plan = null;
                 foreach ($payment_plans_response->body->data as $existing_plan) {
-                    if ($existing_plan->amount == $formatted_price && $existing_plan->interval == $flutterwave_payment_frequency) {
+                    if($existing_plan->amount == $formatted_price && $existing_plan->interval == $flutterwave_payment_frequency) {
                         $payment_plan = $existing_plan;
                         break;
                     }
                 }
 
-                if (!$payment_plan) {
+                if(!$payment_plan) {
                     $create_plan_response = \Unirest\Request::post(
                         'https://api.flutterwave.com/v3/payment-plans',
                         [
@@ -2009,7 +2125,7 @@ class Pay extends Controller {
                         ])
                     );
 
-                    if ($create_plan_response->code >= 400) {
+                    if($create_plan_response->code >= 400) {
                         $flutterwave_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $create_plan_response->body->message : l('pay.error_message.failed_payment');
                         Alerts::add_error($flutterwave_error_message);
                         redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
@@ -2059,7 +2175,7 @@ class Pay extends Controller {
                     \Unirest\Request\Body::json($flutterwave_recurring_payload)
                 );
 
-                if ($flutterwave_recurring_response->code >= 400) {
+                if($flutterwave_recurring_response->code >= 400) {
                     $flutterwave_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $flutterwave_recurring_response->body->message : l('pay.error_message.failed_payment');
                     Alerts::add_error($flutterwave_error_message);
                     redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
@@ -2080,13 +2196,8 @@ class Pay extends Controller {
         /* Apply taxes to base price */
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
-        /* Format price for Lemonsqueezy API (cents or units) */
-        $formatted_price = in_array(currency(), [
-            'MGA', 'BIF', 'CLP', 'PYG', 'DJF', 'RWF', 'GNF', 'UGX', 'JPY', 'VND', 'VUV',
-            'XAF', 'KMF', 'KRW', 'XOF', 'XPF'
-        ])
-            ? number_format($price_with_taxes, 0, '.', '')
-            : number_format($price_with_taxes, 2, '.', '') * 100;
+        /* Format price */
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '') * 100;
 
         /* Store string price for redirect parameters */
         $formatted_price_for_url = number_format($price_with_taxes, 2, '.', '');
@@ -2151,14 +2262,12 @@ class Pay extends Controller {
             \Unirest\Request\Body::json($lemonsqueezy_checkout_payload)
         );
 
-        if ($lemonsqueezy_response->code === 201 && !empty($lemonsqueezy_response->body->data->attributes->url)) {
+        if($lemonsqueezy_response->code === 201 && !empty($lemonsqueezy_response->body->data->attributes->url)) {
             /* Redirect to payment */
             header('Location: ' . $lemonsqueezy_response->body->data->attributes->url); die();
         } else {
             /* Handle payment creation errors */
-            $lemonsqueezy_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                ? print_r($lemonsqueezy_response->body->errors, true)
-                : l('pay.error_message.failed_payment');
+            $lemonsqueezy_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? print_r($lemonsqueezy_response->body->errors, true) : l('pay.error_message.failed_payment');
             Alerts::add_error($lemonsqueezy_error_message);
             redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
         }
@@ -2174,7 +2283,7 @@ class Pay extends Controller {
         $price_with_taxes = $this->calculate_price_with_taxes($price);
 
         /* Format price as integer (no decimals for API) */
-        $formatted_price = intval(number_format($price_with_taxes, 2, '.', ''));
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
 
         /* Prepare meta data for customer reference */
         $customer_reference = $this->user->user_id . '&' . $this->plan_id . '&' . $_POST['payment_frequency'] . '&' . $base_amount . '&' . $code . '&' . $discount_amount . '&' . json_encode($this->applied_taxes_ids);
@@ -2206,24 +2315,337 @@ class Pay extends Controller {
                 \Unirest\Request\Body::json($myfatoorah_payload)
             );
         } catch (\Exception $exception) {
-            $myfatoorah_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                ? $exception->getMessage()
-                : l('pay.error_message.failed_payment');
+            $myfatoorah_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $exception->getMessage() : l('pay.error_message.failed_payment');
             Alerts::add_error($myfatoorah_error_message);
             redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
         }
 
-        if ($myfatoorah_response->code === 200 && !empty($myfatoorah_response->body->Data->InvoiceURL)) {
+        if($myfatoorah_response->code === 200 && !empty($myfatoorah_response->body->Data->InvoiceURL)) {
             /* Redirect to payment */
             header('Location: ' . $myfatoorah_response->body->Data->InvoiceURL); die();
         } else {
-            $myfatoorah_error_message = (DEBUG || \Altum\Authentication::is_admin())
-                ? print_r($myfatoorah_response->body, true)
-                : l('pay.error_message.failed_payment');
+            $myfatoorah_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? print_r($myfatoorah_response->body, true) : l('pay.error_message.failed_payment');
             Alerts::add_error($myfatoorah_error_message);
             redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
         }
 
+    }
+
+    private function klarna() {
+
+        $klarna_base_url = settings()->klarna->mode;
+
+        /* price */
+        extract($this->get_price_details());
+        $price_with_taxes = $this->calculate_price_with_taxes($price);
+        $klarna_amount = round($price_with_taxes * 100);
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
+
+        /* metadata */
+        $klarna_metadata = [
+            'user_id' => $this->user->user_id,
+            'plan_id' => $this->plan_id,
+            'payment_frequency' => $_POST['payment_frequency'],
+            'base_amount' => $base_amount,
+            'code' => $code,
+            'discount_amount' => $discount_amount,
+            'taxes_ids' => json_encode($this->applied_taxes_ids)
+        ];
+
+        /* Prepare redirect query parameters */
+        $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
+        $discount_code_parameter = isset($_GET['code']) ? '&code=' . $_GET['code'] : '';
+
+        /* order lines */
+        $klarna_order_lines = [
+            [
+                'type' => 'digital',
+                'reference' => (string) $this->plan_id,
+                'name' => settings()->business->brand_name . ' - ' . $this->plan->name,
+                'quantity' => 1,
+                'unit_price' => $klarna_amount,
+                'total_amount' => $klarna_amount,
+                'tax_rate' => 0,
+                'total_tax_amount' => 0
+            ]
+        ];
+
+        $purchase_country = $this->user->country;
+        $purchase_currency = currency();
+        $locale = 'en-US';
+
+        /* session */
+        $payments_payload = [
+            'intent' => 'buy',
+            'purchase_country' => $purchase_country,
+            'purchase_currency' => $purchase_currency,
+            'locale' => $locale,
+            'order_amount' => $klarna_amount,
+            'order_tax_amount' => 0,
+            'order_lines' => $klarna_order_lines,
+            'merchant_data' => json_encode($klarna_metadata),
+            //'merchant_urls' => [
+            //'push' => url('webhook-klarna?is_complete=1&session_id={session.id}&order_id={order.id}')
+            //]
+        ];
+
+        try {
+            $payments_response = \Unirest\Request::post(
+                $klarna_base_url . '/payments/v1/sessions',
+                [
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Basic ' . base64_encode(settings()->klarna->username . ':' . settings()->klarna->password)
+                ],
+                json_encode($payments_payload)
+            );
+        } catch (\Exception $exception) {
+            $klarna_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $exception->getMessage() : l('pay.error_message.failed_payment');
+            Alerts::add_error($klarna_error_message);
+            redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
+        }
+
+        if($payments_response->code >= 400 || empty($payments_response->body->session_id)) {
+            $klarna_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? json_encode($payments_response->body) : l('pay.error_message.failed_payment');
+            Alerts::add_error($klarna_error_message);
+            redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
+        }
+
+        $payment_session_url = $klarna_base_url . '/payments/v1/sessions/' . $payments_response->body->session_id;
+
+        /* HPP session */
+        $hpp_payload = [
+            'payment_session_url' => $payment_session_url,
+            'place_order_mode' => 'CAPTURE_ORDER',
+            'merchant_urls' => [
+                'back' => url('pay/' . $this->plan_id),
+                'cancel' => url('pay/' . $this->plan_id . $this->return_url_parameters('cancel', $base_amount, $formatted_price, $code, $discount_amount)),
+                'error' => url('pay/' . $this->plan_id . $this->return_url_parameters('error', $base_amount, $formatted_price, $code, $discount_amount)),
+                'failure' => url('pay/' . $this->plan_id . $this->return_url_parameters('cancel', $base_amount, $formatted_price, $code, $discount_amount)),
+                'status_update' => url('webhook-klarna'),
+                'success' => url('pay/' . $this->plan_id . $this->return_url_parameters('success', $base_amount, $formatted_price, $code, $discount_amount) . '&token={{authorization_token}}')
+            ],
+            'merchant_data' => json_encode($klarna_metadata)
+        ];
+
+        try {
+            $hpp_response = \Unirest\Request::post(
+                $klarna_base_url . '/hpp/v1/sessions',
+                [
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Basic ' . base64_encode(settings()->klarna->username . ':' . settings()->klarna->password)
+                ],
+                json_encode($hpp_payload)
+            );
+        } catch (\Exception $exception) {
+            $klarna_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $exception->getMessage() : l('pay.error_message.failed_payment');
+            Alerts::add_error($klarna_error_message);
+            redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
+        }
+
+        if($hpp_response->code >= 400 || empty($hpp_response->body->redirect_url)) {
+            $klarna_error_message = (DEBUG || \Altum\Authentication::is_admin()) ? json_encode($hpp_response->body) : l('pay.error_message.failed_payment');
+            Alerts::add_error($klarna_error_message);
+            redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
+        }
+
+        /* Log payment intent to database */
+        db()->insert('payments', [
+            'user_id' => $this->user->user_id,
+            'plan_id' => $this->plan_id,
+            'processor' => 'klarna',
+            'type' => $_POST['payment_type'],
+            'frequency' => $_POST['payment_frequency'],
+            'code' => $code,
+            'discount_amount' => $discount_amount,
+            'base_amount' => $base_amount,
+            'email' => $this->user->email,
+            'payment_id' => $hpp_response->body->session_id,
+            'name' => $this->user->name,
+            'plan' => json_encode(db()->where('plan_id', $this->plan_id)->getOne('plans', ['plan_id', 'name'])),
+            'billing' => settings()->payment->taxes_and_billing_is_enabled && $this->user->billing ? json_encode($this->user->billing) : null,
+            'business' => json_encode(settings()->business),
+            'taxes_ids' => !empty($this->applied_taxes_ids) ? json_encode($this->applied_taxes_ids) : null,
+            'total_amount' => $formatted_price,
+            'currency' => currency(),
+            'status' => 'pending',
+            'datetime' => get_date()
+        ]);
+
+        header('Location: ' . $hpp_response->body->redirect_url);
+        die();
+    }
+
+    private function plisio() {
+
+        /* price */
+        extract($this->get_price_details());
+        $price_with_taxes = $this->calculate_price_with_taxes($price);
+        $amount = $price_with_taxes;
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
+
+        /* Id & Order */
+        $order_name = $this->user->user_id . '&' . $this->plan_id . '&' . $_POST['payment_frequency'] . '&' . $base_amount . '&' . $code . '&' . $discount_amount . '&' . json_encode($this->applied_taxes_ids);
+        $order_id = md5(uniqid('', true) . random_bytes(16));
+
+        /* Crypto */
+        $cryptocurrency = isset($_POST['cryptocurrency']) && in_array($_POST['cryptocurrency'], settings()->plisio->accepted_cryptocurrencies) ? $_POST['cryptocurrency'] : settings()->plisio->default_cryptocurrency;
+
+        /* Prepare redirect query parameters */
+        $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
+        $discount_code_parameter = isset($_GET['code']) ? '&code=' . $_GET['code'] : '';
+
+        try {
+            $response = \Unirest\Request::get(
+                Plisio::get_api_url() . 'api/v1/invoices/new?' . http_build_query([
+                    'source_currency' => currency(),
+                    'source_amount' => $amount,
+                    'currency' => $cryptocurrency,
+                    'email' => $this->user->email,
+                    'order_name' => $order_name,
+                    'order_number' => $order_id,
+                    'callback_url' => SITE_URL . 'webhook-plisio',
+                    'success_callback_url' => url('pay/' . $this->plan_id . $this->return_url_parameters('success', $base_amount, $formatted_price, $code, $discount_amount)),
+                    'fail_callback_url' => url('pay/' . $this->plan_id . $this->return_url_parameters('success', $base_amount, $formatted_price, $code, $discount_amount)),
+                    'api_key' => settings()->plisio->secret_key,
+                ]),
+            );
+        } catch (\Exception $exception) {
+            $error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $exception->getMessage() : l('pay.error_message.failed_payment');
+            Alerts::add_error($error_message);
+            redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
+        }
+
+        if($response->code >= 400 || $response->body->status != 'success') {
+            $error_message = (DEBUG || \Altum\Authentication::is_admin()) ? json_encode($response->body) : l('pay.error_message.failed_payment');
+            Alerts::add_error($error_message);
+            redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
+        }
+
+        header('Location: ' . $response->body->data->invoice_url); die();
+    }
+
+    private function plisio_whitelabel() {
+
+        /* Redirect to thank you page if returning from a successful offline payment */
+        if($this->return_type && $this->payment_processor === 'plisio_whitelabel' && $this->return_type === 'success') {
+            $this->redirect_pay_thank_you();
+        }
+
+        /* price */
+        extract($this->get_price_details());
+        $price_with_taxes = $this->calculate_price_with_taxes($price);
+        $amount = $price_with_taxes;
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
+
+        /* Id & Order */
+        $order_name = $this->user->user_id . '&' . $this->plan_id . '&' . $_POST['payment_frequency'] . '&' . $base_amount . '&' . $code . '&' . $discount_amount . '&' . json_encode($this->applied_taxes_ids);
+        $order_id = md5(uniqid('', true) . random_bytes(16));
+
+        /* Crypto */
+        $cryptocurrency = isset($_POST['cryptocurrency']) && in_array($_POST['cryptocurrency'], settings()->plisio->accepted_cryptocurrencies) ? $_POST['cryptocurrency'] : settings()->plisio->default_cryptocurrency;
+
+        /* Prepare redirect query parameters */
+        $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
+        $discount_code_parameter = isset($_GET['code']) ? '&code=' . $_GET['code'] : '';
+
+        try {
+            $response = \Unirest\Request::get(
+                Plisio::get_api_url() . 'api/v1/invoices/new?' . http_build_query([
+                    'source_currency' => currency(),
+                    'source_amount' => $amount,
+                    'currency' => $cryptocurrency,
+                    'email' => $this->user->email,
+                    'order_name' => $order_name,
+                    'order_number' => $order_id,
+                    'callback_url' => SITE_URL . 'webhook-plisio-whitelabel',
+                    'success_callback_url' => url('pay/' . $this->plan_id . $this->return_url_parameters('success', $base_amount, $formatted_price, $code, $discount_amount)),
+                    'fail_callback_url' => url('pay/' . $this->plan_id . $this->return_url_parameters('success', $base_amount, $formatted_price, $code, $discount_amount)),
+                    'api_key' => settings()->plisio->secret_key,
+                ]),
+            );
+        } catch (\Exception $exception) {
+            $error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $exception->getMessage() : l('pay.error_message.failed_payment');
+            Alerts::add_error($error_message);
+            redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
+        }
+
+        if($response->code >= 400 || $response->body->status != 'success') {
+            $error_message = (DEBUG || \Altum\Authentication::is_admin()) ? json_encode($response->body) : l('pay.error_message.failed_payment');
+            Alerts::add_error($error_message);
+            redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
+        }
+
+        /* Store the generated payment link */
+        $this->payment_extra_data = [
+            'payment_processor' => 'plisio_whitelabel',
+            'wallet' => $response->body->data->wallet_hash,
+            'qr_code' => $response->body->data->qr_code,
+            'amount' => $response->body->data->amount,
+            'cryptocurrency' => $response->body->data->currency,
+            'expiration_timestamp' => $response->body->data->expire_utc,
+            'success_url' => url('pay/' . $this->plan_id . $this->return_url_parameters('success', $base_amount, $formatted_price, $code, $discount_amount))
+        ];
+
+        error_log(print_r($this->payment_extra_data, true));
+    }
+
+    private function revolut() {
+
+        /* price */
+        extract($this->get_price_details());
+        $price_with_taxes = $this->calculate_price_with_taxes($price);
+        $amount = round($price_with_taxes * 100);
+        $formatted_price = in_array(currency(), get_zero_decimal_currencies_array()) ? number_format($price_with_taxes, 0, '.', '') : number_format($price_with_taxes, 2, '.', '');
+
+        /* metadata */
+        $metadata = [
+            'user_id' => $this->user->user_id,
+            'plan_id' => $this->plan_id,
+            'payment_frequency' => $_POST['payment_frequency'],
+            'base_amount' => $base_amount,
+            'code' => $code,
+            'discount_amount' => $discount_amount,
+            'taxes_ids' => json_encode($this->applied_taxes_ids)
+        ];
+
+        /* Prepare redirect query parameters */
+        $trial_skip_parameter = isset($_GET['trial_skip']) ? '&trial_skip=true' : '';
+        $discount_code_parameter = isset($_GET['code']) ? '&code=' . $_GET['code'] : '';
+
+        try {
+            $response = \Unirest\Request::post(
+                Revolut::get_api_url() . 'api/orders',
+                [
+                    'Authorization' => 'Bearer ' . settings()->revolut->secret_key,
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'Revolut-Api-Version' => '2024-09-01',
+                ],
+                \Unirest\Request\Body::json([
+                    'amount' => $formatted_price,
+                    'currency' => currency(),
+                    'description' => settings()->business->brand_name . ' - ' . $this->plan->name . ' - ' . l('plan.custom_plan.' . $_POST['payment_frequency']),
+                    'customer' => [
+                        'full_name' => $this->user->name,
+                        'email' => $this->user->email,
+                    ],
+                    'metadata' => $metadata,
+                ])
+            );
+        } catch (\Exception $exception) {
+            $error_message = (DEBUG || \Altum\Authentication::is_admin()) ? $exception->getMessage() : l('pay.error_message.failed_payment');
+            Alerts::add_error($error_message);
+            redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
+        }
+
+        if($response->code >= 400) {
+            $error_message = (DEBUG || \Altum\Authentication::is_admin()) ? json_encode($response->body) : l('pay.error_message.failed_payment');
+            Alerts::add_error($error_message);
+            redirect('pay/' . $this->plan_id . '?' . $trial_skip_parameter . $discount_code_parameter);
+        }
+
+        header('Location: ' . $response->body->checkout_url);
+        die();
     }
 
 }

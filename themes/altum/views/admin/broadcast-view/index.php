@@ -85,7 +85,7 @@
         </div>
     </div>
 
-    <?php if(settings()->main->broadcasts_statistics_is_enabled): ?>
+    <?php if(settings()->content->broadcasts_statistics_is_enabled): ?>
         <div class="col-12 col-sm-6 col-xl mb-4 position-relative" data-toggle="tooltip" title="<?= nr(get_percentage_between_two_numbers($data->broadcast->views, $data->broadcast->total_emails)) . '%' ?>">
             <div class="card d-flex flex-row h-100 overflow-hidden">
                 <div class="card-body">
@@ -161,13 +161,13 @@
         </div>
     </div>
 
-    <?php if(settings()->main->broadcasts_statistics_is_enabled): ?>
+    <?php if(settings()->content->broadcasts_statistics_is_enabled): ?>
         <div class="col-xl-6 mb-5">
             <div class="card h-100">
                 <div class="card-body">
                     <h2 class="h5 mb-4"><?= l('admin_broadcasts.latest_views') ?></h2>
 
-                    <?php if(count($data->users)): ?>
+                    <?php if (!empty($data->users)): ?>
 
                         <div>
                             <?php foreach($data->users as $user): ?>
@@ -210,12 +210,12 @@
 </div>
 
 
-<?php if(settings()->main->broadcasts_statistics_is_enabled): ?>
+<?php if(settings()->content->broadcasts_statistics_is_enabled): ?>
     <div class="card h-100">
         <div class="card-body">
             <h2 class="h5 mb-4"><?= l('admin_broadcasts.clicks') ?></h2>
 
-            <?php if(count($data->clicks)): ?>
+            <?php if (!empty($data->clicks)): ?>
 
                 <div>
                     <?php foreach($data->clicks as $click): ?>
@@ -272,10 +272,13 @@
         ranges: {
             <?= json_encode(l('global.date.today')) ?>: [moment(), moment()],
             <?= json_encode(l('global.date.yesterday')) ?>: [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-            <?= json_encode(l('global.date.last_7_days')) ?>: [moment().subtract(6, 'days'), moment()],
+            <?= json_encode(l('global.date.this_week')) ?>: [moment().startOf('week'), moment().endOf('week')],
+
             <?= json_encode(l('global.date.last_30_days')) ?>: [moment().subtract(29, 'days'), moment()],
-            <?= json_encode(l('global.date.this_month')) ?>: [moment().startOf('month'), moment().endOf('month')],
+                <?= json_encode(l('global.date.this_month')) ?>: [moment().startOf('month'), moment().endOf('month')],
             <?= json_encode(l('global.date.last_month')) ?>: [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                <?= json_encode(l('global.date.this_year')) ?>: [moment().startOf('year'), moment()],
+                <?= json_encode(l('global.date.last_year')) ?>: [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')],
             <?= json_encode(l('global.date.all_time')) ?>: [moment('2015-01-01'), moment()]
         },
         alwaysShowCalendars: true,

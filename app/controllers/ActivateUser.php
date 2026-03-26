@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -30,18 +30,18 @@ class ActivateUser extends Controller {
         $type = isset($_GET['type']) && in_array($_GET['type'], ['user_activation', 'user_pending_email']) ? $_GET['type'] : 'user_activation';
         $redirect = process_and_get_redirect_params() ?? 'dashboard';
 
-        if(!$md5email || !$email_activation_code) redirect();
+        if(!$md5email || !$email_activation_code) throw_404();
 
         /* Check if the activation code is correct */
         switch($type) {
             case 'user_activation':
 
                 if(!$user = db()->where('email_activation_code', $email_activation_code)->getOne('users')) {
-                    redirect();
+                    throw_404();
                 }
 
                 if(md5($user->email) != $md5email) {
-                    redirect();
+                    throw_404();
                 }
 
                 /* Activate the account and reset the email_activation_code */
@@ -100,7 +100,7 @@ class ActivateUser extends Controller {
                         'source' => $user->source,
                         'is_newsletter_subscribed' => $user->is_newsletter_subscribed,
                         'datetime' => get_date(),
-                    ]);
+                    ], signature: true);
                 }
 
                 /* Send internal notification if needed */
@@ -119,8 +119,8 @@ class ActivateUser extends Controller {
                 Logger::users($user->user_id, 'activate.success');
 
                 /* Login and set a successful message */
-                $_SESSION['user_id'] = $user->user_id;
-                $_SESSION['user_password_hash'] = md5($user->password);
+                session_set('user_id', $user->user_id);
+                session_set('user_password_hash', md5($user->password));
 
                 /* Set a nice success message */
                 Alerts::add_success(l('activate_user.user_activation'));
@@ -130,18 +130,18 @@ class ActivateUser extends Controller {
                 /* Clear the cache */
                 cache()->deleteItemsByTag('user_id=' . $user->user_id);
 
-                redirect($redirect . '&welcome=' . $user->user_id);
+                redirect(append_query_param($redirect, 'welcome=' . $user->user_id));
 
                 break;
 
             case 'user_pending_email':
 
                 if(!$user = db()->where('email_activation_code', $email_activation_code)->getOne('users', ['user_id', 'pending_email', 'email'])) {
-                    redirect();
+                    throw_404();
                 }
 
                 if(md5($user->pending_email) != $md5email) {
-                    redirect();
+                    throw_404();
                 }
 
                 /* Confirm the new email address and reset the email_activation_code */

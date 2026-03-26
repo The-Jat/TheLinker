@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -87,11 +87,14 @@ class AdminBiolinkTemplateCreate extends Controller {
             }
         }
 
+        $suggested_next_order_number = db()->orderBy('`order`', 'DESC')->getValue('biolinks_templates', '`order`', 1);
+        $suggested_next_order_number = $suggested_next_order_number ? $suggested_next_order_number + 1 : 1;
+
         $values = [
             'name' => $_POST['name'] ?? null,
             'url' => $_POST['url'] ?? null,
             'link_id' => $_POST['link_id'] ?? null,
-            'order' => $_POST['order'] ?? 0,
+            'order' => $_POST['order'] ?? $suggested_next_order_number,
             'is_enabled' => $_POST['is_enabled'] ?? 1,
         ];
 

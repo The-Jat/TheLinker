@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -28,19 +28,19 @@ class SynthesisCreate extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->syntheses_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('create.syntheses')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('syntheses');
         }
 
         /* Check for the plan limit */
         $syntheses_current_month = db()->where('user_id', $this->user->user_id)->getValue('users', '`aix_syntheses_current_month`');
         if($this->user->plan_settings->syntheses_per_month_limit != -1 && $syntheses_current_month >= $this->user->plan_settings->syntheses_per_month_limit) {
-            Alerts::add_info(l('global.info_message.plan_feature_limit'));
+            Alerts::add_error(l('global.info_message.plan_feature_limit') . (settings()->payment->is_enabled ? ' <a href="' . url('plan') . '" class="font-weight-bold text-reset">' . l('global.info_message.plan_upgrade') . '.</a>' : null));
             redirect('syntheses');
         }
 
@@ -107,7 +107,7 @@ class SynthesisCreate extends Controller {
         //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Response::json('Please create an account on the demo to test out this function.', 'error');
 
         if(empty($_POST)) {
-            redirect();
+            throw_404();
         }
 
         set_time_limit(0);
@@ -115,7 +115,7 @@ class SynthesisCreate extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->syntheses_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Team checks */
@@ -135,7 +135,7 @@ class SynthesisCreate extends Controller {
 
         /* Check for the plan limit */
         $synthesized_characters_current_month = db()->where('user_id', $this->user->user_id)->getValue('users', '`aix_synthesized_characters_current_month`');
-        if($this->user->plan_settings->synthesized_characters_per_month_limit != -1 && $synthesized_characters_current_month + $characters >= $this->user->plan_settings->synthesized_characters_per_month_limit) {
+        if($this->user->plan_settings->synthesized_characters_per_month_limit != -1 && $synthesized_characters_current_month + $characters > $this->user->plan_settings->synthesized_characters_per_month_limit) {
             Response::json(l('global.info_message.plan_feature_limit'), 'error');
         }
 
@@ -171,7 +171,7 @@ class SynthesisCreate extends Controller {
         /* Check for any errors */
         $required_fields = ['name', 'input'];
         foreach($required_fields as $field) {
-            if(!isset($_POST[$field]) || (isset($_POST[$field]) && empty($_POST[$field]) && $_POST[$field] != '0')) {
+            if(!isset($_POST[$field]) || trim($_POST[$field]) === '') {
                 Response::json(l('global.error_message.empty_fields'), 'error');
             }
         }
@@ -224,7 +224,7 @@ class SynthesisCreate extends Controller {
                 $api_response_time = $info['total_time'] * 1000;
 
                 /* Save the synthesis temporarily */
-                $temp_synthesis_name = md5(uniqid()) . '.' . $_POST['format'];
+                $temp_synthesis_name = md5(uniqid('', true) . random_bytes(16)) . '.' . $_POST['format'];
                 file_put_contents(Uploads::get_full_path('syntheses') . $temp_synthesis_name , $response->raw_body);
 
                 break;
@@ -262,7 +262,7 @@ class SynthesisCreate extends Controller {
                 $api_response_time = floor(($time_end - $time_start) * 1000);
 
                 /* Save the synthesis temporarily */
-                $temp_synthesis_name = md5(uniqid()) . '.' . $_POST['format'];
+                $temp_synthesis_name = md5(uniqid('', true) . random_bytes(16)) . '.' . $_POST['format'];
                 file_put_contents(Uploads::get_full_path('syntheses') . $temp_synthesis_name , $result_data);
 
                 break;

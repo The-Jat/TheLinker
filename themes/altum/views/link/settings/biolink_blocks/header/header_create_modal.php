@@ -23,18 +23,25 @@
 
                     <div class="form-group">
                         <label for="header_background_type"><i class="fas fa-fw fa-sm fa-images text-muted mr-1"></i> <?= l('biolink_header.background_type') ?></label>
-                        <div class="row btn-group-toggle" data-toggle="buttons">
-                            <div class="col-12 col-lg-6">
-                                <label class="btn btn-light btn-block text-truncate active">
+                        <div class="row btn-group-toggle m-n2" data-toggle="buttons">
+                            <div class="p-2 col-12 col-lg-4">
+                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate active">
                                     <input type="radio" name="background_type" value="image" class="custom-control-input" checked="checked" required="required" />
                                     <i class="fas fa-fill fa-fw fa-sm mr-1"></i> <?= l('global.image') ?>
                                 </label>
                             </div>
 
-                            <div class="col-12 col-lg-6">
-                                <label class="btn btn-light btn-block text-truncate">
+                            <div class="p-2 col-12 col-lg-4">
+                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate">
                                     <input type="radio" name="background_type" value="video" class="custom-control-input" required="required" />
-                                    <i class="fas fa-video fa-fw fa-sm mr-1"></i> <?= l('biolink_header.video') ?>
+                                    <i class="fab fa-youtube fa-fw fa-sm mr-1"></i> <?= l('biolink_header.video') ?>
+                                </label>
+                            </div>
+
+                            <div class="p-2 col-12 col-lg-4">
+                                <label class="btn btn-light btn-block font-size-small mb-0 text-truncate">
+                                    <input type="radio" name="background_type" value="video_file" class="custom-control-input" required="required" />
+                                    <i class="fas fa-video fa-fw fa-sm mr-1"></i> <?= l('biolink_video.file') ?>
                                 </label>
                             </div>
                         </div>
@@ -51,6 +58,12 @@
                         <input id="header_video_url" type="text" class="form-control" name="video_url" value="" maxlength="2048" placeholder="<?= l('biolink_header.video_url_placeholder') ?>" required="required" />
                     </div>
 
+                    <div data-header-create-background-type="video_file" class="form-group">
+                        <label for="header_video_file"><i class="fas fa-fw fa-video fa-sm text-muted mr-1"></i> <?= l('biolink_video.file') ?></label>
+                        <input id="header_video_file" type="file" name="video_file" accept="<?= \Altum\Uploads::array_to_list_format($data->biolink_blocks['header']['whitelisted_video_extensions']) ?>" class="form-control-file altum-file-input" required="required" />
+                        <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::array_to_list_format($data->biolink_blocks['header']['whitelisted_video_extensions'])) . ' ' . sprintf(l('global.accessibility.file_size_limit'), settings()->links->video_size_limit) ?></small>
+                    </div>
+
                     <div class="form-group">
                         <label for="header_avatar"><i class="fas fa-fw fa-portrait fa-sm text-muted mr-1"></i> <?= l('biolink_header.avatar') ?></label>
                         <input id="header_avatar" type="file" name="avatar" accept="<?= \Altum\Uploads::array_to_list_format($data->biolink_blocks['header']['whitelisted_image_extensions']) ?>" class="form-control-file altum-file-input" required="required" data-crop data-aspect-ratio="1" />
@@ -58,7 +71,7 @@
                     </div>
 
                     <p class="small text-muted"><i class="fas fa-fw fa-sm fa-circle-info mr-1"></i> <?= l('link.create_info') ?></p>
-                    
+
                     <div class="text-center mt-4">
                         <button type="submit" name="submit" class="btn btn-block btn-primary" data-is-ajax><?= l('link.biolink.create_block') ?></button>
                     </div>
@@ -72,7 +85,7 @@
 <?php ob_start() ?>
 <script>
     'use strict';
-    
+
 type_handler('form[name="create_biolink_header"] input[name="background_type"]', 'data-header-create-background-type');
     document.querySelector('form[name="create_biolink_header"] input[name="background_type"]') && document.querySelectorAll('form[name="create_biolink_header"] input[name="background_type"]').forEach(element => element.addEventListener('change', () => { type_handler('form[name="create_biolink_header"] input[name="background_type"]', 'data-header-create-background-type');}));
 </script>

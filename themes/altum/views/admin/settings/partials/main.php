@@ -1,6 +1,6 @@
 <?php defined('ALTUMCODE') || die() ?>
 
-<div>
+<div id="main">
     <div class="form-group">
         <label for="title"><i class="fas fa-fw fa-sm fa-heading text-muted mr-1"></i> <?= l('admin_settings.main.title') ?></label>
         <input id="title" type="text" name="title" class="form-control" value="<?= settings()->main->title ?>" required="required" />
@@ -78,11 +78,11 @@
         </select>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#app_settings_container" aria-expanded="false" aria-controls="app_settings_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#app_settings_container" aria-expanded="false" aria-controls="app_settings_container">
         <i class="fas fa-fw fa-sliders-h fa-sm mr-1"></i> <?= l('admin_settings.main.app_settings') ?>
     </button>
 
-    <div class="collapse" id="app_settings_container">
+    <div class="collapse" data-parent="#main" id="app_settings_container">
         <div class="form-group custom-control custom-switch">
             <input id="admin_spotlight_is_enabled" name="admin_spotlight_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->admin_spotlight_is_enabled ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="admin_spotlight_is_enabled"><i class="fas fa-fw fa-sm fa-search text-muted mr-1"></i> <?= l('admin_settings.main.admin_spotlight_is_enabled') ?></label>
@@ -116,12 +116,6 @@
         <div class="form-group custom-control custom-switch">
             <input id="api_is_enabled" name="api_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->api_is_enabled ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="api_is_enabled"><i class="fas fa-fw fa-sm fa-code text-muted mr-1"></i> <?= l('admin_settings.main.api_is_enabled') ?></label>
-        </div>
-
-        <div class="form-group custom-control custom-switch">
-            <input id="broadcasts_statistics_is_enabled" name="broadcasts_statistics_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->broadcasts_statistics_is_enabled ? 'checked="checked"' : null?>>
-            <label class="custom-control-label" for="broadcasts_statistics_is_enabled"><i class="fas fa-fw fa-sm fa-star text-muted mr-1"></i> <?= l('admin_settings.main.broadcasts_statistics_is_enabled') ?></label>
-            <small class="form-text text-muted"><?= l('admin_settings.main.broadcasts_statistics_is_enabled_help') ?></small>
         </div>
 
         <div class="form-group custom-control custom-switch">
@@ -160,16 +154,46 @@
         </div>
 
         <div class="form-group">
+            <label for="referrer_policy"><i class="fas fa-fw fa-sm fa-share-alt text-muted mr-1"></i> <?= l('admin_settings.main.referrer_policy') ?></label>
+            <select id="referrer_policy" name="referrer_policy" class="custom-select">
+                <optgroup label="🛡️ strict-origin-when-cross-origin">
+                    <option value="strict-origin-when-cross-origin" <?= settings()->main->referrer_policy == 'strict-origin-when-cross-origin' ? 'selected="selected"' : null ?>>
+                        <?= l('admin_settings.main.referrer_policy.strict_origin_when_cross_origin') ?>
+                    </option>
+                </optgroup>
+
+                <optgroup label="🚫 no-referrer">
+                    <option value="no-referrer" <?= settings()->main->referrer_policy == 'no-referrer' ? 'selected="selected"' : null ?>>
+                        <?= l('admin_settings.main.referrer_policy.no_referrer') ?>
+                    </option>
+                </optgroup>
+
+                <optgroup label="🌐 origin">
+                    <option value="origin" <?= settings()->main->referrer_policy == 'origin' ? 'selected="selected"' : null ?>>
+                        <?= l('admin_settings.main.referrer_policy.origin') ?>
+                    </option>
+                </optgroup>
+
+                <optgroup label="⚠️ unsafe-url">
+                    <option value="unsafe-url" <?= settings()->main->referrer_policy == 'unsafe-url' ? 'selected="selected"' : null ?>>
+                        <?= l('admin_settings.main.referrer_policy.unsafe_url') ?>
+                    </option>
+                </optgroup>
+            </select>
+            <small class="form-text text-muted"><?= l('admin_settings.main.referrer_policy_help') ?></small>
+        </div>
+
+        <div class="form-group">
             <label for="title_separator"><i class="fas fa-fw fa-sm fa-quote-left text-muted mr-1"></i> <?= l('admin_settings.main.title_separator') ?></label>
             <input id="title_separator" type="text" name="title_separator" class="form-control" value="<?= settings()->main->title_separator ?? '-' ?>" required="required" />
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#index_settings_container" aria-expanded="false" aria-controls="index_settings_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#index_settings_container" aria-expanded="false" aria-controls="index_settings_container">
         <i class="fas fa-fw fa-plane-arrival fa-sm mr-1"></i> <?= l('admin_settings.main.index_settings') ?>
     </button>
 
-    <div class="collapse" id="index_settings_container">
+    <div class="collapse" data-parent="#main" id="index_settings_container">
         <div class="form-group custom-control custom-switch">
             <input id="display_index_plans" name="display_index_plans" type="checkbox" class="custom-control-input" <?= settings()->main->display_index_plans ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="display_index_plans"><i class="fas fa-fw fa-sm fa-box-open text-muted mr-1"></i> <?= l('admin_settings.main.display_index_plans') ?></label>
@@ -197,11 +221,11 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#maintenance_settings_container" aria-expanded="false" aria-controls="maintenance_settings_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#maintenance_settings_container" aria-expanded="false" aria-controls="maintenance_settings_container">
         <i class="fas fa-fw fa-paint-roller fa-sm mr-1"></i> <?= l('admin_settings.main.maintenance_settings') ?>
     </button>
 
-    <div class="collapse" id="maintenance_settings_container">
+    <div class="collapse" data-parent="#main" id="maintenance_settings_container">
         <div class="form-group custom-control custom-switch">
             <input id="maintenance_is_enabled" name="maintenance_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->main->maintenance_is_enabled ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="maintenance_is_enabled"><?= l('admin_settings.main.maintenance_is_enabled') ?></label>
@@ -229,11 +253,18 @@
         </div>
     </div>
 
-    <button class="btn btn-block btn-gray-200 mb-4" type="button" data-toggle="collapse" data-target="#other_settings_container" aria-expanded="false" aria-controls="other_settings_container">
+    <button class="btn btn-block btn-gray-200 font-size-little-small font-weight-450 mb-4" type="button" data-toggle="collapse" data-target="#other_settings_container" aria-expanded="false" aria-controls="other_settings_container">
         <i class="fas fa-fw fa-tasks fa-sm mr-1"></i> <?= l('admin_settings.main.other_settings') ?>
     </button>
 
-    <div class="collapse" id="other_settings_container">
+    <div class="collapse" data-parent="#main" id="other_settings_container">
+        <div class="form-group" data-file-image-input-wrapper data-file-input-wrapper-size-limit="<?= get_max_upload() ?>" data-file-input-wrapper-size-limit-error="<?= sprintf(l('global.error_message.file_size_limit'), get_max_upload()) ?>">
+            <label for="default_avatar"><i class="fas fa-fw fa-sm fa-user-circle text-muted mr-1"></i> <?= l('admin_settings.main.default_avatar') ?></label>
+            <?= include_view(THEME_PATH . 'views/partials/file_image_input.php', ['uploads_file_key' => 'default_avatar', 'file_key' => 'default_avatar', 'already_existing_image' => settings()->main->default_avatar, 'input_data' => 'data-crop data-aspect-ratio="1"']) ?>
+            <small class="form-text text-muted"><?= sprintf(l('global.accessibility.whitelisted_file_extensions'), \Altum\Uploads::get_whitelisted_file_extensions_accept('default_avatar')) . ' ' . sprintf(l('global.accessibility.file_size_limit'), get_max_upload()) ?></small>
+            <small class="form-text text-muted"><?= l('admin_settings.main.default_avatar_help') ?></small>
+        </div>
+
         <div class="form-group">
             <label for="not_found_url"><i class="fas fa-fw fa-sm fa-compass text-muted mr-1"></i> <?= l('admin_settings.main.not_found_url') ?></label>
             <input id="not_found_url" type="url" name="not_found_url" class="form-control" value="<?= settings()->main->not_found_url ?>" placeholder="<?= l('global.url_placeholder') ?>" />
@@ -292,7 +323,7 @@
         <div class="form-group">
             <label for="openai_model"><i class="fas fa-fw fa-sm fa-robot text-muted mr-1"></i> <?= l('admin_settings.main.openai_model') ?></label>
             <select id="openai_model" name="openai_model" class="custom-select">
-                <?php foreach(['gpt-5-main','gpt-5-main-mini','gpt-5-nano','gpt-4o','gpt-4','gpt-4.1','gpt-4.1-mini','gpt-3.5-turbo'] as $model): ?>
+                <?php foreach(['gpt-5.2','gpt-5.1','gpt-5','gpt-5-mini','gpt-5-nano','gpt-4.1','gpt-4.1-mini'] as $model): ?>
                     <option value="<?= $model ?>" <?= settings()->main->openai_model == $model ? 'selected="selected"' : null ?>><?= $model ?></option>
                 <?php endforeach ?>
             </select>
@@ -301,11 +332,40 @@
 
     <div class="form-group">
         <label for="sitemap_url"><i class="fas fa-fw fa-sm fa-sitemap text-muted mr-1"></i> <?= l('admin_settings.main.sitemap_url') ?></label>
-        <input id="sitemap_url" type="text" name="sitemap_url" class="form-control" value="<?= SITE_URL . 'sitemap' ?>" onclick="this.select();" readonly="readonly" />
+        <div class="input-group">
+            <input id="sitemap_url" type="text" name="sitemap_url" class="form-control" value="<?= SITE_URL . 'sitemap' ?>" readonly="readonly" />
+            <div class="input-group-append">
+                <button
+                        type="button"
+                        class="btn btn-light"
+                        data-toggle="tooltip"
+                        title="<?= l('global.clipboard_copy') ?>"
+                        aria-label="<?= l('global.clipboard_copy') ?>"
+                        data-copy="<?= l('global.clipboard_copy') ?>"
+                        data-copied="<?= l('global.clipboard_copied') ?>"
+                        data-clipboard-text="<?= SITE_URL . 'sitemap' ?>"
+                >
+                    <i class="fas fa-fw fa-sm fa-copy"></i>
+                </button>
+            </div>
+            <div class="input-group-append">
+                <a
+                        href="<?= SITE_URL . 'sitemap' ?>"
+                        target="_blank"
+                        class="btn btn-light"
+                        data-toggle="tooltip"
+                        title="<?= l('global.view') ?>"
+                >
+                    <i class="fas fa-fw fa-sm fa-external-link-alt"></i>
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
 <button type="submit" name="submit" class="btn btn-lg btn-block btn-primary mt-4"><?= l('global.update') ?></button>
+
+<?php include_view(THEME_PATH . 'views/partials/clipboard_js.php') ?>
 
 <?php include_view(THEME_PATH . 'views/partials/js_cropper.php') ?>
 

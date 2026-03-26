@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -26,7 +26,7 @@ class Documents extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->documents_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Check for exclusive personal API usage limitation */
@@ -109,20 +109,20 @@ class Documents extends Controller {
         \Altum\Authentication::guard();
 
         if(!\Altum\Plugin::is_active('aix') || !settings()->aix->documents_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         /* Team checks */
         if(\Altum\Teams::is_delegated() && !\Altum\Teams::has_access('delete.documents')) {
-            Alerts::add_info(l('global.info_message.team_no_access'));
+            Alerts::add_error(l('global.info_message.team_no_access'));
             redirect('documents');
         }
 
-        if(empty($_POST)) {
-            redirect('documents');
+        if (empty($_POST)) {
+            throw_404();
         }
 
-        $document_id = (int) query_clean($_POST['document_id']);
+        $document_id = (int) $_POST['document_id'];
 
         //ALTUMCODE:DEMO if(DEMO) if($this->user->user_id == 1) Alerts::add_error('Please create an account on the demo to test out this function.');
 
@@ -131,7 +131,7 @@ class Documents extends Controller {
         }
 
         if(!$document = db()->where('document_id', $document_id)->where('user_id', $this->user->user_id)->getOne('documents', ['document_id', 'name'])) {
-            redirect('documents');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {

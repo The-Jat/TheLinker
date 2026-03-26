@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -26,7 +26,7 @@ class InternalNotifications extends Controller {
     public function index() {
 
         if(!settings()->internal_notifications->users_is_enabled) {
-            redirect('not-found');
+            throw_404();
         }
 
         \Altum\Authentication::guard();
@@ -68,8 +68,8 @@ class InternalNotifications extends Controller {
 
     public function get_ajax() {
 
-        if(!empty($_POST)) {
-            redirect();
+        if($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            throw_404();
         }
 
         \Altum\Authentication::guard();
@@ -80,7 +80,7 @@ class InternalNotifications extends Controller {
             case 'user':
 
                 if(!settings()->internal_notifications->users_is_enabled) {
-                    redirect('not-found');
+                    throw_404();
                 }
 
                 $internal_notifications = db()->where('for_who', 'user')->where('(`user_id` = ? OR `user_id` IS NULL)', [$this->user->user_id])->orderBy('internal_notification_id', 'DESC')->get('internal_notifications', 3);
@@ -112,7 +112,7 @@ class InternalNotifications extends Controller {
             case 'admin':
 
                 if(!settings()->internal_notifications->admins_is_enabled) {
-                    redirect('not-found');
+                    throw_404();
                 }
 
                 /* :) */

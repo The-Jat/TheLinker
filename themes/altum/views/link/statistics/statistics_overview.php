@@ -453,9 +453,9 @@
 
 <script>
     'use strict';
-    
-/* Charts */
-    <?php if(count($data->pageviews)): ?>
+
+    /* Charts */
+    <?php if (!empty($data->pageviews)): ?>
     let css = window.getComputedStyle(document.body);
     let pageviews_color = css.getPropertyValue('--primary');
     let visitors_color = css.getPropertyValue('--gray-400');

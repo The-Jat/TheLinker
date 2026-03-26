@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2025 AltumCode (https://altumcode.com/)
+ * Copyright (c) 2026 AltumCode (https://altumcode.com/)
  *
  * This software is licensed exclusively by AltumCode and is sold only via https://altumcode.com/.
  * Unauthorized distribution, modification, or use of this software without a valid license is not permitted and may be subject to applicable legal actions.
@@ -24,8 +24,12 @@ class AdminCodes extends Controller {
 
     public function index() {
 
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            redirect('admin');
+        }
+
         /* Prepare the filtering system */
-        $filters = (new \Altum\Filters(['type'], ['name', 'code'], ['code_id', 'name', 'days', 'quantity', 'datetime', 'code', 'redeemed']));
+        $filters = (new \Altum\Filters(['type'], ['name', 'code'], ['code_id', 'name', 'days', 'quantity', 'datetime', 'last_datetime', 'code', 'redeemed']));
         $filters->set_default_order_by('code_id', $this->user->preferences->default_order_type ?? settings()->main->default_order_type);
         $filters->set_default_results_per_page($this->user->preferences->default_results_per_page ?? settings()->main->default_results_per_page);
 
@@ -52,8 +56,8 @@ class AdminCodes extends Controller {
         }
 
         /* Export handler */
-        process_export_json($codes, ['code_id', 'name', 'type', 'days', 'code', 'discount', 'quantity', 'redeemed', 'datetime']);
-        process_export_csv($codes, ['code_id', 'name', 'type', 'days', 'code', 'discount', 'quantity', 'redeemed', 'datetime']);
+        process_export_json($codes, ['code_id', 'name', 'type', 'days', 'code', 'discount', 'quantity', 'redeemed', 'start_datetime', 'end_datetime', 'datetime', 'last_datetime']);
+        process_export_csv($codes, ['code_id', 'name', 'type', 'days', 'code', 'discount', 'quantity', 'redeemed', 'start_datetime', 'end_datetime', 'datetime', 'last_datetime']);
 
         /* Prepare the pagination view */
         $pagination = (new \Altum\View('partials/admin_pagination', (array) $this))->run(['paginator' => $paginator]);
@@ -74,9 +78,13 @@ class AdminCodes extends Controller {
 
     public function bulk() {
 
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            redirect('admin');
+        }
+
         /* Check for any errors */
-        if(empty($_POST)) {
-            redirect('admin/codes');
+        if (empty($_POST)) {
+            throw_404();
         }
 
         if(empty($_POST['selected'])) {
@@ -99,6 +107,8 @@ class AdminCodes extends Controller {
 
             session_write_close();
 
+            $_POST['selected'] = is_array($_POST['selected']) ? array_unique(array_map('intval', $_POST['selected'])) : [];
+
             switch($_POST['type']) {
                 case 'delete':
 
@@ -109,7 +119,7 @@ class AdminCodes extends Controller {
             }
 
             session_start();
-            
+
             /* Set a nice success message */
             Alerts::add_success(l('bulk_delete_modal.success_message'));
 
@@ -120,6 +130,10 @@ class AdminCodes extends Controller {
 
     public function delete() {
 
+        if(!in_array(settings()->license->type, ['Extended License', 'extended'])) {
+            redirect('admin');
+        }
+
         $code_id = isset($this->params[0]) ? (int) $this->params[0] : null;
 
         //ALTUMCODE:DEMO if(DEMO) Alerts::add_error('This command is blocked on the demo.');
@@ -129,7 +143,7 @@ class AdminCodes extends Controller {
         }
 
         if(!$code = db()->where('code_id', $code_id)->getOne('codes', ['code_id', 'code'])) {
-            redirect('admin/codes');
+            throw_404();
         }
 
         if(!Alerts::has_field_errors() && !Alerts::has_errors()) {
