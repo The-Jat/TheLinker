@@ -2,25 +2,25 @@
 
 <div id="users">
     <div class="form-group custom-control custom-switch">
-        <input id="register_is_enabled" name="register_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->users->register_is_enabled ? 'checked="checked"' : null?>>
+        <input id="register_is_enabled" name="register_is_enabled" type="checkbox" class="custom-control-input" <?= (settings()->users->register_is_enabled ?? false) ? 'checked="checked"' : null?>>
         <label class="custom-control-label" for="register_is_enabled"><i class="fas fa-fw fa-sm fa-user-plus text-muted mr-1"></i> <?= l('admin_settings.users.register_is_enabled') ?></label>
         <small class="form-text text-muted"><?= l('admin_settings.users.register_is_enabled_help') ?></small>
     </div>
 
     <div class="form-group custom-control custom-switch">
-        <input id="register_only_social_logins" name="register_only_social_logins" type="checkbox" class="custom-control-input" <?= settings()->users->register_only_social_logins ? 'checked="checked"' : null?>>
+        <input id="register_only_social_logins" name="register_only_social_logins" type="checkbox" class="custom-control-input" <?= (settings()->users->register_only_social_logins ?? false) ? 'checked="checked"' : null?>>
         <label class="custom-control-label" for="register_only_social_logins"><i class="fas fa-fw fa-sm fa-share-alt text-muted mr-1"></i> <?= l('admin_settings.users.register_only_social_logins') ?></label>
         <small class="form-text text-muted"><?= l('admin_settings.users.register_only_social_logins_help') ?></small>
     </div>
 
     <div class="form-group custom-control custom-switch">
-        <input id="email_confirmation" name="email_confirmation" type="checkbox" class="custom-control-input" <?= settings()->users->email_confirmation ? 'checked="checked"' : null?>>
+        <input id="email_confirmation" name="email_confirmation" type="checkbox" class="custom-control-input" <?= (settings()->users->email_confirmation ?? false) ? 'checked="checked"' : null?>>
         <label class="custom-control-label" for="email_confirmation"><i class="fas fa-fw fa-sm fa-envelope text-muted mr-1"></i> <?= l('admin_settings.users.email_confirmation') ?></label>
         <small class="form-text text-muted"><?= l('admin_settings.users.email_confirmation_help') ?></small>
     </div>
 
     <div class="form-group custom-control custom-switch">
-        <input id="welcome_email_is_enabled" name="welcome_email_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->users->welcome_email_is_enabled ? 'checked="checked"' : null?>>
+        <input id="welcome_email_is_enabled" name="welcome_email_is_enabled" type="checkbox" class="custom-control-input" <?= (settings()->users->welcome_email_is_enabled ?? false) ? 'checked="checked"' : null?>>
         <label class="custom-control-label" for="welcome_email_is_enabled"><i class="fas fa-fw fa-sm fa-paper-plane text-muted mr-1"></i> <?= l('admin_settings.users.welcome_email_is_enabled') ?></label>
         <small class="form-text text-muted"><?= l('admin_settings.users.welcome_email_is_enabled_help') ?></small>
     </div>
@@ -33,7 +33,7 @@
         <div class="form-group">
             <label for="auto_delete_unconfirmed_users"><i class="fas fa-fw fa-sm fa-user-minus text-muted mr-1"></i> <?= l('admin_settings.users.auto_delete_unconfirmed_users') ?></label>
             <div class="input-group">
-                <input id="auto_delete_unconfirmed_users" type="number" min="0" name="auto_delete_unconfirmed_users" class="form-control" value="<?= settings()->users->auto_delete_unconfirmed_users ?>" />
+                <input id="auto_delete_unconfirmed_users" type="number" min="0" name="auto_delete_unconfirmed_users" class="form-control" value="<?= settings()->users->auto_delete_unconfirmed_users ?? 0 ?>" />
                 <div class="input-group-append">
                     <span class="input-group-text"><?= l('global.date.days') ?></span>
                 </div>
@@ -44,7 +44,7 @@
         <div class="form-group">
             <label for="auto_delete_inactive_users"><i class="fas fa-fw fa-sm fa-users-slash text-muted mr-1"></i> <?= l('admin_settings.users.auto_delete_inactive_users') ?></label>
             <div class="input-group">
-                <input id="auto_delete_inactive_users" type="number" min="0" name="auto_delete_inactive_users" class="form-control" value="<?= settings()->users->auto_delete_inactive_users ?>" />
+                <input id="auto_delete_inactive_users" type="number" min="0" name="auto_delete_inactive_users" class="form-control" value="<?= settings()->users->auto_delete_inactive_users ?? 0 ?>" />
                 <div class="input-group-append">
                     <span class="input-group-text"><?= l('global.date.days') ?></span>
                 </div>
@@ -55,7 +55,7 @@
         <div class="form-group">
             <label for="user_deletion_reminder"><i class="fas fa-fw fa-sm fa-calendar-minus text-muted mr-1"></i> <?= l('admin_settings.users.user_deletion_reminder') ?></label>
             <div class="input-group">
-                <input id="user_deletion_reminder" type="text" max="<?= settings()->users->auto_delete_inactive_users - 1 ?>" name="user_deletion_reminder" class="form-control" value="<?= settings()->users->user_deletion_reminder ?>" />
+                <input id="user_deletion_reminder" type="text" max="<?= (settings()->users->auto_delete_inactive_users ?? 1) - 1 ?>" name="user_deletion_reminder" class="form-control" value="<?= settings()->users->user_deletion_reminder ?? 0 ?>" />
                 <div class="input-group-append">
                     <span class="input-group-text"><?= l('global.date.days') ?></span>
                 </div>
@@ -71,13 +71,13 @@
     <div class="collapse" data-parent="#users" id="lockouts_container">
         <div class="form-group">
             <label for="blacklisted_domains"><i class="fas fa-fw fa-sm fa-ban text-muted mr-1"></i> <?= l('admin_settings.users.blacklisted_domains') ?></label>
-            <textarea id="blacklisted_domains" name="blacklisted_domains" class="form-control"><?= implode(',', settings()->users->blacklisted_domains ?? []) ?></textarea>
+            <textarea id="blacklisted_domains" name="blacklisted_domains" class="form-control"><?= implode(',', (array)(settings()->users->blacklisted_domains ?? [])) ?></textarea>
             <small class="form-text text-muted"><?= l('admin_settings.users.blacklisted_domains_help') ?></small>
         </div>
 
         <div class="form-group">
             <label for="blacklisted_ips"><i class="fas fa-fw fa-sm fa-eye-slash text-muted mr-1"></i> <?= l('admin_settings.users.blacklisted_ips') ?></label>
-            <textarea id="blacklisted_ips" name="blacklisted_ips" class="form-control"><?= implode(',', settings()->users->blacklisted_ips ?? []) ?></textarea>
+            <textarea id="blacklisted_ips" name="blacklisted_ips" class="form-control"><?= implode(',', (array)(settings()->users->blacklisted_ips ?? [])) ?></textarea>
             <small class="form-text text-muted"><?= l('admin_settings.users.blacklisted_ips_help') ?></small>
         </div>
 
@@ -85,14 +85,14 @@
             <label for="blacklisted_countries"><i class="fas fa-fw fa-sm fa-user-slash text-muted mr-1"></i> <?= l('admin_settings.users.blacklisted_countries') ?></label>
             <select id="blacklisted_countries" name="blacklisted_countries[]" class="custom-select" multiple="multiple">
                 <?php foreach(get_countries_array() as $key => $value): ?>
-                    <option value="<?= $key ?>" <?= in_array($key, settings()->users->blacklisted_countries ?? []) ? 'selected="selected"' : null ?>><?= $value ?></option>
+                    <option value="<?= $key ?>" <?= in_array($key, (array)(settings()->users->blacklisted_countries ?? [])) ? 'selected="selected"' : null ?>><?= $value ?></option>
                 <?php endforeach ?>
             </select>
             <small class="form-text text-muted"><?= l('admin_settings.users.blacklisted_countries_help') ?></small>
         </div>
 
         <div class="form-group custom-control custom-switch">
-            <input id="login_lockout_is_enabled" name="login_lockout_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->users->login_lockout_is_enabled ? 'checked="checked"' : null?>>
+            <input id="login_lockout_is_enabled" name="login_lockout_is_enabled" type="checkbox" class="custom-control-input" <?= (settings()->users->login_lockout_is_enabled ?? false) ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="login_lockout_is_enabled"><i class="fas fa-fw fa-sm fa-shield-alt text-muted mr-1"></i> <?= l('admin_settings.users.login_lockout_is_enabled') ?></label>
         </div>
 
@@ -114,7 +114,7 @@
         </div>
 
         <div class="form-group custom-control custom-switch">
-            <input id="lost_password_lockout_is_enabled" name="lost_password_lockout_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->users->lost_password_lockout_is_enabled ? 'checked="checked"' : null?>>
+            <input id="lost_password_lockout_is_enabled" name="lost_password_lockout_is_enabled" type="checkbox" class="custom-control-input" <?= (settings()->users->lost_password_lockout_is_enabled ?? false) ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="lost_password_lockout_is_enabled"><i class="fas fa-fw fa-sm fa-shield-alt text-muted mr-1"></i> <?= l('admin_settings.users.lost_password_lockout_is_enabled') ?></label>
         </div>
 
@@ -136,7 +136,7 @@
         </div>
 
         <div class="form-group custom-control custom-switch">
-            <input id="resend_activation_lockout_is_enabled" name="resend_activation_lockout_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->users->resend_activation_lockout_is_enabled ? 'checked="checked"' : null?>>
+            <input id="resend_activation_lockout_is_enabled" name="resend_activation_lockout_is_enabled" type="checkbox" class="custom-control-input" <?= (settings()->users->resend_activation_lockout_is_enabled ?? false) ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="resend_activation_lockout_is_enabled"><i class="fas fa-fw fa-sm fa-shield-alt text-muted mr-1"></i> <?= l('admin_settings.users.resend_activation_lockout_is_enabled') ?></label>
         </div>
 
@@ -158,7 +158,7 @@
         </div>
 
         <div class="form-group custom-control custom-switch">
-            <input id="register_lockout_is_enabled" name="register_lockout_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->users->register_lockout_is_enabled ? 'checked="checked"' : null?>>
+            <input id="register_lockout_is_enabled" name="register_lockout_is_enabled" type="checkbox" class="custom-control-input" <?= (settings()->users->register_lockout_is_enabled ?? false) ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="register_lockout_is_enabled"><i class="fas fa-fw fa-sm fa-shield-alt text-muted mr-1"></i> <?= l('admin_settings.users.register_lockout_is_enabled') ?></label>
         </div>
 
@@ -186,29 +186,29 @@
 
     <div class="collapse" data-parent="#users" id="advanced_container">
         <div class="form-group custom-control custom-switch">
-            <input id="register_social_login_require_password" name="register_social_login_require_password" type="checkbox" class="custom-control-input" <?= settings()->users->register_social_login_require_password ? 'checked="checked"' : null?>>
+            <input id="register_social_login_require_password" name="register_social_login_require_password" type="checkbox" class="custom-control-input" <?= (settings()->users->register_social_login_require_password ?? false) ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="register_social_login_require_password"><i class="fas fa-fw fa-sm fa-unlock-alt text-muted mr-1"></i> <?= l('admin_settings.users.register_social_login_require_password') ?></label>
             <small class="form-text text-muted"><?= l('admin_settings.users.register_social_login_require_password_help') ?></small>
         </div>
 
         <div class="form-group custom-control custom-switch">
-            <input id="register_display_newsletter_checkbox" name="register_display_newsletter_checkbox" type="checkbox" class="custom-control-input" <?= settings()->users->register_display_newsletter_checkbox ? 'checked="checked"' : null?>>
+            <input id="register_display_newsletter_checkbox" name="register_display_newsletter_checkbox" type="checkbox" class="custom-control-input" <?= (settings()->users->register_display_newsletter_checkbox ?? false) ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="register_display_newsletter_checkbox"><i class="fas fa-fw fa-sm fa-newspaper text-muted mr-1"></i> <?= l('admin_settings.users.register_display_newsletter_checkbox') ?></label>
         </div>
 
         <div class="form-group custom-control custom-switch">
-            <input id="account_display_newsletter_checkbox" name="account_display_newsletter_checkbox" type="checkbox" class="custom-control-input" <?= settings()->users->account_display_newsletter_checkbox ? 'checked="checked"' : null?>>
+            <input id="account_display_newsletter_checkbox" name="account_display_newsletter_checkbox" type="checkbox" class="custom-control-input" <?= (settings()->users->account_display_newsletter_checkbox ?? false) ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="account_display_newsletter_checkbox"><i class="fas fa-fw fa-sm fa-newspaper text-muted mr-1"></i> <?= l('admin_settings.users.account_display_newsletter_checkbox') ?></label>
         </div>
 
         <div class="form-group custom-control custom-switch">
-            <input id="email_aliases_is_enabled" name="email_aliases_is_enabled" type="checkbox" class="custom-control-input" <?= settings()->users->email_aliases_is_enabled ? 'checked="checked"' : null?>>
+            <input id="email_aliases_is_enabled" name="email_aliases_is_enabled" type="checkbox" class="custom-control-input" <?= (settings()->users->email_aliases_is_enabled ?? false) ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="email_aliases_is_enabled"><i class="fas fa-fw fa-sm fa-at text-muted mr-1"></i> <?= l('admin_settings.users.email_aliases_is_enabled') ?></label>
             <small class="form-text text-muted"><?= l('admin_settings.users.email_aliases_is_enabled_help') ?></small>
         </div>
 
         <div class="form-group custom-control custom-switch">
-            <input id="login_rememberme_checkbox_is_checked" name="login_rememberme_checkbox_is_checked" type="checkbox" class="custom-control-input" <?= settings()->users->login_rememberme_checkbox_is_checked ? 'checked="checked"' : null?>>
+            <input id="login_rememberme_checkbox_is_checked" name="login_rememberme_checkbox_is_checked" type="checkbox" class="custom-control-input" <?= (settings()->users->login_rememberme_checkbox_is_checked ?? false) ? 'checked="checked"' : null?>>
             <label class="custom-control-label" for="login_rememberme_checkbox_is_checked"><i class="fas fa-fw fa-sm fa-bookmark text-muted mr-1"></i> <?= l('admin_settings.users.login_rememberme_checkbox_is_checked') ?></label>
         </div>
 

@@ -193,8 +193,14 @@ class Tools extends Controller {
             }
 
             $data['result'] = [];
+            $dns_types = [DNS_A, DNS_AAAA, DNS_CNAME, DNS_MX, DNS_NS, DNS_TXT, DNS_SOA];
+            if(defined('DNS_CAA')) {
+                $dns_types[] = DNS_CAA;
+            }
 
-            foreach([DNS_A, DNS_AAAA, DNS_CNAME, DNS_MX, DNS_NS, DNS_TXT, DNS_SOA, DNS_CAA] as $dns_type) {
+            foreach($dns_types as $dns_type) {
+
+            // foreach([DNS_A, DNS_AAAA, DNS_CNAME, DNS_MX, DNS_NS, DNS_TXT, DNS_SOA, DNS_CAA] as $dns_type) {
                 $dns_records = @dns_get_record($_POST['host'] . '.', $dns_type);
 
                 if($dns_records) {
