@@ -23,7 +23,7 @@ class AuthCallback extends Controller {
         $code = $_GET['code'];
 
         // 🔁 Exchange code for token
-        $token_response = json_decode(file_get_contents('http://localhost:3000/auth/token', false, stream_context_create([
+        $token_response = json_decode(file_get_contents( AUTH_BASE_URL . '/auth/token', false, stream_context_create([
             'http' => [
                 'method' => 'POST',
                 'header' => "Content-Type: application/x-www-form-urlencoded",
