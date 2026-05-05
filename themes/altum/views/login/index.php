@@ -125,6 +125,12 @@
             <?php endif ?>
         </div>
     <?php endif ?>
+    <!-- The Auth Service SSO -->
+    <div class="mt-3">
+        <a href="<?= url('auth-redirect') ?>" class="btn btn-outline-primary btn-block">
+            Login with SSO
+        </a>
+    </div>
 </form>
 
 <?php if(settings()->users->register_is_enabled): ?>

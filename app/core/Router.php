@@ -567,6 +567,24 @@ class Router {
                 ]
             ],
 
+            /* The Auth Service routes */
+            'auth-redirect' => [
+                'controller' => 'AuthRedirect',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'no_browser_language_detection' => true,
+                ]
+            ],
+
+            'auth-callback' => [
+                'controller' => 'AuthCallback',
+                'settings' => [
+                    'no_authentication_check' => true,
+                    'no_browser_language_detection' => true,
+                    'has_view' => false,
+                ]
+            ],
+
             'register' => [
                 'controller' => 'Register',
                 'settings' => [
